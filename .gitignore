@@ -1,0 +1,10 @@
+# Dependencies
+/quizwise-ai-working/node_modules
+/backend/node_modules
+/backend/.env
+
+# Build folder
+/frontend/dist
+
+/Steps
+/quiz.txt
