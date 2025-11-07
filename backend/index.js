@@ -21,7 +21,7 @@ const express = require('express');
   
   const Quiz = require('./models/Quiz');
   const Report = require('./models/Report');
-  const auth = require('./middleware');
+  const auth = require('./authMiddleware');
   const Result = require('./models/Result'); 
   const { Achievement, UserAchievement, UserStats } = require('./models/Achievement');
   const QuizPDFGenerator = require('./utils/pdfGenerator');
