@@ -7,6 +7,8 @@ import { Brain, Sun, Moon, Menu, X } from "lucide-react";
 import { ToastProvider } from "./components/ui/Toast";
 import Button from "./components/ui/Button";
 import { fadeInUp, staggerContainer, staggerItem } from "./lib/utils";
+import ParticleBackground from "./components/ParticleBackground";
+import FloatingShapes from "./components/FloatingShapes";
 
 // Import Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -63,27 +65,43 @@ function App() {
   return (
     <SocketProvider>
       <ToastProvider>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300">
+        <div className="min-h-screen bg-white dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300 relative overflow-hidden">
+          {/* Animated Background Layers */}
+          <ParticleBackground isDark={theme === "dark"} />
+          <FloatingShapes />
+
+          {/* Glass-morphism Navbar with Reduced Height */}
           <motion.header
-            className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700"
+            className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl sticky top-0 z-50 border-b border-indigo-100/50 dark:border-indigo-900/50 shadow-sm"
             initial={{ y: -100 }}
             animate={{ y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
+            <nav className="container mx-auto px-6 md:px-8 py-3 flex justify-between items-center">
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <Link to="/" className="flex items-center space-x-3 group">
                   <motion.div
-                    className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg"
+                    className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30"
                     whileHover={{ rotate: 5, scale: 1.1 }}
-                    transition={{ duration: 0.2 }}
+                    animate={{
+                      boxShadow: [
+                        "0 10px 25px -5px rgba(99, 102, 241, 0.3)",
+                        "0 10px 25px -5px rgba(139, 92, 246, 0.4)",
+                        "0 10px 25px -5px rgba(99, 102, 241, 0.3)",
+                      ],
+                    }}
+                    transition={{
+                      rotate: { duration: 0.2 },
+                      scale: { duration: 0.2 },
+                      boxShadow: { duration: 3, repeat: Infinity },
+                    }}
                   >
                     <Brain className="h-6 w-6" />
                   </motion.div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-indigo-600 transition-all duration-300">
+                  <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-indigo-600 transition-all duration-300 tracking-tight">
                     Cognito Learning Hub
                   </h1>
                 </Link>
@@ -221,40 +239,50 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/features"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-all duration-200 relative group"
                       >
                         Features
+                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-600 dark:bg-indigo-400 group-hover:w-full transition-all duration-300"></span>
                       </Link>
                     </motion.div>
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/login"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50/50 dark:hover:bg-indigo-900/30 transition-all duration-200"
                       >
                         Login
                       </Link>
                     </motion.div>
                     <motion.div variants={staggerItem}>
-                      <Button asChild variant="default" size="sm">
-                        <Link to="/signup">Sign Up</Link>
-                      </Button>
+                      <Link
+                        to="/signup"
+                        className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5 transition-all duration-300"
+                      >
+                        Sign Up
+                      </Link>
                     </motion.div>
                   </>
                 )}
 
                 <motion.div variants={staggerItem}>
-                  <Button
+                  <motion.button
                     onClick={toggleTheme}
-                    variant="ghost"
-                    size="icon"
-                    className="ml-2"
+                    className="ml-3 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    {theme === "light" ? (
-                      <Moon className="w-5 h-5" />
-                    ) : (
-                      <Sun className="w-5 h-5" />
-                    )}
-                  </Button>
+                    <motion.div
+                      initial={false}
+                      animate={{ rotate: theme === "light" ? 0 : 180 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {theme === "light" ? (
+                        <Moon className="w-5 h-5 text-indigo-600" />
+                      ) : (
+                        <Sun className="w-5 h-5 text-yellow-400" />
+                      )}
+                    </motion.div>
+                  </motion.button>
                 </motion.div>
               </motion.div>
 
@@ -419,7 +447,7 @@ function App() {
             )}
           </AnimatePresence>
 
-          <main className="container mx-auto p-6 lg:p-8 mt-8">
+          <main className="container mx-auto p-6 lg:p-8 mt-4 relative z-10">
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home />} />

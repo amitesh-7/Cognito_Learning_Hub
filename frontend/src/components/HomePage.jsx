@@ -24,6 +24,8 @@ import {
   Star,
   Globe,
   Lock,
+  BookOpen,
+  ListChecks,
 } from "lucide-react";
 import {
   Card,
@@ -215,7 +217,7 @@ export default function HomePage() {
       </script>
 
       <main
-        className="relative overflow-hidden bg-white dark:bg-gray-900 transition-colors duration-300"
+        className="relative overflow-hidden transition-colors duration-300"
         role="main"
       >
         {/* Background */}
@@ -223,10 +225,10 @@ export default function HomePage() {
           <FloatingIconsBackground />
         </div>
 
-        <div className="relative z-10 space-y-32 md:space-y-48">
-          {/* Hero Section - Left Aligned with More White Space */}
+        <div className="relative z-10 space-y-20 md:space-y-32">
+          {/* Hero Section - Left Aligned with Optimized Spacing */}
           <motion.section
-            className="grid md:grid-cols-[1.2fr_1fr] gap-16 items-center pt-16 pb-24 md:pt-24 md:pb-32"
+            className="grid md:grid-cols-[1.2fr_1fr] gap-16 items-center pt-8 pb-16 md:pt-12 md:pb-20"
             variants={staggerContainer}
             initial="initial"
             animate="animate"
@@ -242,41 +244,39 @@ export default function HomePage() {
 
               <motion.h1
                 id="hero-heading"
-                className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.1]"
+                className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-6"
                 variants={fadeInUp}
               >
-                The{" "}
-                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Smarter
-                </span>{" "}
-                Way to Learn and Teach.
+                Your All-in-One Platform for{" "}
+                <span className="text-indigo-600 dark:text-indigo-400">
+                  AI-Powered Learning
+                </span>
               </motion.h1>
 
               <motion.p
-                className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-2xl mt-8 mb-10"
+                className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-3xl mb-10"
                 variants={fadeInUp}
               >
-                Create engaging quizzes in seconds with AI, challenge your
-                knowledge with interactive tests, and get instant help from your
-                personal AI tutor. Join{" "}
+                Turn any PDF into an interactive mock test, get instant
+                doubt-solving, and track your progress—all in one place. Join{" "}
                 <span className="font-bold text-indigo-600 dark:text-indigo-400">
                   10,000+
                 </span>{" "}
-                learners already using QuizWise-AI!
+                learners already transforming their education with QuizWise-AI.
               </motion.p>
 
               <motion.div
-                className="flex flex-col sm:flex-row gap-6 pt-8"
+                className="flex flex-col sm:flex-row gap-4 mb-12"
                 variants={fadeInUp}
               >
                 <Button
                   asChild
                   size="lg"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-6 text-lg font-semibold rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-6 text-lg font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                 >
                   <Link to="/signup">
                     <span className="flex items-center gap-2">
-                      ✨ Get Started for Free
+                      Start Learning for Free
                       <ArrowRight className="w-5 h-5" />
                     </span>
                   </Link>
@@ -286,19 +286,43 @@ export default function HomePage() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 px-10 py-6 text-lg font-semibold rounded-2xl transition-all duration-300 hover:-translate-y-1"
+                  className="border-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 px-10 py-6 text-lg font-semibold rounded-xl transition-all duration-300 hover:-translate-y-1"
                 >
-                  <Link to="/features">
+                  <Link to="#demo">
                     <span className="flex items-center gap-2">
-                      🚀 Explore Features
+                      <svg
+                        className="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
+                      </svg>
+                      Watch Demo
                     </span>
                   </Link>
                 </Button>
               </motion.div>
 
-              {/* Quick Stats with More Spacing */}
+              {/* Social Proof - Moved from bottom */}
+              <motion.div className="space-y-4" variants={fadeInUp}>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                  Trusted by students and teachers worldwide
+                </p>
+                <div className="flex flex-wrap items-center gap-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+                  <div className="text-2xl font-bold text-gray-400">
+                    IIT Bombay
+                  </div>
+                  <div className="text-2xl font-bold text-gray-400">
+                    Stanford
+                  </div>
+                  <div className="text-2xl font-bold text-gray-400">MIT</div>
+                  <div className="text-2xl font-bold text-gray-400">Oxford</div>
+                </div>
+              </motion.div>
+
+              {/* Quick Stats moved below social proof */}
               <motion.div
-                className="flex flex-wrap gap-12 pt-16 mt-16 border-t border-gray-200 dark:border-gray-700"
+                className="flex flex-wrap gap-12 pt-16 mt-12 border-t border-gray-200 dark:border-gray-700"
                 variants={fadeInUp}
               >
                 <div className="text-left">
@@ -343,69 +367,98 @@ export default function HomePage() {
             <motion.div
               className="hidden md:block"
               variants={staggerItem}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.3 }}
             >
               <div className="relative">
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur-3xl"
-                  animate={{
-                    scale: [1, 1.1, 1],
-                    opacity: [0.3, 0.6, 0.3],
-                    rotate: [0, 5, -5, 0],
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
+                {/* Product Mockup Container - Browser-style Frame */}
+                <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                  {/* Browser Chrome */}
+                  <div className="bg-gray-100 dark:bg-gray-800 px-4 py-3 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <div className="flex-1 mx-4 bg-white dark:bg-gray-700 rounded px-3 py-1 text-xs text-gray-500 dark:text-gray-400">
+                      quizwise-ai.com/create-quiz
+                    </div>
+                  </div>
 
-                {/* Floating Elements */}
-                <motion.div
-                  className="absolute -top-4 -right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold shadow-lg"
-                  animate={{
-                    y: [0, -10, 0],
-                    rotate: [0, 5, -5, 0],
-                  }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  🎉 New!
-                </motion.div>
+                  {/* Product Screenshot Placeholder */}
+                  <div className="relative aspect-video bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950 p-8">
+                    <div className="space-y-6">
+                      {/* Upload Area Mockup */}
+                      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border-2 border-dashed border-indigo-300 dark:border-indigo-700">
+                        <div className="flex items-center justify-center gap-4">
+                          <svg
+                            className="w-10 h-10 text-indigo-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                            />
+                          </svg>
+                          <div>
+                            <div className="font-semibold text-gray-900 dark:text-white">
+                              Drop your PDF here
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              or click to browse
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-                <motion.div
-                  className="absolute -bottom-4 -left-4 bg-green-400 text-green-900 px-3 py-1 rounded-full text-sm font-bold shadow-lg"
-                  animate={{
-                    y: [0, 10, 0],
-                    rotate: [0, -5, 5, 0],
-                  }}
-                  transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-                >
-                  🚀 AI-Powered
-                </motion.div>
+                      {/* AI Processing Indicator */}
+                      <motion.div
+                        className="bg-indigo-100 dark:bg-indigo-900/30 rounded-xl p-4 flex items-center gap-3"
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <div className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse"></div>
+                        <span className="text-sm text-indigo-700 dark:text-indigo-300 font-medium">
+                          AI is generating your quiz...
+                        </span>
+                      </motion.div>
 
-                <video
-                  src="/QuizWise-AI-Video.mp4"
-                  className="relative rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 hover:shadow-3xl transition-shadow duration-300"
-                  loop
-                  autoPlay
-                  muted
-                  playsInline
-                />
+                      {/* Generated Question Preview */}
+                      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-yellow-500" />
+                          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            QUESTION 1
+                          </span>
+                        </div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                        <div className="space-y-2">
+                          <div className="h-2 bg-gray-100 dark:bg-gray-700/50 rounded w-full"></div>
+                          <div className="h-2 bg-gray-100 dark:bg-gray-700/50 rounded w-5/6"></div>
+                        </div>
+                      </div>
+                    </div>
 
-                {/* Interactive Overlay */}
-                <motion.div
-                  className="absolute inset-0 bg-black/0 hover:bg-black/10 rounded-2xl flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-pointer"
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <motion.div
-                    className="bg-white/90 dark:bg-gray-900/90 rounded-full p-4 shadow-xl"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Brain className="w-8 h-8 text-indigo-600" />
-                  </motion.div>
-                </motion.div>
+                    {/* Floating Badge */}
+                    <motion.div
+                      className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1"
+                      animate={{
+                        y: [0, -5, 0],
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <Zap className="w-3 h-3" />
+                      AI-Powered
+                    </motion.div>
+                  </div>
+                </div>
+
+                {/* Glow Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 rounded-2xl blur-3xl -z-10"></div>
               </div>
             </motion.div>
           </motion.section>
@@ -900,6 +953,120 @@ export default function HomePage() {
                   Track progress, compete on leaderboards, and learn with AI
                   assistance.
                 </p>
+              </motion.div>
+            </motion.div>
+          </motion.section>
+
+          {/* Why Choose Our AI Tutor - 2x2 Feature Grid */}
+          <motion.section
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.3 }}
+            className="space-y-16"
+          >
+            <motion.div
+              className="text-center space-y-6"
+              variants={staggerItem}
+            >
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
+                Why Chat With Our AI?
+              </h2>
+              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                Get instant, personalized support whenever you need it
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="grid md:grid-cols-2 gap-8"
+              variants={staggerContainer}
+            >
+              {/* Feature 1: Conceptual Clarity */}
+              <motion.div variants={staggerItem}>
+                <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                  <CardContent className="p-8">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                        <Brain className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                          Conceptual Clarity
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                          Get deep explanations that help you truly understand
+                          concepts, not just memorize answers.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Feature 2: 24/7 Doubt Solving */}
+              <motion.div variants={staggerItem}>
+                <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                  <CardContent className="p-8">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+                        <Clock className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                          24/7 Doubt Solving
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                          Never wait for help. Get instant answers to your
+                          questions any time, day or night.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Feature 3: Multi-Subject Support */}
+              <motion.div variants={staggerItem}>
+                <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                  <CardContent className="p-8">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                        <BookOpen className="w-7 h-7 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                          Multi-Subject Support
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                          From Math to Science to History—our AI is trained
+                          across all major subjects and grade levels.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Feature 4: Step-by-Step Solutions */}
+              <motion.div variants={staggerItem}>
+                <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                  <CardContent className="p-8">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-14 h-14 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
+                        <ListChecks className="w-7 h-7 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                          Step-by-Step Solutions
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                          Learn the process, not just the answer. Our AI breaks
+                          down complex problems into simple steps.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </motion.div>
             </motion.div>
           </motion.section>
@@ -1593,89 +1760,83 @@ export default function HomePage() {
             </motion.div>
           </motion.section>
 
-          {/* Pricing Preview Section */}
+          {/* Pricing Preview Section - 3 Column Layout */}
           <motion.section
             variants={staggerContainer}
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, amount: 0.3 }}
-            className="space-y-12"
+            className="space-y-16"
             aria-labelledby="pricing-heading"
           >
             <motion.div
-              className="text-center space-y-4"
+              className="text-center space-y-6"
               variants={staggerItem}
             >
               <h2
                 id="pricing-heading"
-                className="text-4xl font-bold text-gray-900 dark:text-white"
+                className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white"
               >
-                Simple,{" "}
-                <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  Transparent
-                </span>{" "}
-                Pricing
+                Simple, Transparent Pricing
               </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
                 Get started for free, upgrade when you need more power
               </p>
             </motion.div>
 
             <motion.div
-              className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto"
+              className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
               variants={staggerContainer}
             >
-              {/* Free Plan */}
+              {/* Basic (Free) Plan */}
               <motion.div
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors group"
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border-2 border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300"
                 variants={staggerItem}
-                whileHover={{ scale: 1.02 }}
               >
-                <div className="text-center mb-8">
+                <div className="mb-8">
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    Free Forever
+                    Basic
                   </h3>
-                  <div className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400 mb-2">
-                    $0<span className="text-lg text-gray-500">/month</span>
+                  <div className="flex items-baseline gap-1 mb-2">
+                    <span className="text-5xl font-bold text-gray-900 dark:text-white">
+                      $0
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      /month
+                    </span>
                   </div>
                   <p className="text-gray-600 dark:text-gray-300">
-                    Perfect for getting started
+                    Perfect for individual students
                   </p>
                 </div>
 
                 <ul className="space-y-4 mb-8">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-700 dark:text-gray-300">
-                      Unlimited AI quiz creation
+                      10 AI-generated quizzes/month
                     </span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-700 dark:text-gray-300">
-                      Up to 50 students
+                      Access to quiz library
                     </span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-700 dark:text-gray-300">
-                      Basic analytics
+                      Basic AI Doubt Solver
                     </span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-700 dark:text-gray-300">
-                      AI Doubt Solver
+                      Progress tracking
                     </span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Social learning features
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-700 dark:text-gray-300">
                       Community support
                     </span>
@@ -1684,67 +1845,134 @@ export default function HomePage() {
 
                 <Button
                   asChild
-                  className="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  variant="outline"
+                  className="w-full border-2 border-gray-300 dark:border-gray-600 hover:border-indigo-600 hover:text-indigo-600 transition-all"
                 >
                   <Link to="/signup">Get Started Free</Link>
                 </Button>
               </motion.div>
 
-              {/* Premium Plan */}
+              {/* Student Plan - Highlighted */}
               <motion.div
-                className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden group"
+                className="bg-indigo-600 dark:bg-indigo-700 rounded-2xl shadow-2xl p-8 text-white relative border-2 border-indigo-500 scale-105"
                 variants={staggerItem}
-                whileHover={{ scale: 1.02 }}
               >
-                <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold">
-                  Most Popular
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-yellow-400 text-yellow-900 px-4 py-1 rounded-full text-sm font-bold shadow-lg">
+                    Most Popular
+                  </span>
                 </div>
 
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold mb-2">Premium</h3>
-                  <div className="text-4xl font-extrabold mb-2">
-                    $19<span className="text-lg opacity-80">/month</span>
+                <div className="mb-8 mt-2">
+                  <h3 className="text-2xl font-bold mb-2">Student</h3>
+                  <div className="flex items-baseline gap-1 mb-2">
+                    <span className="text-5xl font-bold">$9</span>
+                    <span className="opacity-80">/month</span>
                   </div>
-                  <p className="opacity-90">For growing educators and teams</p>
+                  <p className="opacity-90">For serious learners</p>
                 </div>
 
                 <ul className="space-y-4 mb-8">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0" />
-                    <span>Everything in Free plan</span>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
+                    <span>Everything in Basic</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0" />
-                    <span>Unlimited students</span>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
+                    <span>Unlimited AI quizzes</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0" />
-                    <span>Advanced analytics & reports</span>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
+                    <span>Advanced AI Tutor access</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0" />
-                    <span>Team collaboration tools</span>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
+                    <span>Detailed analytics & insights</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0" />
-                    <span>Custom branding</span>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
+                    <span>Priority doubt resolution</span>
                   </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0" />
-                    <span>Priority support</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0" />
-                    <span>API access</span>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
+                    <span>Study groups & challenges</span>
                   </li>
                 </ul>
 
                 <Button
                   asChild
-                  className="w-full bg-white text-indigo-600 hover:bg-gray-100 font-bold"
-                  glow={true}
+                  className="w-full bg-white text-indigo-600 hover:bg-gray-100 font-semibold shadow-lg hover:shadow-xl transition-all"
                 >
-                  <Link to="/signup?plan=premium">Start Premium Trial</Link>
+                  <Link to="/signup?plan=student">Choose Student</Link>
+                </Button>
+              </motion.div>
+
+              {/* Pro / Teacher Plan */}
+              <motion.div
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border-2 border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300"
+                variants={staggerItem}
+              >
+                <div className="mb-8">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    Pro / Teacher
+                  </h3>
+                  <div className="flex items-baseline gap-1 mb-2">
+                    <span className="text-5xl font-bold text-gray-900 dark:text-white">
+                      $19
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      /month
+                    </span>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    For educators & teams
+                  </p>
+                </div>
+
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Everything in Student
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Unlimited students
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Advanced reports & analytics
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Team collaboration tools
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Custom branding
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Priority email support
+                    </span>
+                  </li>
+                </ul>
+
+                <Button
+                  asChild
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-all"
+                >
+                  <Link to="/signup?plan=pro">Choose Pro</Link>
                 </Button>
               </motion.div>
             </motion.div>
