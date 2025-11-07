@@ -176,7 +176,7 @@ export default function HomePage() {
             QuizWise-AI is warming up its AI
           </h2>
           <p className="text-gray-600 dark:text-gray-300 flex items-center justify-center gap-2">
-            Built by Priyanshu Chaurasia with{" "}
+            Built by OPTIMISTIC MUTANT CODERS with{" "}
             <Heart className="w-4 h-4 text-red-500 animate-pulse" />
           </p>
         </motion.div>
@@ -1189,7 +1189,7 @@ export default function HomePage() {
                       </motion.div>
                       <div className="ml-3">
                         <h4 className="font-medium text-gray-900 dark:text-white">
-                          Reena Chaurasia
+                          Sarah Johnson
                         </h4>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           Government Teacher • India{" "}

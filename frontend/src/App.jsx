@@ -661,7 +661,7 @@ function App() {
               <div className="mt-4 flex justify-center space-x-4">
                 {/* LinkedIn */}
                 <a
-                  href="https://www.linkedin.com/in/priyanshu-chaurasia-326979335/"
+                  href="https://www.linkedin.com/company/optimistic-mutant-coders/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
@@ -678,7 +678,7 @@ function App() {
 
                 {/* GitHub */}
                 <a
-                  href="https://github.com/priyanshu-1006"
+                  href="https://github.com/amitesh-7"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"

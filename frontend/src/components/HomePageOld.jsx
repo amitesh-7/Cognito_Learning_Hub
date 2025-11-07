@@ -312,7 +312,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 gap-10">
               <div className="p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
                   <p className="text-gray-700 dark:text-gray-300 italic">"Quizwise-AI has been a game-changer for my classroom. I can create differentiated quizzes in minutes, not hours. My students are more engaged than ever!"</p>
-                  <p className="mt-4 font-bold text-right text-gray-900 dark:text-white">- Reena Chaurasia, High School Teacher</p>
+                  <p className="mt-4 font-bold text-right text-gray-900 dark:text-white">- Sarah Johnson, High School Teacher</p>
               </div>
               <div className="p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
                   <p className="text-gray-700 dark:text-gray-300 italic">"The AI Doubt Solver is my favorite feature. It's like having a 24/7 tutor. I finally understand complex topics I used to struggle with."</p>
