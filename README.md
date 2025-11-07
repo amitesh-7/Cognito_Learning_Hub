@@ -1,53 +1,477 @@
-# Cognito Learning Hub
+# 🧠 Cognito Learning Hub
+
+<div align="center">
 
 **Intelligence Meets Interaction**
 
-Cognito Learning Hub is a modern, full-stack AI-powered educational platform designed to enhance the learning and teaching experience through the power of artificial intelligence. It provides a comprehensive suite of tools for creating, taking, and managing quizzes, supported by a robust, role-based user system.
+[![Made with Love](https://img.shields.io/badge/Made%20with-❤️-red.svg)](https://github.com/amitesh-7/Cognito_Learning_Hub)
+[![IIT Bombay Techfest 2025](https://img.shields.io/badge/IIT%20Bombay-Techfest%202025-blue.svg)](https://techfest.org)
+[![Node.js](https://img.shields.io/badge/Node.js-20.19.4-green.svg)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-18.3.1-61dafb.svg)](https://reactjs.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green.svg)](https://mongodb.com)
 
-**Made with team OPTIMISTIC MUTANT CODERS** | IIT Bombay Techfest 2025
+_An AI-powered educational platform revolutionizing the learning experience_
 
-1. Core User Roles & Access Control
-   The platform is built on a secure authentication system with four distinct user roles, ensuring that each user has access only to the features relevant to them.
+**Made by team OPTIMISTIC MUTANT CODERS** 🚀
 
-Student: The primary user of the platform. Students can sign up, browse the full library of quizzes, take quizzes, view their scores and history on a personal dashboard, and use the AI Doubt Solver for academic help.
+[Features](#-key-features) • [Tech Stack](#️-tech-stack) • [Getting Started](#-getting-started) • [Documentation](#-documentation)
 
-Teacher: Content creators on the platform. Teachers have all the permissions of a Student, plus exclusive access to the Quiz Maker Studio. They can create, edit, and delete their own quizzes and view a personal dashboard to track how many times their quizzes have been taken.
+</div>
 
-Moderator: Responsible for maintaining a safe and high-quality environment. Moderators can view, edit, and delete any quiz on the platform. They also have access to a dedicated dashboard to review and manage questions that have been reported by users.
+---
 
-Admin: The super-user with complete control over the platform. Admins have all the permissions of every other role and can also manage all users (e.g., change their roles) and view site-wide analytics from a powerful admin dashboard.
+## 📖 Overview
 
-2. The Quiz Maker Studio (For Teachers)
-   This is the creative heart of the application, offering three distinct methods for quiz creation to provide maximum flexibility and efficiency.
+Cognito Learning Hub is a modern, full-stack AI-powered educational platform designed to transform learning and teaching through artificial intelligence. Built with cutting-edge technologies, it provides a comprehensive suite of tools for creating, taking, and managing quizzes with real-time multiplayer capabilities.
 
-AI Generation from Topic: Teachers can simply enter a topic (e.g., "The French Revolution"), select the number of questions, and choose a difficulty level. The AI analyzes the topic and instantly generates a relevant, ready-to-use quiz. Use Case: Quickly creating a quiz for a new lesson plan or for a subject that needs fresh questions.
+### 🎯 Core Philosophy
 
-AI Generation from File: Teachers can upload a document (PDF or TXT file) containing study notes, a textbook chapter, or any other text-based material. The AI reads and understands the content to generate a quiz based directly on the provided information. Use Case: Transforming existing lesson materials or student handouts into an interactive assessment with zero manual effort.
+- **AI-First**: Leverage Google's Gemini AI for intelligent quiz generation and student tutoring
+- **Real-Time**: Live multiplayer quiz sessions with WebSocket technology
+- **Gamified**: Engaging achievements, leaderboards, and social features
+- **Role-Based**: Secure, scalable architecture with granular permissions
+- **Modern UX**: Beautiful, responsive design with smooth animations
 
-Manual Creation: For complete control, teachers can use an intuitive, step-by-step editor to write their own questions and answers. They can add as many questions as needed and define the correct option for each. Use Case: Crafting highly specific questions for an exam or tailoring a quiz to the exact curriculum covered in class.
+---
 
-3. The Student Experience
-   The platform is designed to be an engaging and helpful tool for students, with a focus on interactive learning and support.
+## 🌟 Key Features
 
-Interactive Quiz Taker: A modern, gamified quiz player that presents one question at a time. It features a timer for each question, instant visual and audio feedback for correct/incorrect answers, and a progress bar.
+### 👥 User Roles & Access Control
 
-Celebratory Results Screen: Upon completion, students are shown a celebratory results screen with their final score, a percentage, and a confetti effect for high scores. From here, they can play again, view the leaderboard, or return to the quiz list.
+<table>
+<tr>
+<td width="25%">
 
-AI Doubt Solver / AI Tutor: A dedicated chat interface where students can ask any academic question and receive instant, helpful explanations from the AI, which is prompted to act as a friendly and encouraging tutor.
+**🎓 Student**
 
-Personalized Dashboard: Each student has a private dashboard that displays key stats like their average score and total quizzes completed. It includes a score progression chart to visualize their improvement over time and an achievements section with badges to gamify the learning process.
+- Browse quiz library
+- Take quizzes
+- AI Tutor access
+- Personal dashboard
+- Achievements & badges
+- Social features
 
-Quiz Library & Leaderboards: Students can browse a central library of all available quizzes. For each quiz, they can view a public leaderboard to see how their score compares to the top players, adding a fun, competitive element.
+</td>
+<td width="25%">
 
-4. Platform-Wide Features & UI/UX
-   Quizwise-AI is built with a focus on modern design and a high-quality user experience.
+**👨‍🏫 Teacher**
 
-Secure Authentication: A complete login and sign-up system protects user data. Passwords are never stored directly; they are securely hashed using bcryptjs. User sessions are managed with JSON Web Tokens (JWT).
+- All student features
+- Quiz Maker Studio
+- AI quiz generation
+- Personal analytics
+- Live session hosting
+- Content management
 
-Modern, Responsive UI: The entire application is built with a clean, professional aesthetic that is fully responsive and works beautifully on desktops, tablets, and mobile devices.
+</td>
+<td width="25%">
 
-Dark Theme: Users can switch between a light and a sleek, modern dark theme at any time. The application remembers the user's preference.
+**🛡️ Moderator**
 
-Fluid Animations: The interface is enhanced with smooth, subtle animations powered by Framer Motion, making the application feel dynamic and responsive.
+- Platform moderation
+- Quiz review/edit
+- Content flagging
+- Reports dashboard
+- Quality assurance
+- Safety management
 
-Content Moderation: A "report question" feature is integrated into the quiz taker, allowing students to flag incorrect or inappropriate content. These reports are sent directly to the Moderator and Admin dashboards for review, ensuring the platform remains a safe and reliable learning environment.
+</td>
+<td width="25%">
+
+**⚡ Admin**
+
+- Full platform control
+- User management
+- System analytics
+- Broadcast messages
+- Role assignment
+- Platform settings
+
+</td>
+</tr>
+</table>
+
+### 🎨 Quiz Maker Studio (Teachers)
+
+Three powerful methods for quiz creation:
+
+1. **🤖 AI Topic Generation**
+
+   - Enter any topic (e.g., "Quantum Physics")
+   - Select difficulty and question count
+   - AI instantly generates complete quiz
+
+2. **📄 AI File Upload**
+
+   - Upload PDF/TXT documents
+   - AI extracts key concepts
+   - Generates contextual questions
+
+3. **✍️ Manual Creation**
+   - Intuitive step-by-step editor
+   - Complete creative control
+   - Custom question types
+
+### 🎮 Student Experience
+
+- **Interactive Quiz Taker**: Gamified interface with timer, instant feedback, and progress tracking
+- **Live Sessions**: Join real-time multiplayer quizzes with live leaderboards
+- **AI Tutor**: 24/7 AI-powered doubt solver for instant academic help
+- **Personal Dashboard**: Score analytics, progression charts, and achievement tracking
+- **Social Hub**: Connect with peers, share challenges, and compete
+- **Achievements**: Unlock badges and rewards for milestones
+
+### 🔴 Live Multiplayer Sessions
+
+- **Host Live Quizzes**: Teachers create real-time quiz sessions
+- **Join with Code**: Students join via 6-digit session codes or QR codes
+- **Real-Time Leaderboards**: Live scoring with speed bonuses
+- **Session Analytics**: Post-session performance insights
+- **Session History**: Review past live quiz sessions
+
+### 🎨 Modern UI/UX
+
+- **Dark/Light Theme**: Toggle-able theme with smooth transitions
+- **Responsive Design**: Perfect on desktop, tablet, and mobile
+- **Fluid Animations**: Framer Motion powered micro-interactions
+- **Particle Effects**: Dynamic backgrounds with floating shapes
+- **Glass-morphism**: Modern UI design patterns
+
+### 🔒 Security & Authentication
+
+- **JWT Authentication**: Secure token-based sessions
+- **Password Hashing**: bcrypt encryption for user credentials
+- **Google OAuth**: One-click social login integration
+- **Protected Routes**: Role-based access control
+- **Content Moderation**: User-flagging system for inappropriate content
+
+---
+
+## 🏗️ Tech Stack
+
+### Frontend
+
+```
+React 18.3.1         → UI Framework
+Vite 5.4.19          → Build Tool & Dev Server
+TailwindCSS 3.4.17   → Utility-First CSS
+Framer Motion        → Animation Library
+Socket.IO Client     → Real-Time WebSocket
+React Router         → Client-Side Routing
+Recharts             → Data Visualization
+Lottie React         → Animation Player
+Lucide React         → Icon Library
+```
+
+### Backend
+
+```
+Node.js 20.19.4      → Runtime Environment
+Express 5.1.0        → Web Framework
+Socket.IO 4.8.1      → Real-Time Communication
+MongoDB 6.18.0       → Database
+Mongoose 8.17.0      → ODM (Object Data Modeling)
+JWT                  → Authentication
+Google Gemini AI     → AI Integration
+Multer               → File Upload
+PDF-Parse            → PDF Processing
+QRCode               → QR Generation
+```
+
+### Database Schema
+
+```
+Collections:
+├── users            → User profiles & authentication
+├── quizzes          → Quiz content & metadata
+├── results          → Quiz attempt records
+├── livesessions     → Real-time session data
+├── achievements     → User badges & milestones
+├── socialfeatures   → Social interactions
+└── reports          → Content moderation flags
+```
+
+---
+
+## 📁 Project Structure
+
+```
+Cognito-Learning-Hub/
+├── frontend/                    # React Frontend
+│   ├── public/
+│   │   ├── animations/         # Lottie JSON files
+│   │   ├── sounds/             # Audio effects
+│   │   ├── robots.txt
+│   │   └── sitemap.xml
+│   ├── src/
+│   │   ├── components/         # Reusable UI components
+│   │   │   ├── ui/            # Base UI elements (Button, Card, etc.)
+│   │   │   ├── GoogleAuthButton.jsx
+│   │   │   ├── LiveLeaderboard.jsx
+│   │   │   ├── ParticleBackground.jsx
+│   │   │   └── ProtectedRoute.jsx
+│   │   ├── pages/             # Route components
+│   │   │   ├── Home.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── QuizList.jsx
+│   │   │   ├── QuizTaker.jsx
+│   │   │   ├── LiveSessionHost.jsx
+│   │   │   ├── LiveSessionJoin.jsx
+│   │   │   └── ... (33 pages total)
+│   │   ├── context/           # React Context providers
+│   │   │   ├── AuthContext.jsx
+│   │   │   └── SocketContext.jsx
+│   │   ├── hooks/             # Custom React hooks
+│   │   ├── lib/               # Utility functions
+│   │   ├── assets/            # Static assets
+│   │   ├── App.jsx            # Main app component
+│   │   └── main.jsx           # Entry point
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── tailwind.config.cjs
+│   └── vercel.json            # Vercel deployment config
+│
+├── backend/                    # Node.js Backend
+│   ├── models/                # Mongoose schemas
+│   │   ├── User.js
+│   │   ├── Quiz.js
+│   │   ├── Result.js
+│   │   ├── LiveSession.js
+│   │   ├── Achievement.js
+│   │   ├── SocialFeatures.js
+│   │   └── Report.js
+│   ├── utils/
+│   │   └── pdfGenerator.js
+│   ├── uploads/               # File upload storage
+│   ├── index.js               # Express + Socket.IO server
+│   ├── authMiddleware.js      # JWT authentication
+│   ├── adminMiddleware.js     # Admin route guard
+│   ├── moderatorMiddleware.js # Moderator route guard
+│   ├── package.json
+│   └── vercel.json            # Vercel deployment config
+│
+├── ARCHITECTURE.md             # System architecture documentation
+├── PROJECT_CONTEXT.md          # Project context & decisions
+├── DEPLOYMENT_CHECKLIST.md     # Deployment guide
+├── PRODUCTION_DEPLOYMENT.md    # Production setup instructions
+├── VERCEL_DEPLOYMENT.md        # Vercel-specific deployment
+├── VERCEL_BACKEND_DEPLOYMENT.md
+├── QUICK_START.md              # Quick start guide
+├── ProblemStatement.md         # Original problem statement
+├── .gitignore
+└── README.md                   # This file
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js** 20.19.4 or higher
+- **npm** or **yarn** package manager
+- **MongoDB Atlas** account (or local MongoDB)
+- **Google Gemini API** key
+- **Google OAuth** credentials (optional)
+
+### Installation
+
+1. **Clone the repository**
+
+   ```powershell
+   git clone https://github.com/amitesh-7/Cognito_Learning_Hub.git
+   cd Cognito_Learning_Hub
+   ```
+
+2. **Backend Setup**
+
+   ```powershell
+   cd backend
+   npm install
+   ```
+
+   Create `.env` file in `backend/`:
+
+   ```env
+   PORT=3001
+   MONGO_URI=your_mongodb_atlas_connection_string
+   JWT_SECRET=your_super_secret_jwt_key
+   GEMINI_API_KEY=your_google_gemini_api_key
+   GOOGLE_CLIENT_ID=your_google_oauth_client_id
+   GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
+   CLIENT_URL=http://localhost:5173
+   ```
+
+3. **Frontend Setup**
+
+   ```powershell
+   cd ../frontend
+   npm install
+   ```
+
+   Create `.env` file in `frontend/`:
+
+   ```env
+   VITE_API_URL=http://localhost:3001
+   VITE_SOCKET_URL=http://localhost:3001
+   VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
+   ```
+
+4. **Run Development Servers**
+
+   Terminal 1 (Backend):
+
+   ```powershell
+   cd backend
+   npm run dev
+   ```
+
+   Terminal 2 (Frontend):
+
+   ```powershell
+   cd frontend
+   npm run dev
+   ```
+
+5. **Access the Application**
+   - Frontend: `http://localhost:5173`
+   - Backend API: `http://localhost:3001`
+
+---
+
+## 📚 Documentation
+
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Complete system architecture with data flow diagrams
+- **[QUICK_START.md](./QUICK_START.md)** - Quick setup guide for developers
+- **[PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md)** - Project decisions and context
+- **[DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
+- **[PRODUCTION_DEPLOYMENT.md](./PRODUCTION_DEPLOYMENT.md)** - Production deployment guide
+- **[VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)** - Vercel deployment instructions
+
+---
+
+## 🎯 Core Features in Detail
+
+### Real-Time Architecture
+
+The platform uses **Socket.IO** for bidirectional real-time communication:
+
+- **WebSocket Events**: 12+ custom events for live sessions
+- **Room Management**: Isolated sessions with unique codes
+- **Score Calculation**: Base points (10) + speed bonus (0-5)
+- **Leaderboard Updates**: Broadcast to all participants in real-time
+- **Session State**: In-memory + MongoDB persistence
+
+### AI Integration
+
+Powered by **Google Gemini AI**:
+
+- **Quiz Generation**: Intelligent question generation from topics/files
+- **AI Tutor**: Context-aware academic assistance
+- **Content Analysis**: PDF/TXT parsing and understanding
+- **Difficulty Scaling**: Adaptive question complexity
+
+### Gamification
+
+- **🏆 Achievements System**: 15+ unlockable badges
+- **📊 Performance Analytics**: Visual charts and statistics
+- **🎮 Score Multipliers**: Speed bonuses in live sessions
+- **🌟 Social Features**: Challenges, leaderboards, and social hub
+- **🎉 Celebrations**: Confetti effects for high scores
+
+---
+
+## 🔐 Environment Variables
+
+### Backend Variables
+
+| Variable               | Description               | Required    |
+| ---------------------- | ------------------------- | ----------- |
+| `PORT`                 | Backend server port       | ✅          |
+| `MONGO_URI`            | MongoDB connection string | ✅          |
+| `JWT_SECRET`           | Secret for JWT signing    | ✅          |
+| `GEMINI_API_KEY`       | Google Gemini API key     | ✅          |
+| `GOOGLE_CLIENT_ID`     | Google OAuth client ID    | ⚠️ Optional |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth secret       | ⚠️ Optional |
+| `CLIENT_URL`           | Frontend URL for CORS     | ✅          |
+
+### Frontend Variables
+
+| Variable                | Description            | Required    |
+| ----------------------- | ---------------------- | ----------- |
+| `VITE_API_URL`          | Backend API endpoint   | ✅          |
+| `VITE_SOCKET_URL`       | Socket.IO server URL   | ✅          |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID | ⚠️ Optional |
+
+---
+
+## 🌐 Deployment
+
+The application is designed for deployment on **Vercel**:
+
+### Frontend Deployment
+
+```powershell
+cd frontend
+vercel --prod
+```
+
+### Backend Deployment
+
+```powershell
+cd backend
+vercel --prod
+```
+
+See [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) for detailed instructions.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 👥 Team OPTIMISTIC MUTANT CODERS
+
+<div align="center">
+
+**IIT Bombay Techfest 2025**
+
+[LinkedIn](https://www.linkedin.com/company/optimistic-mutant-coders/) • [GitHub](https://github.com/amitesh-7)
+
+</div>
+
+---
+
+## 📄 License
+
+This project is part of IIT Bombay Techfest 2025. All rights reserved.
+
+---
+
+## 🙏 Acknowledgments
+
+- **IIT Bombay Techfest** for the opportunity
+- **Google Gemini AI** for AI capabilities
+- **MongoDB Atlas** for database hosting
+- **Vercel** for deployment platform
+- **Open Source Community** for amazing libraries
+
+---
+
+<div align="center">
+
+**⭐ Star this repo if you find it helpful!**
+
+Made with ❤️ by team OPTIMISTIC MUTANT CODERS
+
+</div>
