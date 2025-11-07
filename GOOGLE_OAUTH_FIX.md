@@ -1,6 +1,7 @@
 # 🔧 Fix Google OAuth "Error 400: origin_mismatch"
 
 ## ❌ Current Error
+
 **Error**: `Access blocked: Authorisation error - Error 400: origin_mismatch`
 
 **Cause**: Your Vercel frontend URL (`cognito-learning-hub-frontend.vercel.app`) is not registered in Google Cloud Console as an authorized origin.
@@ -51,10 +52,12 @@ Click **Save** at the bottom of the page.
 ### Required URLs to Add:
 
 #### For Development (localhost):
+
 - ✅ `http://localhost:5173` (Vite default)
 - ✅ `http://localhost:3000` (alternative)
 
 #### For Production (Vercel):
+
 - ✅ `https://cognito-learning-hub-frontend.vercel.app` (your current URL)
 - ✅ `https://cognito-learning-hub-backend.vercel.app` (backend URL if needed)
 
@@ -137,6 +140,7 @@ npm run dev
 
 1. **Client ID**: `499091061377-4k0m8gnios927sua2a9d64nvlh8aorru.apps.googleusercontent.com`
 2. **Authorized JavaScript origins** should include:
+
    - `http://localhost:5173`
    - `https://cognito-learning-hub-frontend.vercel.app`
 
@@ -152,7 +156,8 @@ npm run dev
 
 ### Issue 1: Still Getting origin_mismatch After Adding URLs
 
-**Solution**: 
+**Solution**:
+
 - Wait 5-10 minutes for Google's changes to propagate
 - Clear browser cache and cookies
 - Try in incognito/private mode
@@ -160,6 +165,7 @@ npm run dev
 ### Issue 2: Works on localhost but not on Vercel
 
 **Solution**:
+
 - Double-check the exact Vercel URL (with/without trailing slash)
 - Verify both URLs are in Google Console
 - Check browser console for exact error message
@@ -167,6 +173,7 @@ npm run dev
 ### Issue 3: Backend CORS Error
 
 **Solution**:
+
 - Update `FRONTEND_URLS` in backend Vercel environment variables
 - Include exact frontend URL: `https://cognito-learning-hub-frontend.vercel.app`
 - Redeploy backend after updating env vars
@@ -189,12 +196,14 @@ npm run dev
 ## 📞 Testing OAuth
 
 ### Test on Production (Vercel):
+
 1. Visit: `https://cognito-learning-hub-frontend.vercel.app`
 2. Click "Login" or "Sign Up"
 3. Click "Sign in with Google"
 4. Should redirect to Google login (no error)
 
 ### Test on Local Development:
+
 1. Start backend: `cd backend && node index.js`
 2. Start frontend: `cd frontend && npm run dev`
 3. Visit: `http://localhost:5173`
@@ -206,6 +215,7 @@ npm run dev
 ## 🚀 After Fixing
 
 Once you update Google Cloud Console:
+
 1. Wait 5-10 minutes
 2. Clear browser cache
 3. Test login again

@@ -71,26 +71,41 @@ const upload = multer({ storage: storage });
 
 // --- MIDDLEWARE ---
 // CORS configuration for production and development
-const allowedOrigins = process.env.FRONTEND_URLS 
-  ? process.env.FRONTEND_URLS.split(',').map(url => url.trim())
+const allowedOrigins = process.env.FRONTEND_URLS
+  ? process.env.FRONTEND_URLS.split(",").map((url) => url.trim())
   : process.env.NODE_ENV === "production"
-    ? [
-        "https://www.quizwise-ai.live",
-        "https://quizwise-ai.live",
-        "https://quiz-wise-ai-full-stack.vercel.app",
-        "https://quizwise-ai-server.onrender.com",
-        "https://cognito-learning-hub-frontend.vercel.app",
-      ]
-    : [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:5174",
-      ];
+  ? [
+      "https://www.quizwise-ai.live",
+      "https://quizwise-ai.live",
+      "https://quiz-wise-ai-full-stack.vercel.app",
+      "https://quizwise-ai-server.onrender.com",
+      "https://cognito-learning-hub-frontend.vercel.app",
+    ]
+  : ["http://localhost:3000", "http://localhost:5173", "http://localhost:5174"];
 
 const corsOptions = {
-  origin: allowedOrigins,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+
+    // Check if the origin matches any allowed origin or is a Vercel preview deployment
+    const isAllowed =
+      allowedOrigins.includes(origin) ||
+      origin.endsWith(".vercel.app") ||
+      origin.endsWith("localhost:5173") ||
+      origin.endsWith("localhost:3000");
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.log("CORS blocked origin:", origin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"],
 };
 
 app.use(cors(corsOptions));
@@ -98,14 +113,14 @@ app.use(express.json());
 
 // Root route for Vercel health check
 app.get("/", (req, res) => {
-  res.json({ 
+  res.json({
     status: "ok",
     message: "Cognito Learning Hub Backend API",
     version: "1.0.0",
     endpoints: {
       health: "/test",
-      api: "/api/*"
-    }
+      api: "/api/*",
+    },
   });
 });
 
@@ -1578,11 +1593,9 @@ app.post("/api/quizzes/:id/submit", auth, async (req, res) => {
 app.post("/api/quizzes/generate-enhanced", auth, async (req, res) => {
   try {
     if (req.user.role !== "Teacher") {
-      return res
-        .status(403)
-        .json({
-          message: "Access denied. Only teachers can generate quizzes.",
-        });
+      return res.status(403).json({
+        message: "Access denied. Only teachers can generate quizzes.",
+      });
     }
 
     const {
@@ -1983,12 +1996,10 @@ app.get("/api/quizzes/:id/pdf/:format", auth, async (req, res) => {
       quiz.createdBy._id.toString() !== req.user.id &&
       req.user.role !== "Admin"
     ) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "Access denied. You can only generate PDFs for your own quizzes.",
-        });
+      return res.status(403).json({
+        message:
+          "Access denied. You can only generate PDFs for your own quizzes.",
+      });
     }
 
     const pdfGenerator = new QuizPDFGenerator();
@@ -2209,12 +2220,9 @@ app.post("/api/quizzes/report", auth, async (req, res) => {
 
     await newReport.save();
     console.log(`New report submitted by user ${userId} for quiz ${quizId}`);
-    res
-      .status(201)
-      .json({
-        message:
-          "Report submitted successfully. Our moderators will review it.",
-      });
+    res.status(201).json({
+      message: "Report submitted successfully. Our moderators will review it.",
+    });
   } catch (error) {
     console.error("Error submitting report:", error);
     res.status(500).send("Server Error");
@@ -2572,12 +2580,10 @@ app.post("/api/challenges/create", auth, async (req, res) => {
       .populate("challenged", "name")
       .populate("quiz", "title");
 
-    res
-      .status(201)
-      .json({
-        message: "Challenge created successfully",
-        challenge: populatedChallenge,
-      });
+    res.status(201).json({
+      message: "Challenge created successfully",
+      challenge: populatedChallenge,
+    });
   } catch (error) {
     console.error("Error creating challenge:", error);
     res.status(500).json({ message: "Failed to create challenge" });
@@ -3292,7 +3298,7 @@ app.delete("/api/live-sessions/:code", auth, async (req, res) => {
 
 // --- START THE SERVER ---
 // For local development
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   server.listen(PORT, () => {
     console.log(`Server with Socket.IO running on port ${PORT}`);
   });

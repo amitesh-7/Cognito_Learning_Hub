@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { getSocketUrl } from '../lib/apiConfig';
 
 const SocketContext = createContext(null);
 
@@ -20,8 +21,8 @@ export const SocketProvider = ({ children }) => {
   const maxReconnectAttempts = 5;
 
   useEffect(() => {
-    // Get backend URL from environment or default to localhost
-    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
+    // Get backend URL from environment (with trailing slash removed)
+    const SOCKET_URL = getSocketUrl();
 
     console.log('🔌 Initializing Socket.IO connection to:', SOCKET_URL);
 

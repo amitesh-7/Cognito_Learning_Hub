@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import GoogleAuthButton from '../components/ui/GoogleAuthButton';
+import { apiUrl } from '../lib/apiConfig';
 import { Sparkles, Gamepad2, MessageCircle, User, Mail, Lock, CheckCircle, UserPlus, TrendingUp, Shield, Zap } from 'lucide-react';
 
 
@@ -185,10 +186,10 @@ export default function SignUp() {
       setMessage('');
 
       // Send credential to backend for verification
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://quizwise-ai-server.onrender.com';
-      console.log('Using API URL:', apiUrl);
+      const backendApiUrl = getApiUrl();
+      console.log('Using API URL:', backendApiUrl);
       
-      const response = await fetch(`${apiUrl}/api/auth/google`, {
+      const response = await fetch(apiUrl('/api/auth/google'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -234,7 +235,7 @@ export default function SignUp() {
     setIsSubmitting(true);
     setError('');
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+      const response = await fetch(apiUrl('/api/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
