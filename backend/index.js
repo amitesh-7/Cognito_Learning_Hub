@@ -1,628 +1,694 @@
-require('dotenv').config();
-const express = require('express');
-  const http = require('http'); // <-- NEW: HTTP server for Socket.IO
-  const { Server } = require('socket.io'); // <-- NEW: Socket.IO
-  const cors = require('cors');
-  const multer = require('multer');
-  const path = require('path');
-  const fs = require('fs'); // Node.js File System module
-  const pdf = require('pdf-parse'); // PDF parsing library
-  const { GoogleGenerativeAI } = require('@google/generative-ai');
-  const { OAuth2Client } = require('google-auth-library'); // Google OAuth
+require("dotenv").config();
+const express = require("express");
+const http = require("http"); // <-- NEW: HTTP server for Socket.IO
+const { Server } = require("socket.io"); // <-- NEW: Socket.IO
+const cors = require("cors");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs"); // Node.js File System module
+const pdf = require("pdf-parse"); // PDF parsing library
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { OAuth2Client } = require("google-auth-library"); // Google OAuth
 
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-  const mongoose = require('mongoose');
-  const bcrypt = require('bcryptjs');
-  const jwt = require('jsonwebtoken');
+const User = require("./models/User");
+const admin = require("./adminMiddleware");
+const moderator = require("./moderatorMiddleware");
 
-  const User = require('./models/User');
-  const admin = require('./adminMiddleware');
-  const moderator = require('./moderatorMiddleware');
-  
-  const Quiz = require('./models/Quiz');
-  const Report = require('./models/Report');
-  const auth = require('./authMiddleware');
-  const Result = require('./models/Result'); 
-  const { Achievement, UserAchievement, UserStats } = require('./models/Achievement');
-  const QuizPDFGenerator = require('./utils/pdfGenerator');
-  const LiveSession = require('./models/LiveSession'); // <-- NEW: Live session model
-  const { 
-    Friendship, 
-    Challenge, 
-    Message, 
-    ChatRoom, 
-    Notification, 
-    Broadcast 
-  } = require('./models/SocialFeatures'); 
-  // --- CONFIGURATION ---
-  const app = express();
-  const server = http.createServer(app); // <-- NEW: Wrap Express with HTTP server
-  const PORT = 3001;
+const Quiz = require("./models/Quiz");
+const Report = require("./models/Report");
+const auth = require("./authMiddleware");
+const Result = require("./models/Result");
+const {
+  Achievement,
+  UserAchievement,
+  UserStats,
+} = require("./models/Achievement");
+const QuizPDFGenerator = require("./utils/pdfGenerator");
+const LiveSession = require("./models/LiveSession"); // <-- NEW: Live session model
+const {
+  Friendship,
+  Challenge,
+  Message,
+  ChatRoom,
+  Notification,
+  Broadcast,
+} = require("./models/SocialFeatures");
+// --- CONFIGURATION ---
+const app = express();
+const server = http.createServer(app); // <-- NEW: Wrap Express with HTTP server
+const PORT = 3001;
 
-
-
- const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI = process.env.MONGO_URI;
 const API_KEY = process.env.API_KEY;
 const JWT_SECRET = process.env.JWT_SECRET;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 
-  const genAI = new GoogleGenerativeAI(API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash"});
+const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-  // Google OAuth client
-  const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
+// Google OAuth client
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-  // --- MULTER SETUP (for file uploads) ---
-  const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, 'uploads/'); // The folder where files will be saved
-    },
-    filename: function (req, file, cb) {
-      // Create a unique filename to avoid overwrites
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    }
-  });
-  const upload = multer({ storage: storage });
+// --- MULTER SETUP (for file uploads) ---
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // The folder where files will be saved
+  },
+  filename: function (req, file, cb) {
+    // Create a unique filename to avoid overwrites
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
+});
+const upload = multer({ storage: storage });
 
-
-  // --- MIDDLEWARE ---
-  // CORS configuration for production and development
-  const corsOptions = {
-    origin: process.env.NODE_ENV === 'production' 
+// --- MIDDLEWARE ---
+// CORS configuration for production and development
+const corsOptions = {
+  origin:
+    process.env.NODE_ENV === "production"
       ? [
-          'https://www.quizwise-ai.live',
-          'https://quizwise-ai.live',
-          'https://quiz-wise-ai-full-stack.vercel.app',
-          'https://quizwise-ai-server.onrender.com'
+          "https://www.quizwise-ai.live",
+          "https://quizwise-ai.live",
+          "https://quiz-wise-ai-full-stack.vercel.app",
+          "https://quizwise-ai-server.onrender.com",
         ]
       : [
-          'http://localhost:3000',
-          'http://localhost:5173',
-          'http://localhost:5174'
+          "http://localhost:3000",
+          "http://localhost:5173",
+          "http://localhost:5174",
         ],
-    credentials: true,
-    optionsSuccessStatus: 200
-  };
-  
-  app.use(cors(corsOptions));
-  app.use(express.json());
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
 
-  // --- SOCKET.IO SETUP ---
-  const io = new Server(server, {
-    cors: corsOptions, // Use same CORS options
-    transports: ['websocket', 'polling'], // Support both for compatibility
-    pingTimeout: 60000, // 60 seconds before considering connection lost
-    pingInterval: 25000 // Send ping every 25 seconds
-  });
+app.use(cors(corsOptions));
+app.use(express.json());
 
-  // Store active sessions in memory for fast access
-  // Format: Map<sessionCode, { hostSocketId, participantSockets: Map<userId, socketId> }>
-  const activeSessions = new Map();
+// --- SOCKET.IO SETUP ---
+const io = new Server(server, {
+  cors: corsOptions, // Use same CORS options
+  transports: ["websocket", "polling"], // Support both for compatibility
+  pingTimeout: 60000, // 60 seconds before considering connection lost
+  pingInterval: 25000, // Send ping every 25 seconds
+});
 
-  // Socket.IO connection handler
-  io.on('connection', (socket) => {
-    console.log(`[Socket.IO] Client connected: ${socket.id}`);
+// Store active sessions in memory for fast access
+// Format: Map<sessionCode, { hostSocketId, participantSockets: Map<userId, socketId> }>
+const activeSessions = new Map();
 
-    // ========================================
-    // EVENT: create-session
-    // Teacher/Admin creates a live quiz session
-    // ========================================
-    socket.on('create-session', async (data, callback) => {
-      try {
-        const { quizId, hostId, settings } = data;
+// Socket.IO connection handler
+io.on("connection", (socket) => {
+  console.log(`[Socket.IO] Client connected: ${socket.id}`);
 
-        // Validate quiz exists
-        const quiz = await Quiz.findById(quizId);
-        if (!quiz) {
-          return callback({ success: false, error: 'Quiz not found' });
-        }
+  // ========================================
+  // EVENT: create-session
+  // Teacher/Admin creates a live quiz session
+  // ========================================
+  socket.on("create-session", async (data, callback) => {
+    try {
+      const { quizId, hostId, settings } = data;
 
-        // Generate unique session code
-        const sessionCode = await LiveSession.generateSessionCode();
-
-        // Create session in database
-        const session = new LiveSession({
-          sessionCode,
-          quizId,
-          hostId,
-          hostSocketId: socket.id,
-          settings: settings || {}
-        });
-
-        await session.save();
-
-        // Store in memory for fast access
-        activeSessions.set(sessionCode, {
-          hostSocketId: socket.id,
-          participantSockets: new Map()
-        });
-
-        // Host joins their own room
-        socket.join(sessionCode);
-
-        console.log(`[Socket.IO] Session created: ${sessionCode} by host ${hostId}`);
-
-        callback({ 
-          success: true, 
-          sessionCode,
-          sessionId: session._id
-        });
-
-      } catch (error) {
-        console.error('[Socket.IO] Error creating session:', error);
-        callback({ success: false, error: error.message });
+      // Validate quiz exists
+      const quiz = await Quiz.findById(quizId);
+      if (!quiz) {
+        return callback({ success: false, error: "Quiz not found" });
       }
-    });
 
-    // ========================================
-    // EVENT: join-session
-    // Student joins a live quiz session
-    // ========================================
-    socket.on('join-session', async (data, callback) => {
-      try {
-        const { sessionCode, userId, username, avatar } = data;
-
-        // Find session in database
-        const session = await LiveSession.findOne({ sessionCode }).populate('quizId');
-        
-        if (!session) {
-          return callback({ success: false, error: 'Session not found' });
-        }
-
-        // Check session status
-        if (session.status === 'completed' || session.status === 'cancelled') {
-          return callback({ success: false, error: 'Session has ended' });
-        }
-
-        // Check if participant is reconnecting
-        const existingParticipant = session.participants.find(p => p.userId.toString() === userId);
-        let isReconnection = false;
-
-        if (existingParticipant) {
-          // Reconnection detected
-          isReconnection = true;
-          existingParticipant.socketId = socket.id;
-          existingParticipant.disconnectedAt = null;
-          await session.save();
-          console.log(`[Socket.IO] User ${username} reconnected to session ${sessionCode}`);
-        } else {
-          // New participant joining
-          // Check if late join is allowed
-          if (!session.settings.allowLateJoin && session.status === 'active') {
-            return callback({ success: false, error: 'Late joining is not allowed' });
-          }
-
-          // Check participant limit
-          if (session.participantCount >= session.settings.maxParticipants) {
-            return callback({ success: false, error: 'Session is full' });
-          }
-
-          // Add participant to session
-          await session.addParticipant({
-            userId,
-            username,
-            avatar,
-            socketId: socket.id
-          });
-        }
-
-        // Update in-memory store
-        const sessionMemory = activeSessions.get(sessionCode);
-        if (sessionMemory) {
-          sessionMemory.participantSockets.set(userId, socket.id);
-        }
-
-        // Join the room
-        socket.join(sessionCode);
-
-        // Notify everyone in the room (only if new join, not reconnection)
-        if (!isReconnection) {
-          io.to(sessionCode).emit('participant-joined', {
-            userId,
-            username,
-            avatar,
-            participantCount: session.participantCount + 1
-          });
-        }
-
-        console.log(`[Socket.IO] User ${username} ${isReconnection ? 'reconnected to' : 'joined'} session ${sessionCode}`);
-
-        // Calculate current state for reconnecting users
-        const leaderboard = isReconnection ? session.getLeaderboard() : null;
-
-        callback({ 
-          success: true,
-          isReconnection,
-          session: {
-            sessionCode: session.sessionCode,
-            quizTitle: session.quizId.title,
-            status: session.status,
-            currentQuestionIndex: session.currentQuestionIndex,
-            participantCount: session.participantCount + (isReconnection ? 0 : 1),
-            totalQuestions: session.quizId.questions.length
-          },
-          // Send current question and leaderboard for reconnections
-          ...(isReconnection && session.status === 'active' && {
-            currentQuestion: session.quizId.questions[session.currentQuestionIndex],
-            leaderboard
-          })
-        });
-
-      } catch (error) {
-        console.error('[Socket.IO] Error joining session:', error);
-        callback({ success: false, error: error.message });
-      }
-    });
-
-    // ========================================
-    // EVENT: start-quiz
-    // Host starts the quiz
-    // ========================================
-    socket.on('start-quiz', async (data, callback) => {
-      try {
-        const { sessionCode } = data;
-
-        const session = await LiveSession.findOne({ sessionCode }).populate('quizId');
-        
-        if (!session) {
-          return callback({ success: false, error: 'Session not found' });
-        }
-
-        // Verify host
-        if (session.hostSocketId !== socket.id) {
-          return callback({ success: false, error: 'Only host can start the quiz' });
-        }
-
-        // Update session status
-        session.status = 'active';
-        session.startedAt = new Date();
-        session.currentQuestionIndex = 0;
-        session.questionStartTimes.push({
-          questionIndex: 0,
-          startedAt: new Date()
-        });
-
-        await session.save();
-
-        // Get first question
-        const firstQuestion = session.quizId.questions[0];
-
-        // Broadcast to all participants
-        io.to(sessionCode).emit('quiz-started', {
-          questionIndex: 0,
-          question: {
-            question: firstQuestion.question,
-            type: firstQuestion.type,
-            options: firstQuestion.options,
-            timeLimit: firstQuestion.timeLimit || session.settings.timePerQuestion,
-            points: firstQuestion.points,
-            difficulty: firstQuestion.difficulty
-          },
-          totalQuestions: session.quizId.questions.length,
-          timestamp: Date.now()
-        });
-
-        console.log(`[Socket.IO] Quiz started in session ${sessionCode}`);
-
-        callback({ success: true });
-
-      } catch (error) {
-        console.error('[Socket.IO] Error starting quiz:', error);
-        callback({ success: false, error: error.message });
-      }
-    });
-
-    // ========================================
-    // EVENT: submit-answer
-    // Student submits an answer
-    // ========================================
-    socket.on('submit-answer', async (data, callback) => {
-      try {
-        const { sessionCode, userId, questionIndex, answer, timeSpent } = data;
-
-        const session = await LiveSession.findOne({ sessionCode }).populate('quizId');
-        
-        if (!session) {
-          return callback({ success: false, error: 'Session not found' });
-        }
-
-        // Get correct answer
-        const question = session.quizId.questions[questionIndex];
-        const isCorrect = answer === question.correctAnswer;
-
-        // Calculate points with speed bonus and streak multiplier
-        let pointsEarned = 0;
-        let streakBonus = 0;
-        
-        if (isCorrect) {
-          const basePoints = question.points || 10;
-          const timeLimit = question.timeLimit || session.settings.timePerQuestion;
-          
-          // Speed bonus (up to 50% of base points)
-          const speedBonus = Math.floor(
-            ((timeLimit - timeSpent) / timeLimit) * (basePoints * 0.5)
-          );
-          
-          // Calculate streak bonus
-          const participant = session.participants.find(p => p.userId.toString() === userId);
-          if (participant) {
-            // Count consecutive correct answers before this one
-            let streak = 0;
-            for (let i = participant.answers.length - 1; i >= 0; i--) {
-              if (participant.answers[i].isCorrect) {
-                streak++;
-              } else {
-                break;
-              }
-            }
-            
-            // Streak multiplier: 2 streak = 10%, 3 = 15%, 4 = 20%, 5+ = 25%
-            if (streak >= 2) {
-              const streakMultiplier = Math.min(0.25, 0.05 + (streak - 1) * 0.05);
-              streakBonus = Math.floor(basePoints * streakMultiplier);
-            }
-          }
-          
-          pointsEarned = basePoints + Math.max(0, speedBonus) + streakBonus;
-        }
-
-        // Record answer
-        await session.recordAnswer(userId, {
-          questionIndex,
-          answer,
-          isCorrect,
-          timeSpent,
-          pointsEarned
-        });
-
-        // Reload to get updated scores
-        await session.populate('quizId');
-        const leaderboard = session.getLeaderboard();
-
-        // Broadcast updated leaderboard
-        io.to(sessionCode).emit('leaderboard-updated', {
-          leaderboard,
-          questionIndex
-        });
-
-        console.log(`[Socket.IO] Answer submitted by user ${userId} in session ${sessionCode} - Points: ${pointsEarned} (${streakBonus > 0 ? `+${streakBonus} streak bonus` : 'no streak'})`);
-
-        callback({ 
-          success: true, 
-          isCorrect,
-          pointsEarned,
-          streakBonus,
-          correctAnswer: session.settings.showCorrectAnswers ? question.correctAnswer : undefined,
-          explanation: session.settings.showCorrectAnswers ? question.explanation : undefined
-        });
-
-      } catch (error) {
-        console.error('[Socket.IO] Error submitting answer:', error);
-        callback({ success: false, error: error.message });
-      }
-    });
-
-    // ========================================
-    // EVENT: next-question
-    // Host moves to next question
-    // ========================================
-    socket.on('next-question', async (data, callback) => {
-      try {
-        const { sessionCode } = data;
-
-        const session = await LiveSession.findOne({ sessionCode }).populate('quizId');
-        
-        if (!session) {
-          return callback({ success: false, error: 'Session not found' });
-        }
-
-        // Verify host
-        if (session.hostSocketId !== socket.id) {
-          return callback({ success: false, error: 'Only host can navigate questions' });
-        }
-
-        const nextIndex = session.currentQuestionIndex + 1;
-
-        // Check if quiz is complete
-        if (nextIndex >= session.quizId.questions.length) {
-          return socket.emit('end-session', { sessionCode });
-        }
-
-        // Update session
-        session.currentQuestionIndex = nextIndex;
-        session.questionStartTimes.push({
-          questionIndex: nextIndex,
-          startedAt: new Date()
-        });
-
-        await session.save();
-
-        const nextQuestion = session.quizId.questions[nextIndex];
-
-        // Broadcast next question
-        io.to(sessionCode).emit('question-started', {
-          questionIndex: nextIndex,
-          question: {
-            question: nextQuestion.question,
-            type: nextQuestion.type,
-            options: nextQuestion.options,
-            timeLimit: nextQuestion.timeLimit || session.settings.timePerQuestion,
-            points: nextQuestion.points,
-            difficulty: nextQuestion.difficulty
-          },
-          totalQuestions: session.quizId.questions.length,
-          timestamp: Date.now()
-        });
-
-        console.log(`[Socket.IO] Next question (${nextIndex}) in session ${sessionCode}`);
-
-        callback({ success: true, questionIndex: nextIndex });
-
-      } catch (error) {
-        console.error('[Socket.IO] Error moving to next question:', error);
-        callback({ success: false, error: error.message });
-      }
-    });
-
-    // ========================================
-    // EVENT: end-session
-    // Host ends the quiz session
-    // ========================================
-    socket.on('end-session', async (data, callback) => {
-      try {
-        const { sessionCode } = data;
-
-        const session = await LiveSession.findOne({ sessionCode }).populate('quizId');
-        
-        if (!session) {
-          return callback({ success: false, error: 'Session not found' });
-        }
-
-        // Verify host
-        if (session.hostSocketId !== socket.id) {
-          return callback({ success: false, error: 'Only host can end the session' });
-        }
-
-        // Update session status
-        session.status = 'completed';
-        session.endedAt = new Date();
-
-        await session.save();
-
-        // Get final leaderboard
-        const leaderboard = session.getLeaderboard();
-
-        // Save results for all participants
-        for (const participant of session.participants) {
-          if (!participant.isActive) continue;
-
-          const result = new Result({
-            user: participant.userId,
-            quiz: session.quizId._id,
-            score: participant.answers.filter(a => a.isCorrect).length,
-            totalQuestions: session.quizId.questions.length,
-            pointsEarned: participant.score,
-            totalTimeTaken: participant.answers.reduce((sum, a) => sum + a.timeSpent, 0),
-            percentage: (participant.answers.filter(a => a.isCorrect).length / session.quizId.questions.length) * 100,
-            passed: (participant.answers.filter(a => a.isCorrect).length / session.quizId.questions.length) * 100 >= session.quizId.passingScore,
-            questionResults: participant.answers.map(a => ({
-              questionId: session.quizId.questions[a.questionIndex]._id,
-              userAnswer: a.answer,
-              correctAnswer: session.quizId.questions[a.questionIndex].correct_answer,
-              isCorrect: a.isCorrect,
-              timeTaken: a.timeSpent,
-              pointsEarned: a.pointsEarned
-            }))
-          });
-
-          await result.save();
-        }
-
-        // Broadcast session end
-        io.to(sessionCode).emit('session-ended', {
-          leaderboard,
-          totalParticipants: session.participantCount,
-          totalQuestions: session.quizId.questions.length
-        });
-
-        // Clean up memory
-        activeSessions.delete(sessionCode);
-
-        console.log(`[Socket.IO] Session ${sessionCode} ended`);
-
-        callback({ success: true });
-
-      } catch (error) {
-        console.error('[Socket.IO] Error ending session:', error);
-        callback({ success: false, error: error.message });
-      }
-    });
-
-    // ========================================
-    // EVENT: disconnect
-    // Handle client disconnection
-    // ========================================
-    socket.on('disconnect', async (reason) => {
-      console.log(`[Socket.IO] Client disconnected: ${socket.id}, reason: ${reason}`);
-      
-      try {
-        // Find all sessions where this socket is a participant or host
-        const sessions = await LiveSession.find({
-          $or: [
-            { hostSocketId: socket.id },
-            { 'participants.socketId': socket.id, status: { $in: ['waiting', 'active', 'paused'] } }
-          ]
-        });
-
-        for (const session of sessions) {
-          if (session.hostSocketId === socket.id) {
-            // Host disconnected - pause session
-            session.status = 'paused';
-            await session.save();
-            
-            io.to(session.sessionCode).emit('host-disconnected', {
-              message: 'Host disconnected. Session paused.'
-            });
-            
-            console.log(`[Socket.IO] Host disconnected from session ${session.sessionCode}`);
-          } else {
-            // Participant disconnected
-            const participant = session.participants.find(p => p.socketId === socket.id);
-            if (participant) {
-              participant.isActive = false;
-              participant.leftAt = new Date();
-              await session.save();
-
-              io.to(session.sessionCode).emit('participant-left', {
-                userId: participant.userId,
-                username: participant.username,
-                participantCount: session.participantCount
-              });
-
-              console.log(`[Socket.IO] Participant ${participant.username} left session ${session.sessionCode}`);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('[Socket.IO] Error handling disconnect:', error);
-      }
-    });
-
-  });
-
-
- // MongoDB connection
-  mongoose.connect(MONGO_URI)
-  .then(() => console.log("MongoDB connected successfully"))
-  .catch(err => console.error("MongoDB connection error:", err));
-
-
-  // --- ROUTES ---
-  app.get('/test', (req, res) => {
-    res.json({ message: "Backend is running!" });
-  });
-
-
-
- // --- HELPER FUNCTION for robust JSON parsing ---
-function extractJson(text) {
-    // Find the start of the JSON array
-    const jsonStart = text.indexOf('[');
-    // Find the end of the JSON array
-    const jsonEnd = text.lastIndexOf(']');
-
-    if (jsonStart === -1 || jsonEnd === -1) {
-        throw new Error("AI response format error. Could not find a valid JSON array.");
+      // Generate unique session code
+      const sessionCode = await LiveSession.generateSessionCode();
+
+      // Create session in database
+      const session = new LiveSession({
+        sessionCode,
+        quizId,
+        hostId,
+        hostSocketId: socket.id,
+        settings: settings || {},
+      });
+
+      await session.save();
+
+      // Store in memory for fast access
+      activeSessions.set(sessionCode, {
+        hostSocketId: socket.id,
+        participantSockets: new Map(),
+      });
+
+      // Host joins their own room
+      socket.join(sessionCode);
+
+      console.log(
+        `[Socket.IO] Session created: ${sessionCode} by host ${hostId}`
+      );
+
+      callback({
+        success: true,
+        sessionCode,
+        sessionId: session._id,
+      });
+    } catch (error) {
+      console.error("[Socket.IO] Error creating session:", error);
+      callback({ success: false, error: error.message });
     }
-    // Extract the JSON string
-    const jsonString = text.substring(jsonStart, jsonEnd + 1);
-    // Parse and return
-    return JSON.parse(jsonString);
+  });
+
+  // ========================================
+  // EVENT: join-session
+  // Student joins a live quiz session
+  // ========================================
+  socket.on("join-session", async (data, callback) => {
+    try {
+      const { sessionCode, userId, username, avatar } = data;
+
+      // Find session in database
+      const session = await LiveSession.findOne({ sessionCode }).populate(
+        "quizId"
+      );
+
+      if (!session) {
+        return callback({ success: false, error: "Session not found" });
+      }
+
+      // Check session status
+      if (session.status === "completed" || session.status === "cancelled") {
+        return callback({ success: false, error: "Session has ended" });
+      }
+
+      // Check if participant is reconnecting
+      const existingParticipant = session.participants.find(
+        (p) => p.userId.toString() === userId
+      );
+      let isReconnection = false;
+
+      if (existingParticipant) {
+        // Reconnection detected
+        isReconnection = true;
+        existingParticipant.socketId = socket.id;
+        existingParticipant.disconnectedAt = null;
+        await session.save();
+        console.log(
+          `[Socket.IO] User ${username} reconnected to session ${sessionCode}`
+        );
+      } else {
+        // New participant joining
+        // Check if late join is allowed
+        if (!session.settings.allowLateJoin && session.status === "active") {
+          return callback({
+            success: false,
+            error: "Late joining is not allowed",
+          });
+        }
+
+        // Check participant limit
+        if (session.participantCount >= session.settings.maxParticipants) {
+          return callback({ success: false, error: "Session is full" });
+        }
+
+        // Add participant to session
+        await session.addParticipant({
+          userId,
+          username,
+          avatar,
+          socketId: socket.id,
+        });
+      }
+
+      // Update in-memory store
+      const sessionMemory = activeSessions.get(sessionCode);
+      if (sessionMemory) {
+        sessionMemory.participantSockets.set(userId, socket.id);
+      }
+
+      // Join the room
+      socket.join(sessionCode);
+
+      // Notify everyone in the room (only if new join, not reconnection)
+      if (!isReconnection) {
+        io.to(sessionCode).emit("participant-joined", {
+          userId,
+          username,
+          avatar,
+          participantCount: session.participantCount + 1,
+        });
+      }
+
+      console.log(
+        `[Socket.IO] User ${username} ${
+          isReconnection ? "reconnected to" : "joined"
+        } session ${sessionCode}`
+      );
+
+      // Calculate current state for reconnecting users
+      const leaderboard = isReconnection ? session.getLeaderboard() : null;
+
+      callback({
+        success: true,
+        isReconnection,
+        session: {
+          sessionCode: session.sessionCode,
+          quizTitle: session.quizId.title,
+          status: session.status,
+          currentQuestionIndex: session.currentQuestionIndex,
+          participantCount: session.participantCount + (isReconnection ? 0 : 1),
+          totalQuestions: session.quizId.questions.length,
+        },
+        // Send current question and leaderboard for reconnections
+        ...(isReconnection &&
+          session.status === "active" && {
+            currentQuestion:
+              session.quizId.questions[session.currentQuestionIndex],
+            leaderboard,
+          }),
+      });
+    } catch (error) {
+      console.error("[Socket.IO] Error joining session:", error);
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  // ========================================
+  // EVENT: start-quiz
+  // Host starts the quiz
+  // ========================================
+  socket.on("start-quiz", async (data, callback) => {
+    try {
+      const { sessionCode } = data;
+
+      const session = await LiveSession.findOne({ sessionCode }).populate(
+        "quizId"
+      );
+
+      if (!session) {
+        return callback({ success: false, error: "Session not found" });
+      }
+
+      // Verify host
+      if (session.hostSocketId !== socket.id) {
+        return callback({
+          success: false,
+          error: "Only host can start the quiz",
+        });
+      }
+
+      // Update session status
+      session.status = "active";
+      session.startedAt = new Date();
+      session.currentQuestionIndex = 0;
+      session.questionStartTimes.push({
+        questionIndex: 0,
+        startedAt: new Date(),
+      });
+
+      await session.save();
+
+      // Get first question
+      const firstQuestion = session.quizId.questions[0];
+
+      // Broadcast to all participants
+      io.to(sessionCode).emit("quiz-started", {
+        questionIndex: 0,
+        question: {
+          question: firstQuestion.question,
+          type: firstQuestion.type,
+          options: firstQuestion.options,
+          timeLimit:
+            firstQuestion.timeLimit || session.settings.timePerQuestion,
+          points: firstQuestion.points,
+          difficulty: firstQuestion.difficulty,
+        },
+        totalQuestions: session.quizId.questions.length,
+        timestamp: Date.now(),
+      });
+
+      console.log(`[Socket.IO] Quiz started in session ${sessionCode}`);
+
+      callback({ success: true });
+    } catch (error) {
+      console.error("[Socket.IO] Error starting quiz:", error);
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  // ========================================
+  // EVENT: submit-answer
+  // Student submits an answer
+  // ========================================
+  socket.on("submit-answer", async (data, callback) => {
+    try {
+      const { sessionCode, userId, questionIndex, answer, timeSpent } = data;
+
+      const session = await LiveSession.findOne({ sessionCode }).populate(
+        "quizId"
+      );
+
+      if (!session) {
+        return callback({ success: false, error: "Session not found" });
+      }
+
+      // Get correct answer
+      const question = session.quizId.questions[questionIndex];
+      const isCorrect = answer === question.correctAnswer;
+
+      // Calculate points with speed bonus and streak multiplier
+      let pointsEarned = 0;
+      let streakBonus = 0;
+
+      if (isCorrect) {
+        const basePoints = question.points || 10;
+        const timeLimit =
+          question.timeLimit || session.settings.timePerQuestion;
+
+        // Speed bonus (up to 50% of base points)
+        const speedBonus = Math.floor(
+          ((timeLimit - timeSpent) / timeLimit) * (basePoints * 0.5)
+        );
+
+        // Calculate streak bonus
+        const participant = session.participants.find(
+          (p) => p.userId.toString() === userId
+        );
+        if (participant) {
+          // Count consecutive correct answers before this one
+          let streak = 0;
+          for (let i = participant.answers.length - 1; i >= 0; i--) {
+            if (participant.answers[i].isCorrect) {
+              streak++;
+            } else {
+              break;
+            }
+          }
+
+          // Streak multiplier: 2 streak = 10%, 3 = 15%, 4 = 20%, 5+ = 25%
+          if (streak >= 2) {
+            const streakMultiplier = Math.min(0.25, 0.05 + (streak - 1) * 0.05);
+            streakBonus = Math.floor(basePoints * streakMultiplier);
+          }
+        }
+
+        pointsEarned = basePoints + Math.max(0, speedBonus) + streakBonus;
+      }
+
+      // Record answer
+      await session.recordAnswer(userId, {
+        questionIndex,
+        answer,
+        isCorrect,
+        timeSpent,
+        pointsEarned,
+      });
+
+      // Reload to get updated scores
+      await session.populate("quizId");
+      const leaderboard = session.getLeaderboard();
+
+      // Broadcast updated leaderboard
+      io.to(sessionCode).emit("leaderboard-updated", {
+        leaderboard,
+        questionIndex,
+      });
+
+      console.log(
+        `[Socket.IO] Answer submitted by user ${userId} in session ${sessionCode} - Points: ${pointsEarned} (${
+          streakBonus > 0 ? `+${streakBonus} streak bonus` : "no streak"
+        })`
+      );
+
+      callback({
+        success: true,
+        isCorrect,
+        pointsEarned,
+        streakBonus,
+        correctAnswer: session.settings.showCorrectAnswers
+          ? question.correctAnswer
+          : undefined,
+        explanation: session.settings.showCorrectAnswers
+          ? question.explanation
+          : undefined,
+      });
+    } catch (error) {
+      console.error("[Socket.IO] Error submitting answer:", error);
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  // ========================================
+  // EVENT: next-question
+  // Host moves to next question
+  // ========================================
+  socket.on("next-question", async (data, callback) => {
+    try {
+      const { sessionCode } = data;
+
+      const session = await LiveSession.findOne({ sessionCode }).populate(
+        "quizId"
+      );
+
+      if (!session) {
+        return callback({ success: false, error: "Session not found" });
+      }
+
+      // Verify host
+      if (session.hostSocketId !== socket.id) {
+        return callback({
+          success: false,
+          error: "Only host can navigate questions",
+        });
+      }
+
+      const nextIndex = session.currentQuestionIndex + 1;
+
+      // Check if quiz is complete
+      if (nextIndex >= session.quizId.questions.length) {
+        return socket.emit("end-session", { sessionCode });
+      }
+
+      // Update session
+      session.currentQuestionIndex = nextIndex;
+      session.questionStartTimes.push({
+        questionIndex: nextIndex,
+        startedAt: new Date(),
+      });
+
+      await session.save();
+
+      const nextQuestion = session.quizId.questions[nextIndex];
+
+      // Broadcast next question
+      io.to(sessionCode).emit("question-started", {
+        questionIndex: nextIndex,
+        question: {
+          question: nextQuestion.question,
+          type: nextQuestion.type,
+          options: nextQuestion.options,
+          timeLimit: nextQuestion.timeLimit || session.settings.timePerQuestion,
+          points: nextQuestion.points,
+          difficulty: nextQuestion.difficulty,
+        },
+        totalQuestions: session.quizId.questions.length,
+        timestamp: Date.now(),
+      });
+
+      console.log(
+        `[Socket.IO] Next question (${nextIndex}) in session ${sessionCode}`
+      );
+
+      callback({ success: true, questionIndex: nextIndex });
+    } catch (error) {
+      console.error("[Socket.IO] Error moving to next question:", error);
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  // ========================================
+  // EVENT: end-session
+  // Host ends the quiz session
+  // ========================================
+  socket.on("end-session", async (data, callback) => {
+    try {
+      const { sessionCode } = data;
+
+      const session = await LiveSession.findOne({ sessionCode }).populate(
+        "quizId"
+      );
+
+      if (!session) {
+        return callback({ success: false, error: "Session not found" });
+      }
+
+      // Verify host
+      if (session.hostSocketId !== socket.id) {
+        return callback({
+          success: false,
+          error: "Only host can end the session",
+        });
+      }
+
+      // Update session status
+      session.status = "completed";
+      session.endedAt = new Date();
+
+      await session.save();
+
+      // Get final leaderboard
+      const leaderboard = session.getLeaderboard();
+
+      // Save results for all participants
+      for (const participant of session.participants) {
+        if (!participant.isActive) continue;
+
+        const result = new Result({
+          user: participant.userId,
+          quiz: session.quizId._id,
+          score: participant.answers.filter((a) => a.isCorrect).length,
+          totalQuestions: session.quizId.questions.length,
+          pointsEarned: participant.score,
+          totalTimeTaken: participant.answers.reduce(
+            (sum, a) => sum + a.timeSpent,
+            0
+          ),
+          percentage:
+            (participant.answers.filter((a) => a.isCorrect).length /
+              session.quizId.questions.length) *
+            100,
+          passed:
+            (participant.answers.filter((a) => a.isCorrect).length /
+              session.quizId.questions.length) *
+              100 >=
+            session.quizId.passingScore,
+          questionResults: participant.answers.map((a) => ({
+            questionId: session.quizId.questions[a.questionIndex]._id,
+            userAnswer: a.answer,
+            correctAnswer:
+              session.quizId.questions[a.questionIndex].correct_answer,
+            isCorrect: a.isCorrect,
+            timeTaken: a.timeSpent,
+            pointsEarned: a.pointsEarned,
+          })),
+        });
+
+        await result.save();
+      }
+
+      // Broadcast session end
+      io.to(sessionCode).emit("session-ended", {
+        leaderboard,
+        totalParticipants: session.participantCount,
+        totalQuestions: session.quizId.questions.length,
+      });
+
+      // Clean up memory
+      activeSessions.delete(sessionCode);
+
+      console.log(`[Socket.IO] Session ${sessionCode} ended`);
+
+      callback({ success: true });
+    } catch (error) {
+      console.error("[Socket.IO] Error ending session:", error);
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  // ========================================
+  // EVENT: disconnect
+  // Handle client disconnection
+  // ========================================
+  socket.on("disconnect", async (reason) => {
+    console.log(
+      `[Socket.IO] Client disconnected: ${socket.id}, reason: ${reason}`
+    );
+
+    try {
+      // Find all sessions where this socket is a participant or host
+      const sessions = await LiveSession.find({
+        $or: [
+          { hostSocketId: socket.id },
+          {
+            "participants.socketId": socket.id,
+            status: { $in: ["waiting", "active", "paused"] },
+          },
+        ],
+      });
+
+      for (const session of sessions) {
+        if (session.hostSocketId === socket.id) {
+          // Host disconnected - pause session
+          session.status = "paused";
+          await session.save();
+
+          io.to(session.sessionCode).emit("host-disconnected", {
+            message: "Host disconnected. Session paused.",
+          });
+
+          console.log(
+            `[Socket.IO] Host disconnected from session ${session.sessionCode}`
+          );
+        } else {
+          // Participant disconnected
+          const participant = session.participants.find(
+            (p) => p.socketId === socket.id
+          );
+          if (participant) {
+            participant.isActive = false;
+            participant.leftAt = new Date();
+            await session.save();
+
+            io.to(session.sessionCode).emit("participant-left", {
+              userId: participant.userId,
+              username: participant.username,
+              participantCount: session.participantCount,
+            });
+
+            console.log(
+              `[Socket.IO] Participant ${participant.username} left session ${session.sessionCode}`
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[Socket.IO] Error handling disconnect:", error);
+    }
+  });
+});
+
+// MongoDB connection
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log("MongoDB connected successfully"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+// --- ROUTES ---
+app.get("/test", (req, res) => {
+  res.json({ message: "Backend is running!" });
+});
+
+// --- HELPER FUNCTION for robust JSON parsing ---
+function extractJson(text) {
+  // Find the start of the JSON array
+  const jsonStart = text.indexOf("[");
+  // Find the end of the JSON array
+  const jsonEnd = text.lastIndexOf("]");
+
+  if (jsonStart === -1 || jsonEnd === -1) {
+    throw new Error(
+      "AI response format error. Could not find a valid JSON array."
+    );
+  }
+  // Extract the JSON string
+  const jsonString = text.substring(jsonStart, jsonEnd + 1);
+  // Parse and return
+  return JSON.parse(jsonString);
 }
 
-  // ** UPDATED ** GENERATE QUIZ FROM TOPIC (now protected and saves to DB)
-app.post('/api/generate-quiz-topic', auth, async (req, res) => {
+// ** UPDATED ** GENERATE QUIZ FROM TOPIC (now protected and saves to DB)
+app.post("/api/generate-quiz-topic", auth, async (req, res) => {
   try {
     const { topic, numQuestions, difficulty } = req.body;
     const prompt = `
@@ -639,25 +705,25 @@ app.post('/api/generate-quiz-topic', auth, async (req, res) => {
         "correct_answer": "The correct option text"
       }
     `; // Your existing prompt
-    
+
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    
-    
+
     const questions = extractJson(text); // Use the helper function
     // Save the new quiz to the database
     const newQuiz = new Quiz({
-        title: `AI Quiz: ${topic}`,
-        questions: questions,
-        difficulty: difficulty,
-        createdBy: req.user.id // From auth middleware
+      title: `AI Quiz: ${topic}`,
+      questions: questions,
+      difficulty: difficulty,
+      createdBy: req.user.id, // From auth middleware
     });
     const savedQuiz = await newQuiz.save();
 
-    console.log(`AI-Topic quiz "${savedQuiz.title}" saved for user ${req.user.id}`);
+    console.log(
+      `AI-Topic quiz "${savedQuiz.title}" saved for user ${req.user.id}`
+    );
     res.status(201).json({ quiz: savedQuiz });
-
   } catch (error) {
     console.error("Error in AI Topic Generation:", error);
     res.status(500).json({ message: "Failed to generate quiz from topic." });
@@ -666,101 +732,114 @@ app.post('/api/generate-quiz-topic', auth, async (req, res) => {
 // --- QUIZ ROUTES ---
 
 // ** NEW ** GET ALL QUIZZES
-app.get('/api/quizzes', async (req, res) => {
-    try {
-        // Find all quizzes and populate the 'createdBy' field with the user's name
-        const quizzes = await Quiz.find().populate('createdBy', 'name');
-        res.json(quizzes);
-    } catch (error) {
-        console.error("Error fetching quizzes:", error);
-        res.status(500).send('Server Error');
-    }
+app.get("/api/quizzes", async (req, res) => {
+  try {
+    // Find all quizzes and populate the 'createdBy' field with the user's name
+    const quizzes = await Quiz.find().populate("createdBy", "name");
+    res.json(quizzes);
+  } catch (error) {
+    console.error("Error fetching quizzes:", error);
+    res.status(500).send("Server Error");
+  }
 });
-
 
 // TEACHER DASHBOARD STASTISTICS
-  app.get('/api/quizzes/my-quizzes', auth, async (req, res) => {
-    if (req.user.role !== 'Teacher') {
-        return res.status(403).json({ message: 'Access denied. Only for teachers.' });
-    }
-    try {
-        const quizzes = await Quiz.find({ createdBy: req.user.id });
-        
-        const quizzesWithStats = await Promise.all(quizzes.map(async (quiz) => {
-            const timesTaken = await Result.countDocuments({ quiz: quiz._id });
-            return { ...quiz.toObject(), timesTaken };
-        }));
+app.get("/api/quizzes/my-quizzes", auth, async (req, res) => {
+  if (req.user.role !== "Teacher") {
+    return res
+      .status(403)
+      .json({ message: "Access denied. Only for teachers." });
+  }
+  try {
+    const quizzes = await Quiz.find({ createdBy: req.user.id });
 
-        // Sort based on query parameter
-        const sortBy = req.query.sortBy || 'createdAt'; // Default to newest
-        quizzesWithStats.sort((a, b) => {
-            if (sortBy === 'timesTaken') {
-                return b.timesTaken - a.timesTaken;
-            }
-            return new Date(b.createdAt) - new Date(a.createdAt);
-        });
+    const quizzesWithStats = await Promise.all(
+      quizzes.map(async (quiz) => {
+        const timesTaken = await Result.countDocuments({ quiz: quiz._id });
+        return { ...quiz.toObject(), timesTaken };
+      })
+    );
 
-        const quizIds = quizzes.map(q => q._id);
-        const totalTakes = await Result.countDocuments({ quiz: { $in: quizIds } });
-        const uniqueStudents = await Result.distinct('user', { quiz: { $in: quizIds } });
+    // Sort based on query parameter
+    const sortBy = req.query.sortBy || "createdAt"; // Default to newest
+    quizzesWithStats.sort((a, b) => {
+      if (sortBy === "timesTaken") {
+        return b.timesTaken - a.timesTaken;
+      }
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
 
-        res.json({
-            quizzes: quizzesWithStats,
-            stats: {
-                totalQuizzes: quizzes.length,
-                totalTakes,
-                uniqueStudents: uniqueStudents.length
-            }
-        });
-    } catch (error) {
-        console.error("Error fetching teacher's quizzes:", error);
-        res.status(500).send('Server Error');
-    }
-  });
+    const quizIds = quizzes.map((q) => q._id);
+    const totalTakes = await Result.countDocuments({ quiz: { $in: quizIds } });
+    const uniqueStudents = await Result.distinct("user", {
+      quiz: { $in: quizIds },
+    });
 
-  
-// *** NEW *** GET A SINGLE QUIZ BY ID
-  app.get('/api/quizzes/:id', async (req, res) => {
-    try {
-        const quiz = await Quiz.findById(req.params.id).populate('createdBy', 'name');
-        if (!quiz) {
-            return res.status(404).json({ msg: 'Quiz not found' });
-        }
-        res.json(quiz);
-    } catch (error) {
-        console.error("Error fetching single quiz:", error);
-        if (error.kind === 'ObjectId') {
-            return res.status(404).json({ msg: 'Quiz not found' });
-        }
-        res.status(500).send('Server Error');
-    }
-  });
-
-  // ** UPDATED ** SAVE MANUAL QUIZ (now protected and saves to DB)
-app.post('/api/save-manual-quiz', auth, async (req, res) => { // 'auth' middleware is added
-    try {
-        const { title, questions } = req.body;
-
-        const newQuiz = new Quiz({
-            title,
-            questions,
-            createdBy: req.user.id // Get user ID from the middleware
-        });
-
-        const savedQuiz = await newQuiz.save();
-        console.log(`Manual quiz "${savedQuiz.title}" saved by user ${req.user.id}`);
-        res.status(201).json(savedQuiz);
-
-    } catch (error) {
-        console.error("Error saving manual quiz:", error);
-        res.status(500).json({ message: "An error occurred on the server." });
-    }
+    res.json({
+      quizzes: quizzesWithStats,
+      stats: {
+        totalQuizzes: quizzes.length,
+        totalTakes,
+        uniqueStudents: uniqueStudents.length,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching teacher's quizzes:", error);
+    res.status(500).send("Server Error");
+  }
 });
 
-  // ** UPDATED ** GENERATE QUIZ FROM FILE (now protected and saves to DB)
-app.post('/api/generate-quiz-file', auth, upload.single('quizFile'), async (req, res) => {
+// *** NEW *** GET A SINGLE QUIZ BY ID
+app.get("/api/quizzes/:id", async (req, res) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id).populate(
+      "createdBy",
+      "name"
+    );
+    if (!quiz) {
+      return res.status(404).json({ msg: "Quiz not found" });
+    }
+    res.json(quiz);
+  } catch (error) {
+    console.error("Error fetching single quiz:", error);
+    if (error.kind === "ObjectId") {
+      return res.status(404).json({ msg: "Quiz not found" });
+    }
+    res.status(500).send("Server Error");
+  }
+});
+
+// ** UPDATED ** SAVE MANUAL QUIZ (now protected and saves to DB)
+app.post("/api/save-manual-quiz", auth, async (req, res) => {
+  // 'auth' middleware is added
+  try {
+    const { title, questions } = req.body;
+
+    const newQuiz = new Quiz({
+      title,
+      questions,
+      createdBy: req.user.id, // Get user ID from the middleware
+    });
+
+    const savedQuiz = await newQuiz.save();
+    console.log(
+      `Manual quiz "${savedQuiz.title}" saved by user ${req.user.id}`
+    );
+    res.status(201).json(savedQuiz);
+  } catch (error) {
+    console.error("Error saving manual quiz:", error);
+    res.status(500).json({ message: "An error occurred on the server." });
+  }
+});
+
+// ** UPDATED ** GENERATE QUIZ FROM FILE (now protected and saves to DB)
+app.post(
+  "/api/generate-quiz-file",
+  auth,
+  upload.single("quizFile"),
+  async (req, res) => {
     if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded." });
+      return res.status(400).json({ message: "No file uploaded." });
     }
 
     const filePath = req.file.path;
@@ -769,80 +848,86 @@ app.post('/api/generate-quiz-file', auth, upload.single('quizFile'), async (req,
     console.log(`Processing file: ${filePath}`);
 
     try {
-        // 1. Extract text from the file
-        let extractedText = '';
-        if (req.file.mimetype === 'application/pdf') {
-            const dataBuffer = fs.readFileSync(filePath);
-            const data = await pdf(dataBuffer);
-            extractedText = data.text;
-        } else { // Assume text file for other types
-            extractedText = fs.readFileSync(filePath, 'utf8');
-        }
+      // 1. Extract text from the file
+      let extractedText = "";
+      if (req.file.mimetype === "application/pdf") {
+        const dataBuffer = fs.readFileSync(filePath);
+        const data = await pdf(dataBuffer);
+        extractedText = data.text;
+      } else {
+        // Assume text file for other types
+        extractedText = fs.readFileSync(filePath, "utf8");
+      }
 
-        if (!extractedText.trim()) {
-            throw new Error("Could not extract text from the file.");
-        }
+      if (!extractedText.trim()) {
+        throw new Error("Could not extract text from the file.");
+      }
 
-        console.log(`Extracted ${extractedText.length} characters of text.`);
+      console.log(`Extracted ${extractedText.length} characters of text.`);
 
-        // 2. Generate quiz from the extracted text using AI
-        const prompt = `
+      // 2. Generate quiz from the extracted text using AI
+      const prompt = `
             You are an expert quiz maker.
-            Create a quiz with ${numQuestions || 5} questions based on the following text content:
+            Create a quiz with ${
+              numQuestions || 5
+            } questions based on the following text content:
             ---
             ${extractedText.substring(0, 8000)} 
             ---
             IMPORTANT: Your response MUST be a valid JSON object. Do not include any text, explanation, or markdown formatting before or after the JSON object.
             The JSON object should be an array of question objects, each with "question", "options", and "correct_answer" keys.
         `;
-        
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-        
-        
-        const questions = extractJson(text); // Use the helper function
 
-        // 3. Save the new quiz to the database
-        const newQuiz = new Quiz({
-            title: `AI Quiz: ${req.file.originalname}`,
-            questions: questions,
-            difficulty: 'Medium', // Default difficulty for file uploads
-            createdBy: req.user.id // From auth middleware
-        });
-        const savedQuiz = await newQuiz.save();
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
 
-        console.log(`AI-File quiz "${savedQuiz.title}" saved for user ${req.user.id}`);
-        
-        // 4. Send the saved quiz object back to the client
-        res.status(201).json({ quiz: savedQuiz });
+      const questions = extractJson(text); // Use the helper function
 
+      // 3. Save the new quiz to the database
+      const newQuiz = new Quiz({
+        title: `AI Quiz: ${req.file.originalname}`,
+        questions: questions,
+        difficulty: "Medium", // Default difficulty for file uploads
+        createdBy: req.user.id, // From auth middleware
+      });
+      const savedQuiz = await newQuiz.save();
+
+      console.log(
+        `AI-File quiz "${savedQuiz.title}" saved for user ${req.user.id}`
+      );
+
+      // 4. Send the saved quiz object back to the client
+      res.status(201).json({ quiz: savedQuiz });
     } catch (error) {
-        console.error("Error processing file:", error);
-        res.status(500).json({ message: "An error occurred while processing the file." });
+      console.error("Error processing file:", error);
+      res
+        .status(500)
+        .json({ message: "An error occurred while processing the file." });
     } finally {
-        // 5. Clean up: delete the uploaded file
-        fs.unlinkSync(filePath);
-        console.log(`Deleted temporary file: ${filePath}`);
+      // 5. Clean up: delete the uploaded file
+      fs.unlinkSync(filePath);
+      console.log(`Deleted temporary file: ${filePath}`);
     }
-});
+  }
+);
 
-
-
-  app.post('/api/generate-pdf-questions', auth, async (req, res) => {
+app.post("/api/generate-pdf-questions", auth, async (req, res) => {
   try {
     const { topic, numQuestions, difficulty, questionTypes } = req.body;
-    
+
     // Build dynamic prompt based on question types
-    let questionTypeInstructions = '';
+    let questionTypeInstructions = "";
     const typeMapping = {
-      'mcq': 'Multiple Choice Questions with 4 options',
-      'truefalse': 'True/False Questions',
-      'descriptive': 'Descriptive/Essay Questions'
+      mcq: "Multiple Choice Questions with 4 options",
+      truefalse: "True/False Questions",
+      descriptive: "Descriptive/Essay Questions",
     };
-    
-    const requestedTypes = questionTypes.map(type => typeMapping[type] || type).join(', ');
-    
+
+    const requestedTypes = questionTypes
+      .map((type) => typeMapping[type] || type)
+      .join(", ");
+
     const prompt = `
       You are an expert quiz maker and educator.
       Create ${numQuestions} quiz questions about "${topic}".
@@ -885,124 +970,131 @@ app.post('/api/generate-quiz-file', auth, upload.single('quizFile'), async (req,
         }
       ]
     `;
-    
+
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    
-    console.log('AI Response for PDF questions:', text);
-    
+
+    console.log("AI Response for PDF questions:", text);
+
     // Try to extract JSON from the response
     let questions;
     try {
       questions = extractJson(text);
-      
+
       // Validate and format questions
       questions = questions.map((q, index) => ({
-        type: q.type || 'mcq',
+        type: q.type || "mcq",
         question: q.question || `Generated question ${index + 1}`,
         options: q.options || [],
-        correctAnswer: q.correctAnswer || q.correct_answer || '',
-        explanation: q.explanation || '',
-        marks: q.marks || (q.type === 'descriptive' ? 5 : 2)
+        correctAnswer: q.correctAnswer || q.correct_answer || "",
+        explanation: q.explanation || "",
+        marks: q.marks || (q.type === "descriptive" ? 5 : 2),
       }));
-      
     } catch (parseError) {
-      console.error('JSON parsing failed, attempting text parsing:', parseError);
-      
+      console.error(
+        "JSON parsing failed, attempting text parsing:",
+        parseError
+      );
+
       // Fallback: Create basic questions from text
       questions = [];
-      const lines = text.split('\n').filter(line => line.trim());
-      
+      const lines = text.split("\n").filter((line) => line.trim());
+
       for (let i = 0; i < Math.min(numQuestions, lines.length); i++) {
         const line = lines[i].trim();
         if (line) {
           questions.push({
-            type: questionTypes[0] || 'mcq',
-            question: line.replace(/^\d+\.?\s*/, ''), // Remove numbering
-            options: questionTypes[0] === 'mcq' ? ['Option A', 'Option B', 'Option C', 'Option D'] : [],
-            correctAnswer: questionTypes[0] === 'truefalse' ? 'True' : (questionTypes[0] === 'mcq' ? 'Option A' : ''),
-            explanation: 'AI generated question',
-            marks: questionTypes[0] === 'descriptive' ? 5 : 2
+            type: questionTypes[0] || "mcq",
+            question: line.replace(/^\d+\.?\s*/, ""), // Remove numbering
+            options:
+              questionTypes[0] === "mcq"
+                ? ["Option A", "Option B", "Option C", "Option D"]
+                : [],
+            correctAnswer:
+              questionTypes[0] === "truefalse"
+                ? "True"
+                : questionTypes[0] === "mcq"
+                ? "Option A"
+                : "",
+            explanation: "AI generated question",
+            marks: questionTypes[0] === "descriptive" ? 5 : 2,
           });
         }
       }
     }
-    
+
     if (!questions || questions.length === 0) {
-      throw new Error('No valid questions generated');
+      throw new Error("No valid questions generated");
     }
-    
-    console.log(`Generated ${questions.length} PDF questions for topic: ${topic}`);
+
+    console.log(
+      `Generated ${questions.length} PDF questions for topic: ${topic}`
+    );
     res.json({ questions });
-    
   } catch (error) {
     console.error("Error generating PDF questions:", error);
-    res.status(500).json({ 
-      message: "Failed to generate questions for PDF", 
-      error: error.message 
+    res.status(500).json({
+      message: "Failed to generate questions for PDF",
+      error: error.message,
     });
   }
 });
 
 // *** NEW *** SUBMIT QUIZ RESULT
-  app.post('/api/quizzes/submit', auth, async (req, res) => {
-    try {
-        const { quizId, score, totalQuestions } = req.body;
-        const userId = req.user.id;
+app.post("/api/quizzes/submit", auth, async (req, res) => {
+  try {
+    const { quizId, score, totalQuestions } = req.body;
+    const userId = req.user.id;
 
-        const newResult = new Result({
-            user: userId,
-            quiz: quizId,
-            score,
-            totalQuestions
-        });
+    const newResult = new Result({
+      user: userId,
+      quiz: quizId,
+      score,
+      totalQuestions,
+    });
 
-        await newResult.save();
-        console.log(`Result saved for user ${userId} on quiz ${quizId}`);
-        res.status(201).json({ message: 'Result saved successfully!' });
+    await newResult.save();
+    console.log(`Result saved for user ${userId} on quiz ${quizId}`);
+    res.status(201).json({ message: "Result saved successfully!" });
+  } catch (error) {
+    console.error("Error saving result:", error);
+    res.status(500).send("Server Error");
+  }
+});
 
-    } catch (error) {
-        console.error("Error saving result:", error);
-        res.status(500).send('Server Error');
-    }
-  });
+// *** NEW *** GET RESULTS FOR THE LOGGED-IN USER
+app.get("/api/results/my-results", auth, async (req, res) => {
+  try {
+    const results = await Result.find({ user: req.user.id })
+      .populate("quiz", "title") // Populate the 'quiz' field, only getting the 'title'
+      .sort({ createdAt: -1 }); // Show the most recent results first
 
-
-   // *** NEW *** GET RESULTS FOR THE LOGGED-IN USER
-  app.get('/api/results/my-results', auth, async (req, res) => {
-    try {
-        const results = await Result.find({ user: req.user.id })
-            .populate('quiz', 'title') // Populate the 'quiz' field, only getting the 'title'
-            .sort({ createdAt: -1 }); // Show the most recent results first
-
-        res.json(results);
-    } catch (error) {
-        console.error("Error fetching user results:", error);
-        res.status(500).send('Server Error');
-    }
-  });
-
-
-  
-
-
+    res.json(results);
+  } catch (error) {
+    console.error("Error fetching user results:", error);
+    res.status(500).send("Server Error");
+  }
+});
 
 // *** NEW AUTHENTICATION ROUTE ***
-app.post('/api/auth/register', async (req, res) => {
+app.post("/api/auth/register", async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
     // Security Check: Prevent users from assigning themselves Admin or Moderator roles.
-    if (role === 'Admin' || role === 'Moderator') {
-        return res.status(403).json({ message: 'Cannot register with this role.' });
+    if (role === "Admin" || role === "Moderator") {
+      return res
+        .status(403)
+        .json({ message: "Cannot register with this role." });
     }
-
 
     // 1. Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'User with this email already exists.' });
+      return res
+        .status(400)
+        .json({ message: "User with this email already exists." });
     }
 
     // 2. Hash the password
@@ -1020,41 +1112,43 @@ app.post('/api/auth/register', async (req, res) => {
     // 4. Save the user to the database
     const savedUser = await newUser.save();
 
-    console.log('New user registered:', savedUser.email);
-    
-    // Send a success response (don't send the password back)
-    res.status(201).json({ 
-        message: 'User registered successfully!',
-        user: {
-            id: savedUser._id,
-            name: savedUser.name,
-            email: savedUser.email,
-            role: savedUser.role
-        }
-    });
+    console.log("New user registered:", savedUser.email);
 
+    // Send a success response (don't send the password back)
+    res.status(201).json({
+      message: "User registered successfully!",
+      user: {
+        id: savedUser._id,
+        name: savedUser.name,
+        email: savedUser.email,
+        role: savedUser.role,
+      },
+    });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ message: 'Server error during registration.' });
+    console.error("Registration error:", error);
+    res.status(500).json({ message: "Server error during registration." });
   }
 });
 
-
 // *** NEW LOGIN ROUTE ***
-app.post('/api/auth/login', async (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     // 1. Find the user by email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials. User not found.' });
+      return res
+        .status(400)
+        .json({ message: "Invalid credentials. User not found." });
     }
 
     // 2. Compare the submitted password with the hashed password in the database
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials. Password incorrect.' });
+      return res
+        .status(400)
+        .json({ message: "Invalid credentials. Password incorrect." });
     }
 
     // 3. If passwords match, create a JWT payload
@@ -1062,31 +1156,29 @@ app.post('/api/auth/login', async (req, res) => {
       user: {
         id: user.id,
         name: user.name,
-        role: user.role
-      }
+        role: user.role,
+      },
     };
 
     // 4. Sign the token with the secret key
     jwt.sign(
       payload,
       JWT_SECRET,
-      { expiresIn: '1h' }, // Token expires in 1 hour
+      { expiresIn: "1h" }, // Token expires in 1 hour
       (err, token) => {
         if (err) throw err;
         // 5. Send the token back to the client
         res.json({ token });
       }
     );
-
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error during login.' });
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Server error during login." });
   }
 });
 
-
 // *** GOOGLE OAUTH LOGIN ROUTE ***
-app.post('/api/auth/google', async (req, res) => {
+app.post("/api/auth/google", async (req, res) => {
   try {
     const { credential } = req.body;
 
@@ -1100,7 +1192,9 @@ app.post('/api/auth/google', async (req, res) => {
     const { sub: googleId, email, name, picture } = payload;
 
     if (!email) {
-      return res.status(400).json({ message: 'No email found in Google account.' });
+      return res
+        .status(400)
+        .json({ message: "No email found in Google account." });
     }
 
     // Check if user already exists
@@ -1122,15 +1216,15 @@ app.post('/api/auth/google', async (req, res) => {
         email,
         googleId,
         picture,
-        role: 'Student', // Default role for Google OAuth users
+        role: "Student", // Default role for Google OAuth users
         // No password needed for Google OAuth users
       });
       await user.save();
-      console.log('New Google OAuth user registered:', user.email);
+      console.log("New Google OAuth user registered:", user.email);
     }
 
     // Update user status and activity
-    user.status = 'online';
+    user.status = "online";
     user.lastActivity = new Date();
     user.lastSeen = new Date();
     await user.save();
@@ -1142,21 +1236,23 @@ app.post('/api/auth/google', async (req, res) => {
         name: user.name,
         role: user.role,
         email: user.email,
-        picture: user.picture
-      }
+        picture: user.picture,
+      },
     };
 
     jwt.sign(
       jwtPayload,
       JWT_SECRET,
-      { expiresIn: '7d' }, // Longer expiry for OAuth users
+      { expiresIn: "7d" }, // Longer expiry for OAuth users
       (err, token) => {
         if (err) {
-          console.error('JWT signing error:', err);
-          return res.status(500).json({ message: 'Error creating authentication token.' });
+          console.error("JWT signing error:", err);
+          return res
+            .status(500)
+            .json({ message: "Error creating authentication token." });
         }
-        
-        res.json({ 
+
+        res.json({
           token,
           isNewUser,
           user: {
@@ -1164,26 +1260,27 @@ app.post('/api/auth/google', async (req, res) => {
             name: user.name,
             email: user.email,
             role: user.role,
-            picture: user.picture
-          }
+            picture: user.picture,
+          },
         });
       }
     );
-
   } catch (error) {
-    console.error('Google OAuth error:', error);
-    res.status(500).json({ message: 'Google authentication failed.' });
+    console.error("Google OAuth error:", error);
+    res.status(500).json({ message: "Google authentication failed." });
   }
 });
 
 // *** GOOGLE OAUTH ROLE UPDATE ROUTE ***
-app.post('/api/auth/google/update-role', auth, async (req, res) => {
+app.post("/api/auth/google/update-role", auth, async (req, res) => {
   try {
     const { role } = req.body;
 
     // Validate role
-    if (!['Student', 'Teacher'].includes(role)) {
-      return res.status(400).json({ message: 'Invalid role. Must be Student or Teacher.' });
+    if (!["Student", "Teacher"].includes(role)) {
+      return res
+        .status(400)
+        .json({ message: "Invalid role. Must be Student or Teacher." });
     }
 
     // Update user role
@@ -1191,10 +1288,10 @@ app.post('/api/auth/google/update-role', auth, async (req, res) => {
       req.user.id,
       { role: role },
       { new: true }
-    ).select('-password');
+    ).select("-password");
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
+      return res.status(404).json({ message: "User not found." });
     }
 
     // Create new JWT token with updated role
@@ -1204,165 +1301,169 @@ app.post('/api/auth/google/update-role', auth, async (req, res) => {
         name: user.name,
         role: user.role,
         email: user.email,
-        picture: user.picture
-      }
+        picture: user.picture,
+      },
     };
 
-    jwt.sign(
-      jwtPayload,
-      JWT_SECRET,
-      { expiresIn: '7d' },
-      (err, token) => {
-        if (err) {
-          console.error('JWT signing error:', err);
-          return res.status(500).json({ message: 'Error creating authentication token.' });
-        }
-        
-        res.json({ 
-          token,
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            picture: user.picture
-          }
-        });
+    jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: "7d" }, (err, token) => {
+      if (err) {
+        console.error("JWT signing error:", err);
+        return res
+          .status(500)
+          .json({ message: "Error creating authentication token." });
       }
-    );
 
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          picture: user.picture,
+        },
+      });
+    });
   } catch (error) {
-    console.error('Role update error:', error);
-    res.status(500).json({ message: 'Failed to update user role.' });
+    console.error("Role update error:", error);
+    res.status(500).json({ message: "Failed to update user role." });
   }
 });
 
 // *** NEW *** DELETE A QUIZ
-  app.delete('/api/quizzes/:id', auth, async (req, res) => {
-    try {
-        const quiz = await Quiz.findById(req.params.id);
-        if (!quiz) {
-            return res.status(404).json({ msg: 'Quiz not found' });
-        }
-        // Ensure the user deleting the quiz is the one who created it
-        if (quiz.createdBy.toString() !== req.user.id) {
-            return res.status(401).json({ msg: 'User not authorized' });
-        }
-        
-        await quiz.deleteOne(); // <-- THIS IS THE FIX (changed from .remove())
-
-        // Also delete all results associated with this quiz
-        await Result.deleteMany({ quiz: req.params.id });
-        
-        res.json({ msg: 'Quiz and associated results removed' });
-    } catch (error) {
-        console.error("Error deleting quiz:", error);
-        res.status(500).send('Server Error');
+app.delete("/api/quizzes/:id", auth, async (req, res) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id);
+    if (!quiz) {
+      return res.status(404).json({ msg: "Quiz not found" });
     }
-  });
-
-  // *** NEW *** UPDATE A QUIZ
-  app.put('/api/quizzes/:id', auth, async (req, res) => {
-    try {
-        const { title, questions } = req.body;
-        let quiz = await Quiz.findById(req.params.id);
-        if (!quiz) {
-            return res.status(404).json({ msg: 'Quiz not found' });
-        }
-        if (quiz.createdBy.toString() !== req.user.id) {
-            return res.status(401).json({ msg: 'User not authorized' });
-        }
-        
-        // Update the quiz fields
-        quiz.title = title;
-        quiz.questions = questions;
-        
-        const updatedQuiz = await quiz.save();
-        res.json(updatedQuiz);
-    } catch (error) {
-        console.error("Error updating quiz:", error);
-        res.status(500).send('Server Error');
+    // Ensure the user deleting the quiz is the one who created it
+    if (quiz.createdBy.toString() !== req.user.id) {
+      return res.status(401).json({ msg: "User not authorized" });
     }
-  });
 
+    await quiz.deleteOne(); // <-- THIS IS THE FIX (changed from .remove())
 
-  // *** NEW *** GET LEADERBOARD FOR A QUIZ
-  app.get('/api/quizzes/:quizId/leaderboard', async (req, res) => {
-    try {
-        const { quizId } = req.params;
+    // Also delete all results associated with this quiz
+    await Result.deleteMany({ quiz: req.params.id });
 
-        const leaderboard = await Result.aggregate([
-            // 1. Match all results for the specific quiz
-            { $match: { quiz: new mongoose.Types.ObjectId(quizId) } },
-            // 2. Sort by score (highest first) and then by time (quickest first)
-            { $sort: { score: -1, createdAt: 1 } },
-            // 3. Group by user, taking only their first (and best) score
-            {
-                $group: {
-                    _id: "$user",
-                    highestScore: { $first: "$score" },
-                    totalQuestions: { $first: "$totalQuestions" },
-                    date: { $first: "$createdAt" }
-                }
-            },
-            // 4. Sort the unique user scores again
-            { $sort: { highestScore: -1, date: 1 } },
-            // 5. Limit to the top 10 players
-            { $limit: 10 },
-            // 6. Join with the Users collection to get the user's name
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: '_id',
-                    foreignField: '_id',
-                    as: 'userDetails'
-                }
-            },
-            // 7. Reshape the output
-            {
-                $project: {
-                    _id: 0,
-                    score: "$highestScore",
-                    totalQuestions: "$totalQuestions",
-                    userName: { $arrayElemAt: ["$userDetails.name", 0] }
-                }
-            }
-        ]);
+    res.json({ msg: "Quiz and associated results removed" });
+  } catch (error) {
+    console.error("Error deleting quiz:", error);
+    res.status(500).send("Server Error");
+  }
+});
 
-        res.json(leaderboard);
-    } catch (error) {
-        console.error("Error fetching leaderboard:", error);
-        res.status(500).send('Server Error');
+// *** NEW *** UPDATE A QUIZ
+app.put("/api/quizzes/:id", auth, async (req, res) => {
+  try {
+    const { title, questions } = req.body;
+    let quiz = await Quiz.findById(req.params.id);
+    if (!quiz) {
+      return res.status(404).json({ msg: "Quiz not found" });
     }
-  });
+    if (quiz.createdBy.toString() !== req.user.id) {
+      return res.status(401).json({ msg: "User not authorized" });
+    }
 
+    // Update the quiz fields
+    quiz.title = title;
+    quiz.questions = questions;
 
+    const updatedQuiz = await quiz.save();
+    res.json(updatedQuiz);
+  } catch (error) {
+    console.error("Error updating quiz:", error);
+    res.status(500).send("Server Error");
+  }
+});
+
+// *** NEW *** GET LEADERBOARD FOR A QUIZ
+app.get("/api/quizzes/:quizId/leaderboard", async (req, res) => {
+  try {
+    const { quizId } = req.params;
+
+    const leaderboard = await Result.aggregate([
+      // 1. Match all results for the specific quiz
+      { $match: { quiz: new mongoose.Types.ObjectId(quizId) } },
+      // 2. Sort by score (highest first) and then by time (quickest first)
+      { $sort: { score: -1, createdAt: 1 } },
+      // 3. Group by user, taking only their first (and best) score
+      {
+        $group: {
+          _id: "$user",
+          highestScore: { $first: "$score" },
+          totalQuestions: { $first: "$totalQuestions" },
+          date: { $first: "$createdAt" },
+        },
+      },
+      // 4. Sort the unique user scores again
+      { $sort: { highestScore: -1, date: 1 } },
+      // 5. Limit to the top 10 players
+      { $limit: 10 },
+      // 6. Join with the Users collection to get the user's name
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      // 7. Reshape the output
+      {
+        $project: {
+          _id: 0,
+          score: "$highestScore",
+          totalQuestions: "$totalQuestions",
+          userName: { $arrayElemAt: ["$userDetails.name", 0] },
+        },
+      },
+    ]);
+
+    res.json(leaderboard);
+  } catch (error) {
+    console.error("Error fetching leaderboard:", error);
+    res.status(500).send("Server Error");
+  }
+});
 
 // *** ENHANCED QUIZ CREATION AND GAMIFICATION ***
 
 // Create Enhanced Quiz with Multiple Question Types
-app.post('/api/quizzes/enhanced', auth, async (req, res) => {
+app.post("/api/quizzes/enhanced", auth, async (req, res) => {
   try {
-    if (req.user.role !== 'Teacher') {
-      return res.status(403).json({ message: 'Access denied. Only teachers can create quizzes.' });
+    if (req.user.role !== "Teacher") {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Only teachers can create quizzes." });
     }
 
     const quizData = req.body;
-    
+
     // Validate quiz data
-    if (!quizData.title || !quizData.questions || quizData.questions.length === 0) {
-      return res.status(400).json({ message: 'Quiz title and questions are required.' });
+    if (
+      !quizData.title ||
+      !quizData.questions ||
+      quizData.questions.length === 0
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Quiz title and questions are required." });
     }
 
     // Calculate total points
-    const totalPoints = quizData.questions.reduce((sum, q) => sum + (q.points || 1), 0);
+    const totalPoints = quizData.questions.reduce(
+      (sum, q) => sum + (q.points || 1),
+      0
+    );
 
     const newQuiz = new Quiz({
       title: quizData.title,
       description: quizData.description,
       questions: quizData.questions,
       createdBy: req.user.id,
-      difficulty: quizData.difficulty || 'Medium',
+      difficulty: quizData.difficulty || "Medium",
       category: quizData.category,
       tags: quizData.tags || [],
       isPublic: quizData.isPublic !== false,
@@ -1373,22 +1474,28 @@ app.post('/api/quizzes/enhanced', auth, async (req, res) => {
         enableHints: false,
         enableTimeBonuses: true,
         enableStreakBonuses: true,
-        showLeaderboard: true
-      }
+        showLeaderboard: true,
+      },
     });
 
     const savedQuiz = await newQuiz.save();
-    console.log(`Enhanced quiz "${savedQuiz.title}" created by user ${req.user.id}`);
-    
-    res.status(201).json({ quiz: savedQuiz, message: 'Quiz created successfully!' });
+    console.log(
+      `Enhanced quiz "${savedQuiz.title}" created by user ${req.user.id}`
+    );
+
+    res
+      .status(201)
+      .json({ quiz: savedQuiz, message: "Quiz created successfully!" });
   } catch (error) {
-    console.error('Error creating enhanced quiz:', error);
-    res.status(500).json({ message: 'Failed to create quiz. Please try again.' });
+    console.error("Error creating enhanced quiz:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to create quiz. Please try again." });
   }
 });
 
 // Submit Enhanced Quiz Result with Gamification
-app.post('/api/quizzes/:id/submit', auth, async (req, res) => {
+app.post("/api/quizzes/:id/submit", auth, async (req, res) => {
   try {
     const { id: quizId } = req.params;
     const resultData = req.body;
@@ -1397,7 +1504,7 @@ app.post('/api/quizzes/:id/submit', auth, async (req, res) => {
     // Find the quiz
     const quiz = await Quiz.findById(quizId);
     if (!quiz) {
-      return res.status(404).json({ message: 'Quiz not found.' });
+      return res.status(404).json({ message: "Quiz not found." });
     }
 
     // Create detailed result
@@ -1409,13 +1516,15 @@ app.post('/api/quizzes/:id/submit', auth, async (req, res) => {
       pointsEarned: resultData.pointsEarned || 0,
       bonusPoints: resultData.bonusPoints || 0,
       totalTimeTaken: resultData.totalTimeTaken || 0,
-      averageTimePerQuestion: resultData.totalTimeTaken ? Math.round(resultData.totalTimeTaken / resultData.totalQuestions) : 0,
+      averageTimePerQuestion: resultData.totalTimeTaken
+        ? Math.round(resultData.totalTimeTaken / resultData.totalQuestions)
+        : 0,
       percentage: resultData.percentage,
       passed: resultData.passed,
       rank: getRankFromPercentage(resultData.percentage),
       questionResults: resultData.questionResults || [],
       streakAtCompletion: resultData.streakAtCompletion || 0,
-      experienceGained: resultData.experienceGained || 0
+      experienceGained: resultData.experienceGained || 0,
     });
 
     await newResult.save();
@@ -1424,49 +1533,64 @@ app.post('/api/quizzes/:id/submit', auth, async (req, res) => {
     await updateUserStats(userId, resultData);
 
     // Check for new achievements
-    const unlockedAchievements = await checkUserAchievements(userId, resultData);
-    
+    const unlockedAchievements = await checkUserAchievements(
+      userId,
+      resultData
+    );
+
     if (unlockedAchievements.length > 0) {
-      newResult.achievementsUnlocked = unlockedAchievements.map(a => a._id);
+      newResult.achievementsUnlocked = unlockedAchievements.map((a) => a._id);
       await newResult.save();
     }
 
     // Update quiz statistics
     await updateQuizStats(quizId, resultData);
 
-    res.json({ 
-      result: newResult, 
+    res.json({
+      result: newResult,
       achievementsUnlocked: unlockedAchievements,
-      message: 'Quiz submitted successfully!' 
+      message: "Quiz submitted successfully!",
     });
-
   } catch (error) {
-    console.error('Error submitting quiz result:', error);
-    res.status(500).json({ message: 'Failed to submit quiz result.' });
+    console.error("Error submitting quiz result:", error);
+    res.status(500).json({ message: "Failed to submit quiz result." });
   }
 });
 
 // Generate AI Quiz with Multiple Question Types
-app.post('/api/quizzes/generate-enhanced', auth, async (req, res) => {
+app.post("/api/quizzes/generate-enhanced", auth, async (req, res) => {
   try {
-    if (req.user.role !== 'Teacher') {
-      return res.status(403).json({ message: 'Access denied. Only teachers can generate quizzes.' });
+    if (req.user.role !== "Teacher") {
+      return res
+        .status(403)
+        .json({
+          message: "Access denied. Only teachers can generate quizzes.",
+        });
     }
 
-    const { topic, numQuestions = 5, difficulty = 'Medium', questionTypes = ['multiple-choice'] } = req.body;
+    const {
+      topic,
+      numQuestions = 5,
+      difficulty = "Medium",
+      questionTypes = ["multiple-choice"],
+    } = req.body;
 
     if (!topic.trim()) {
-      return res.status(400).json({ message: 'Topic is required.' });
+      return res.status(400).json({ message: "Topic is required." });
     }
 
     const questionTypePrompts = {
-      'multiple-choice': 'Create multiple choice questions with 4 options each.',
-      'true-false': 'Create true/false questions.',
-      'descriptive': 'Create descriptive/essay questions that require detailed answers.',
-      'fill-in-blank': 'Create fill-in-the-blank questions.'
+      "multiple-choice":
+        "Create multiple choice questions with 4 options each.",
+      "true-false": "Create true/false questions.",
+      descriptive:
+        "Create descriptive/essay questions that require detailed answers.",
+      "fill-in-blank": "Create fill-in-the-blank questions.",
     };
 
-    const typeInstructions = questionTypes.map(type => questionTypePrompts[type]).join(' ');
+    const typeInstructions = questionTypes
+      .map((type) => questionTypePrompts[type])
+      .join(" ");
 
     const prompt = `
       You are an expert quiz maker. Create a quiz about "${topic}" with ${numQuestions} questions.
@@ -1492,11 +1616,11 @@ app.post('/api/quizzes/generate-enhanced', auth, async (req, res) => {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    
+
     const questions = extractJson(text);
-    
+
     if (!questions || questions.length === 0) {
-      throw new Error('Failed to generate questions');
+      throw new Error("Failed to generate questions");
     }
 
     // Calculate total points
@@ -1507,34 +1631,38 @@ app.post('/api/quizzes/generate-enhanced', auth, async (req, res) => {
       description: `Auto-generated quiz about ${topic} with mixed question types`,
       questions: questions,
       difficulty: difficulty,
-      category: 'AI Generated',
+      category: "AI Generated",
       totalPoints: totalPoints,
       createdBy: req.user.id,
       gameSettings: {
         enableHints: false,
         enableTimeBonuses: true,
         enableStreakBonuses: true,
-        showLeaderboard: true
-      }
+        showLeaderboard: true,
+      },
     });
 
     const savedQuiz = await newQuiz.save();
-    
-    console.log(`AI Enhanced quiz "${savedQuiz.title}" generated for user ${req.user.id}`);
-    res.status(201).json({ quiz: savedQuiz });
 
+    console.log(
+      `AI Enhanced quiz "${savedQuiz.title}" generated for user ${req.user.id}`
+    );
+    res.status(201).json({ quiz: savedQuiz });
   } catch (error) {
-    console.error('Error generating enhanced quiz:', error);
-    res.status(500).json({ message: 'Failed to generate enhanced quiz. Please try again.' });
+    console.error("Error generating enhanced quiz:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to generate enhanced quiz. Please try again." });
   }
 });
 
 // Get User Stats and Achievements
-app.get('/api/users/stats', auth, async (req, res) => {
+app.get("/api/users/stats", auth, async (req, res) => {
   try {
-    let userStats = await UserStats.findOne({ user: req.user.id })
-      .populate('achievements');
-    
+    let userStats = await UserStats.findOne({ user: req.user.id }).populate(
+      "achievements"
+    );
+
     if (!userStats) {
       // Create initial stats for new user
       userStats = new UserStats({
@@ -1547,61 +1675,67 @@ app.get('/api/users/stats', auth, async (req, res) => {
         averageScore: 0,
         totalTimeSpent: 0,
         level: 1,
-        experience: 0
+        experience: 0,
       });
       await userStats.save();
     }
 
     // Get recent achievements
     const recentAchievements = await UserAchievement.find({ user: req.user.id })
-      .populate('achievement')
+      .populate("achievement")
       .sort({ unlockedAt: -1 })
       .limit(5);
 
     res.json({
       stats: userStats,
-      recentAchievements: recentAchievements
+      recentAchievements: recentAchievements,
     });
-
   } catch (error) {
-    console.error('Error fetching user stats:', error);
-    res.status(500).json({ message: 'Failed to fetch user statistics.' });
+    console.error("Error fetching user stats:", error);
+    res.status(500).json({ message: "Failed to fetch user statistics." });
   }
 });
 
 // Helper Functions
 function getRankFromPercentage(percentage) {
-  if (percentage >= 95) return 'A+';
-  if (percentage >= 90) return 'A';
-  if (percentage >= 85) return 'A-';
-  if (percentage >= 80) return 'B+';
-  if (percentage >= 75) return 'B';
-  if (percentage >= 70) return 'B-';
-  if (percentage >= 65) return 'C+';
-  if (percentage >= 60) return 'C';
-  if (percentage >= 55) return 'C-';
-  if (percentage >= 50) return 'D+';
-  if (percentage >= 45) return 'D';
-  return 'F';
+  if (percentage >= 95) return "A+";
+  if (percentage >= 90) return "A";
+  if (percentage >= 85) return "A-";
+  if (percentage >= 80) return "B+";
+  if (percentage >= 75) return "B";
+  if (percentage >= 70) return "B-";
+  if (percentage >= 65) return "C+";
+  if (percentage >= 60) return "C";
+  if (percentage >= 55) return "C-";
+  if (percentage >= 50) return "D+";
+  if (percentage >= 45) return "D";
+  return "F";
 }
 
 async function updateUserStats(userId, resultData) {
   try {
     let userStats = await UserStats.findOne({ user: userId });
-    
+
     if (!userStats) {
       userStats = new UserStats({ user: userId });
     }
 
     // Update stats
     userStats.totalQuizzesTaken += 1;
-    userStats.totalPoints += (resultData.pointsEarned || 0) + (resultData.bonusPoints || 0);
-    userStats.totalTimeSpent += Math.round((resultData.totalTimeTaken || 0) / 60); // Convert to minutes
-    
+    userStats.totalPoints +=
+      (resultData.pointsEarned || 0) + (resultData.bonusPoints || 0);
+    userStats.totalTimeSpent += Math.round(
+      (resultData.totalTimeTaken || 0) / 60
+    ); // Convert to minutes
+
     // Update average score
-    const totalScore = (userStats.averageScore * (userStats.totalQuizzesTaken - 1)) + resultData.percentage;
-    userStats.averageScore = Math.round(totalScore / userStats.totalQuizzesTaken);
-    
+    const totalScore =
+      userStats.averageScore * (userStats.totalQuizzesTaken - 1) +
+      resultData.percentage;
+    userStats.averageScore = Math.round(
+      totalScore / userStats.totalQuizzesTaken
+    );
+
     // Update streak
     if (resultData.passed) {
       userStats.currentStreak += 1;
@@ -1611,17 +1745,17 @@ async function updateUserStats(userId, resultData) {
     } else {
       userStats.currentStreak = 0;
     }
-    
+
     // Update experience and level
     userStats.experience += resultData.experienceGained || 0;
     userStats.level = Math.floor(userStats.experience / 100) + 1; // Level up every 100 XP
-    
+
     userStats.lastQuizDate = new Date();
-    
+
     await userStats.save();
     return userStats;
   } catch (error) {
-    console.error('Error updating user stats:', error);
+    console.error("Error updating user stats:", error);
   }
 }
 
@@ -1629,21 +1763,53 @@ async function checkUserAchievements(userId, resultData) {
   try {
     const unlockedAchievements = [];
     const userStats = await UserStats.findOne({ user: userId });
-    
+
     if (!userStats) return unlockedAchievements;
 
     // Check for various achievement criteria
     const achievementChecks = [
-      { criteria: userStats.totalQuizzesTaken >= 1, name: 'First Quiz', type: 'quiz_completion' },
-      { criteria: userStats.totalQuizzesTaken >= 10, name: 'Quiz Enthusiast', type: 'quiz_completion' },
-      { criteria: userStats.totalQuizzesTaken >= 50, name: 'Quiz Master', type: 'quiz_completion' },
-      { criteria: userStats.currentStreak >= 5, name: 'On Fire!', type: 'streak' },
-      { criteria: userStats.currentStreak >= 10, name: 'Unstoppable', type: 'streak' },
-      { criteria: resultData.percentage >= 100, name: 'Perfect Score', type: 'score_achievement' },
-      { criteria: resultData.percentage >= 90, name: 'Excellence', type: 'score_achievement' },
-      { criteria: userStats.totalPoints >= 1000, name: 'Point Collector', type: 'special' },
-      { criteria: userStats.level >= 5, name: 'Rising Star', type: 'special' },
-      { criteria: userStats.level >= 10, name: 'Champion', type: 'special' }
+      {
+        criteria: userStats.totalQuizzesTaken >= 1,
+        name: "First Quiz",
+        type: "quiz_completion",
+      },
+      {
+        criteria: userStats.totalQuizzesTaken >= 10,
+        name: "Quiz Enthusiast",
+        type: "quiz_completion",
+      },
+      {
+        criteria: userStats.totalQuizzesTaken >= 50,
+        name: "Quiz Master",
+        type: "quiz_completion",
+      },
+      {
+        criteria: userStats.currentStreak >= 5,
+        name: "On Fire!",
+        type: "streak",
+      },
+      {
+        criteria: userStats.currentStreak >= 10,
+        name: "Unstoppable",
+        type: "streak",
+      },
+      {
+        criteria: resultData.percentage >= 100,
+        name: "Perfect Score",
+        type: "score_achievement",
+      },
+      {
+        criteria: resultData.percentage >= 90,
+        name: "Excellence",
+        type: "score_achievement",
+      },
+      {
+        criteria: userStats.totalPoints >= 1000,
+        name: "Point Collector",
+        type: "special",
+      },
+      { criteria: userStats.level >= 5, name: "Rising Star", type: "special" },
+      { criteria: userStats.level >= 10, name: "Champion", type: "special" },
     ];
 
     for (const check of achievementChecks) {
@@ -1651,20 +1817,20 @@ async function checkUserAchievements(userId, resultData) {
         // Check if user already has this achievement
         const existingAchievement = await UserAchievement.findOne({
           user: userId,
-          'achievement.name': check.name
+          "achievement.name": check.name,
         });
 
         if (!existingAchievement) {
           // Create new achievement
           let achievement = await Achievement.findOne({ name: check.name });
-          
+
           if (!achievement) {
             achievement = new Achievement({
               name: check.name,
               description: `Awarded for ${check.name.toLowerCase()}`,
               icon: getAchievementIcon(check.type),
               type: check.type,
-              points: getAchievementPoints(check.type)
+              points: getAchievementPoints(check.type),
             });
             await achievement.save();
           }
@@ -1672,9 +1838,9 @@ async function checkUserAchievements(userId, resultData) {
           const userAchievement = new UserAchievement({
             user: userId,
             achievement: achievement._id,
-            isCompleted: true
+            isCompleted: true,
           });
-          
+
           await userAchievement.save();
           unlockedAchievements.push(achievement);
         }
@@ -1683,20 +1849,20 @@ async function checkUserAchievements(userId, resultData) {
 
     return unlockedAchievements;
   } catch (error) {
-    console.error('Error checking achievements:', error);
+    console.error("Error checking achievements:", error);
     return [];
   }
 }
 
 function getAchievementIcon(type) {
   const icons = {
-    quiz_completion: '📚',
-    score_achievement: '🏆',
-    streak: '🔥',
-    speed: '⚡',
-    special: '⭐'
+    quiz_completion: "📚",
+    score_achievement: "🏆",
+    streak: "🔥",
+    speed: "⚡",
+    special: "⭐",
   };
-  return icons[type] || '🎉';
+  return icons[type] || "🎉";
 }
 
 function getAchievementPoints(type) {
@@ -1705,7 +1871,7 @@ function getAchievementPoints(type) {
     score_achievement: 20,
     streak: 15,
     speed: 25,
-    special: 50
+    special: 50,
   };
   return points[type] || 10;
 }
@@ -1716,124 +1882,142 @@ async function updateQuizStats(quizId, resultData) {
     if (!quiz) return;
 
     quiz.attempts = (quiz.attempts || 0) + 1;
-    
+
     // Update average score
-    const totalScore = (quiz.averageScore * (quiz.attempts - 1)) + resultData.percentage;
+    const totalScore =
+      quiz.averageScore * (quiz.attempts - 1) + resultData.percentage;
     quiz.averageScore = Math.round(totalScore / quiz.attempts);
-    
+
     await quiz.save();
   } catch (error) {
-    console.error('Error updating quiz stats:', error);
+    console.error("Error updating quiz stats:", error);
   }
 }
 
 // Generate PDF for Quiz
-app.post('/api/quizzes/generate-pdf', auth, async (req, res) => {
+app.post("/api/quizzes/generate-pdf", auth, async (req, res) => {
   try {
-    if (req.user.role !== 'Teacher') {
-      return res.status(403).json({ message: 'Access denied. Only teachers can generate PDFs.' });
+    if (req.user.role !== "Teacher") {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Only teachers can generate PDFs." });
     }
 
-    const { quizData, questions, format = 'teacher' } = req.body;
-    
+    const { quizData, questions, format = "teacher" } = req.body;
+
     if (!quizData || !questions) {
-      return res.status(400).json({ message: 'Quiz data and questions are required.' });
+      return res
+        .status(400)
+        .json({ message: "Quiz data and questions are required." });
     }
 
     const pdfGenerator = new QuizPDFGenerator();
     const fullQuizData = { ...quizData, questions };
-    
+
     let htmlContent;
-    
+
     switch (format) {
-      case 'student':
+      case "student":
         htmlContent = pdfGenerator.generateStudentCopy(fullQuizData);
         break;
-      case 'answer-key':
+      case "answer-key":
         htmlContent = pdfGenerator.generateAnswerKey(fullQuizData);
         break;
-      case 'teacher':
+      case "teacher":
       default:
         htmlContent = pdfGenerator.generateTeacherCopy(fullQuizData);
         break;
     }
 
     // Send HTML content that can be converted to PDF on frontend
-    res.json({ 
+    res.json({
       html: htmlContent,
-      filename: `${quizData.title || 'quiz'}_${format}.pdf`,
-      message: 'PDF HTML generated successfully. Use browser print or PDF library to convert.' 
+      filename: `${quizData.title || "quiz"}_${format}.pdf`,
+      message:
+        "PDF HTML generated successfully. Use browser print or PDF library to convert.",
     });
-
   } catch (error) {
-    console.error('Error generating PDF:', error);
-    res.status(500).json({ message: 'Failed to generate PDF. Please try again.' });
+    console.error("Error generating PDF:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to generate PDF. Please try again." });
   }
 });
 
 // Generate PDF for Existing Quiz
-app.get('/api/quizzes/:id/pdf/:format', auth, async (req, res) => {
+app.get("/api/quizzes/:id/pdf/:format", auth, async (req, res) => {
   try {
-    if (req.user.role !== 'Teacher') {
-      return res.status(403).json({ message: 'Access denied. Only teachers can generate PDFs.' });
+    if (req.user.role !== "Teacher") {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Only teachers can generate PDFs." });
     }
 
-    const { id: quizId, format = 'teacher' } = req.params;
-    
-    const quiz = await Quiz.findById(quizId).populate('createdBy', 'name');
-    
+    const { id: quizId, format = "teacher" } = req.params;
+
+    const quiz = await Quiz.findById(quizId).populate("createdBy", "name");
+
     if (!quiz) {
-      return res.status(404).json({ message: 'Quiz not found.' });
+      return res.status(404).json({ message: "Quiz not found." });
     }
 
     // Check if user owns the quiz or is admin
-    if (quiz.createdBy._id.toString() !== req.user.id && req.user.role !== 'Admin') {
-      return res.status(403).json({ message: 'Access denied. You can only generate PDFs for your own quizzes.' });
+    if (
+      quiz.createdBy._id.toString() !== req.user.id &&
+      req.user.role !== "Admin"
+    ) {
+      return res
+        .status(403)
+        .json({
+          message:
+            "Access denied. You can only generate PDFs for your own quizzes.",
+        });
     }
 
     const pdfGenerator = new QuizPDFGenerator();
-    
+
     let htmlContent;
-    
+
     switch (format) {
-      case 'student':
+      case "student":
         htmlContent = pdfGenerator.generateStudentCopy(quiz);
         break;
-      case 'answer-key':
+      case "answer-key":
         htmlContent = pdfGenerator.generateAnswerKey(quiz);
         break;
-      case 'teacher':
+      case "teacher":
       default:
         htmlContent = pdfGenerator.generateTeacherCopy(quiz);
         break;
     }
 
-    res.json({ 
+    res.json({
       html: htmlContent,
       filename: `${quiz.title}_${format}.pdf`,
       quiz: {
         title: quiz.title,
         createdBy: quiz.createdBy.name,
-        createdAt: quiz.createdAt
+        createdAt: quiz.createdAt,
       },
-      message: 'PDF HTML generated successfully.' 
+      message: "PDF HTML generated successfully.",
     });
-
   } catch (error) {
-    console.error('Error generating quiz PDF:', error);
-    res.status(500).json({ message: 'Failed to generate PDF. Please try again.' });
+    console.error("Error generating quiz PDF:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to generate PDF. Please try again." });
   }
 });
 
 // *** NEW DOUBT SOLVER ROUTE ***
-  app.post('/api/doubt-solver', async (req, res) => {
-    try {
-      const { message } = req.body;
-      if (!message) {
-        return res.status(400).json({ message: 'No message provided.' });
-      }
+app.post("/api/doubt-solver", async (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message) {
+      return res.status(400).json({ message: "No message provided." });
+    }
 
-      const prompt = `
+    const prompt = `
         You are a friendly and encouraging AI tutor for students. 
         Your name is Quizwise-Bot.
         A student has asked the following question: "${message}".
@@ -1841,1184 +2025,1255 @@ app.get('/api/quizzes/:id/pdf/:format', auth, async (req, res) => {
         Do not answer questions that are not academic or educational in nature.
       `;
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
-      res.json({ reply: text });
+    res.json({ reply: text });
+  } catch (error) {
+    console.error("Doubt solver error:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while getting an answer." });
+  }
+});
 
-    } catch (error) {
-      console.error('Doubt solver error:', error);
-      res.status(500).json({ message: 'An error occurred while getting an answer.' });
-    }
-  });
+// --- ADMIN ROUTES ---
+// All routes in this section are protected by both auth and admin middleware
 
+// UPDATE A USER'S ROLE
+app.put("/api/admin/users/:id/role", auth, admin, async (req, res) => {
+  try {
+    const { role } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { role },
+      { new: true }
+    ).select("-password");
+    res.json(user);
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+});
 
+// ADMIN DELETE A QUIZ
+app.delete("/api/admin/quizzes/:id", auth, admin, async (req, res) => {
+  try {
+    await Quiz.findByIdAndDelete(req.params.id);
+    await Result.deleteMany({ quiz: req.params.id });
+    res.json({ msg: "Quiz removed by admin" });
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+});
 
-  // --- ADMIN ROUTES ---
-  // All routes in this section are protected by both auth and admin middleware
+// GET ALL USERS (with search and pagination)
+app.get("/api/admin/users", auth, admin, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = "" } = req.query;
+    const query = search ? { name: { $regex: search, $options: "i" } } : {};
+    const users = await User.find(query)
+      .select("-password")
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+    const count = await User.countDocuments(query);
+    res.json({
+      users,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+    });
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+});
 
-  
+// GET ALL QUIZZES (with search and pagination)
+app.get("/api/admin/quizzes", auth, admin, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = "" } = req.query;
+    const query = search ? { title: { $regex: search, $options: "i" } } : {};
+    const quizzes = await Quiz.find(query)
+      .populate("createdBy", "name")
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+    const count = await Quiz.countDocuments(query);
+    res.json({
+      quizzes,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+    });
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+});
 
-  // UPDATE A USER'S ROLE
-  app.put('/api/admin/users/:id/role', auth, admin, async (req, res) => {
-    try {
-        const { role } = req.body;
-        const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password');
-        res.json(user);
-    } catch (error) {
-        res.status(500).send('Server Error');
-    }
-  });
+// GET SITE ANALYTICS
+app.get("/api/admin/analytics", auth, admin, async (req, res) => {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  // ADMIN DELETE A QUIZ
-  app.delete('/api/admin/quizzes/:id', auth, admin, async (req, res) => {
-    try {
-        await Quiz.findByIdAndDelete(req.params.id);
-        await Result.deleteMany({ quiz: req.params.id });
-        res.json({ msg: 'Quiz removed by admin' });
-    } catch (error) {
-        res.status(500).send('Server Error');
-    }
-  });
+    const userSignups = await User.aggregate([
+      { $match: { createdAt: { $gte: sevenDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+    res.json({ userSignups });
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+});
 
+// --- MODERATOR ROUTES ---
 
-  // GET ALL USERS (with search and pagination)
-  app.get('/api/admin/users', auth, admin, async (req, res) => {
-    try {
-        const { page = 1, limit = 10, search = '' } = req.query;
-        const query = search ? { name: { $regex: search, $options: 'i' } } : {};
-        const users = await User.find(query)
-            .select('-password')
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .exec();
-        const count = await User.countDocuments(query);
-        res.json({ users, totalPages: Math.ceil(count / limit), currentPage: page });
-    } catch (error) {
-        res.status(500).send('Server Error');
-    }
-  });
+// GET MODERATOR STATS
+app.get("/api/moderator/stats", auth, moderator, async (req, res) => {
+  try {
+    const totalQuizzes = await Quiz.countDocuments();
+    const pendingReports = await Report.countDocuments({ status: "pending" });
+    res.json({ totalQuizzes, pendingReports });
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+});
 
-  // GET ALL QUIZZES (with search and pagination)
-  app.get('/api/admin/quizzes', auth, admin, async (req, res) => {
-    try {
-        const { page = 1, limit = 10, search = '' } = req.query;
-        const query = search ? { title: { $regex: search, $options: 'i' } } : {};
-        const quizzes = await Quiz.find(query)
-            .populate('createdBy', 'name')
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .exec();
-        const count = await Quiz.countDocuments(query);
-        res.json({ quizzes, totalPages: Math.ceil(count / limit), currentPage: page });
-    } catch (error) {
-        res.status(500).send('Server Error');
-    }
-  });
-  
-  // GET SITE ANALYTICS
-  app.get('/api/admin/analytics', auth, admin, async (req, res) => {
-    try {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+// GET ALL QUIZZES (for moderation, with search and pagination)
+app.get("/api/moderator/quizzes", auth, moderator, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = "" } = req.query;
+    const query = search ? { title: { $regex: search, $options: "i" } } : {};
+    const quizzes = await Quiz.find(query)
+      .populate("createdBy", "name")
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+    const count = await Quiz.countDocuments(query);
+    res.json({
+      quizzes,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+    });
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+});
 
-        const userSignups = await User.aggregate([
-            { $match: { createdAt: { $gte: sevenDaysAgo } } },
-            { $group: {
-                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                count: { $sum: 1 }
-            }},
-            { $sort: { _id: 1 } }
-        ]);
-        res.json({ userSignups });
-    } catch (error) {
-        res.status(500).send('Server Error');
-    }
-  });
+// MODERATOR DELETE A QUIZ
+app.delete("/api/moderator/quizzes/:id", auth, moderator, async (req, res) => {
+  try {
+    await Quiz.findByIdAndDelete(req.params.id);
+    await Result.deleteMany({ quiz: req.params.id });
+    res.json({ msg: "Quiz removed by moderator" });
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+});
 
+// --- REPORT ROUTE ---
+app.post("/api/quizzes/report", auth, async (req, res) => {
+  try {
+    const { quizId, questionText, reason } = req.body;
+    const userId = req.user.id;
 
-  // --- MODERATOR ROUTES ---
+    const newReport = new Report({
+      quiz: quizId,
+      questionText,
+      reason,
+      reportedBy: userId,
+    });
 
-  // GET MODERATOR STATS
-  app.get('/api/moderator/stats', auth, moderator, async (req, res) => {
-    try {
-        const totalQuizzes = await Quiz.countDocuments();
-        const pendingReports = await Report.countDocuments({ status: 'pending' });
-        res.json({ totalQuizzes, pendingReports });
-    } catch (error) {
-        res.status(500).send('Server Error');
-    }
-  });
-
-  // GET ALL QUIZZES (for moderation, with search and pagination)
-  app.get('/api/moderator/quizzes', auth, moderator, async (req, res) => {
-    try {
-        const { page = 1, limit = 10, search = '' } = req.query;
-        const query = search ? { title: { $regex: search, $options: 'i' } } : {};
-        const quizzes = await Quiz.find(query)
-            .populate('createdBy', 'name')
-            .sort({ createdAt: -1 })
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .exec();
-        const count = await Quiz.countDocuments(query);
-        res.json({ quizzes, totalPages: Math.ceil(count / limit), currentPage: page });
-    } catch (error) {
-        res.status(500).send('Server Error');
-    }
-  });
-
-  // MODERATOR DELETE A QUIZ
-  app.delete('/api/moderator/quizzes/:id', auth, moderator, async (req, res) => {
-    try {
-        await Quiz.findByIdAndDelete(req.params.id);
-        await Result.deleteMany({ quiz: req.params.id });
-        res.json({ msg: 'Quiz removed by moderator' });
-    } catch (error) {
-        res.status(500).send('Server Error');
-    }
-  });
-
-
-  // --- REPORT ROUTE ---
-  app.post('/api/quizzes/report', auth, async (req, res) => {
-    try {
-        const { quizId, questionText, reason } = req.body;
-        const userId = req.user.id;
-
-        const newReport = new Report({
-            quiz: quizId,
-            questionText,
-            reason,
-            reportedBy: userId,
-        });
-
-        await newReport.save();
-        console.log(`New report submitted by user ${userId} for quiz ${quizId}`);
-        res.status(201).json({ message: 'Report submitted successfully. Our moderators will review it.' });
-
-    } catch (error) {
-        console.error("Error submitting report:", error);
-        res.status(500).send('Server Error');
-    }
-  });
-
-
-
-
-
-    // *** NEW *** GET ALL PENDING REPORTS (for moderators/admins)
-  app.get('/api/reports', auth, moderator, async (req, res) => {
-    try {
-      const reports = await Report.find()
-        .populate('quiz', 'title') // Get the title of the quiz
-        .populate('reportedBy', 'name') // Get the name of the user who reported
-        .sort({ createdAt: -1 }); // Show newest reports first
-
-      res.json(reports);
-    } catch (error) {
-      console.error("Error fetching reports:", error);
-      res.status(500).send('Server Error');
-    }
-  });
-
-  // *** NEW *** RESOLVE A REPORT
-  app.put('/api/reports/:id/resolve', auth, moderator, async (req, res) => {
-    try {
-      const report = await Report.findByIdAndUpdate(
-        req.params.id,
-        { status: 'resolved', resolvedBy: req.user.id, resolvedAt: new Date() },
-        { new: true }
-      );
-      
-      if (!report) {
-        return res.status(404).json({ message: 'Report not found' });
-      }
-
-      console.log(`Report ${req.params.id} resolved by ${req.user.name}`);
-      res.json({ message: 'Report resolved successfully', report });
-    } catch (error) {
-      console.error("Error resolving report:", error);
-      res.status(500).send('Server Error');
-    }
-  });
-
-  // *** NEW *** DISMISS A REPORT
-  app.put('/api/reports/:id/dismiss', auth, moderator, async (req, res) => {
-    try {
-      const report = await Report.findByIdAndUpdate(
-        req.params.id,
-        { status: 'dismissed', resolvedBy: req.user.id, resolvedAt: new Date() },
-        { new: true }
-      );
-      
-      if (!report) {
-        return res.status(404).json({ message: 'Report not found' });
-      }
-
-      console.log(`Report ${req.params.id} dismissed by ${req.user.name}`);
-      res.json({ message: 'Report dismissed successfully', report });
-    } catch (error) {
-      console.error("Error dismissing report:", error);
-      res.status(500).send('Server Error');
-    }
-  });
-
-  // *** NEW *** GET REPORT STATISTICS
-  app.get('/api/reports/stats', auth, moderator, async (req, res) => {
-    try {
-      const totalReports = await Report.countDocuments();
-      const pendingReports = await Report.countDocuments({ status: 'pending' });
-      const resolvedReports = await Report.countDocuments({ status: 'resolved' });
-      const dismissedReports = await Report.countDocuments({ status: 'dismissed' });
-
-      // Get report trends (last 7 days)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      const recentReports = await Report.countDocuments({ 
-        createdAt: { $gte: sevenDaysAgo } 
+    await newReport.save();
+    console.log(`New report submitted by user ${userId} for quiz ${quizId}`);
+    res
+      .status(201)
+      .json({
+        message:
+          "Report submitted successfully. Our moderators will review it.",
       });
+  } catch (error) {
+    console.error("Error submitting report:", error);
+    res.status(500).send("Server Error");
+  }
+});
 
-      res.json({
-        total: totalReports,
-        pending: pendingReports,
-        resolved: resolvedReports,
-        dismissed: dismissedReports,
-        recentReports
-      });
-    } catch (error) {
-      console.error("Error fetching report stats:", error);
-      res.status(500).send('Server Error');
+// *** NEW *** GET ALL PENDING REPORTS (for moderators/admins)
+app.get("/api/reports", auth, moderator, async (req, res) => {
+  try {
+    const reports = await Report.find()
+      .populate("quiz", "title") // Get the title of the quiz
+      .populate("reportedBy", "name") // Get the name of the user who reported
+      .sort({ createdAt: -1 }); // Show newest reports first
+
+    res.json(reports);
+  } catch (error) {
+    console.error("Error fetching reports:", error);
+    res.status(500).send("Server Error");
+  }
+});
+
+// *** NEW *** RESOLVE A REPORT
+app.put("/api/reports/:id/resolve", auth, moderator, async (req, res) => {
+  try {
+    const report = await Report.findByIdAndUpdate(
+      req.params.id,
+      { status: "resolved", resolvedBy: req.user.id, resolvedAt: new Date() },
+      { new: true }
+    );
+
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
     }
-  });
 
+    console.log(`Report ${req.params.id} resolved by ${req.user.name}`);
+    res.json({ message: "Report resolved successfully", report });
+  } catch (error) {
+    console.error("Error resolving report:", error);
+    res.status(500).send("Server Error");
+  }
+});
 
+// *** NEW *** DISMISS A REPORT
+app.put("/api/reports/:id/dismiss", auth, moderator, async (req, res) => {
+  try {
+    const report = await Report.findByIdAndUpdate(
+      req.params.id,
+      { status: "dismissed", resolvedBy: req.user.id, resolvedAt: new Date() },
+      { new: true }
+    );
 
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
 
-  // === SOCIAL FEATURES API ENDPOINTS ===
+    console.log(`Report ${req.params.id} dismissed by ${req.user.name}`);
+    res.json({ message: "Report dismissed successfully", report });
+  } catch (error) {
+    console.error("Error dismissing report:", error);
+    res.status(500).send("Server Error");
+  }
+});
 
-  // === FRIEND SYSTEM ROUTES ===
+// *** NEW *** GET REPORT STATISTICS
+app.get("/api/reports/stats", auth, moderator, async (req, res) => {
+  try {
+    const totalReports = await Report.countDocuments();
+    const pendingReports = await Report.countDocuments({ status: "pending" });
+    const resolvedReports = await Report.countDocuments({ status: "resolved" });
+    const dismissedReports = await Report.countDocuments({
+      status: "dismissed",
+    });
 
-  // Send Friend Request
-  app.post('/api/friends/request', auth, async (req, res) => {
-    try {
-      const { recipientId } = req.body;
-      const requesterId = req.user.id;
+    // Get report trends (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      if (requesterId === recipientId) {
-        return res.status(400).json({ message: 'Cannot send friend request to yourself' });
-      }
+    const recentReports = await Report.countDocuments({
+      createdAt: { $gte: sevenDaysAgo },
+    });
 
-      // Check if friendship already exists
-      const existingFriendship = await Friendship.findOne({
-        $or: [
-          { requester: requesterId, recipient: recipientId },
-          { requester: recipientId, recipient: requesterId }
-        ]
-      });
+    res.json({
+      total: totalReports,
+      pending: pendingReports,
+      resolved: resolvedReports,
+      dismissed: dismissedReports,
+      recentReports,
+    });
+  } catch (error) {
+    console.error("Error fetching report stats:", error);
+    res.status(500).send("Server Error");
+  }
+});
 
-      if (existingFriendship) {
-        return res.status(400).json({ message: 'Friendship request already exists' });
-      }
+// === SOCIAL FEATURES API ENDPOINTS ===
 
-      const friendship = new Friendship({
-        requester: requesterId,
-        recipient: recipientId
-      });
+// === FRIEND SYSTEM ROUTES ===
 
+// Send Friend Request
+app.post("/api/friends/request", auth, async (req, res) => {
+  try {
+    const { recipientId } = req.body;
+    const requesterId = req.user.id;
+
+    if (requesterId === recipientId) {
+      return res
+        .status(400)
+        .json({ message: "Cannot send friend request to yourself" });
+    }
+
+    // Check if friendship already exists
+    const existingFriendship = await Friendship.findOne({
+      $or: [
+        { requester: requesterId, recipient: recipientId },
+        { requester: recipientId, recipient: requesterId },
+      ],
+    });
+
+    if (existingFriendship) {
+      return res
+        .status(400)
+        .json({ message: "Friendship request already exists" });
+    }
+
+    const friendship = new Friendship({
+      requester: requesterId,
+      recipient: recipientId,
+    });
+
+    await friendship.save();
+
+    // Create notification
+    const notification = new Notification({
+      recipient: recipientId,
+      sender: requesterId,
+      type: "friend-request",
+      title: "New Friend Request",
+      message: `${req.user.name} sent you a friend request`,
+      metadata: { friendshipId: friendship._id },
+    });
+
+    await notification.save();
+
+    res
+      .status(201)
+      .json({ message: "Friend request sent successfully", friendship });
+  } catch (error) {
+    console.error("Error sending friend request:", error);
+    res.status(500).json({ message: "Failed to send friend request" });
+  }
+});
+
+// Accept/Decline Friend Request
+app.put("/api/friends/respond/:friendshipId", auth, async (req, res) => {
+  try {
+    const { friendshipId } = req.params;
+    const { action } = req.body; // 'accept' or 'decline'
+    const userId = req.user.id;
+
+    const friendship = await Friendship.findById(friendshipId)
+      .populate("requester", "name")
+      .populate("recipient", "name");
+
+    if (!friendship) {
+      return res.status(404).json({ message: "Friend request not found" });
+    }
+
+    if (friendship.recipient._id.toString() !== userId) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to respond to this request" });
+    }
+
+    if (friendship.status !== "pending") {
+      return res
+        .status(400)
+        .json({ message: "Friend request already responded to" });
+    }
+
+    if (action === "accept") {
+      friendship.status = "accepted";
+      friendship.acceptedAt = new Date();
       await friendship.save();
 
-      // Create notification
+      // Create notification for requester
       const notification = new Notification({
-        recipient: recipientId,
-        sender: requesterId,
-        type: 'friend-request',
-        title: 'New Friend Request',
-        message: `${req.user.name} sent you a friend request`,
-        metadata: { friendshipId: friendship._id }
+        recipient: friendship.requester._id,
+        sender: userId,
+        type: "friend-accepted",
+        title: "Friend Request Accepted",
+        message: `${req.user.name} accepted your friend request`,
+        metadata: { friendshipId: friendship._id },
       });
 
       await notification.save();
 
-      res.status(201).json({ message: 'Friend request sent successfully', friendship });
-    } catch (error) {
-      console.error('Error sending friend request:', error);
-      res.status(500).json({ message: 'Failed to send friend request' });
+      res.json({ message: "Friend request accepted", friendship });
+    } else {
+      await Friendship.findByIdAndDelete(friendshipId);
+      res.json({ message: "Friend request declined" });
     }
-  });
+  } catch (error) {
+    console.error("Error responding to friend request:", error);
+    res.status(500).json({ message: "Failed to respond to friend request" });
+  }
+});
 
-  // Accept/Decline Friend Request
-  app.put('/api/friends/respond/:friendshipId', auth, async (req, res) => {
-    try {
-      const { friendshipId } = req.params;
-      const { action } = req.body; // 'accept' or 'decline'
-      const userId = req.user.id;
+// Get Friends List
+app.get("/api/friends", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
 
-      const friendship = await Friendship.findById(friendshipId)
-        .populate('requester', 'name')
-        .populate('recipient', 'name');
-
-      if (!friendship) {
-        return res.status(404).json({ message: 'Friend request not found' });
-      }
-
-      if (friendship.recipient._id.toString() !== userId) {
-        return res.status(403).json({ message: 'Not authorized to respond to this request' });
-      }
-
-      if (friendship.status !== 'pending') {
-        return res.status(400).json({ message: 'Friend request already responded to' });
-      }
-
-      if (action === 'accept') {
-        friendship.status = 'accepted';
-        friendship.acceptedAt = new Date();
-        await friendship.save();
-
-        // Create notification for requester
-        const notification = new Notification({
-          recipient: friendship.requester._id,
-          sender: userId,
-          type: 'friend-accepted',
-          title: 'Friend Request Accepted',
-          message: `${req.user.name} accepted your friend request`,
-          metadata: { friendshipId: friendship._id }
-        });
-
-        await notification.save();
-
-        res.json({ message: 'Friend request accepted', friendship });
-      } else {
-        await Friendship.findByIdAndDelete(friendshipId);
-        res.json({ message: 'Friend request declined' });
-      }
-    } catch (error) {
-      console.error('Error responding to friend request:', error);
-      res.status(500).json({ message: 'Failed to respond to friend request' });
-    }
-  });
-
-  // Get Friends List
-  app.get('/api/friends', auth, async (req, res) => {
-    try {
-      const userId = req.user.id;
-
-      const friendships = await Friendship.find({
-        $or: [
-          { requester: userId, status: 'accepted' },
-          { recipient: userId, status: 'accepted' }
-        ]
-      })
-      .populate('requester', 'name email role')
-      .populate('recipient', 'name email role')
+    const friendships = await Friendship.find({
+      $or: [
+        { requester: userId, status: "accepted" },
+        { recipient: userId, status: "accepted" },
+      ],
+    })
+      .populate("requester", "name email role")
+      .populate("recipient", "name email role")
       .sort({ acceptedAt: -1 });
 
-      const friends = friendships.map(friendship => {
-        const friend = friendship.requester._id.toString() === userId 
-          ? friendship.recipient 
+    const friends = friendships.map((friendship) => {
+      const friend =
+        friendship.requester._id.toString() === userId
+          ? friendship.recipient
           : friendship.requester;
-        
-        return {
-          friendshipId: friendship._id,
-          friend,
-          since: friendship.acceptedAt
-        };
-      });
 
-      res.json({ friends });
-    } catch (error) {
-      console.error('Error fetching friends:', error);
-      res.status(500).json({ message: 'Failed to fetch friends' });
+      return {
+        friendshipId: friendship._id,
+        friend,
+        since: friendship.acceptedAt,
+      };
+    });
+
+    res.json({ friends });
+  } catch (error) {
+    console.error("Error fetching friends:", error);
+    res.status(500).json({ message: "Failed to fetch friends" });
+  }
+});
+
+// Search Users (for adding friends)
+app.get("/api/users/search", auth, async (req, res) => {
+  try {
+    const { query } = req.query;
+    const userId = req.user.id;
+
+    if (!query || query.trim().length < 2) {
+      return res
+        .status(400)
+        .json({ message: "Search query must be at least 2 characters" });
     }
-  });
 
-  // Search Users (for adding friends)
-  app.get('/api/users/search', auth, async (req, res) => {
-    try {
-      const { query } = req.query;
-      const userId = req.user.id;
-
-      if (!query || query.trim().length < 2) {
-        return res.status(400).json({ message: 'Search query must be at least 2 characters' });
-      }
-
-      const users = await User.find({
-        $and: [
-          { _id: { $ne: userId } }, // Exclude current user
-          {
-            $or: [
-              { name: { $regex: query, $options: 'i' } },
-              { email: { $regex: query, $options: 'i' } }
-            ]
-          }
-        ]
-      })
-      .select('name email role')
+    const users = await User.find({
+      $and: [
+        { _id: { $ne: userId } }, // Exclude current user
+        {
+          $or: [
+            { name: { $regex: query, $options: "i" } },
+            { email: { $regex: query, $options: "i" } },
+          ],
+        },
+      ],
+    })
+      .select("name email role")
       .limit(20);
 
-      // Check friendship status for each user
-      const usersWithFriendshipStatus = await Promise.all(users.map(async (user) => {
+    // Check friendship status for each user
+    const usersWithFriendshipStatus = await Promise.all(
+      users.map(async (user) => {
         const friendship = await Friendship.findOne({
           $or: [
             { requester: userId, recipient: user._id },
-            { requester: user._id, recipient: userId }
-          ]
+            { requester: user._id, recipient: userId },
+          ],
         });
 
         return {
           ...user.toObject(),
-          friendshipStatus: friendship ? friendship.status : 'none',
-          friendshipId: friendship ? friendship._id : null
+          friendshipStatus: friendship ? friendship.status : "none",
+          friendshipId: friendship ? friendship._id : null,
         };
-      }));
-
-      res.json({ users: usersWithFriendshipStatus });
-    } catch (error) {
-      console.error('Error searching users:', error);
-      res.status(500).json({ message: 'Failed to search users' });
-    }
-  });
-
-  // === QUIZ CHALLENGE ROUTES ===
-
-  // Create Quiz Challenge
-  app.post('/api/challenges/create', auth, async (req, res) => {
-    try {
-      const { challengedUserId, quizId, message } = req.body;
-      const challengerId = req.user.id;
-
-      if (challengerId === challengedUserId) {
-        return res.status(400).json({ message: 'Cannot challenge yourself' });
-      }
-
-      // Verify quiz exists
-      const quiz = await Quiz.findById(quizId);
-      if (!quiz) {
-        return res.status(404).json({ message: 'Quiz not found' });
-      }
-
-      // Check if users are friends
-      const friendship = await Friendship.findOne({
-        $or: [
-          { requester: challengerId, recipient: challengedUserId, status: 'accepted' },
-          { requester: challengedUserId, recipient: challengerId, status: 'accepted' }
-        ]
-      });
-
-      if (!friendship) {
-        return res.status(403).json({ message: 'Can only challenge friends' });
-      }
-
-      const challenge = new Challenge({
-        challenger: challengerId,
-        challenged: challengedUserId,
-        quiz: quizId,
-        message: message || `${req.user.name} challenged you to a quiz!`
-      });
-
-      await challenge.save();
-
-      // Create notification
-      const notification = new Notification({
-        recipient: challengedUserId,
-        sender: challengerId,
-        type: 'quiz-challenge',
-        title: 'New Quiz Challenge',
-        message: `${req.user.name} challenged you to: ${quiz.title}`,
-        metadata: { challengeId: challenge._id }
-      });
-
-      await notification.save();
-
-      const populatedChallenge = await Challenge.findById(challenge._id)
-        .populate('challenger', 'name')
-        .populate('challenged', 'name')
-        .populate('quiz', 'title');
-
-      res.status(201).json({ message: 'Challenge created successfully', challenge: populatedChallenge });
-    } catch (error) {
-      console.error('Error creating challenge:', error);
-      res.status(500).json({ message: 'Failed to create challenge' });
-    }
-  });
-
-  // Get User Challenges
-  app.get('/api/challenges', auth, async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const { status = 'all' } = req.query;
-
-      let query = {
-        $or: [
-          { challenger: userId },
-          { challenged: userId }
-        ]
-      };
-
-      if (status !== 'all') {
-        query.status = status;
-      }
-
-      const challenges = await Challenge.find(query)
-        .populate('challenger', 'name')
-        .populate('challenged', 'name')
-        .populate('quiz', 'title')
-        .sort({ createdAt: -1 });
-
-      res.json({ challenges });
-    } catch (error) {
-      console.error('Error fetching challenges:', error);
-      res.status(500).json({ message: 'Failed to fetch challenges' });
-    }
-  });
-
-  // === NOTIFICATION ROUTES ===
-
-  // Get User Notifications
-  app.get('/api/notifications', auth, async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const { page = 1, limit = 20, unreadOnly = false } = req.query;
-
-      let query = { recipient: userId };
-      if (unreadOnly === 'true') {
-        query.isRead = false;
-      }
-
-      const notifications = await Notification.find(query)
-        .populate('sender', 'name')
-        .sort({ createdAt: -1 })
-        .limit(limit * 1)
-        .skip((page - 1) * limit);
-
-      const unreadCount = await Notification.countDocuments({ recipient: userId, isRead: false });
-
-      res.json({ notifications, unreadCount });
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-      res.status(500).json({ message: 'Failed to fetch notifications' });
-    }
-  });
-
-  // Mark Notification as Read
-  app.put('/api/notifications/:notificationId/read', auth, async (req, res) => {
-    try {
-      const { notificationId } = req.params;
-      const userId = req.user.id;
-
-      const notification = await Notification.findOneAndUpdate(
-        { _id: notificationId, recipient: userId },
-        { isRead: true },
-        { new: true }
-      );
-
-      if (!notification) {
-        return res.status(404).json({ message: 'Notification not found' });
-      }
-
-      res.json({ message: 'Notification marked as read', notification });
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-      res.status(500).json({ message: 'Failed to mark notification as read' });
-    }
-  });
-
-  // === ADMIN BROADCAST ROUTES ===
-
-  // Create Broadcast (Admin only)
-  app.post('/api/broadcasts/create', auth, admin, async (req, res) => {
-    try {
-      const { title, content, type = 'announcement', targetAudience, priority = 'medium', scheduledFor, expiresAt } = req.body;
-
-      if (!title.trim() || !content.trim()) {
-        return res.status(400).json({ message: 'Title and content are required' });
-      }
-
-      const broadcast = new Broadcast({
-        sender: req.user.id,
-        title,
-        content,
-        type,
-        targetAudience: targetAudience || { roles: ['Student', 'Teacher'] },
-        priority,
-        scheduledFor: scheduledFor ? new Date(scheduledFor) : new Date(),
-        expiresAt: expiresAt ? new Date(expiresAt) : null
-      });
-
-      await broadcast.save();
-
-      // Create notifications for target audience
-      let targetUsers = [];
-
-      if (targetAudience && targetAudience.specific && targetAudience.specific.length > 0) {
-        targetUsers = targetAudience.specific;
-      } else if (targetAudience && targetAudience.roles && targetAudience.roles.length > 0) {
-        const users = await User.find({ role: { $in: targetAudience.roles } });
-        targetUsers = users.map(user => user._id);
-      } else {
-        const users = await User.find({});
-        targetUsers = users.map(user => user._id);
-      }
-
-      // Create notifications in batches
-      const notifications = targetUsers.map(userId => ({
-        recipient: userId,
-        sender: req.user.id,
-        type: 'broadcast',
-        title: `📢 ${title}`,
-        message: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
-        metadata: { broadcastId: broadcast._id }
-      }));
-
-      await Notification.insertMany(notifications);
-
-      res.status(201).json({ message: 'Broadcast created successfully', broadcast });
-    } catch (error) {
-      console.error('Error creating broadcast:', error);
-      res.status(500).json({ message: 'Failed to create broadcast' });
-    }
-  });
-
-  // Get Broadcasts
-  app.get('/api/broadcasts', auth, async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const userRole = req.user.role;
-
-      let query = {
-        isActive: true,
-        scheduledFor: { $lte: new Date() }
-      };
-
-      // Add expiration check
-      query.$or = [
-        { expiresAt: { $exists: false } },
-        { expiresAt: null },
-        { expiresAt: { $gte: new Date() } }
-      ];
-
-      // Filter by target audience
-      query.$and = [
-        {
-          $or: [
-            { 'targetAudience.roles': userRole },
-            { 'targetAudience.specific': userId },
-            { 'targetAudience.roles': { $exists: false } }
-          ]
-        }
-      ];
-
-      const broadcasts = await Broadcast.find(query)
-        .populate('sender', 'name role')
-        .sort({ priority: -1, createdAt: -1 })
-        .limit(10);
-
-      res.json({ broadcasts });
-    } catch (error) {
-      console.error('Error fetching broadcasts:', error);
-      res.status(500).json({ message: 'Failed to fetch broadcasts' });
-    }
-  });
-
-  // === CHAT SYSTEM ROUTES ===
-  
-  // Send Message
-  app.post('/api/chat/send', auth, async (req, res) => {
-    try {
-      const { recipientId, content } = req.body;
-      
-      if (!recipientId || !content || !content.trim()) {
-        return res.status(400).json({ message: 'Recipient and message content are required' });
-      }
-
-      // Check if users are friends
-      const friendship = await Friendship.findOne({
-        $or: [
-          { requester: req.user.id, recipient: recipientId, status: 'accepted' },
-          { requester: recipientId, recipient: req.user.id, status: 'accepted' }
-        ]
-      });
-
-      if (!friendship) {
-        return res.status(403).json({ message: 'You can only message friends' });
-      }
-
-      // Find or create chat room
-      let chatRoom = await ChatRoom.findOne({
-        participants: { $all: [req.user.id, recipientId] },
-        type: 'direct'
-      });
-
-      if (!chatRoom) {
-        // Get recipient's name for chat room name
-        const recipient = await User.findById(recipientId).select('name');
-        const sender = await User.findById(req.user.id).select('name');
-        
-        chatRoom = new ChatRoom({
-          name: `${sender.name} & ${recipient.name}`,
-          type: 'direct',
-          participants: [req.user.id, recipientId],
-          creator: req.user.id,
-          settings: {
-            isPublic: false,
-            allowStudents: true,
-            requireApproval: false,
-            canStudentsPost: true
-          }
-        });
-        await chatRoom.save();
-      }
-
-      // Create message
-      const message = new Message({
-        chatRoom: chatRoom._id,
-        sender: req.user.id,
-        content: content.trim(),
-        timestamp: new Date()
-      });
-
-      await message.save();
-
-      // Update chat room's last message
-      chatRoom.lastMessage = message._id;
-      chatRoom.lastActivity = new Date();
-      await chatRoom.save();
-
-      // Populate sender info for response
-      await message.populate('sender', 'name email role');
-
-      res.status(201).json({ 
-        message: 'Message sent successfully', 
-        data: message 
-      });
-
-    } catch (error) {
-      console.error('Error sending message:', error);
-      res.status(500).json({ message: 'Failed to send message' });
-    }
-  });
-
-  // Get Messages for a Chat
-  app.get('/api/chat/messages/:friendId', auth, async (req, res) => {
-    try {
-      const { friendId } = req.params;
-
-      // Check if users are friends
-      const friendship = await Friendship.findOne({
-        $or: [
-          { requester: req.user.id, recipient: friendId, status: 'accepted' },
-          { requester: friendId, recipient: req.user.id, status: 'accepted' }
-        ]
-      });
-
-      if (!friendship) {
-        return res.status(403).json({ message: 'You can only view messages with friends' });
-      }
-
-      // Find chat room
-      const chatRoom = await ChatRoom.findOne({
-        participants: { $all: [req.user.id, friendId] },
-        type: 'direct'
-      });
-
-      if (!chatRoom) {
-        return res.json({ messages: [] });
-      }
-
-      // Get messages
-      const messages = await Message.find({ chatRoom: chatRoom._id })
-        .populate('sender', 'name email role')
-        .sort({ timestamp: 1 })
-        .limit(100); // Limit to last 100 messages
-
-      res.json({ messages });
-
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-      res.status(500).json({ message: 'Failed to fetch messages' });
-    }
-  });
-
-  // Get Chat Rooms for User
-  app.get('/api/chat/rooms', auth, async (req, res) => {
-    try {
-      const chatRooms = await ChatRoom.find({
-        participants: req.user.id
       })
-      .populate('participants', 'name email role')
-      .populate('lastMessage')
+    );
+
+    res.json({ users: usersWithFriendshipStatus });
+  } catch (error) {
+    console.error("Error searching users:", error);
+    res.status(500).json({ message: "Failed to search users" });
+  }
+});
+
+// === QUIZ CHALLENGE ROUTES ===
+
+// Create Quiz Challenge
+app.post("/api/challenges/create", auth, async (req, res) => {
+  try {
+    const { challengedUserId, quizId, message } = req.body;
+    const challengerId = req.user.id;
+
+    if (challengerId === challengedUserId) {
+      return res.status(400).json({ message: "Cannot challenge yourself" });
+    }
+
+    // Verify quiz exists
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    // Check if users are friends
+    const friendship = await Friendship.findOne({
+      $or: [
+        {
+          requester: challengerId,
+          recipient: challengedUserId,
+          status: "accepted",
+        },
+        {
+          requester: challengedUserId,
+          recipient: challengerId,
+          status: "accepted",
+        },
+      ],
+    });
+
+    if (!friendship) {
+      return res.status(403).json({ message: "Can only challenge friends" });
+    }
+
+    const challenge = new Challenge({
+      challenger: challengerId,
+      challenged: challengedUserId,
+      quiz: quizId,
+      message: message || `${req.user.name} challenged you to a quiz!`,
+    });
+
+    await challenge.save();
+
+    // Create notification
+    const notification = new Notification({
+      recipient: challengedUserId,
+      sender: challengerId,
+      type: "quiz-challenge",
+      title: "New Quiz Challenge",
+      message: `${req.user.name} challenged you to: ${quiz.title}`,
+      metadata: { challengeId: challenge._id },
+    });
+
+    await notification.save();
+
+    const populatedChallenge = await Challenge.findById(challenge._id)
+      .populate("challenger", "name")
+      .populate("challenged", "name")
+      .populate("quiz", "title");
+
+    res
+      .status(201)
+      .json({
+        message: "Challenge created successfully",
+        challenge: populatedChallenge,
+      });
+  } catch (error) {
+    console.error("Error creating challenge:", error);
+    res.status(500).json({ message: "Failed to create challenge" });
+  }
+});
+
+// Get User Challenges
+app.get("/api/challenges", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { status = "all" } = req.query;
+
+    let query = {
+      $or: [{ challenger: userId }, { challenged: userId }],
+    };
+
+    if (status !== "all") {
+      query.status = status;
+    }
+
+    const challenges = await Challenge.find(query)
+      .populate("challenger", "name")
+      .populate("challenged", "name")
+      .populate("quiz", "title")
+      .sort({ createdAt: -1 });
+
+    res.json({ challenges });
+  } catch (error) {
+    console.error("Error fetching challenges:", error);
+    res.status(500).json({ message: "Failed to fetch challenges" });
+  }
+});
+
+// === NOTIFICATION ROUTES ===
+
+// Get User Notifications
+app.get("/api/notifications", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { page = 1, limit = 20, unreadOnly = false } = req.query;
+
+    let query = { recipient: userId };
+    if (unreadOnly === "true") {
+      query.isRead = false;
+    }
+
+    const notifications = await Notification.find(query)
+      .populate("sender", "name")
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const unreadCount = await Notification.countDocuments({
+      recipient: userId,
+      isRead: false,
+    });
+
+    res.json({ notifications, unreadCount });
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    res.status(500).json({ message: "Failed to fetch notifications" });
+  }
+});
+
+// Mark Notification as Read
+app.put("/api/notifications/:notificationId/read", auth, async (req, res) => {
+  try {
+    const { notificationId } = req.params;
+    const userId = req.user.id;
+
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, recipient: userId },
+      { isRead: true },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    res.json({ message: "Notification marked as read", notification });
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+    res.status(500).json({ message: "Failed to mark notification as read" });
+  }
+});
+
+// === ADMIN BROADCAST ROUTES ===
+
+// Create Broadcast (Admin only)
+app.post("/api/broadcasts/create", auth, admin, async (req, res) => {
+  try {
+    const {
+      title,
+      content,
+      type = "announcement",
+      targetAudience,
+      priority = "medium",
+      scheduledFor,
+      expiresAt,
+    } = req.body;
+
+    if (!title.trim() || !content.trim()) {
+      return res
+        .status(400)
+        .json({ message: "Title and content are required" });
+    }
+
+    const broadcast = new Broadcast({
+      sender: req.user.id,
+      title,
+      content,
+      type,
+      targetAudience: targetAudience || { roles: ["Student", "Teacher"] },
+      priority,
+      scheduledFor: scheduledFor ? new Date(scheduledFor) : new Date(),
+      expiresAt: expiresAt ? new Date(expiresAt) : null,
+    });
+
+    await broadcast.save();
+
+    // Create notifications for target audience
+    let targetUsers = [];
+
+    if (
+      targetAudience &&
+      targetAudience.specific &&
+      targetAudience.specific.length > 0
+    ) {
+      targetUsers = targetAudience.specific;
+    } else if (
+      targetAudience &&
+      targetAudience.roles &&
+      targetAudience.roles.length > 0
+    ) {
+      const users = await User.find({ role: { $in: targetAudience.roles } });
+      targetUsers = users.map((user) => user._id);
+    } else {
+      const users = await User.find({});
+      targetUsers = users.map((user) => user._id);
+    }
+
+    // Create notifications in batches
+    const notifications = targetUsers.map((userId) => ({
+      recipient: userId,
+      sender: req.user.id,
+      type: "broadcast",
+      title: `📢 ${title}`,
+      message: content.substring(0, 100) + (content.length > 100 ? "..." : ""),
+      metadata: { broadcastId: broadcast._id },
+    }));
+
+    await Notification.insertMany(notifications);
+
+    res
+      .status(201)
+      .json({ message: "Broadcast created successfully", broadcast });
+  } catch (error) {
+    console.error("Error creating broadcast:", error);
+    res.status(500).json({ message: "Failed to create broadcast" });
+  }
+});
+
+// Get Broadcasts
+app.get("/api/broadcasts", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    let query = {
+      isActive: true,
+      scheduledFor: { $lte: new Date() },
+    };
+
+    // Add expiration check
+    query.$or = [
+      { expiresAt: { $exists: false } },
+      { expiresAt: null },
+      { expiresAt: { $gte: new Date() } },
+    ];
+
+    // Filter by target audience
+    query.$and = [
+      {
+        $or: [
+          { "targetAudience.roles": userRole },
+          { "targetAudience.specific": userId },
+          { "targetAudience.roles": { $exists: false } },
+        ],
+      },
+    ];
+
+    const broadcasts = await Broadcast.find(query)
+      .populate("sender", "name role")
+      .sort({ priority: -1, createdAt: -1 })
+      .limit(10);
+
+    res.json({ broadcasts });
+  } catch (error) {
+    console.error("Error fetching broadcasts:", error);
+    res.status(500).json({ message: "Failed to fetch broadcasts" });
+  }
+});
+
+// === CHAT SYSTEM ROUTES ===
+
+// Send Message
+app.post("/api/chat/send", auth, async (req, res) => {
+  try {
+    const { recipientId, content } = req.body;
+
+    if (!recipientId || !content || !content.trim()) {
+      return res
+        .status(400)
+        .json({ message: "Recipient and message content are required" });
+    }
+
+    // Check if users are friends
+    const friendship = await Friendship.findOne({
+      $or: [
+        { requester: req.user.id, recipient: recipientId, status: "accepted" },
+        { requester: recipientId, recipient: req.user.id, status: "accepted" },
+      ],
+    });
+
+    if (!friendship) {
+      return res.status(403).json({ message: "You can only message friends" });
+    }
+
+    // Find or create chat room
+    let chatRoom = await ChatRoom.findOne({
+      participants: { $all: [req.user.id, recipientId] },
+      type: "direct",
+    });
+
+    if (!chatRoom) {
+      // Get recipient's name for chat room name
+      const recipient = await User.findById(recipientId).select("name");
+      const sender = await User.findById(req.user.id).select("name");
+
+      chatRoom = new ChatRoom({
+        name: `${sender.name} & ${recipient.name}`,
+        type: "direct",
+        participants: [req.user.id, recipientId],
+        creator: req.user.id,
+        settings: {
+          isPublic: false,
+          allowStudents: true,
+          requireApproval: false,
+          canStudentsPost: true,
+        },
+      });
+      await chatRoom.save();
+    }
+
+    // Create message
+    const message = new Message({
+      chatRoom: chatRoom._id,
+      sender: req.user.id,
+      content: content.trim(),
+      timestamp: new Date(),
+    });
+
+    await message.save();
+
+    // Update chat room's last message
+    chatRoom.lastMessage = message._id;
+    chatRoom.lastActivity = new Date();
+    await chatRoom.save();
+
+    // Populate sender info for response
+    await message.populate("sender", "name email role");
+
+    res.status(201).json({
+      message: "Message sent successfully",
+      data: message,
+    });
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ message: "Failed to send message" });
+  }
+});
+
+// Get Messages for a Chat
+app.get("/api/chat/messages/:friendId", auth, async (req, res) => {
+  try {
+    const { friendId } = req.params;
+
+    // Check if users are friends
+    const friendship = await Friendship.findOne({
+      $or: [
+        { requester: req.user.id, recipient: friendId, status: "accepted" },
+        { requester: friendId, recipient: req.user.id, status: "accepted" },
+      ],
+    });
+
+    if (!friendship) {
+      return res
+        .status(403)
+        .json({ message: "You can only view messages with friends" });
+    }
+
+    // Find chat room
+    const chatRoom = await ChatRoom.findOne({
+      participants: { $all: [req.user.id, friendId] },
+      type: "direct",
+    });
+
+    if (!chatRoom) {
+      return res.json({ messages: [] });
+    }
+
+    // Get messages
+    const messages = await Message.find({ chatRoom: chatRoom._id })
+      .populate("sender", "name email role")
+      .sort({ timestamp: 1 })
+      .limit(100); // Limit to last 100 messages
+
+    res.json({ messages });
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({ message: "Failed to fetch messages" });
+  }
+});
+
+// Get Chat Rooms for User
+app.get("/api/chat/rooms", auth, async (req, res) => {
+  try {
+    const chatRooms = await ChatRoom.find({
+      participants: req.user.id,
+    })
+      .populate("participants", "name email role")
+      .populate("lastMessage")
       .sort({ lastActivity: -1 });
 
-      res.json({ chatRooms });
+    res.json({ chatRooms });
+  } catch (error) {
+    console.error("Error fetching chat rooms:", error);
+    res.status(500).json({ message: "Failed to fetch chat rooms" });
+  }
+});
 
-    } catch (error) {
-      console.error('Error fetching chat rooms:', error);
-      res.status(500).json({ message: 'Failed to fetch chat rooms' });
+// Mark Messages as Read
+app.put("/api/chat/read/:friendId", auth, async (req, res) => {
+  try {
+    const { friendId } = req.params;
+
+    // Find chat room
+    const chatRoom = await ChatRoom.findOne({
+      participants: { $all: [req.user.id, friendId] },
+      type: "direct",
+    });
+
+    if (!chatRoom) {
+      return res.status(404).json({ message: "Chat room not found" });
     }
-  });
 
-  // Mark Messages as Read
-  app.put('/api/chat/read/:friendId', auth, async (req, res) => {
-    try {
-      const { friendId } = req.params;
+    // Mark messages as read
+    await Message.updateMany(
+      {
+        chatRoom: chatRoom._id,
+        sender: { $ne: req.user.id },
+        isRead: false,
+      },
+      { isRead: true, readAt: new Date() }
+    );
 
-      // Find chat room
-      const chatRoom = await ChatRoom.findOne({
-        participants: { $all: [req.user.id, friendId] },
-        type: 'direct'
-      });
+    res.json({ message: "Messages marked as read" });
+  } catch (error) {
+    console.error("Error marking messages as read:", error);
+    res.status(500).json({ message: "Failed to mark messages as read" });
+  }
+});
 
-      if (!chatRoom) {
-        return res.status(404).json({ message: 'Chat room not found' });
-      }
+// === USER STATUS TRACKING ROUTES ===
 
-      // Mark messages as read
-      await Message.updateMany(
-        { 
-          chatRoom: chatRoom._id, 
-          sender: { $ne: req.user.id },
-          isRead: false 
-        },
-        { isRead: true, readAt: new Date() }
-      );
+// Update User Status
+app.put("/api/user/status", auth, async (req, res) => {
+  try {
+    const { status } = req.body;
 
-      res.json({ message: 'Messages marked as read' });
-
-    } catch (error) {
-      console.error('Error marking messages as read:', error);
-      res.status(500).json({ message: 'Failed to mark messages as read' });
+    if (!["online", "offline", "away"].includes(status)) {
+      return res
+        .status(400)
+        .json({ message: "Invalid status. Must be online, offline, or away" });
     }
-  });
 
-  // === USER STATUS TRACKING ROUTES ===
-  
-  // Update User Status
-  app.put('/api/user/status', auth, async (req, res) => {
-    try {
-      const { status } = req.body;
-      
-      if (!['online', 'offline', 'away'].includes(status)) {
-        return res.status(400).json({ message: 'Invalid status. Must be online, offline, or away' });
-      }
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        status: status,
+        lastActivity: new Date(),
+        lastSeen: status === "offline" ? new Date() : undefined,
+      },
+      { new: true, select: "status lastSeen lastActivity" }
+    );
 
-      const user = await User.findByIdAndUpdate(
-        req.user.id,
-        { 
-          status: status,
-          lastActivity: new Date(),
-          lastSeen: status === 'offline' ? new Date() : undefined
-        },
-        { new: true, select: 'status lastSeen lastActivity' }
-      );
+    res.json({
+      message: "Status updated successfully",
+      user: user,
+    });
+  } catch (error) {
+    console.error("Error updating user status:", error);
+    res.status(500).json({ message: "Failed to update status" });
+  }
+});
 
-      res.json({ 
-        message: 'Status updated successfully',
-        user: user
-      });
+// Get Friends Status
+app.get("/api/user/friends-status", auth, async (req, res) => {
+  try {
+    // Get user's friends
+    const friendships = await Friendship.find({
+      $or: [
+        { requester: req.user.id, status: "accepted" },
+        { recipient: req.user.id, status: "accepted" },
+      ],
+    }).populate("requester recipient", "name status lastSeen lastActivity");
 
-    } catch (error) {
-      console.error('Error updating user status:', error);
-      res.status(500).json({ message: 'Failed to update status' });
-    }
-  });
-
-  // Get Friends Status
-  app.get('/api/user/friends-status', auth, async (req, res) => {
-    try {
-      // Get user's friends
-      const friendships = await Friendship.find({
-        $or: [
-          { requester: req.user.id, status: 'accepted' },
-          { recipient: req.user.id, status: 'accepted' }
-        ]
-      }).populate('requester recipient', 'name status lastSeen lastActivity');
-
-      // Extract friend info with status
-      const friendsStatus = friendships.map(friendship => {
-        const friend = friendship.requester._id.toString() === req.user.id 
-          ? friendship.recipient 
+    // Extract friend info with status
+    const friendsStatus = friendships.map((friendship) => {
+      const friend =
+        friendship.requester._id.toString() === req.user.id
+          ? friendship.recipient
           : friendship.requester;
-        
-        return {
-          friendId: friend._id,
-          name: friend.name,
-          status: friend.status,
-          lastSeen: friend.lastSeen,
-          lastActivity: friend.lastActivity,
-          isOnline: friend.status === 'online' && 
-                   (new Date() - new Date(friend.lastActivity)) < 5 * 60 * 1000 // 5 minutes threshold
-        };
+
+      return {
+        friendId: friend._id,
+        name: friend.name,
+        status: friend.status,
+        lastSeen: friend.lastSeen,
+        lastActivity: friend.lastActivity,
+        isOnline:
+          friend.status === "online" &&
+          new Date() - new Date(friend.lastActivity) < 5 * 60 * 1000, // 5 minutes threshold
+      };
+    });
+
+    res.json({ friendsStatus });
+  } catch (error) {
+    console.error("Error fetching friends status:", error);
+    res.status(500).json({ message: "Failed to fetch friends status" });
+  }
+});
+
+// Update Last Activity (called periodically by frontend)
+app.put("/api/user/activity", auth, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user.id, {
+      lastActivity: new Date(),
+      status: "online",
+    });
+
+    res.json({ message: "Activity updated" });
+  } catch (error) {
+    console.error("Error updating activity:", error);
+    res.status(500).json({ message: "Failed to update activity" });
+  }
+});
+
+// Get Single User Status
+app.get("/api/user/status/:userId", auth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Check if users are friends
+    const friendship = await Friendship.findOne({
+      $or: [
+        { requester: req.user.id, recipient: userId, status: "accepted" },
+        { requester: userId, recipient: req.user.id, status: "accepted" },
+      ],
+    });
+
+    if (!friendship) {
+      return res
+        .status(403)
+        .json({ message: "You can only view status of friends" });
+    }
+
+    const user = await User.findById(userId).select(
+      "name status lastSeen lastActivity"
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isOnline =
+      user.status === "online" &&
+      new Date() - new Date(user.lastActivity) < 5 * 60 * 1000; // 5 minutes
+
+    res.json({
+      userId: user._id,
+      name: user.name,
+      status: user.status,
+      lastSeen: user.lastSeen,
+      lastActivity: user.lastActivity,
+      isOnline: isOnline,
+    });
+  } catch (error) {
+    console.error("Error fetching user status:", error);
+    res.status(500).json({ message: "Failed to fetch user status" });
+  }
+});
+
+// ========================================
+// LIVE SESSION REST ENDPOINTS
+// Fallback for fetching session data without WebSocket
+// ========================================
+
+// Get session by code
+app.get("/api/live-sessions/:code", async (req, res) => {
+  try {
+    const { code } = req.params;
+
+    const session = await LiveSession.findOne({
+      sessionCode: code.toUpperCase(),
+    })
+      .populate("quizId", "title description questions")
+      .populate("hostId", "name picture")
+      .populate("participants.userId", "name picture");
+
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    res.json({
+      sessionCode: session.sessionCode,
+      quiz: {
+        id: session.quizId._id,
+        title: session.quizId.title,
+        description: session.quizId.description,
+        totalQuestions: session.quizId.questions.length,
+      },
+      host: {
+        id: session.hostId._id,
+        name: session.hostId.name,
+        picture: session.hostId.picture,
+      },
+      status: session.status,
+      currentQuestionIndex: session.currentQuestionIndex,
+      participantCount: session.participantCount,
+      participants: session.participants
+        .filter((p) => p.isActive)
+        .map((p) => ({
+          id: p.userId._id,
+          name: p.userId.name,
+          picture: p.userId.picture,
+          score: p.score,
+        })),
+      settings: session.settings,
+      createdAt: session.createdAt,
+      startedAt: session.startedAt,
+      endedAt: session.endedAt,
+    });
+  } catch (error) {
+    console.error("Error fetching session:", error);
+    res.status(500).json({ message: "Failed to fetch session" });
+  }
+});
+
+// Get leaderboard for a session
+app.get("/api/live-sessions/:code/leaderboard", async (req, res) => {
+  try {
+    const { code } = req.params;
+
+    const session = await LiveSession.findOne({
+      sessionCode: code.toUpperCase(),
+    }).populate("participants.userId", "name picture");
+
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    const leaderboard = session.getLeaderboard();
+
+    res.json({ leaderboard });
+  } catch (error) {
+    console.error("Error fetching leaderboard:", error);
+    res.status(500).json({ message: "Failed to fetch leaderboard" });
+  }
+});
+
+// Get all sessions for a host (teacher dashboard)
+app.get("/api/live-sessions/host/my-sessions", auth, async (req, res) => {
+  try {
+    const sessions = await LiveSession.find({ hostId: req.user.id })
+      .populate("quizId", "title")
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    res.json({
+      sessions: sessions.map((s) => ({
+        sessionCode: s.sessionCode,
+        quizTitle: s.quizId.title,
+        status: s.status,
+        participantCount: s.participantCount,
+        createdAt: s.createdAt,
+        startedAt: s.startedAt,
+        endedAt: s.endedAt,
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching host sessions:", error);
+    res.status(500).json({ message: "Failed to fetch sessions" });
+  }
+});
+
+// Get session analytics (for host after session ends)
+app.get("/api/live-sessions/:code/analytics", auth, async (req, res) => {
+  try {
+    const { code } = req.params;
+
+    const session = await LiveSession.findOne({
+      sessionCode: code.toUpperCase(),
+    })
+      .populate("quizId")
+      .populate("participants.userId", "name");
+
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    // Verify requester is host
+    if (session.hostId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Only host can view analytics" });
+    }
+
+    // Calculate question accuracy
+    const questionAccuracy = [];
+    for (let i = 0; i < session.quizId.questions.length; i++) {
+      const totalAnswers = session.participants.reduce((count, p) => {
+        return count + (p.answers.some((a) => a.questionIndex === i) ? 1 : 0);
+      }, 0);
+
+      const correctAnswers = session.participants.reduce((count, p) => {
+        const answer = p.answers.find((a) => a.questionIndex === i);
+        return count + (answer && answer.isCorrect ? 1 : 0);
+      }, 0);
+
+      questionAccuracy.push({
+        questionIndex: i,
+        question: session.quizId.questions[i].question,
+        totalAnswers,
+        correctAnswers,
+        correctPercentage:
+          totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0,
       });
-
-      res.json({ friendsStatus });
-
-    } catch (error) {
-      console.error('Error fetching friends status:', error);
-      res.status(500).json({ message: 'Failed to fetch friends status' });
     }
-  });
 
-  // Update Last Activity (called periodically by frontend)
-  app.put('/api/user/activity', auth, async (req, res) => {
-    try {
-      await User.findByIdAndUpdate(
-        req.user.id,
-        { 
-          lastActivity: new Date(),
-          status: 'online'
-        }
-      );
+    // Calculate average score
+    const totalScore = session.participants.reduce(
+      (sum, p) => sum + p.score,
+      0
+    );
+    const avgScore =
+      session.participants.length > 0
+        ? totalScore / session.participants.length
+        : 0;
 
-      res.json({ message: 'Activity updated' });
+    res.json({
+      sessionCode: session.sessionCode,
+      quizTitle: session.quizId.title,
+      totalParticipants: session.participants.length,
+      activeParticipants: session.participantCount,
+      averageScore: avgScore.toFixed(2),
+      questionAccuracy,
+      topPerformers: session.getLeaderboard().slice(0, 10),
+      duration:
+        session.endedAt && session.startedAt
+          ? Math.floor((session.endedAt - session.startedAt) / 1000)
+          : null,
+    });
+  } catch (error) {
+    console.error("Error fetching session analytics:", error);
+    res.status(500).json({ message: "Failed to fetch analytics" });
+  }
+});
 
-    } catch (error) {
-      console.error('Error updating activity:', error);
-      res.status(500).json({ message: 'Failed to update activity' });
+// Delete/Cancel a session (host only)
+app.delete("/api/live-sessions/:code", auth, async (req, res) => {
+  try {
+    const { code } = req.params;
+
+    const session = await LiveSession.findOne({
+      sessionCode: code.toUpperCase(),
+    });
+
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
     }
-  });
 
-  // Get Single User Status
-  app.get('/api/user/status/:userId', auth, async (req, res) => {
-    try {
-      const { userId } = req.params;
-
-      // Check if users are friends
-      const friendship = await Friendship.findOne({
-        $or: [
-          { requester: req.user.id, recipient: userId, status: 'accepted' },
-          { requester: userId, recipient: req.user.id, status: 'accepted' }
-        ]
-      });
-
-      if (!friendship) {
-        return res.status(403).json({ message: 'You can only view status of friends' });
-      }
-
-      const user = await User.findById(userId).select('name status lastSeen lastActivity');
-      
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      const isOnline = user.status === 'online' && 
-                      (new Date() - new Date(user.lastActivity)) < 5 * 60 * 1000; // 5 minutes
-
-      res.json({
-        userId: user._id,
-        name: user.name,
-        status: user.status,
-        lastSeen: user.lastSeen,
-        lastActivity: user.lastActivity,
-        isOnline: isOnline
-      });
-
-    } catch (error) {
-      console.error('Error fetching user status:', error);
-      res.status(500).json({ message: 'Failed to fetch user status' });
+    // Verify requester is host
+    if (session.hostId.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Only host can delete session" });
     }
-  });
 
-  // ========================================
-  // LIVE SESSION REST ENDPOINTS
-  // Fallback for fetching session data without WebSocket
-  // ========================================
+    session.status = "cancelled";
+    session.endedAt = new Date();
+    await session.save();
 
-  // Get session by code
-  app.get('/api/live-sessions/:code', async (req, res) => {
-    try {
-      const { code } = req.params;
-      
-      const session = await LiveSession.findOne({ sessionCode: code.toUpperCase() })
-        .populate('quizId', 'title description questions')
-        .populate('hostId', 'name picture')
-        .populate('participants.userId', 'name picture');
+    // Notify via Socket.IO if session is active
+    io.to(code.toUpperCase()).emit("session-cancelled", {
+      message: "Session has been cancelled by host",
+    });
 
-      if (!session) {
-        return res.status(404).json({ message: 'Session not found' });
-      }
+    res.json({ message: "Session cancelled successfully" });
+  } catch (error) {
+    console.error("Error cancelling session:", error);
+    res.status(500).json({ message: "Failed to cancel session" });
+  }
+});
 
-      res.json({
-        sessionCode: session.sessionCode,
-        quiz: {
-          id: session.quizId._id,
-          title: session.quizId.title,
-          description: session.quizId.description,
-          totalQuestions: session.quizId.questions.length
-        },
-        host: {
-          id: session.hostId._id,
-          name: session.hostId.name,
-          picture: session.hostId.picture
-        },
-        status: session.status,
-        currentQuestionIndex: session.currentQuestionIndex,
-        participantCount: session.participantCount,
-        participants: session.participants
-          .filter(p => p.isActive)
-          .map(p => ({
-            id: p.userId._id,
-            name: p.userId.name,
-            picture: p.userId.picture,
-            score: p.score
-          })),
-        settings: session.settings,
-        createdAt: session.createdAt,
-        startedAt: session.startedAt,
-        endedAt: session.endedAt
-      });
-
-    } catch (error) {
-      console.error('Error fetching session:', error);
-      res.status(500).json({ message: 'Failed to fetch session' });
-    }
-  });
-
-  // Get leaderboard for a session
-  app.get('/api/live-sessions/:code/leaderboard', async (req, res) => {
-    try {
-      const { code } = req.params;
-      
-      const session = await LiveSession.findOne({ sessionCode: code.toUpperCase() })
-        .populate('participants.userId', 'name picture');
-
-      if (!session) {
-        return res.status(404).json({ message: 'Session not found' });
-      }
-
-      const leaderboard = session.getLeaderboard();
-
-      res.json({ leaderboard });
-
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error);
-      res.status(500).json({ message: 'Failed to fetch leaderboard' });
-    }
-  });
-
-  // Get all sessions for a host (teacher dashboard)
-  app.get('/api/live-sessions/host/my-sessions', auth, async (req, res) => {
-    try {
-      const sessions = await LiveSession.find({ hostId: req.user.id })
-        .populate('quizId', 'title')
-        .sort({ createdAt: -1 })
-        .limit(20);
-
-      res.json({
-        sessions: sessions.map(s => ({
-          sessionCode: s.sessionCode,
-          quizTitle: s.quizId.title,
-          status: s.status,
-          participantCount: s.participantCount,
-          createdAt: s.createdAt,
-          startedAt: s.startedAt,
-          endedAt: s.endedAt
-        }))
-      });
-
-    } catch (error) {
-      console.error('Error fetching host sessions:', error);
-      res.status(500).json({ message: 'Failed to fetch sessions' });
-    }
-  });
-
-  // Get session analytics (for host after session ends)
-  app.get('/api/live-sessions/:code/analytics', auth, async (req, res) => {
-    try {
-      const { code } = req.params;
-      
-      const session = await LiveSession.findOne({ sessionCode: code.toUpperCase() })
-        .populate('quizId')
-        .populate('participants.userId', 'name');
-
-      if (!session) {
-        return res.status(404).json({ message: 'Session not found' });
-      }
-
-      // Verify requester is host
-      if (session.hostId.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'Only host can view analytics' });
-      }
-
-      // Calculate question accuracy
-      const questionAccuracy = [];
-      for (let i = 0; i < session.quizId.questions.length; i++) {
-        const totalAnswers = session.participants.reduce((count, p) => {
-          return count + (p.answers.some(a => a.questionIndex === i) ? 1 : 0);
-        }, 0);
-
-        const correctAnswers = session.participants.reduce((count, p) => {
-          const answer = p.answers.find(a => a.questionIndex === i);
-          return count + (answer && answer.isCorrect ? 1 : 0);
-        }, 0);
-
-        questionAccuracy.push({
-          questionIndex: i,
-          question: session.quizId.questions[i].question,
-          totalAnswers,
-          correctAnswers,
-          correctPercentage: totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0
-        });
-      }
-
-      // Calculate average score
-      const totalScore = session.participants.reduce((sum, p) => sum + p.score, 0);
-      const avgScore = session.participants.length > 0 ? totalScore / session.participants.length : 0;
-
-      res.json({
-        sessionCode: session.sessionCode,
-        quizTitle: session.quizId.title,
-        totalParticipants: session.participants.length,
-        activeParticipants: session.participantCount,
-        averageScore: avgScore.toFixed(2),
-        questionAccuracy,
-        topPerformers: session.getLeaderboard().slice(0, 10),
-        duration: session.endedAt && session.startedAt 
-          ? Math.floor((session.endedAt - session.startedAt) / 1000) 
-          : null
-      });
-
-    } catch (error) {
-      console.error('Error fetching session analytics:', error);
-      res.status(500).json({ message: 'Failed to fetch analytics' });
-    }
-  });
-
-  // Delete/Cancel a session (host only)
-  app.delete('/api/live-sessions/:code', auth, async (req, res) => {
-    try {
-      const { code } = req.params;
-      
-      const session = await LiveSession.findOne({ sessionCode: code.toUpperCase() });
-
-      if (!session) {
-        return res.status(404).json({ message: 'Session not found' });
-      }
-
-      // Verify requester is host
-      if (session.hostId.toString() !== req.user.id) {
-        return res.status(403).json({ message: 'Only host can delete session' });
-      }
-
-      session.status = 'cancelled';
-      session.endedAt = new Date();
-      await session.save();
-
-      // Notify via Socket.IO if session is active
-      io.to(code.toUpperCase()).emit('session-cancelled', {
-        message: 'Session has been cancelled by host'
-      });
-
-      res.json({ message: 'Session cancelled successfully' });
-
-    } catch (error) {
-      console.error('Error cancelling session:', error);
-      res.status(500).json({ message: 'Failed to cancel session' });
-    }
-  });
-
-  // --- START THE SERVER ---
-  server.listen(PORT, () => {
-    console.log(`Server with Socket.IO running on port ${PORT}`);
-  });
+// --- START THE SERVER ---
+server.listen(PORT, () => {
+  console.log(`Server with Socket.IO running on port ${PORT}`);
+});

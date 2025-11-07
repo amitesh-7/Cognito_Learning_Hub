@@ -3,7 +3,8 @@
 ## ✅ Issue Fixed
 
 **Problem**: Edge Function middleware error with `jsonwebtoken`  
-**Solution**: 
+**Solution**:
+
 1. ✅ Renamed `middleware.js` → `authMiddleware.js` (Vercel auto-detects `middleware.js` as Edge Function)
 2. ✅ Added `vercel.json` to force Node.js runtime
 3. ✅ Added `.vercelignore` to exclude unnecessary files
@@ -18,6 +19,7 @@
 2. Click **"Add New..."** → **"Project"**
 3. Import your GitHub repository: `Cognito_Learning_Hub`
 4. Configure:
+
    - **Framework Preset**: Other
    - **Root Directory**: `backend`
    - **Build Command**: Leave empty or `npm install`
@@ -25,6 +27,7 @@
    - **Install Command**: `npm install`
 
 5. **Add Environment Variables**:
+
    ```
    MONGO_URI=your-mongodb-connection-string
    API_KEY=your-gemini-api-key
@@ -61,6 +64,7 @@ vercel --prod
 1. In Vercel Dashboard, add another project
 2. Import same GitHub repo
 3. Configure:
+
    - **Framework Preset**: Vite
    - **Root Directory**: `frontend`
    - **Build Command**: `npm install --legacy-peer-deps && npm run build`
@@ -68,6 +72,7 @@ vercel --prod
    - **Install Command**: `npm install --legacy-peer-deps`
 
 4. **Add Environment Variables**:
+
    ```
    VITE_API_URL=https://your-backend.vercel.app
    VITE_SOCKET_URL=https://your-backend.vercel.app
@@ -85,6 +90,7 @@ After getting your frontend URL, update backend environment variable:
 **In Vercel → Backend Project → Settings → Environment Variables:**
 
 Edit `FRONTEND_URLS`:
+
 ```
 https://your-frontend.vercel.app,https://cognito-learning-hub.vercel.app
 ```
@@ -96,6 +102,7 @@ https://your-frontend.vercel.app,https://cognito-learning-hub.vercel.app
 ## ⚙️ Important Configuration Details
 
 ### Backend vercel.json
+
 ```json
 {
   "version": 2,
@@ -132,16 +139,19 @@ This forces all `.js` files to use Node.js runtime (not Edge runtime), which sup
 ## 🧪 Testing
 
 ### 1. Test Backend
+
 ```bash
 curl https://your-backend.vercel.app/api/health
 ```
 
 ### 2. Test Frontend
+
 - Visit frontend URL
 - Check browser console
 - Should see API connection
 
 ### 3. Test Full Flow
+
 - [ ] Login with Google OAuth
 - [ ] Create quiz
 - [ ] Take quiz
@@ -152,12 +162,15 @@ curl https://your-backend.vercel.app/api/health
 ## 🔧 Common Issues
 
 ### Issue: CORS Error
+
 **Solution**: Update `FRONTEND_URLS` in backend env variables
 
 ### Issue: 504 Timeout
+
 **Solution**: Vercel Serverless Functions have 10s timeout (Hobby) or 60s (Pro). Optimize long-running operations.
 
 ### Issue: Cold Starts
+
 **Solution**: First request after inactivity may be slow (Vercel serverless nature)
 
 ---
@@ -165,6 +178,7 @@ curl https://your-backend.vercel.app/api/health
 ## 📊 Environment Variables Checklist
 
 ### Backend
+
 - [x] MONGO_URI
 - [x] API_KEY
 - [x] JWT_SECRET
@@ -175,6 +189,7 @@ curl https://your-backend.vercel.app/api/health
 - [x] FRONTEND_URLS
 
 ### Frontend
+
 - [x] VITE_API_URL
 - [x] VITE_SOCKET_URL
 - [x] VITE_GOOGLE_CLIENT_ID
