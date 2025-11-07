@@ -71,26 +71,43 @@ const upload = multer({ storage: storage });
 
 // --- MIDDLEWARE ---
 // CORS configuration for production and development
+const allowedOrigins = process.env.FRONTEND_URLS 
+  ? process.env.FRONTEND_URLS.split(',').map(url => url.trim())
+  : process.env.NODE_ENV === "production"
+    ? [
+        "https://www.quizwise-ai.live",
+        "https://quizwise-ai.live",
+        "https://quiz-wise-ai-full-stack.vercel.app",
+        "https://quizwise-ai-server.onrender.com",
+        "https://cognito-learning-hub-frontend.vercel.app",
+      ]
+    : [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5174",
+      ];
+
 const corsOptions = {
-  origin:
-    process.env.NODE_ENV === "production"
-      ? [
-          "https://www.quizwise-ai.live",
-          "https://quizwise-ai.live",
-          "https://quiz-wise-ai-full-stack.vercel.app",
-          "https://quizwise-ai-server.onrender.com",
-        ]
-      : [
-          "http://localhost:3000",
-          "http://localhost:5173",
-          "http://localhost:5174",
-        ],
+  origin: allowedOrigins,
   credentials: true,
   optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Root route for Vercel health check
+app.get("/", (req, res) => {
+  res.json({ 
+    status: "ok",
+    message: "Cognito Learning Hub Backend API",
+    version: "1.0.0",
+    endpoints: {
+      health: "/test",
+      api: "/api/*"
+    }
+  });
+});
 
 // --- SOCKET.IO SETUP ---
 const io = new Server(server, {
@@ -3274,6 +3291,12 @@ app.delete("/api/live-sessions/:code", auth, async (req, res) => {
 });
 
 // --- START THE SERVER ---
-server.listen(PORT, () => {
-  console.log(`Server with Socket.IO running on port ${PORT}`);
-});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  server.listen(PORT, () => {
+    console.log(`Server with Socket.IO running on port ${PORT}`);
+  });
+}
+
+// Export for Vercel serverless
+module.exports = app;
