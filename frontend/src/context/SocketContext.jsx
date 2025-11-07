@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { io } from 'socket.io-client';
-import { getSocketUrl } from '../lib/apiConfig';
+import { createContext, useContext, useEffect, useState, useRef } from "react";
+import { io } from "socket.io-client";
+import { getSocketUrl } from "../lib/apiConfig";
 
 const SocketContext = createContext(null);
 
@@ -8,7 +8,7 @@ const SocketContext = createContext(null);
 export const useSocket = () => {
   const context = useContext(SocketContext);
   if (!context) {
-    throw new Error('useSocket must be used within a SocketProvider');
+    throw new Error("useSocket must be used within a SocketProvider");
   }
   return context;
 };
@@ -24,11 +24,11 @@ export const SocketProvider = ({ children }) => {
     // Get backend URL from environment (with trailing slash removed)
     const SOCKET_URL = getSocketUrl();
 
-    console.log('🔌 Initializing Socket.IO connection to:', SOCKET_URL);
+    console.log("🔌 Initializing Socket.IO connection to:", SOCKET_URL);
 
     // Create socket connection
     const socketInstance = io(SOCKET_URL, {
-      transports: ['websocket', 'polling'],
+      transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
@@ -37,44 +37,48 @@ export const SocketProvider = ({ children }) => {
     });
 
     // Connection established
-    socketInstance.on('connect', () => {
-      console.log('✅ Socket.IO connected! ID:', socketInstance.id);
+    socketInstance.on("connect", () => {
+      console.log("✅ Socket.IO connected! ID:", socketInstance.id);
       setIsConnected(true);
       setConnectionError(null);
       reconnectAttempts.current = 0;
     });
 
     // Connection error
-    socketInstance.on('connect_error', (error) => {
-      console.error('❌ Socket.IO connection error:', error.message);
+    socketInstance.on("connect_error", (error) => {
+      console.error("❌ Socket.IO connection error:", error.message);
       setIsConnected(false);
       reconnectAttempts.current += 1;
 
       if (reconnectAttempts.current >= maxReconnectAttempts) {
-        setConnectionError('Unable to connect to server. Please check your internet connection.');
+        setConnectionError(
+          "Unable to connect to server. Please check your internet connection."
+        );
       } else {
-        setConnectionError(`Connection issue. Retrying... (${reconnectAttempts.current}/${maxReconnectAttempts})`);
+        setConnectionError(
+          `Connection issue. Retrying... (${reconnectAttempts.current}/${maxReconnectAttempts})`
+        );
       }
     });
 
     // Disconnection
-    socketInstance.on('disconnect', (reason) => {
-      console.warn('⚠️ Socket.IO disconnected. Reason:', reason);
+    socketInstance.on("disconnect", (reason) => {
+      console.warn("⚠️ Socket.IO disconnected. Reason:", reason);
       setIsConnected(false);
 
-      if (reason === 'io server disconnect') {
+      if (reason === "io server disconnect") {
         // Server disconnected, manually reconnect
         socketInstance.connect();
       }
     });
 
     // Reconnection attempt
-    socketInstance.on('reconnect_attempt', (attemptNumber) => {
+    socketInstance.on("reconnect_attempt", (attemptNumber) => {
       console.log(`🔄 Reconnection attempt ${attemptNumber}...`);
     });
 
     // Reconnected successfully
-    socketInstance.on('reconnect', (attemptNumber) => {
+    socketInstance.on("reconnect", (attemptNumber) => {
       console.log(`✅ Reconnected after ${attemptNumber} attempts`);
       setIsConnected(true);
       setConnectionError(null);
@@ -82,16 +86,16 @@ export const SocketProvider = ({ children }) => {
     });
 
     // Reconnection failed
-    socketInstance.on('reconnect_failed', () => {
-      console.error('❌ Reconnection failed after maximum attempts');
-      setConnectionError('Connection lost. Please refresh the page.');
+    socketInstance.on("reconnect_failed", () => {
+      console.error("❌ Reconnection failed after maximum attempts");
+      setConnectionError("Connection lost. Please refresh the page.");
     });
 
     setSocket(socketInstance);
 
     // Cleanup on unmount
     return () => {
-      console.log('🔌 Disconnecting Socket.IO...');
+      console.log("🔌 Disconnecting Socket.IO...");
       socketInstance.disconnect();
     };
   }, []);
@@ -103,9 +107,7 @@ export const SocketProvider = ({ children }) => {
   };
 
   return (
-    <SocketContext.Provider value={value}>
-      {children}
-    </SocketContext.Provider>
+    <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
   );
 };
 
