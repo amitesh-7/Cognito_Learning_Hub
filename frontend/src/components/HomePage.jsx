@@ -223,25 +223,18 @@ export default function HomePage() {
           <FloatingIconsBackground />
         </div>
 
-        <div className="relative z-10 space-y-24 md:space-y-32">
-          {/* Hero Section */}
+        <div className="relative z-10 space-y-32 md:space-y-48">
+          {/* Hero Section - Left Aligned with More White Space */}
           <motion.section
-            className="grid md:grid-cols-2 gap-12 items-center pt-12 pb-20"
+            className="grid md:grid-cols-[1.2fr_1fr] gap-16 items-center pt-16 pb-24 md:pt-24 md:pb-32"
             variants={staggerContainer}
             initial="initial"
             animate="animate"
             aria-labelledby="hero-heading"
           >
-            <motion.div
-              className="text-center md:text-left space-y-6"
-              variants={staggerItem}
-            >
+            <motion.div className="text-left space-y-8" variants={staggerItem}>
               <motion.div variants={fadeInUp}>
-                <Badge
-                  variant="gradient"
-                  size="lg"
-                  className="mb-4 animate-pulse"
-                >
+                <Badge variant="gradient" size="lg" className="mb-6">
                   <Sparkles className="w-4 h-4 mr-2" />
                   🔥 AI-Powered Learning Platform
                 </Badge>
@@ -249,21 +242,21 @@ export default function HomePage() {
 
               <motion.h1
                 id="hero-heading"
-                className="text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight"
+                className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.1]"
                 variants={fadeInUp}
               >
                 The{" "}
-                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient">
+                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                   Smarter
                 </span>{" "}
                 Way to Learn and Teach.
               </motion.h1>
 
               <motion.p
-                className="max-w-xl mx-auto md:mx-0 text-lg text-gray-600 dark:text-gray-300"
+                className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-2xl mt-8 mb-10"
                 variants={fadeInUp}
               >
-                🚀 Create engaging quizzes in seconds with AI, challenge your
+                Create engaging quizzes in seconds with AI, challenge your
                 knowledge with interactive tests, and get instant help from your
                 personal AI tutor. Join{" "}
                 <span className="font-bold text-indigo-600 dark:text-indigo-400">
@@ -273,38 +266,18 @@ export default function HomePage() {
               </motion.p>
 
               <motion.div
-                className="flex flex-col sm:flex-row justify-center md:justify-start gap-4"
+                className="flex flex-col sm:flex-row gap-6 pt-8"
                 variants={fadeInUp}
               >
                 <Button
                   asChild
                   size="lg"
-                  variant="hero"
-                  glow={true}
-                  className="group relative overflow-hidden button-pulse-glow"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-6 text-lg font-semibold rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                 >
                   <Link to="/signup">
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-0 group-hover:opacity-100"
-                      initial={{ scale: 0, rotate: 0 }}
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                    <span className="relative z-10 flex items-center">
-                      <motion.span
-                        animate={{
-                          scale: [1, 1.05, 1],
-                          textShadow: [
-                            "0 0 0px rgba(255,255,255,0)",
-                            "0 0 10px rgba(255,255,255,0.5)",
-                            "0 0 0px rgba(255,255,255,0)",
-                          ],
-                        }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        ✨ Get Started for Free
-                      </motion.span>
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform inline" />
+                    <span className="flex items-center gap-2">
+                      ✨ Get Started for Free
+                      <ArrowRight className="w-5 h-5" />
                     </span>
                   </Link>
                 </Button>
@@ -313,99 +286,54 @@ export default function HomePage() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="group relative border-2 border-purple-300 dark:border-purple-500 hover:border-purple-500 dark:hover:border-purple-400 bg-white/90 dark:bg-gray-800 backdrop-blur-sm text-purple-700 dark:text-purple-300"
+                  className="border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 px-10 py-6 text-lg font-semibold rounded-2xl transition-all duration-300 hover:-translate-y-1"
                 >
                   <Link to="/features">
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 opacity-0 group-hover:opacity-100"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                    <span className="relative z-10 flex items-center">
+                    <span className="flex items-center gap-2">
                       🚀 Explore Features
-                      <motion.span
-                        className="ml-2"
-                        animate={{ y: [0, -2, 0] }}
-                        transition={{
-                          duration: 1.5,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                      >
-                        ✨
-                      </motion.span>
-                    </span>
-                  </Link>
-                </Button>
-
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="group relative border-2 border-indigo-300 dark:border-indigo-500 hover:border-indigo-500 dark:hover:border-indigo-400 bg-white/90 dark:bg-gray-800 backdrop-blur-sm text-indigo-700 dark:text-indigo-300"
-                >
-                  <Link to="/quizzes">
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900 opacity-0 group-hover:opacity-100"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                    <span className="relative z-10 flex items-center">
-                      🎯 Browse Quizzes
-                      <motion.span
-                        className="ml-2"
-                        animate={{ rotate: [0, 360] }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: "linear",
-                        }}
-                      >
-                        ⚡
-                      </motion.span>
                     </span>
                   </Link>
                 </Button>
               </motion.div>
 
-              {/* Quick Stats */}
+              {/* Quick Stats with More Spacing */}
               <motion.div
-                className="flex flex-wrap justify-center md:justify-start gap-6 pt-6"
+                className="flex flex-wrap gap-12 pt-16 mt-16 border-t border-gray-200 dark:border-gray-700"
                 variants={fadeInUp}
               >
-                <div className="text-center p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900 border border-indigo-100 dark:border-indigo-800">
+                <div className="text-left">
                   <motion.div
-                    className="text-2xl font-bold text-indigo-600 dark:text-indigo-400"
-                    animate={{ scale: [1, 1.1, 1] }}
+                    className="text-4xl md:text-5xl font-bold text-indigo-600 dark:text-indigo-400 mb-2"
+                    animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
                     10K+
                   </motion.div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-base text-gray-600 dark:text-gray-400">
                     Active Users
                   </div>
                 </div>
-                <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-900 border border-green-100 dark:border-green-800">
+                <div className="text-left">
                   <motion.div
-                    className="text-2xl font-bold text-green-600 dark:text-green-400"
+                    className="text-4xl md:text-5xl font-bold text-green-600 dark:text-green-400 mb-2"
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                   >
                     50K+
                   </motion.div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-base text-gray-600 dark:text-gray-400">
                     Quizzes Created
                   </div>
                 </div>
-                <div className="text-center p-3 rounded-lg bg-purple-50 dark:bg-purple-900 border border-purple-100 dark:border-purple-800">
+                <div className="text-left p-6 rounded-2xl bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800">
                   <motion.div
-                    className="text-2xl font-bold text-purple-600 dark:text-purple-400"
+                    className="text-4xl md:text-5xl font-bold text-purple-600 dark:text-purple-400 mb-2"
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 2, repeat: Infinity, delay: 1 }}
                   >
                     98%
                   </motion.div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-base text-gray-600 dark:text-gray-400">
                     Satisfaction
                   </div>
                 </div>
@@ -488,37 +416,39 @@ export default function HomePage() {
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, amount: 0.3 }}
-            className="space-y-12"
+            className="space-y-16"
           >
             <motion.div
-              className="text-center space-y-4"
+              className="text-center space-y-6"
               variants={staggerItem}
             >
-              <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
                 Everything You Need in One Platform
               </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
                 Powerful tools for both students and educators to create, learn,
                 and grow together.
               </p>
             </motion.div>
 
             <motion.div
-              className="grid md:grid-cols-3 gap-8"
+              className="grid md:grid-cols-3 gap-10"
               variants={staggerContainer}
             >
               <motion.div variants={staggerItem}>
-                <Card className="h-full text-center group">
-                  <CardContent className="p-8">
+                <Card className="h-full text-center group card-lift border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                  <CardContent className="p-10">
                     <motion.div
-                      className="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 mb-6 mx-auto text-white"
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      transition={{ duration: 0.2 }}
+                      className="flex items-center justify-center h-20 w-20 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 mb-6 mx-auto text-indigo-600 dark:text-indigo-400"
+                      whileHover={{ scale: 1.05, y: -4 }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <Sparkles className="h-8 w-8" />
+                      <Sparkles className="h-10 w-10" />
                     </motion.div>
-                    <CardTitle className="mb-4">AI-Powered Creation</CardTitle>
-                    <CardDescription className="text-base">
+                    <CardTitle className="mb-4 text-2xl">
+                      AI-Powered Creation
+                    </CardTitle>
+                    <CardDescription className="text-base leading-relaxed">
                       Generate quizzes from a topic, PDF, or simple text
                       description. Save hours of prep time with intelligent AI
                       assistance.
@@ -528,17 +458,19 @@ export default function HomePage() {
               </motion.div>
 
               <motion.div variants={staggerItem}>
-                <Card className="h-full text-center group">
-                  <CardContent className="p-8">
+                <Card className="h-full text-center group card-lift border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                  <CardContent className="p-10">
                     <motion.div
-                      className="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-green-500 to-blue-600 mb-6 mx-auto text-white"
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      transition={{ duration: 0.2 }}
+                      className="flex items-center justify-center h-20 w-20 rounded-2xl bg-green-100 dark:bg-green-900/30 mb-6 mx-auto text-green-600 dark:text-green-400"
+                      whileHover={{ scale: 1.05, y: -4 }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <Gamepad2 className="h-8 w-8" />
+                      <Gamepad2 className="h-10 w-10" />
                     </motion.div>
-                    <CardTitle className="mb-4">Interactive Quizzes</CardTitle>
-                    <CardDescription className="text-base">
+                    <CardTitle className="mb-4 text-2xl">
+                      Interactive Quizzes
+                    </CardTitle>
+                    <CardDescription className="text-base leading-relaxed">
                       Engage with a modern quiz player that provides instant
                       feedback, tracks progress, and celebrates achievements.
                     </CardDescription>
@@ -547,17 +479,19 @@ export default function HomePage() {
               </motion.div>
 
               <motion.div variants={staggerItem}>
-                <Card className="h-full text-center group">
-                  <CardContent className="p-8">
+                <Card className="h-full text-center group card-lift border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                  <CardContent className="p-10">
                     <motion.div
-                      className="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-orange-500 to-red-600 mb-6 mx-auto text-white"
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      transition={{ duration: 0.2 }}
+                      className="flex items-center justify-center h-20 w-20 rounded-2xl bg-orange-100 dark:bg-orange-900/30 mb-6 mx-auto text-orange-600 dark:text-orange-400"
+                      whileHover={{ scale: 1.05, y: -4 }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <MessageCircle className="h-8 w-8" />
+                      <MessageCircle className="h-10 w-10" />
                     </motion.div>
-                    <CardTitle className="mb-4">AI Tutor Support</CardTitle>
-                    <CardDescription className="text-base">
+                    <CardTitle className="mb-4 text-2xl">
+                      AI Tutor Support
+                    </CardTitle>
+                    <CardDescription className="text-base leading-relaxed">
                       Get instant help with any academic question from your
                       personal AI tutor, available 24/7 for all subjects.
                     </CardDescription>
@@ -598,8 +532,8 @@ export default function HomePage() {
             >
               {/* AI Quiz Generator Demo */}
               <motion.div variants={staggerItem}>
-                <Card className="h-full overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
-                  <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900">
+                <Card className="h-full overflow-hidden group card-lift shadow-large spotlight">
+                  <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 glass">
                     <CardTitle className="flex items-center gap-3">
                       <motion.div
                         className="p-2 bg-blue-500 rounded-lg text-white"
@@ -717,8 +651,8 @@ export default function HomePage() {
 
               {/* Live Activity Feed */}
               <motion.div variants={staggerItem}>
-                <Card className="h-full overflow-hidden group hover:shadow-2xl transition-shadow duration-300">
-                  <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900">
+                <Card className="h-full overflow-hidden group card-lift shadow-large spotlight">
+                  <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 glass">
                     <CardTitle className="flex items-center gap-3">
                       <motion.div
                         className="p-2 bg-green-500 rounded-lg text-white"
@@ -821,7 +755,7 @@ export default function HomePage() {
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, amount: 0.3 }}
-            className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 dark:from-indigo-700 dark:via-purple-700 dark:to-indigo-700 rounded-3xl p-12 text-white shadow-2xl"
+            className="animated-gradient rounded-3xl p-12 text-white shadow-2xl reveal-scale"
           >
             <motion.div
               className="grid md:grid-cols-4 gap-8 text-center"
@@ -976,45 +910,35 @@ export default function HomePage() {
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, amount: 0.3 }}
-            className="space-y-12"
+            className="space-y-16 reveal-fade-up"
           >
             <motion.div
-              className="text-center space-y-4"
+              className="text-center space-y-6"
               variants={staggerItem}
             >
-              <Badge variant="gradient" size="lg" className="mb-4">
+              <Badge variant="gradient" size="lg" className="mb-4 pulse-ring">
                 <Award className="w-4 h-4 mr-2" />
                 💝 Success Stories
               </Badge>
-              <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
                 Loved by Students and Teachers Worldwide
               </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
                 Join thousands of learners who are transforming their education
                 with QuizWise-AI
               </p>
             </motion.div>
 
             <motion.div
-              className="grid md:grid-cols-3 gap-8"
+              className="grid md:grid-cols-3 gap-10"
               variants={staggerContainer}
             >
               <motion.div variants={staggerItem}>
-                <Card className="h-full group hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                  <CardContent className="p-8 relative overflow-hidden">
-                    {/* Animated Background */}
-                    <motion.div
-                      className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full blur-xl"
-                      animate={{
-                        scale: [1, 1.2, 1],
-                        opacity: [0.3, 0.6, 0.3],
-                      }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    />
-
-                    <div className="flex justify-between items-start mb-4">
+                <Card className="h-full group border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                  <CardContent className="p-10 relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-6">
                       <motion.div
-                        className="flex text-yellow-400"
+                        className="flex text-yellow-400 text-lg"
                         initial={{ scale: 0 }}
                         whileInView={{ scale: 1 }}
                         transition={{ delay: 0.5, staggerChildren: 0.1 }}
@@ -1035,7 +959,7 @@ export default function HomePage() {
                       </Badge>
                     </div>
 
-                    <p className="italic text-gray-600 dark:text-gray-300 mb-6 relative z-10">
+                    <p className="text-gray-700 dark:text-gray-300 mb-8 relative z-10 text-base leading-relaxed">
                       "🚀 Quizwise-AI has completely revolutionized my
                       classroom! I can create engaging quizzes in under 30
                       seconds. My students are more motivated than ever!"
@@ -1043,22 +967,22 @@ export default function HomePage() {
 
                     <motion.div
                       className="flex items-center"
-                      whileHover={{ scale: 1.05 }}
+                      whileHover={{ scale: 1.02 }}
                       transition={{ duration: 0.2 }}
                     >
                       <motion.div
-                        className="h-12 w-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold shadow-lg"
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.5 }}
+                        className="h-14 w-14 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-lg"
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ duration: 0.3 }}
                       >
                         MS
                       </motion.div>
-                      <div className="ml-3">
-                        <h4 className="font-medium text-gray-900 dark:text-white">
+                      <div className="ml-4">
+                        <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
                           Rakshita
                         </h4>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          High School Science Teacher • 🇺🇸 India
+                          High School Science Teacher • �� India
                         </p>
                       </div>
                     </motion.div>
@@ -1067,21 +991,11 @@ export default function HomePage() {
               </motion.div>
 
               <motion.div variants={staggerItem}>
-                <Card className="h-full group hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                  <CardContent className="p-8 relative overflow-hidden">
-                    {/* Animated Background */}
-                    <motion.div
-                      className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-500 to-blue-500 rounded-full blur-xl"
-                      animate={{
-                        scale: [1, 1.2, 1],
-                        opacity: [0.3, 0.6, 0.3],
-                      }}
-                      transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-                    />
-
-                    <div className="flex justify-between items-start mb-4">
+                <Card className="h-full group border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                  <CardContent className="p-10 relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-6">
                       <motion.div
-                        className="flex text-yellow-400"
+                        className="flex text-yellow-400 text-lg"
                         initial={{ scale: 0 }}
                         whileInView={{ scale: 1 }}
                         transition={{ delay: 0.7, staggerChildren: 0.1 }}
@@ -1102,7 +1016,7 @@ export default function HomePage() {
                       </Badge>
                     </div>
 
-                    <p className="italic text-gray-600 dark:text-gray-300 mb-6 relative z-10">
+                    <p className="text-gray-700 dark:text-gray-300 mb-8 relative z-10 text-base leading-relaxed">
                       "🎯 The AI Doubt Solver is like having a genius tutor
                       24/7! My grades improved from C+ to A- in just 2 months.
                       This app is pure magic!"
@@ -1110,18 +1024,18 @@ export default function HomePage() {
 
                     <motion.div
                       className="flex items-center"
-                      whileHover={{ scale: 1.05 }}
+                      whileHover={{ scale: 1.02 }}
                       transition={{ duration: 0.2 }}
                     >
                       <motion.div
-                        className="h-12 w-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold shadow-lg"
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.5 }}
+                        className="h-14 w-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 font-semibold text-lg"
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ duration: 0.3 }}
                       >
                         AK
                       </motion.div>
-                      <div className="ml-3">
-                        <h4 className="font-medium text-gray-900 dark:text-white">
+                      <div className="ml-4">
+                        <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
                           Amitesh Vishwakarma
                         </h4>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -1134,21 +1048,11 @@ export default function HomePage() {
               </motion.div>
 
               <motion.div variants={staggerItem}>
-                <Card className="h-full group hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                  <CardContent className="p-8 relative overflow-hidden">
-                    {/* Animated Background */}
-                    <motion.div
-                      className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-pink-500 to-red-500 rounded-full blur-xl"
-                      animate={{
-                        scale: [1, 1.2, 1],
-                        opacity: [0.3, 0.6, 0.3],
-                      }}
-                      transition={{ duration: 3, repeat: Infinity, delay: 2 }}
-                    />
-
-                    <div className="flex justify-between items-start mb-4">
+                <Card className="h-full group border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                  <CardContent className="p-10 relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-6">
                       <motion.div
-                        className="flex text-yellow-400"
+                        className="flex text-yellow-400 text-lg"
                         initial={{ scale: 0 }}
                         whileInView={{ scale: 1 }}
                         transition={{ delay: 0.9, staggerChildren: 0.1 }}
@@ -1169,7 +1073,7 @@ export default function HomePage() {
                       </Badge>
                     </div>
 
-                    <p className="italic text-gray-600 dark:text-gray-300 mb-6 relative z-10">
+                    <p className="text-gray-700 dark:text-gray-300 mb-8 relative z-10 text-base leading-relaxed">
                       "💼 We deployed QuizWise-AI across our entire school
                       district. Student engagement is up 300% and teacher
                       productivity has doubled. Outstanding!"
@@ -1177,18 +1081,18 @@ export default function HomePage() {
 
                     <motion.div
                       className="flex items-center"
-                      whileHover={{ scale: 1.05 }}
+                      whileHover={{ scale: 1.02 }}
                       transition={{ duration: 0.2 }}
                     >
                       <motion.div
-                        className="h-12 w-12 bg-gradient-to-br from-pink-500 to-red-600 rounded-full flex items-center justify-center text-white font-semibold shadow-lg"
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.5 }}
+                        className="h-14 w-14 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center text-pink-600 dark:text-pink-400 font-semibold text-lg"
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ duration: 0.3 }}
                       >
                         DR
                       </motion.div>
-                      <div className="ml-3">
-                        <h4 className="font-medium text-gray-900 dark:text-white">
+                      <div className="ml-4">
+                        <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
                           Sarah Johnson
                         </h4>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -1247,7 +1151,7 @@ export default function HomePage() {
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, amount: 0.3 }}
-            className="relative text-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-3xl p-12 shadow-2xl overflow-hidden"
+            className="relative text-center bg-indigo-600 dark:bg-indigo-700 rounded-3xl p-16 shadow-2xl overflow-hidden reveal-scale"
           >
             {/* Animated Background Elements */}
             <motion.div
@@ -1287,7 +1191,7 @@ export default function HomePage() {
             </motion.div>
 
             <motion.div
-              className="relative z-10 space-y-6"
+              className="relative z-10 space-y-8"
               variants={staggerItem}
             >
               <motion.div
@@ -1298,7 +1202,7 @@ export default function HomePage() {
                 <Badge
                   variant="secondary"
                   size="lg"
-                  className="mb-4 bg-white/20 text-white border-white/30"
+                  className="mb-6 bg-white/20 text-white border-white/30"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   🎉 Limited Time: Free Premium Features
@@ -1306,17 +1210,16 @@ export default function HomePage() {
               </motion.div>
 
               <motion.h2
-                className="text-4xl md:text-5xl font-extrabold text-white leading-tight"
+                className="text-4xl md:text-6xl font-bold text-white leading-tight"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                Ready to <span className="animate-pulse">Revolutionize</span>{" "}
-                Your Learning?
+                Ready to Revolutionize Your Learning?
               </motion.h2>
 
               <motion.p
-                className="text-xl text-indigo-100 max-w-2xl mx-auto"
+                className="text-xl md:text-2xl text-indigo-50 max-w-3xl mx-auto leading-relaxed"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
@@ -1328,7 +1231,7 @@ export default function HomePage() {
               </motion.p>
 
               <motion.div
-                className="flex flex-col sm:flex-row justify-center gap-4 pt-4"
+                className="flex flex-col sm:flex-row justify-center gap-6 pt-8"
                 variants={staggerContainer}
                 initial="initial"
                 whileInView="animate"
@@ -1338,55 +1241,12 @@ export default function HomePage() {
                   <Button
                     asChild
                     size="xl"
-                    className="group bg-white text-indigo-600 hover:bg-gray-50 font-bold shadow-2xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden"
-                    glow={true}
-                    ripple={true}
+                    className="group bg-white text-indigo-600 hover:bg-gray-50 font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 px-12 py-6 text-lg rounded-2xl"
                   >
                     <Link to="/signup">
-                      {/* Animated Background */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 opacity-0 group-hover:opacity-20"
-                        animate={{
-                          background: [
-                            "linear-gradient(to right, #fde047, #f9a8d4, #d8b4fe)",
-                            "linear-gradient(to right, #f9a8d4, #d8b4fe, #fde047)",
-                            "linear-gradient(to right, #d8b4fe, #fde047, #f9a8d4)",
-                          ],
-                        }}
-                        transition={{ duration: 3, repeat: Infinity }}
-                      />
-
-                      {/* Multiple Shimmer Effects */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12"
-                        animate={{ x: ["-100%", "100%"] }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                      />
-
-                      <span className="relative z-10 flex items-center">
-                        <motion.span
-                          animate={{
-                            scale: [1, 1.02, 1],
-                            textShadow: [
-                              "0 0 0px rgba(99,102,241,0)",
-                              "0 0 20px rgba(99,102,241,0.8)",
-                              "0 0 0px rgba(99,102,241,0)",
-                            ],
-                          }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          🚀 Start Learning for FREE
-                        </motion.span>
-                        <motion.div
-                          animate={{ x: [0, 5, 0] }}
-                          transition={{ duration: 1, repeat: Infinity }}
-                        >
-                          <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform duration-300" />
-                        </motion.div>
+                      <span className="relative z-10 flex items-center gap-2">
+                        🚀 Start Learning for FREE
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                       </span>
                     </Link>
                   </Button>
@@ -1397,37 +1257,11 @@ export default function HomePage() {
                     asChild
                     variant="outline"
                     size="xl"
-                    className="border-2 border-white/30 text-white hover:bg-white/10 font-bold backdrop-blur-sm relative overflow-hidden group"
-                    glow={true}
+                    className="border-2 border-white text-white hover:bg-white hover:text-indigo-600 font-semibold backdrop-blur-sm px-12 py-6 text-lg rounded-2xl transition-all duration-300 hover:-translate-y-1"
                   >
                     <Link to="/quizzes">
-                      {/* Particle Effect Background */}
-                      <motion.div
-                        className="absolute inset-0 opacity-0 group-hover:opacity-100"
-                        initial={{
-                          background:
-                            "radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)",
-                        }}
-                        animate={{
-                          backgroundPosition: ["0% 0%", "100% 100%"],
-                          backgroundSize: [
-                            "20px 20px",
-                            "40px 40px",
-                            "20px 20px",
-                          ],
-                        }}
-                        transition={{ duration: 3, repeat: Infinity }}
-                      />
-
-                      <span className="relative z-10 flex items-center">
-                        <motion.span
-                          animate={{
-                            color: ["#ffffff", "#fbbf24", "#ffffff"],
-                          }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          🎯 Explore Quizzes
-                        </motion.span>
+                      <span className="relative z-10 flex items-center gap-2">
+                        🎯 Explore Quizzes
                       </span>
                     </Link>
                   </Button>
