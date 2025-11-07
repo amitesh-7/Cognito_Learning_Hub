@@ -23,6 +23,7 @@ npm install lenis
 ```
 
 **Lenis** - Premium smooth scrolling library with momentum-based physics
+
 - **Size:** ~5KB gzipped
 - **Performance:** Hardware-accelerated, 60fps
 - **Features:** Easing, momentum, direction control
@@ -34,6 +35,7 @@ npm install lenis
 ### **1. Lenis Smooth Scrolling Integration** ✨
 
 #### **Before:**
+
 ```jsx
 export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +44,7 @@ export default function HomePage() {
 ```
 
 #### **After:**
+
 ```jsx
 import Lenis from "lenis";
 
@@ -54,7 +57,7 @@ export default function HomePage() {
       const lenis = new Lenis({
         duration: 1.2,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        direction: 'vertical',
+        direction: "vertical",
         smooth: true,
         mouseMultiplier: 1,
         smoothTouch: false,
@@ -76,6 +79,7 @@ export default function HomePage() {
 ```
 
 **Benefits:**
+
 - ✅ 60fps smooth scrolling
 - ✅ Momentum-based physics
 - ✅ Better UX on scroll-heavy pages
@@ -90,14 +94,15 @@ We reduced ALL oversized text throughout the page for a more professional appear
 
 #### **Hero Section**
 
-| Element | Before | After | Change |
-|---------|--------|-------|--------|
-| **H1 Heading** | `text-5xl md:text-7xl` | `text-3xl md:text-5xl lg:text-6xl` | ⬇️ Smaller, responsive |
-| **Subtitle** | `text-xl md:text-2xl` | `text-base md:text-lg` | ⬇️ Less overwhelming |
-| **Stats Numbers** | `text-4xl md:text-5xl` | `text-2xl md:text-3xl` | ⬇️ More modest |
-| **Stats Labels** | `text-base` | `text-sm` | ⬇️ Subtle |
+| Element           | Before                 | After                              | Change                 |
+| ----------------- | ---------------------- | ---------------------------------- | ---------------------- |
+| **H1 Heading**    | `text-5xl md:text-7xl` | `text-3xl md:text-5xl lg:text-6xl` | ⬇️ Smaller, responsive |
+| **Subtitle**      | `text-xl md:text-2xl`  | `text-base md:text-lg`             | ⬇️ Less overwhelming   |
+| **Stats Numbers** | `text-4xl md:text-5xl` | `text-2xl md:text-3xl`             | ⬇️ More modest         |
+| **Stats Labels**  | `text-base`            | `text-sm`                          | ⬇️ Subtle              |
 
 **Before:**
+
 ```jsx
 <h1 className="text-5xl md:text-7xl font-black">
   Your All-in-One Platform for AI-Powered Learning
@@ -108,6 +113,7 @@ We reduced ALL oversized text throughout the page for a more professional appear
 ```
 
 **After:**
+
 ```jsx
 <h1 className="text-3xl md:text-5xl lg:text-6xl font-black">
   Your All-in-One Platform for AI-Powered Learning
@@ -119,30 +125,28 @@ We reduced ALL oversized text throughout the page for a more professional appear
 
 #### **Section Headings**
 
-| Section | Before | After |
-|---------|--------|-------|
-| Features | `text-4xl md:text-5xl` | `text-2xl md:text-4xl` |
-| Experience Magic | `text-4xl` | `text-2xl md:text-4xl` |
-| AI Tutor | `text-4xl md:text-5xl` | `text-2xl md:text-4xl` |
-| Testimonials | `text-4xl md:text-5xl` | `text-2xl md:text-4xl` |
-| CTA | `text-4xl md:text-6xl` | `text-2xl md:text-4xl lg:text-5xl` |
-| Pricing | `text-4xl md:text-5xl` | `text-2xl md:text-4xl` |
-| FAQ | `text-4xl` | `text-2xl md:text-4xl` |
+| Section          | Before                 | After                              |
+| ---------------- | ---------------------- | ---------------------------------- |
+| Features         | `text-4xl md:text-5xl` | `text-2xl md:text-4xl`             |
+| Experience Magic | `text-4xl`             | `text-2xl md:text-4xl`             |
+| AI Tutor         | `text-4xl md:text-5xl` | `text-2xl md:text-4xl`             |
+| Testimonials     | `text-4xl md:text-5xl` | `text-2xl md:text-4xl`             |
+| CTA              | `text-4xl md:text-6xl` | `text-2xl md:text-4xl lg:text-5xl` |
+| Pricing          | `text-4xl md:text-5xl` | `text-2xl md:text-4xl`             |
+| FAQ              | `text-4xl`             | `text-2xl md:text-4xl`             |
 
 #### **Card Titles**
 
 **Before:**
+
 ```jsx
-<CardTitle className="mb-4 text-2xl">
-  AI-Powered Creation
-</CardTitle>
+<CardTitle className="mb-4 text-2xl">AI-Powered Creation</CardTitle>
 ```
 
 **After:**
+
 ```jsx
-<CardTitle className="mb-4 text-xl">
-  AI-Powered Creation
-</CardTitle>
+<CardTitle className="mb-4 text-xl">AI-Powered Creation</CardTitle>
 ```
 
 All card titles reduced from `text-2xl` → `text-xl`
@@ -150,17 +154,15 @@ All card titles reduced from `text-2xl` → `text-xl`
 #### **Stats Section**
 
 **Before:**
+
 ```jsx
-<motion.div className="text-4xl font-bold text-white">
-  10K+
-</motion.div>
+<motion.div className="text-4xl font-bold text-white">10K+</motion.div>
 ```
 
 **After:**
+
 ```jsx
-<motion.div className="text-3xl font-bold text-white">
-  10K+
-</motion.div>
+<motion.div className="text-3xl font-bold text-white">10K+</motion.div>
 ```
 
 All stats reduced from `text-4xl` → `text-3xl`
@@ -170,8 +172,11 @@ All stats reduced from `text-4xl` → `text-3xl`
 ### **3. Removed Mock Social Proof** 🚫
 
 **Deleted Section:**
+
 ```jsx
-{/* Social Proof - REMOVED */}
+{
+  /* Social Proof - REMOVED */
+}
 <motion.div className="space-y-4" variants={fadeInUp}>
   <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
     Trusted by students and teachers worldwide
@@ -182,16 +187,18 @@ All stats reduced from `text-4xl` → `text-3xl`
     <div className="text-2xl font-bold text-gray-400">MIT</div>
     <div className="text-2xl font-bold text-gray-400">Oxford</div>
   </div>
-</motion.div>
+</motion.div>;
 ```
 
 **Why This Is Important:**
+
 - ❌ **Damages Credibility** - Claiming associations with IIT Bombay, Stanford, MIT, Oxford without proof is dishonest
 - ❌ **Legal Risk** - Using university names without permission can lead to trademark issues
 - ❌ **User Trust** - Savvy users recognize fake social proof immediately
 - ✅ **Better Alternative** - Keep real metrics (10K+ users, 50K+ quizzes) which are verifiable
 
 **What We Kept (Real Data):**
+
 - ✅ "10,000+ learners" (from your actual user base)
 - ✅ "50K+ Quizzes Created" (real platform activity)
 - ✅ "98% Satisfaction" (based on actual feedback)
@@ -201,6 +208,7 @@ All stats reduced from `text-4xl` → `text-3xl`
 ## 📊 Typography Scale Comparison
 
 ### **Old Scale (Too Large)**
+
 ```
 H1: 80-112px (text-5xl to text-7xl)
 H2: 48-60px (text-4xl to text-5xl)
@@ -210,6 +218,7 @@ Stats: 48-60px (text-4xl to text-5xl)
 ```
 
 ### **New Scale (Professional)**
+
 ```
 H1: 30-48px sm → 60px lg (text-3xl to text-6xl)
 H2: 24-36px sm → 48px md (text-2xl to text-4xl)
@@ -219,6 +228,7 @@ Stats: 30-36px (text-3xl)
 ```
 
 ### **Benefits:**
+
 - ✅ More readable at all screen sizes
 - ✅ Better hierarchy (clearer visual levels)
 - ✅ Less scrolling required
@@ -231,19 +241,20 @@ Stats: 30-36px (text-3xl)
 
 ```jsx
 const lenis = new Lenis({
-  duration: 1.2,        // Scroll duration (seconds)
+  duration: 1.2, // Scroll duration (seconds)
   easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Smooth ease-out
-  direction: 'vertical', // Only vertical scroll
-  gestureDirection: 'vertical',
-  smooth: true,          // Enable smooth scrolling
-  mouseMultiplier: 1,    // Mouse wheel sensitivity
-  smoothTouch: false,    // Disable on touch (native feels better)
+  direction: "vertical", // Only vertical scroll
+  gestureDirection: "vertical",
+  smooth: true, // Enable smooth scrolling
+  mouseMultiplier: 1, // Mouse wheel sensitivity
+  smoothTouch: false, // Disable on touch (native feels better)
   touchMultiplier: 2,
-  infinite: false,       // No infinite scroll
+  infinite: false, // No infinite scroll
 });
 ```
 
 ### **Performance Notes:**
+
 - Uses `requestAnimationFrame` for 60fps
 - GPU-accelerated transforms
 - Minimal CPU overhead (~1-2%)
@@ -266,10 +277,11 @@ lenis.raf(time);
   viewport={{ once: true, amount: 0.3 }}
 >
   {/* Content */}
-</motion.section>
+</motion.section>;
 ```
 
 **No Conflicts!** Both libraries work independently:
+
 - Lenis: Smooths scroll **behavior**
 - Framer: Animates elements **on scroll**
 
@@ -280,6 +292,7 @@ lenis.raf(time);
 ### **Hero Section**
 
 **Before:**
+
 ```
 ┌─────────────────────────────────────────┐
 │ [HUGE 7xl TEXT - 112px]                 │
@@ -298,6 +311,7 @@ lenis.raf(time);
 ```
 
 **After:**
+
 ```
 ┌─────────────────────────────────────────┐
 │ [MEDIUM 5xl TEXT - 48px]                │
@@ -318,11 +332,11 @@ lenis.raf(time);
 
 The new text sizes provide **better mobile experience**:
 
-| Screen Size | Old H1 | New H1 | Improvement |
-|-------------|--------|--------|-------------|
-| **Mobile (375px)** | 80px | 30px | ⬇️ 62% smaller |
-| **Tablet (768px)** | 96px | 48px | ⬇️ 50% smaller |
-| **Desktop (1024px)** | 112px | 60px | ⬇️ 46% smaller |
+| Screen Size          | Old H1 | New H1 | Improvement    |
+| -------------------- | ------ | ------ | -------------- |
+| **Mobile (375px)**   | 80px   | 30px   | ⬇️ 62% smaller |
+| **Tablet (768px)**   | 96px   | 48px   | ⬇️ 50% smaller |
+| **Desktop (1024px)** | 112px  | 60px   | ⬇️ 46% smaller |
 
 **Result:** Less scrolling, more content visible, better UX
 
@@ -331,12 +345,14 @@ The new text sizes provide **better mobile experience**:
 ## 🚀 Performance Impact
 
 ### **Lenis Library**
+
 - **Bundle Size:** +5KB gzipped
 - **Runtime Overhead:** ~1-2% CPU
 - **FPS Impact:** None (60fps maintained)
 - **Memory:** Negligible (~100KB)
 
 ### **Text Size Reduction**
+
 - **Bundle Size:** No change
 - **Render Performance:** ✅ **Slightly improved** (less text to render)
 - **Layout Shifts:** ✅ **Reduced** (smaller elements = less reflow)
@@ -363,23 +379,27 @@ The new text sizes provide **better mobile experience**:
 ## 🎓 How to Test
 
 ### **1. Start Dev Server**
+
 ```bash
 cd frontend
 npm run dev
 ```
 
 ### **2. Test Smooth Scrolling**
+
 - Scroll with **mouse wheel** → Should feel buttery smooth
 - Scroll with **trackpad** → Momentum-based physics
 - Click **nav links** → Smooth scroll to sections
 - Try on **mobile** → Native touch scroll (Lenis disabled)
 
 ### **3. Test Text Sizes**
+
 - Open on **mobile** (375px) → Text should be readable, not overwhelming
 - Open on **tablet** (768px) → Comfortable reading size
 - Open on **desktop** (1440px+) → Professional, not shouty
 
 ### **4. Verify No Mock Data**
+
 - Check hero section → No IIT Bombay/Stanford/MIT/Oxford
 - Stats section → Only real metrics (10K+, 50K+, 98%)
 
@@ -388,25 +408,30 @@ npm run dev
 ## 🔮 Future Recommendations
 
 ### **1. Add Real Social Proof**
+
 Instead of fake universities, add:
+
 - ✅ Real user testimonials with photos
 - ✅ Actual company logos (with permission)
 - ✅ Verified review scores (Google, Trustpilot)
 - ✅ Case studies with measurable results
 
 ### **2. A/B Test Text Sizes**
+
 - Track conversion rates with new sizes
 - Monitor scroll depth analytics
 - Collect user feedback on readability
 
 ### **3. Optimize Lenis Settings**
+
 - Adjust `duration` based on user feedback (current: 1.2s)
 - Test different `easing` functions
 - Consider enabling `smoothTouch` on tablets
 
 ### **4. Add Scroll Progress Indicator**
+
 ```jsx
-lenis.on('scroll', ({ progress }) => {
+lenis.on("scroll", ({ progress }) => {
   // Show scroll progress bar (0-100%)
 });
 ```
@@ -416,17 +441,20 @@ lenis.on('scroll', ({ progress }) => {
 ## 📚 References
 
 ### **Lenis Documentation**
+
 - GitHub: https://github.com/studio-freight/lenis
 - Docs: https://lenis.studiofreight.com/
 - Examples: https://lenis.studiofreight.com/showcase
 
 ### **Typography Best Practices**
+
 - Material Design: 12px-96px scale
 - Apple HIG: Dynamic Type
 - Stripe: 14px-56px scale
 - Vercel: 14px-72px scale
 
 ### **Social Proof Guidelines**
+
 - FTC Guidelines: https://www.ftc.gov/endorsements
 - GDPR: Testimonials require consent
 - Trademark Law: Don't use logos without permission

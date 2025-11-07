@@ -31,19 +31,21 @@ npm install lenis  # Already installed ✅
 
 ### **Text Size Reductions**
 
-| Element | Before | After |
-|---------|--------|-------|
-| Hero H1 | 112px | 60px max |
-| Section H2 | 60px | 48px max |
-| Card Titles | 30px | 20px |
-| Body Text | 24px | 18px |
-| Stats | 60px | 36px |
+| Element     | Before | After    |
+| ----------- | ------ | -------- |
+| Hero H1     | 112px  | 60px max |
+| Section H2  | 60px   | 48px max |
+| Card Titles | 30px   | 20px     |
+| Body Text   | 24px   | 18px     |
+| Stats       | 60px   | 36px     |
 
 ### **What Was Removed**
+
 - ❌ Fake university endorsements (IIT Bombay, Stanford, MIT, Oxford)
 - ✅ Kept real metrics (10K+ users, 50K+ quizzes, 98% satisfaction)
 
 ### **What Was Added**
+
 - ✅ Lenis smooth scrolling with momentum physics
 - ✅ Proper cleanup on unmount
 - ✅ Mobile-responsive text scaling
@@ -67,7 +69,7 @@ npm install lenis  # Already installed ✅
 ```jsx
 // Text scales automatically:
 text-3xl      // Mobile: 30px
-md:text-5xl   // Tablet: 48px  
+md:text-5xl   // Tablet: 48px
 lg:text-6xl   // Desktop: 60px
 ```
 
@@ -77,10 +79,10 @@ lg:text-6xl   // Desktop: 60px
 
 ```jsx
 new Lenis({
-  duration: 1.2,        // Smooth over 1.2 seconds
-  smooth: true,         // Enable smooth scrolling
-  smoothTouch: false,   // Native touch scroll on mobile
-})
+  duration: 1.2, // Smooth over 1.2 seconds
+  smooth: true, // Enable smooth scrolling
+  smoothTouch: false, // Native touch scroll on mobile
+});
 ```
 
 ---
