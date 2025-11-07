@@ -3,6 +3,14 @@
 /backend/node_modules
 /backend/.env
 
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+.env.*.local
+*.env
+
 # Build folder
 /frontend/dist
 
