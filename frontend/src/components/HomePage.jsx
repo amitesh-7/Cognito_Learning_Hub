@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import Lenis from "lenis";
 import {
   Sparkles,
   Gamepad2,
@@ -44,6 +45,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [openFAQ, setOpenFAQ] = useState(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const lenisRef = useRef(null);
 
   useEffect(() => {
     // Simulate loading time
@@ -52,6 +54,36 @@ export default function HomePage() {
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Initialize Lenis smooth scrolling
+  useEffect(() => {
+    if (!isLoading) {
+      const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        direction: 'vertical',
+        gestureDirection: 'vertical',
+        smooth: true,
+        mouseMultiplier: 1,
+        smoothTouch: false,
+        touchMultiplier: 2,
+        infinite: false,
+      });
+
+      lenisRef.current = lenis;
+
+      function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+
+      requestAnimationFrame(raf);
+
+      return () => {
+        lenis.destroy();
+      };
+    }
+  }, [isLoading]);
 
   // Structured Data for SEO
   const structuredData = {
@@ -244,7 +276,7 @@ export default function HomePage() {
 
               <motion.h1
                 id="hero-heading"
-                className="text-5xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-6"
+                className="text-3xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.1] mb-6"
                 variants={fadeInUp}
               >
                 Your All-in-One Platform for{" "}
@@ -254,7 +286,7 @@ export default function HomePage() {
               </motion.h1>
 
               <motion.p
-                className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-3xl mb-10"
+                className="text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed max-w-3xl mb-10"
                 variants={fadeInUp}
               >
                 Turn any PDF into an interactive mock test, get instant
@@ -303,61 +335,44 @@ export default function HomePage() {
                 </Button>
               </motion.div>
 
-              {/* Social Proof - Moved from bottom */}
-              <motion.div className="space-y-4" variants={fadeInUp}>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                  Trusted by students and teachers worldwide
-                </p>
-                <div className="flex flex-wrap items-center gap-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                  <div className="text-2xl font-bold text-gray-400">
-                    IIT Bombay
-                  </div>
-                  <div className="text-2xl font-bold text-gray-400">
-                    Stanford
-                  </div>
-                  <div className="text-2xl font-bold text-gray-400">MIT</div>
-                  <div className="text-2xl font-bold text-gray-400">Oxford</div>
-                </div>
-              </motion.div>
-
-              {/* Quick Stats moved below social proof */}
+              {/* Quick Stats */}
               <motion.div
-                className="flex flex-wrap gap-12 pt-16 mt-12 border-t border-gray-200 dark:border-gray-700"
+                className="flex flex-wrap gap-8 pt-8 border-t border-gray-200 dark:border-gray-700"
                 variants={fadeInUp}
               >
                 <div className="text-left">
                   <motion.div
-                    className="text-4xl md:text-5xl font-bold text-indigo-600 dark:text-indigo-400 mb-2"
+                    className="text-2xl md:text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-1"
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
                     10K+
                   </motion.div>
-                  <div className="text-base text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     Active Users
                   </div>
                 </div>
                 <div className="text-left">
                   <motion.div
-                    className="text-4xl md:text-5xl font-bold text-green-600 dark:text-green-400 mb-2"
+                    className="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400 mb-1"
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                   >
                     50K+
                   </motion.div>
-                  <div className="text-base text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     Quizzes Created
                   </div>
                 </div>
-                <div className="text-left p-6 rounded-2xl bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800">
+                <div className="text-left p-4 rounded-2xl bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800">
                   <motion.div
-                    className="text-4xl md:text-5xl font-bold text-purple-600 dark:text-purple-400 mb-2"
+                    className="text-2xl md:text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1"
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 2, repeat: Infinity, delay: 1 }}
                   >
                     98%
                   </motion.div>
-                  <div className="text-base text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     Satisfaction
                   </div>
                 </div>
@@ -475,10 +490,10 @@ export default function HomePage() {
               className="text-center space-y-6"
               variants={staggerItem}
             >
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">
                 Everything You Need in One Platform
               </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
                 Powerful tools for both students and educators to create, learn,
                 and grow together.
               </p>
@@ -498,7 +513,7 @@ export default function HomePage() {
                     >
                       <Sparkles className="h-10 w-10" />
                     </motion.div>
-                    <CardTitle className="mb-4 text-2xl">
+                    <CardTitle className="mb-4 text-xl">
                       AI-Powered Creation
                     </CardTitle>
                     <CardDescription className="text-base leading-relaxed">
@@ -520,7 +535,7 @@ export default function HomePage() {
                     >
                       <Gamepad2 className="h-10 w-10" />
                     </motion.div>
-                    <CardTitle className="mb-4 text-2xl">
+                    <CardTitle className="mb-4 text-xl">
                       Interactive Quizzes
                     </CardTitle>
                     <CardDescription className="text-base leading-relaxed">
@@ -541,7 +556,7 @@ export default function HomePage() {
                     >
                       <MessageCircle className="h-10 w-10" />
                     </motion.div>
-                    <CardTitle className="mb-4 text-2xl">
+                    <CardTitle className="mb-4 text-xl">
                       AI Tutor Support
                     </CardTitle>
                     <CardDescription className="text-base leading-relaxed">
@@ -570,10 +585,10 @@ export default function HomePage() {
                 <Zap className="w-4 h-4 mr-2" />
                 🎮 Try It Live
               </Badge>
-              <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">
                 Experience the Magic in Action
               </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
                 See how QuizWise-AI transforms learning with real-time demos and
                 interactive previews.
               </p>
@@ -817,7 +832,7 @@ export default function HomePage() {
               <motion.div variants={staggerItem}>
                 <div className="space-y-2">
                   <motion.div
-                    className="text-4xl font-bold text-white"
+                    className="text-3xl font-bold text-white"
                     initial={{ scale: 0 }}
                     whileInView={{ scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
@@ -833,7 +848,7 @@ export default function HomePage() {
               <motion.div variants={staggerItem}>
                 <div className="space-y-2">
                   <motion.div
-                    className="text-4xl font-bold text-white"
+                    className="text-3xl font-bold text-white"
                     initial={{ scale: 0 }}
                     whileInView={{ scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
@@ -849,7 +864,7 @@ export default function HomePage() {
               <motion.div variants={staggerItem}>
                 <div className="space-y-2">
                   <motion.div
-                    className="text-4xl font-bold text-white"
+                    className="text-3xl font-bold text-white"
                     initial={{ scale: 0 }}
                     whileInView={{ scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.4 }}
@@ -865,7 +880,7 @@ export default function HomePage() {
               <motion.div variants={staggerItem}>
                 <div className="space-y-2">
                   <motion.div
-                    className="text-4xl font-bold text-white"
+                    className="text-3xl font-bold text-white"
                     initial={{ scale: 0 }}
                     whileInView={{ scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.5 }}
@@ -892,10 +907,10 @@ export default function HomePage() {
               className="text-center space-y-4 mb-12"
               variants={staggerItem}
             >
-              <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">
                 Get Started in 3 Easy Steps
               </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-400">
+              <p className="text-base md:text-lg text-gray-600 dark:text-gray-400">
                 From concept to quiz in minutes.
               </p>
             </motion.div>
@@ -969,10 +984,10 @@ export default function HomePage() {
               className="text-center space-y-6"
               variants={staggerItem}
             >
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">
                 Why Chat With Our AI?
               </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
                 Get instant, personalized support whenever you need it
               </p>
             </motion.div>
@@ -1087,10 +1102,10 @@ export default function HomePage() {
                 <Award className="w-4 h-4 mr-2" />
                 💝 Success Stories
               </Badge>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">
                 Loved by Students and Teachers Worldwide
               </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
                 Join thousands of learners who are transforming their education
                 with QuizWise-AI
               </p>
@@ -1377,7 +1392,7 @@ export default function HomePage() {
               </motion.div>
 
               <motion.h2
-                className="text-4xl md:text-6xl font-bold text-white leading-tight"
+                className="text-2xl md:text-4xl lg:text-5xl font-bold text-white leading-tight"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
@@ -1386,7 +1401,7 @@ export default function HomePage() {
               </motion.h2>
 
               <motion.p
-                className="text-xl md:text-2xl text-indigo-50 max-w-3xl mx-auto leading-relaxed"
+                className="text-base md:text-lg text-indigo-50 max-w-3xl mx-auto leading-relaxed"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
@@ -1565,7 +1580,7 @@ export default function HomePage() {
             >
               <h2
                 id="comparison-heading"
-                className="text-4xl font-bold text-gray-900 dark:text-white"
+                className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white"
               >
                 Why Choose{" "}
                 <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
@@ -1573,7 +1588,7 @@ export default function HomePage() {
                 </span>
                 ?
               </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
                 See how we compare to traditional quiz creation methods
               </p>
             </motion.div>
@@ -1708,11 +1723,11 @@ export default function HomePage() {
             >
               <h2
                 id="faq-heading"
-                className="text-4xl font-bold text-gray-900 dark:text-white"
+                className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white"
               >
                 Frequently Asked Questions
               </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
                 Everything you need to know about QuizWise-AI
               </p>
             </motion.div>
@@ -1775,11 +1790,11 @@ export default function HomePage() {
             >
               <h2
                 id="pricing-heading"
-                className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white"
+                className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white"
               >
                 Simple, Transparent Pricing
               </h2>
-              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
                 Get started for free, upgrade when you need more power
               </p>
             </motion.div>
