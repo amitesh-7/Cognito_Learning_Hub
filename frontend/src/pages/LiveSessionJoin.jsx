@@ -34,6 +34,22 @@ const LiveSessionJoin = () => {
   const [quizEnded, setQuizEnded] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
+  // Connect socket when component mounts
+  useEffect(() => {
+    if (socket && !socket.connected) {
+      console.log('🔌 Connecting socket for live session...');
+      socket.connect();
+    }
+
+    return () => {
+      // Disconnect when leaving the page
+      if (socket && socket.connected) {
+        console.log('🔌 Disconnecting socket...');
+        socket.disconnect();
+      }
+    };
+  }, [socket]);
+
   // Join session
   const handleJoinSession = useCallback(async () => {
     if (!sessionCode || sessionCode.length !== 6) {

@@ -26,6 +26,22 @@ const LiveSessionHost = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Connect socket when component mounts
+  useEffect(() => {
+    if (socket && !socket.connected) {
+      console.log('🔌 Connecting socket for live session...');
+      socket.connect();
+    }
+
+    return () => {
+      // Disconnect when leaving the page
+      if (socket && socket.connected) {
+        console.log('🔌 Disconnecting socket...');
+        socket.disconnect();
+      }
+    };
+  }, [socket]);
+
   // Fetch quiz details
   useEffect(() => {
     const fetchQuiz = async () => {
