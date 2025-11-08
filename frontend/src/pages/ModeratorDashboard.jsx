@@ -61,7 +61,7 @@ export default function ModeratorDashboard() {
     try {
       const [quizzesRes, statsRes] = await Promise.all([
         fetch(`${import.meta.env.VITE_API_URL}/api/moderator/quizzes?page=${quizPage}&search=${quizSearch}`, { headers: { 'x-auth-token': token } }),
-        fetch('${import.meta.env.VITE_API_URL}/api/moderator/stats', { headers: { 'x-auth-token': token } })
+        fetch(`${import.meta.env.VITE_API_URL}/api/moderator/stats`, { headers: { 'x-auth-token': token } })
       ]);
       const quizzesData = await quizzesRes.json();
       const statsData = await statsRes.json();
