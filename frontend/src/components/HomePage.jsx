@@ -294,7 +294,8 @@ export default function HomePage() {
                 <span className="font-bold text-indigo-600 dark:text-indigo-400">
                   10,000+
                 </span>{" "}
-                learners already transforming their education with Cognito Learning Hub.
+                learners already transforming their education with Cognito
+                Learning Hub.
               </motion.p>
 
               <motion.div
@@ -589,8 +590,8 @@ export default function HomePage() {
                 Experience the Magic in Action
               </h2>
               <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                See how Cognito Learning Hub transforms learning with real-time demos and
-                interactive previews.
+                See how Cognito Learning Hub transforms learning with real-time
+                demos and interactive previews.
               </p>
             </motion.div>
 
@@ -1256,8 +1257,8 @@ export default function HomePage() {
                     </div>
 
                     <p className="text-gray-700 dark:text-gray-300 mb-8 relative z-10 text-base leading-relaxed">
-                      "💼 We deployed Cognito Learning Hub across our entire school
-                      district. Student engagement is up 300% and teacher
+                      "💼 We deployed Cognito Learning Hub across our entire
+                      school district. Student engagement is up 300% and teacher
                       productivity has doubled. Outstanding!"
                     </p>
 

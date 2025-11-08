@@ -159,18 +159,18 @@ app.use(
 // 2. Data Sanitization against NoSQL Injection (Express 5 compatible)
 // Custom middleware to sanitize user input
 const sanitizeInput = (obj) => {
-  if (obj && typeof obj === 'object') {
+  if (obj && typeof obj === "object") {
     for (const key in obj) {
-      if (typeof obj[key] === 'string') {
+      if (typeof obj[key] === "string") {
         // Remove $ and . from beginning of keys to prevent NoSQL injection
-        obj[key] = obj[key].replace(/^\$/, '').replace(/^\./g, '');
-      } else if (typeof obj[key] === 'object') {
+        obj[key] = obj[key].replace(/^\$/, "").replace(/^\./g, "");
+      } else if (typeof obj[key] === "object") {
         sanitizeInput(obj[key]);
       }
     }
     // Remove keys that start with $ or .
-    Object.keys(obj).forEach(key => {
-      if (key.startsWith('$') || key.startsWith('.')) {
+    Object.keys(obj).forEach((key) => {
+      if (key.startsWith("$") || key.startsWith(".")) {
         delete obj[key];
       }
     });
