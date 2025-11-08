@@ -89,10 +89,10 @@ export default function HomePage() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "QuizWise-AI",
+    name: "Cognito Learning Hub",
     applicationCategory: "EducationalApplication",
     operatingSystem: "Web Browser",
-    url: "https://quizwise-ai.live",
+    url: "https://cognito-learning-hub.live",
     description:
       "AI-powered quiz creation platform for educators and students with social learning features",
     offers: {
@@ -119,7 +119,7 @@ export default function HomePage() {
         "Our AI analyzes your topic or uploaded content using advanced natural language processing to generate relevant, high-quality questions with multiple choice answers, explanations, and difficulty levels.",
     },
     {
-      question: "Is QuizWise-AI really free?",
+      question: "Is Cognito Learning Hub really free?",
       answer:
         "Yes! Our core features including AI quiz generation, taking quizzes, and basic analytics are completely free forever. Premium features like advanced analytics and team management are available in paid plans.",
     },
@@ -129,9 +129,9 @@ export default function HomePage() {
         "You can upload PDF documents, text files, and even paste YouTube video links. Our AI will extract the content and create relevant quizzes automatically.",
     },
     {
-      question: "Can I use QuizWise-AI for corporate training?",
+      question: "Can I use Cognito Learning Hub for corporate training?",
       answer:
-        "Absolutely! QuizWise-AI is perfect for HR teams, L&D professionals, and corporate trainers. Create engaging assessments for employee onboarding, compliance training, and skill development.",
+        "Absolutely! Cognito Learning Hub is perfect for HR teams, L&D professionals, and corporate trainers. Create engaging assessments for employee onboarding, compliance training, and skill development.",
     },
     {
       question: "How secure is my data?",
@@ -207,7 +207,7 @@ export default function HomePage() {
           transition={{ delay: 0.5 }}
         >
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-            QuizWise-AI is warming up its AI
+            Cognito Learning Hub is warming up its AI
           </h2>
           <p className="text-gray-600 dark:text-gray-300 flex items-center justify-center gap-2">
             Built by OPTIMISTIC MUTANT CODERS with{" "}
@@ -294,7 +294,7 @@ export default function HomePage() {
                 <span className="font-bold text-indigo-600 dark:text-indigo-400">
                   10,000+
                 </span>{" "}
-                learners already transforming their education with QuizWise-AI.
+                learners already transforming their education with Cognito Learning Hub.
               </motion.p>
 
               <motion.div
@@ -396,7 +396,7 @@ export default function HomePage() {
                       <div className="w-3 h-3 rounded-full bg-green-500"></div>
                     </div>
                     <div className="flex-1 mx-4 bg-white dark:bg-gray-700 rounded px-3 py-1 text-xs text-gray-500 dark:text-gray-400">
-                      quizwise-ai.com/create-quiz
+                      cognito-learning-hub.com/create-quiz
                     </div>
                   </div>
 
@@ -589,7 +589,7 @@ export default function HomePage() {
                 Experience the Magic in Action
               </h2>
               <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                See how QuizWise-AI transforms learning with real-time demos and
+                See how Cognito Learning Hub transforms learning with real-time demos and
                 interactive previews.
               </p>
             </motion.div>
@@ -1107,7 +1107,7 @@ export default function HomePage() {
               </h2>
               <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
                 Join thousands of learners who are transforming their education
-                with QuizWise-AI
+                with Cognito Learning Hub
               </p>
             </motion.div>
 
@@ -1142,7 +1142,7 @@ export default function HomePage() {
                     </div>
 
                     <p className="text-gray-700 dark:text-gray-300 mb-8 relative z-10 text-base leading-relaxed">
-                      "🚀 Quizwise-AI has completely revolutionized my
+                      "🚀 Cognito Learning Hub has completely revolutionized my
                       classroom! I can create engaging quizzes in under 30
                       seconds. My students are more motivated than ever!"
                     </p>
@@ -1256,7 +1256,7 @@ export default function HomePage() {
                     </div>
 
                     <p className="text-gray-700 dark:text-gray-300 mb-8 relative z-10 text-base leading-relaxed">
-                      "💼 We deployed QuizWise-AI across our entire school
+                      "💼 We deployed Cognito Learning Hub across our entire school
                       district. Student engagement is up 300% and teacher
                       productivity has doubled. Outstanding!"
                     </p>
@@ -1584,7 +1584,7 @@ export default function HomePage() {
               >
                 Why Choose{" "}
                 <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  QuizWise-AI
+                  Cognito Learning Hub
                 </span>
                 ?
               </h2>
@@ -1607,7 +1607,7 @@ export default function HomePage() {
                       <th className="px-6 py-4 text-center text-lg font-semibold">
                         <div className="flex items-center justify-center gap-2">
                           <Sparkles className="w-5 h-5" />
-                          QuizWise-AI
+                          Cognito Learning Hub
                         </div>
                       </th>
                       <th className="px-6 py-4 text-center text-lg font-semibold">
@@ -1728,7 +1728,7 @@ export default function HomePage() {
                 Frequently Asked Questions
               </h2>
               <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                Everything you need to know about QuizWise-AI
+                Everything you need to know about Cognito Learning Hub
               </p>
             </motion.div>
 

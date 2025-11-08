@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, Suspense, lazy } from "react";
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "./context/AuthContext";
 import { useTheme } from "./hooks/useTheme";
@@ -9,44 +9,48 @@ import Button from "./components/ui/Button";
 import { fadeInUp, staggerContainer, staggerItem } from "./lib/utils";
 import ParticleBackground from "./components/ParticleBackground";
 import FloatingShapes from "./components/FloatingShapes";
+import LoadingSpinner from "./components/LoadingSpinner";
 
-// Import Components
+// Import route wrapper components (never lazy load these)
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import ModeratorRoute from "./components/ModeratorRoute";
+import { SocketProvider } from "./context/SocketContext";
 
-// Import Pages
+// Lazy load pages for better performance (code splitting)
+// Critical pages - load immediately
 import Home from "./pages/Home";
-import QuizList from "./pages/QuizList";
-import QuizTaker from "./pages/QuizTaker";
-import Dashboard from "./pages/Dashboard";
-import TeacherDashboard from "./pages/TeacherDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import ModeratorDashboard from "./pages/ModeratorDashboard";
-import EditQuiz from "./pages/EditQuiz";
-import QuizMaker from "./pages/QuizMaker";
-import TopicQuizGenerator from "./pages/TopicQuizGenerator";
-import ManualQuizCreator from "./pages/ManualQuizCreator";
-import FileQuizGenerator from "./pages/FileQuizGenerator";
-import DoubtSolver from "./pages/DoubtSolver";
-import ChatSystem from "./pages/ChatSystem";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
-import Leaderboard from "./pages/Leaderboard";
-import ReportsDashboard from "./pages/ReportsDashboard";
-import AchievementDashboard from "./pages/AchievementDashboard";
-import EnhancedQuizCreator from "./pages/EnhancedQuizCreator";
-import GamifiedQuizTaker from "./pages/GamifiedQuizTaker";
-import PDFQuizGenerator from "./pages/PDFQuizGenerator";
-import SocialDashboard from "./pages/SocialDashboard";
-import ChallengeCreator from "./pages/ChallengeCreator";
-import AdminBroadcast from "./pages/AdminBroadcast";
-import Features from "./pages/Features";
-import LiveSessionHost from "./pages/LiveSessionHost";
-import LiveSessionJoin from "./pages/LiveSessionJoin";
-import LiveSessionAnalytics from "./pages/LiveSessionAnalytics";
-import LiveSessionHistory from "./pages/LiveSessionHistory";
-import { SocketProvider } from "./context/SocketContext";
+
+// Less critical pages - lazy load
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const QuizList = lazy(() => import("./pages/QuizList"));
+const QuizTaker = lazy(() => import("./pages/QuizTaker"));
+const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const ModeratorDashboard = lazy(() => import("./pages/ModeratorDashboard"));
+const EditQuiz = lazy(() => import("./pages/EditQuiz"));
+const QuizMaker = lazy(() => import("./pages/QuizMaker"));
+const TopicQuizGenerator = lazy(() => import("./pages/TopicQuizGenerator"));
+const ManualQuizCreator = lazy(() => import("./pages/ManualQuizCreator"));
+const FileQuizGenerator = lazy(() => import("./pages/FileQuizGenerator"));
+const DoubtSolver = lazy(() => import("./pages/DoubtSolver"));
+const ChatSystem = lazy(() => import("./pages/ChatSystem"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const ReportsDashboard = lazy(() => import("./pages/ReportsDashboard"));
+const AchievementDashboard = lazy(() => import("./pages/AchievementDashboard"));
+const EnhancedQuizCreator = lazy(() => import("./pages/EnhancedQuizCreator"));
+const GamifiedQuizTaker = lazy(() => import("./pages/GamifiedQuizTaker"));
+const PDFQuizGenerator = lazy(() => import("./pages/PDFQuizGenerator"));
+const SocialDashboard = lazy(() => import("./pages/SocialDashboard"));
+const ChallengeCreator = lazy(() => import("./pages/ChallengeCreator"));
+const AdminBroadcast = lazy(() => import("./pages/AdminBroadcast"));
+const Features = lazy(() => import("./pages/Features"));
+const LiveSessionHost = lazy(() => import("./pages/LiveSessionHost"));
+const LiveSessionJoin = lazy(() => import("./pages/LiveSessionJoin"));
+const LiveSessionAnalytics = lazy(() => import("./pages/LiveSessionAnalytics"));
+const LiveSessionHistory = lazy(() => import("./pages/LiveSessionHistory"));
 
 function App() {
   const { user, logout } = useContext(AuthContext);
@@ -69,7 +73,6 @@ function App() {
           {/* Animated Background Layers */}
           <ParticleBackground isDark={theme === "dark"} />
           <FloatingShapes />
-
           {/* Glass-morphism Navbar with Reduced Height */}
           <motion.header
             className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl sticky top-0 z-50 border-b border-indigo-100/50 dark:border-indigo-900/50 shadow-sm"
@@ -309,7 +312,6 @@ function App() {
               </div>
             </nav>
           </motion.header>
-
           {/* Mobile Menu Overlay */}
           <AnimatePresence>
             {isMenuOpen && (
@@ -446,231 +448,237 @@ function App() {
               </motion.div>
             )}
           </AnimatePresence>
-
           <main className="container mx-auto p-6 lg:p-8 mt-4 relative z-10">
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/features" element={<Features />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<SignUp />} />
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center min-h-[60vh]">
+                  <LoadingSpinner />
+                </div>
+              }
+            >
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/features" element={<Features />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<SignUp />} />
 
-              {/* Protected Routes */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/teacher-dashboard"
-                element={
-                  <ProtectedRoute>
-                    <TeacherDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quizzes"
-                element={
-                  <ProtectedRoute>
-                    <QuizList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz/:quizId"
-                element={
-                  <ProtectedRoute>
-                    <QuizTaker />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz/edit/:quizId"
-                element={
-                  <ProtectedRoute>
-                    <EditQuiz />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz/:quizId/leaderboard"
-                element={
-                  <ProtectedRoute>
-                    <Leaderboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz-maker"
-                element={
-                  <ProtectedRoute>
-                    <QuizMaker />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz-maker/topic"
-                element={
-                  <ProtectedRoute>
-                    <TopicQuizGenerator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz-maker/manual"
-                element={
-                  <ProtectedRoute>
-                    <ManualQuizCreator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz-maker/enhanced"
-                element={
-                  <ProtectedRoute>
-                    <EnhancedQuizCreator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz-maker/file"
-                element={
-                  <ProtectedRoute>
-                    <FileQuizGenerator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/pdf-quiz-generator"
-                element={
-                  <ProtectedRoute>
-                    <PDFQuizGenerator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/social"
-                element={
-                  <ProtectedRoute>
-                    <SocialDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/create-challenge"
-                element={
-                  <ProtectedRoute>
-                    <ChallengeCreator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz/:quizId/gamified"
-                element={
-                  <ProtectedRoute>
-                    <GamifiedQuizTaker />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/achievements"
-                element={
-                  <ProtectedRoute>
-                    <AchievementDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/doubt-solver"
-                element={
-                  <ProtectedRoute>
-                    <DoubtSolver />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/chat"
-                element={
-                  <ProtectedRoute>
-                    <ChatSystem />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Protected Routes */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/teacher-dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <TeacherDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quizzes"
+                  element={
+                    <ProtectedRoute>
+                      <QuizList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/:quizId"
+                  element={
+                    <ProtectedRoute>
+                      <QuizTaker />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/edit/:quizId"
+                  element={
+                    <ProtectedRoute>
+                      <EditQuiz />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/:quizId/leaderboard"
+                  element={
+                    <ProtectedRoute>
+                      <Leaderboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker"
+                  element={
+                    <ProtectedRoute>
+                      <QuizMaker />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/topic"
+                  element={
+                    <ProtectedRoute>
+                      <TopicQuizGenerator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/manual"
+                  element={
+                    <ProtectedRoute>
+                      <ManualQuizCreator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/enhanced"
+                  element={
+                    <ProtectedRoute>
+                      <EnhancedQuizCreator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/file"
+                  element={
+                    <ProtectedRoute>
+                      <FileQuizGenerator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/pdf-quiz-generator"
+                  element={
+                    <ProtectedRoute>
+                      <PDFQuizGenerator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/social"
+                  element={
+                    <ProtectedRoute>
+                      <SocialDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/create-challenge"
+                  element={
+                    <ProtectedRoute>
+                      <ChallengeCreator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/:quizId/gamified"
+                  element={
+                    <ProtectedRoute>
+                      <GamifiedQuizTaker />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/achievements"
+                  element={
+                    <ProtectedRoute>
+                      <AchievementDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/doubt-solver"
+                  element={
+                    <ProtectedRoute>
+                      <DoubtSolver />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/chat"
+                  element={
+                    <ProtectedRoute>
+                      <ChatSystem />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Live Session Routes */}
-              <Route
-                path="/live/host/:quizId"
-                element={
-                  <ProtectedRoute>
-                    <LiveSessionHost />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/live/join"
-                element={
-                  <ProtectedRoute>
-                    <LiveSessionJoin />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/live/analytics/:sessionCode"
-                element={
-                  <ProtectedRoute>
-                    <LiveSessionAnalytics />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/live/history"
-                element={
-                  <ProtectedRoute>
-                    <LiveSessionHistory />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Live Session Routes */}
+                <Route
+                  path="/live/host/:quizId"
+                  element={
+                    <ProtectedRoute>
+                      <LiveSessionHost />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/live/join"
+                  element={
+                    <ProtectedRoute>
+                      <LiveSessionJoin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/live/analytics/:sessionCode"
+                  element={
+                    <ProtectedRoute>
+                      <LiveSessionAnalytics />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/live/history"
+                  element={
+                    <ProtectedRoute>
+                      <LiveSessionHistory />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Admin & Moderator Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin-broadcast"
-                element={
-                  <AdminRoute>
-                    <AdminBroadcast />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/moderator"
-                element={
-                  <ModeratorRoute>
-                    <ModeratorDashboard />
-                  </ModeratorRoute>
-                }
-              />
-              <Route
-                path="/reports"
-                element={
-                  <ModeratorRoute>
-                    <ReportsDashboard />
-                  </ModeratorRoute>
-                }
-              />
-            </Routes>
-          </main>
-
+                {/* Admin & Moderator Routes */}
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin-broadcast"
+                  element={
+                    <AdminRoute>
+                      <AdminBroadcast />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/moderator"
+                  element={
+                    <ModeratorRoute>
+                      <ModeratorDashboard />
+                    </ModeratorRoute>
+                  }
+                />
+                <Route
+                  path="/reports"
+                  element={
+                    <ModeratorRoute>
+                      <ReportsDashboard />
+                    </ModeratorRoute>
+                  }
+                />
+              </Routes>
+            </Suspense>
+          </main>{" "}
           <footer className="bg-white dark:bg-gray-900 mt-12 py-6 border-t border-gray-200 dark:border-gray-700">
             <div className="container mx-auto px-4 text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">

@@ -310,7 +310,7 @@ export default function HomePage() {
               <Card className="h-full">
                 <CardContent className="p-8">
                   <p className="italic text-gray-600 dark:text-gray-300 mb-6">
-                    "Quizwise-AI has completely transformed how I create quizzes for my students. The AI generates high-quality questions in seconds!"
+                    "Cognito Learning Hub has completely transformed how I create quizzes for my students. The AI generates high-quality questions in seconds!"
                   </p>
                   <div className="flex items-center">
                     <div className="h-12 w-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
@@ -359,7 +359,7 @@ export default function HomePage() {
               Ready to Transform Your Learning Experience?
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Join thousands of students and educators who are already using QuizWise-AI to make learning more engaging and effective.
+              Join thousands of students and educators who are already using Cognito Learning Hub to make learning more engaging and effective.
             </p>
             <motion.div 
               className="flex flex-col sm:flex-row justify-center gap-4"

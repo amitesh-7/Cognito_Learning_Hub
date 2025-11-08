@@ -382,7 +382,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-2 gap-10">
             <div className="p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
               <p className="text-gray-700 dark:text-gray-300 italic">
-                "Quizwise-AI has been a game-changer for my classroom. I can
+                "Cognito Learning Hub has been a game-changer for my classroom. I can
                 create differentiated quizzes in minutes, not hours. My students
                 are more engaged than ever!"
               </p>

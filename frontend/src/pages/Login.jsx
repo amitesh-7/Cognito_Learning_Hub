@@ -326,7 +326,7 @@ export default function Login() {
                 <Star className="w-4 h-4 mr-2" />
                 ⭐ 4.9/5 Rating
               </Badge>
-              <h2 className="text-4xl font-bold mb-2">QuizWise-AI</h2>
+              <h2 className="text-4xl font-bold mb-2">Cognito Learning Hub</h2>
               <p className="text-indigo-100">The Future of Learning is Here</p>
             </motion.div>
             
@@ -480,7 +480,7 @@ export default function Login() {
                   </div>
                 ) : (
                   <span className="flex items-center justify-center">
-                    🚀 Login to QuizWise-AI
+                    🚀 Login to Cognito Learning Hub
                     <Zap className="w-5 h-5 ml-2" />
                   </span>
                 )}

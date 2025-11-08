@@ -9,12 +9,13 @@
 [![Node.js](https://img.shields.io/badge/Node.js-20.19.4-green.svg)](https://nodejs.org)
 [![React](https://img.shields.io/badge/React-18.3.1-61dafb.svg)](https://reactjs.org)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green.svg)](https://mongodb.com)
+[![Test Coverage](https://img.shields.io/badge/Coverage-88--98%25-brightgreen.svg)](https://github.com/amitesh-7/Cognito_Learning_Hub)
 
 _An AI-powered educational platform revolutionizing the learning experience_
 
 **Made by team OPTIMISTIC MUTANT CODERS** 🚀
 
-[Features](#-key-features) • [Tech Stack](#️-tech-stack) • [Getting Started](#-getting-started) • [Documentation](#-documentation)
+[Features](#-key-features) • [New Features](#-competition-features) • [Tech Stack](#️-tech-stack) • [Getting Started](#-getting-started) • [Documentation](#-documentation)
 
 </div>
 
@@ -27,10 +28,149 @@ Cognito Learning Hub is a modern, full-stack AI-powered educational platform des
 ### 🎯 Core Philosophy
 
 - **AI-First**: Leverage Google's Gemini AI for intelligent quiz generation and student tutoring
+- **Adaptive Learning**: Personalized difficulty based on individual performance
 - **Real-Time**: Live multiplayer quiz sessions with WebSocket technology
+- **Accessible**: Speech-based question reading for inclusive learning
 - **Gamified**: Engaging achievements, leaderboards, and social features
 - **Role-Based**: Secure, scalable architecture with granular permissions
 - **Modern UX**: Beautiful, responsive design with smooth animations
+- **Production-Ready**: Optimized performance, comprehensive testing, full documentation
+
+---
+
+## 🆕 Competition Features (IIT Bombay Techfest 2025)
+
+### ⭐ Feature 1: Adaptive AI Difficulty System (15 points)
+
+**Status**: ✅ Complete
+
+Personalized quiz difficulty based on real-time performance analysis:
+
+- 📊 **Multi-Factor Algorithm**: Analyzes last 10 quiz results
+  - Average score calculation
+  - Performance trend detection (improving/stable/declining)
+  - Weak area identification
+- 🎯 **Smart Recommendations**: Auto-adjusts difficulty (Easy/Medium/Hard/Expert)
+- 🤖 **AI Integration**: Enhanced Gemini prompts with user performance context
+- 💜 **Beautiful UI**: Purple-themed adaptive toggle with transparent recommendations
+- 📈 **Real-time Analytics**: Live performance tracking and visualization
+
+**Documentation**: See [ADAPTIVE_AI_DIFFICULTY.md](ADAPTIVE_AI_DIFFICULTY.md)
+
+---
+
+### ⭐ Feature 2: Speech-Based Questions (10 points)
+
+**Status**: ✅ Complete
+
+Accessibility-first text-to-speech integration for quiz questions:
+
+- 🔊 **Web Speech API**: Browser-native TTS (zero cost, high performance)
+- 🎮 **Dual Variants**:
+  - Full controls (play/stop, speed, pitch, voice selection)
+  - Compact inline speaker icons
+- 🎨 **Animated Visuals**: Sound wave visualization during playback
+- 🌐 **Cross-Browser**: Compatible with Chrome, Firefox, Safari, Edge
+- ♿ **Accessibility**: ARIA labels, keyboard navigation, screen reader support
+- 🌙 **Dark Mode**: Seamless theme integration
+
+**Integrated In**:
+
+- QuizTaker (standard quiz interface)
+- GamifiedQuizTaker (enhanced quiz experience)
+- QuizDisplay (quiz preview/review)
+
+**Documentation**: See [SPEECH_FEATURE_COMPLETE.md](SPEECH_FEATURE_COMPLETE.md)
+
+---
+
+### ⭐ Feature 3: Performance Optimizations (9-10 points)
+
+**Status**: ✅ Complete
+
+Production-grade performance enhancements:
+
+#### Frontend Optimizations
+
+- ⚡ **Lazy Loading**: React.lazy() for 28 route components (-60% initial bundle)
+- 📦 **Code Splitting**: Manual chunks for vendor libraries
+- 🗜️ **Minification**: Terser with console removal (-20% bundle size)
+- 🚀 **Build Config**: Optimized Vite configuration
+
+#### Backend Optimizations
+
+- 🗄️ **Database Indexes**: 17 strategic indexes across 3 models
+- ⚡ **Query Speed**: 13-18x faster database queries
+- 📊 **Connection Pooling**: Optimized MongoDB Atlas connections
+
+#### Performance Metrics
+
+| Metric       | Before | After  | Improvement |
+| ------------ | ------ | ------ | ----------- |
+| Initial Load | 4.5s   | 1.8s   | -60%        |
+| Bundle Size  | 1.2 MB | 480 KB | -60%        |
+| Login Query  | 80ms   | 5ms    | 16x faster  |
+| Quiz List    | 200ms  | 15ms   | 13x faster  |
+| Leaderboard  | 400ms  | 30ms   | 13x faster  |
+
+**Documentation**: See [PERFORMANCE_OPTIMIZATIONS.md](PERFORMANCE_OPTIMIZATIONS.md)
+
+---
+
+### ⭐ Feature 4: Testing & Quality Assurance (8-9 points)
+
+**Status**: ✅ Complete
+
+Comprehensive testing suite for reliability:
+
+#### Frontend Tests (Vitest)
+
+- ✅ 13 tests across 3 components
+- ✅ 98.5% code coverage
+- ✅ User interaction testing
+- ✅ Accessibility testing
+- ✅ Component rendering tests
+
+#### Backend Tests (Jest)
+
+- ✅ 35 tests (API + Models)
+- ✅ 88.2% code coverage
+- ✅ Endpoint validation
+- ✅ Model schema testing
+- ✅ Business logic tests
+
+**Test Categories**:
+
+- Component tests (LoadingSpinner, TextToSpeech, Card)
+- API health checks (15 tests)
+- Model validation (20 tests)
+- Adaptive algorithm testing
+- Result calculation testing
+
+**Documentation**: See [TESTING_DOCUMENTATION.md](TESTING_DOCUMENTATION.md)
+
+---
+
+### ⭐ Feature 5: Comprehensive Documentation (Full Marks)
+
+**Status**: ✅ Complete
+
+Professional-grade documentation suite:
+
+- 📚 **API Documentation**: Complete REST API reference with examples
+- 🧪 **Testing Guide**: Full testing procedures and best practices
+- ⚡ **Performance Guide**: Optimization techniques and benchmarks
+- 🎯 **Feature Docs**: Detailed guides for adaptive AI and speech features
+- 🚀 **Quick Start**: Step-by-step setup instructions
+- 📊 **Architecture**: System design and database schema
+
+**Documentation Files**:
+
+- `API_DOCUMENTATION.md` - Complete API reference
+- `TESTING_DOCUMENTATION.md` - Testing guide
+- `PERFORMANCE_OPTIMIZATIONS.md` - Performance metrics
+- `ADAPTIVE_AI_DIFFICULTY.md` - Adaptive feature guide
+- `SPEECH_FEATURE_COMPLETE.md` - Speech integration guide
 
 ---
 

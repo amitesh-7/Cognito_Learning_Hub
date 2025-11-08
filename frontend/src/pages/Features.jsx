@@ -210,7 +210,7 @@ const Features = () => {
             Powered by Advanced AI Technology
           </div>
           <h1 className="text-5xl lg:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">
-            QuizWise-AI Features
+            Cognito Learning Hub Features
           </h1>
           <p className="text-xl lg:text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed">
             Discover the comprehensive suite of features that make QuizWise-AI the ultimate platform for 
