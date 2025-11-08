@@ -85,6 +85,8 @@ export default function AdminDashboard() {
   const [quizzes, setQuizzes] = useState([]);
   const [reports, setReports] = useState([]);
   const [analytics, setAnalytics] = useState({ userSignups: [] });
+  const [userStats, setUserStats] = useState({ totalUsers: 0, totalStudents: 0, totalTeachers: 0, totalModerators: 0, totalAdmins: 0 });
+  const [totalQuizzes, setTotalQuizzes] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('users');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -113,8 +115,10 @@ export default function AdminDashboard() {
 
       setUsers(usersData.users || []);
       setUserTotalPages(usersData.totalPages || 1);
+      setUserStats(usersData.stats || { totalUsers: 0, totalStudents: 0, totalTeachers: 0, totalModerators: 0, totalAdmins: 0 });
       setQuizzes(quizzesData.quizzes || []);
       setQuizTotalPages(quizzesData.totalPages || 1);
+      setTotalQuizzes(quizzesData.totalQuizzes || 0);
       setReports(reportsData || []);
       setAnalytics(analyticsData || { userSignups: [] });
     } catch (error) {
@@ -155,10 +159,10 @@ export default function AdminDashboard() {
     fetchData();
   };
 
-  const totalTeachers = users.filter(u => u.role === 'Teacher').length;
-  const totalStudents = users.filter(u => u.role === 'Student').length;
-  const totalModerators = users.filter(u => u.role === 'Moderator').length;
-  const totalAdmins = users.filter(u => u.role === 'Admin').length;
+  const totalTeachers = userStats.totalTeachers;
+  const totalStudents = userStats.totalStudents;
+  const totalModerators = userStats.totalModerators;
+  const totalAdmins = userStats.totalAdmins;
   
   const chartData = analytics.userSignups.map(item => ({ 
     name: new Date(item._id).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), 
@@ -229,7 +233,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{users.length}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{userStats.totalUsers}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">+{analytics.userSignups?.reduce((acc, item) => acc + item.count, 0) || 0} this week</p>
                 </div>
               </div>
@@ -245,7 +249,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Total Quizzes</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{quizzes.length}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalQuizzes}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Across all subjects</p>
                 </div>
               </div>

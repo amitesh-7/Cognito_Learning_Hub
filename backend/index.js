@@ -2485,10 +2485,25 @@ app.get("/api/admin/users", auth, admin, async (req, res) => {
       .skip((page - 1) * limit)
       .exec();
     const count = await User.countDocuments(query);
+    
+    // Get total counts for all roles
+    const totalUsers = await User.countDocuments();
+    const totalStudents = await User.countDocuments({ role: "Student" });
+    const totalTeachers = await User.countDocuments({ role: "Teacher" });
+    const totalModerators = await User.countDocuments({ role: "Moderator" });
+    const totalAdmins = await User.countDocuments({ role: "Admin" });
+    
     res.json({
       users,
       totalPages: Math.ceil(count / limit),
       currentPage: page,
+      stats: {
+        totalUsers,
+        totalStudents,
+        totalTeachers,
+        totalModerators,
+        totalAdmins
+      }
     });
   } catch (error) {
     res.status(500).send("Server Error");
@@ -2506,10 +2521,13 @@ app.get("/api/admin/quizzes", auth, admin, async (req, res) => {
       .skip((page - 1) * limit)
       .exec();
     const count = await Quiz.countDocuments(query);
+    const totalQuizzes = await Quiz.countDocuments();
+    
     res.json({
       quizzes,
       totalPages: Math.ceil(count / limit),
       currentPage: page,
+      totalQuizzes
     });
   } catch (error) {
     res.status(500).send("Server Error");
