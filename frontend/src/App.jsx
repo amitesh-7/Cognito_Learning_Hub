@@ -112,7 +112,7 @@ function App() {
 
               {/* Desktop Navigation */}
               <motion.div
-                className="hidden md:flex items-center space-x-2"
+                className="hidden lg:flex items-center space-x-1 xl:space-x-2"
                 variants={staggerContainer}
                 initial="initial"
                 animate="animate"
@@ -132,7 +132,7 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/dashboard"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                       >
                         Dashboard
                       </Link>
@@ -141,7 +141,7 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/quizzes"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                       >
                         Take a Quiz
                       </Link>
@@ -150,7 +150,7 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/doubt-solver"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                       >
                         AI Tutor
                       </Link>
@@ -159,7 +159,7 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/achievements"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                       >
                         Achievements
                       </Link>
@@ -168,7 +168,7 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/social"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                       >
                         Social Hub
                       </Link>
@@ -177,7 +177,7 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/chat"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                       >
                         Chat
                       </Link>
@@ -187,7 +187,7 @@ function App() {
                       <motion.div variants={staggerItem}>
                         <Link
                           to="/teacher-dashboard"
-                          className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                          className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                         >
                           My Quizzes
                         </Link>
@@ -198,7 +198,7 @@ function App() {
                       <motion.div variants={staggerItem}>
                         <Link
                           to="/admin-broadcast"
-                          className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900 transition-all duration-200"
+                          className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900 transition-all duration-200 whitespace-nowrap"
                         >
                           Broadcast
                         </Link>
@@ -209,7 +209,7 @@ function App() {
                       <motion.div variants={staggerItem}>
                         <Link
                           to="/moderator"
-                          className="px-3 py-2 font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 rounded-lg hover:bg-green-50 dark:hover:bg-green-900 transition-all duration-200"
+                          className="px-3 py-2 font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 rounded-lg hover:bg-green-50 dark:hover:bg-green-900 transition-all duration-200 whitespace-nowrap"
                         >
                           Moderator
                         </Link>
@@ -220,7 +220,7 @@ function App() {
                       <motion.div variants={staggerItem}>
                         <Link
                           to="/admin"
-                          className="px-3 py-2 font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-900 transition-all duration-200"
+                          className="px-3 py-2 font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-900 transition-all duration-200 whitespace-nowrap"
                         >
                           Admin
                         </Link>
