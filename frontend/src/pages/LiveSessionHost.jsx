@@ -164,38 +164,64 @@ const LiveSessionHost = () => {
 
   // Socket event handlers
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      console.log("⏸️ No socket for event listeners");
+      return;
+    }
 
-    // Participant joined
-    socket.on(
-      "participant-joined",
-      ({ userId, username, avatar, participantCount }) => {
-        console.log("👤 Participant joined:", username);
-        setParticipants((prev) => [...prev, { userId, username, avatar }]);
-      }
-    );
-
-    // Participant left
-    socket.on("participant-left", ({ userId, username, participantCount }) => {
-      console.log("👋 Participant left:", username);
-      setParticipants((prev) => prev.filter((p) => p.userId !== userId));
+    console.log("🎧 Setting up socket event listeners...", {
+      socketId: socket.id,
+      isConnected: socket.connected,
+      sessionCode: sessionCode,
     });
 
+    // Participant joined
+    const handleParticipantJoined = ({
+      userId,
+      username,
+      avatar,
+      participantCount,
+    }) => {
+      console.log("🎉 PARTICIPANT JOINED EVENT RECEIVED!");
+      console.log("👤 User:", username, "ID:", userId);
+      console.log("📊 Participant count:", participantCount);
+      console.log("📋 Current participants before update:", participants);
+
+      setParticipants((prev) => {
+        const updated = [...prev, { userId, username, avatar }];
+        console.log("📋 Updated participants:", updated);
+        return updated;
+      });
+    };
+
+    // Participant left
+    const handleParticipantLeft = ({ userId, username, participantCount }) => {
+      console.log("👋 Participant left:", username);
+      setParticipants((prev) => prev.filter((p) => p.userId !== userId));
+    };
+
     // Leaderboard updated
-    socket.on(
-      "leaderboard-updated",
-      ({ leaderboard: newLeaderboard, questionIndex }) => {
-        console.log("🏆 Leaderboard updated for question", questionIndex);
-        setLeaderboard(newLeaderboard);
-      }
-    );
+    const handleLeaderboardUpdate = ({
+      leaderboard: newLeaderboard,
+      questionIndex,
+    }) => {
+      console.log("🏆 Leaderboard updated for question", questionIndex);
+      setLeaderboard(newLeaderboard);
+    };
+
+    socket.on("participant-joined", handleParticipantJoined);
+    socket.on("participant-left", handleParticipantLeft);
+    socket.on("leaderboard-updated", handleLeaderboardUpdate);
+
+    console.log("✅ Socket event listeners registered");
 
     return () => {
-      socket.off("participant-joined");
-      socket.off("participant-left");
-      socket.off("leaderboard-updated");
+      console.log("🧹 Cleaning up socket event listeners");
+      socket.off("participant-joined", handleParticipantJoined);
+      socket.off("participant-left", handleParticipantLeft);
+      socket.off("leaderboard-updated", handleLeaderboardUpdate);
     };
-  }, [socket]);
+  }, [socket, sessionCode]);
 
   // Start quiz
   const handleStartQuiz = useCallback(() => {

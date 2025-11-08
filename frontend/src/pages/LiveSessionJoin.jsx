@@ -74,18 +74,29 @@ const LiveSessionJoin = () => {
       return;
     }
 
+    // Handle both user.id and user._id formats
+    const userId = user?._id || user?.id;
+
+    if (!userId) {
+      setJoinError("User not authenticated. Please log in.");
+      return;
+    }
+
     console.log("🎯 Joining session:", sessionCode);
+    console.log("👤 User ID:", userId, "Name:", user.name);
+    console.log("🔌 Socket ID:", socket.id, "Connected:", socket.connected);
     setJoinError("");
 
     socket.emit(
       "join-session",
       {
         sessionCode: sessionCode.toUpperCase(),
-        userId: user._id,
+        userId: userId,
         username: user.name,
         avatar: user.profilePicture || null,
       },
       (response) => {
+        console.log("📡 Join session response:", response);
         if (response.success) {
           console.log("✅ Joined session successfully");
           setSession(response.session);

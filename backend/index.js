@@ -289,6 +289,14 @@ io.on("connection", (socket) => {
       socket.join(sessionCode);
 
       console.log(
+        `[Socket.IO] 🎓 Host joined room ${sessionCode}. Socket ID: ${socket.id}`
+      );
+      console.log(
+        `[Socket.IO] 🚪 Room members after host join:`,
+        io.sockets.adapter.rooms.get(sessionCode)
+      );
+
+      console.log(
         `[Socket.IO] Session created: ${sessionCode} by host ${hostId}`
       );
 
@@ -375,12 +383,26 @@ io.on("connection", (socket) => {
 
       // Notify everyone in the room (only if new join, not reconnection)
       if (!isReconnection) {
+        console.log(
+          `[Socket.IO] 📢 EMITTING participant-joined to room ${sessionCode}`
+        );
+        console.log(`[Socket.IO] 👤 Participant: ${username} (${userId})`);
+        console.log(
+          `[Socket.IO] 📊 Participant count: ${session.participantCount + 1}`
+        );
+        console.log(
+          `[Socket.IO] 🚪 Room members:`,
+          io.sockets.adapter.rooms.get(sessionCode)
+        );
+
         io.to(sessionCode).emit("participant-joined", {
           userId,
           username,
           avatar,
           participantCount: session.participantCount + 1,
         });
+
+        console.log(`[Socket.IO] ✅ participant-joined event emitted`);
       }
 
       console.log(
