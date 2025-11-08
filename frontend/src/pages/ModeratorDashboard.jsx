@@ -171,18 +171,26 @@ export default function ModeratorDashboard() {
 
       // Check if responses are OK
       if (!quizzesRes.ok) {
-        console.error("Quizzes fetch failed:", quizzesRes.status, quizzesRes.statusText);
+        console.error(
+          "Quizzes fetch failed:",
+          quizzesRes.status,
+          quizzesRes.statusText
+        );
         throw new Error(`Failed to fetch quizzes: ${quizzesRes.status}`);
       }
       if (!statsRes.ok) {
-        console.error("Stats fetch failed:", statsRes.status, statsRes.statusText);
+        console.error(
+          "Stats fetch failed:",
+          statsRes.status,
+          statsRes.statusText
+        );
         throw new Error(`Failed to fetch stats: ${statsRes.status}`);
       }
 
       // Check content type to ensure we're getting JSON
       const quizzesContentType = quizzesRes.headers.get("content-type");
       const statsContentType = statsRes.headers.get("content-type");
-      
+
       if (!quizzesContentType?.includes("application/json")) {
         console.error("Quizzes response is not JSON:", quizzesContentType);
         throw new Error("Server returned non-JSON response for quizzes");
@@ -201,7 +209,9 @@ export default function ModeratorDashboard() {
       setError(null); // Clear any previous errors
     } catch (error) {
       console.error("Failed to fetch moderator data", error);
-      setError(error.message || "Failed to load moderator data. Please try again.");
+      setError(
+        error.message || "Failed to load moderator data. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -258,15 +268,19 @@ export default function ModeratorDashboard() {
         </motion.div>
 
         {error && (
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
           >
             <div className="flex items-center gap-3">
               <AlertTriangleIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
               <div>
-                <h3 className="text-sm font-semibold text-red-800 dark:text-red-300">Error Loading Data</h3>
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                <h3 className="text-sm font-semibold text-red-800 dark:text-red-300">
+                  Error Loading Data
+                </h3>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {error}
+                </p>
               </div>
             </div>
           </motion.div>

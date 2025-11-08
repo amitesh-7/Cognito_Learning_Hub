@@ -1,13 +1,23 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useSocket } from '../context/SocketContext';
-import { useAuth } from '../context/AuthContext';
-import { useSound } from '../hooks/useSound';
-import LoadingSpinner from '../components/LoadingSpinner';
-import LiveLeaderboard from '../components/LiveLeaderboard';
-import Confetti from 'react-confetti';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, Clock, Trophy, CheckCircle, XCircle, Loader, AlertCircle, Volume2, VolumeX } from 'lucide-react';
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSocket } from "../context/SocketContext";
+import { useAuth } from "../context/AuthContext";
+import { useSound } from "../hooks/useSound";
+import LoadingSpinner from "../components/LoadingSpinner";
+import LiveLeaderboard from "../components/LiveLeaderboard";
+import Confetti from "react-confetti";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  LogIn,
+  Clock,
+  Trophy,
+  CheckCircle,
+  XCircle,
+  Loader,
+  AlertCircle,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 
 const LiveSessionJoin = () => {
   const navigate = useNavigate();
@@ -17,16 +27,18 @@ const LiveSessionJoin = () => {
   const { play, toggleMute, isMuted } = useSound();
 
   // Join form state
-  const [sessionCode, setSessionCode] = useState(searchParams.get('code') || '');
+  const [sessionCode, setSessionCode] = useState(
+    searchParams.get("code") || ""
+  );
   const [hasJoined, setHasJoined] = useState(false);
-  const [joinError, setJoinError] = useState('');
+  const [joinError, setJoinError] = useState("");
 
   // Session state
   const [session, setSession] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState('');
+  const [selectedAnswer, setSelectedAnswer] = useState("");
   const [hasAnswered, setHasAnswered] = useState(false);
   const [answerResult, setAnswerResult] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -37,14 +49,14 @@ const LiveSessionJoin = () => {
   // Connect socket when component mounts
   useEffect(() => {
     if (socket && !socket.connected) {
-      console.log('🔌 Connecting socket for live session...');
+      console.log("🔌 Connecting socket for live session...");
       socket.connect();
     }
 
     return () => {
       // Disconnect when leaving the page
       if (socket && socket.connected) {
-        console.log('🔌 Disconnecting socket...');
+        console.log("🔌 Disconnecting socket...");
         socket.disconnect();
       }
     };
@@ -53,38 +65,42 @@ const LiveSessionJoin = () => {
   // Join session
   const handleJoinSession = useCallback(async () => {
     if (!sessionCode || sessionCode.length !== 6) {
-      setJoinError('Please enter a valid 6-character session code');
+      setJoinError("Please enter a valid 6-character session code");
       return;
     }
 
     if (!socket || !isConnected) {
-      setJoinError('Not connected to server. Please wait...');
+      setJoinError("Not connected to server. Please wait...");
       return;
     }
 
-    console.log('🎯 Joining session:', sessionCode);
-    setJoinError('');
+    console.log("🎯 Joining session:", sessionCode);
+    setJoinError("");
 
-    socket.emit('join-session', {
-      sessionCode: sessionCode.toUpperCase(),
-      userId: user._id,
-      username: user.name,
-      avatar: user.profilePicture || null,
-    }, (response) => {
-      if (response.success) {
-        console.log('✅ Joined session successfully');
-        setSession(response.session);
-        setHasJoined(true);
-      } else {
-        console.error('❌ Failed to join:', response.error);
-        setJoinError(response.error || 'Failed to join session');
+    socket.emit(
+      "join-session",
+      {
+        sessionCode: sessionCode.toUpperCase(),
+        userId: user._id,
+        username: user.name,
+        avatar: user.profilePicture || null,
+      },
+      (response) => {
+        if (response.success) {
+          console.log("✅ Joined session successfully");
+          setSession(response.session);
+          setHasJoined(true);
+        } else {
+          console.error("❌ Failed to join:", response.error);
+          setJoinError(response.error || "Failed to join session");
+        }
       }
-    });
+    );
   }, [socket, isConnected, sessionCode, user]);
 
   // Auto-join if code in URL
   useEffect(() => {
-    if (searchParams.get('code') && !hasJoined && socket && isConnected) {
+    if (searchParams.get("code") && !hasJoined && socket && isConnected) {
       handleJoinSession();
     }
   }, [searchParams, hasJoined, socket, isConnected, handleJoinSession]);
@@ -94,64 +110,81 @@ const LiveSessionJoin = () => {
     if (!socket || !hasJoined) return;
 
     // Quiz started
-    socket.on('quiz-started', ({ questionIndex, question, totalQuestions: total, timestamp }) => {
-      console.log('🚀 Quiz started! Question:', questionIndex + 1);
-      setCurrentQuestion(question);
-      setCurrentQuestionIndex(questionIndex);
-      setTotalQuestions(total);
-      setHasAnswered(false);
-      setSelectedAnswer('');
-      setAnswerResult(null);
-      setTimeLeft(30);
-    });
+    socket.on(
+      "quiz-started",
+      ({ questionIndex, question, totalQuestions: total, timestamp }) => {
+        console.log("🚀 Quiz started! Question:", questionIndex + 1);
+        setCurrentQuestion(question);
+        setCurrentQuestionIndex(questionIndex);
+        setTotalQuestions(total);
+        setHasAnswered(false);
+        setSelectedAnswer("");
+        setAnswerResult(null);
+        setTimeLeft(30);
+      }
+    );
 
     // Next question
-    socket.on('question-started', ({ questionIndex, question, totalQuestions: total, timestamp }) => {
-      console.log('➡️ Next question:', questionIndex + 1);
-      setCurrentQuestion(question);
-      setCurrentQuestionIndex(questionIndex);
-      setTotalQuestions(total);
-      setHasAnswered(false);
-      setSelectedAnswer('');
-      setAnswerResult(null);
-      setTimeLeft(30);
-    });
+    socket.on(
+      "question-started",
+      ({ questionIndex, question, totalQuestions: total, timestamp }) => {
+        console.log("➡️ Next question:", questionIndex + 1);
+        setCurrentQuestion(question);
+        setCurrentQuestionIndex(questionIndex);
+        setTotalQuestions(total);
+        setHasAnswered(false);
+        setSelectedAnswer("");
+        setAnswerResult(null);
+        setTimeLeft(30);
+      }
+    );
 
     // Leaderboard updated
-    socket.on('leaderboard-updated', ({ leaderboard: newLeaderboard, questionIndex }) => {
-      console.log('🏆 Leaderboard updated');
-      setLeaderboard(newLeaderboard);
-    });
+    socket.on(
+      "leaderboard-updated",
+      ({ leaderboard: newLeaderboard, questionIndex }) => {
+        console.log("🏆 Leaderboard updated");
+        setLeaderboard(newLeaderboard);
+      }
+    );
 
     // Session ended
-    socket.on('session-ended', ({ leaderboard: finalLeaderboard, totalParticipants, totalQuestions: total }) => {
-      console.log('🏁 Quiz ended!');
-      setLeaderboard(finalLeaderboard);
-      setTotalQuestions(total);
-      setQuizEnded(true);
-      
-      // Show confetti if user is in top 3
-      const myRank = finalLeaderboard.findIndex(entry => entry.userId === user._id) + 1;
-      if (myRank > 0 && myRank <= 3) {
-        setShowConfetti(true);
-        // Stop confetti after 5 seconds
-        setTimeout(() => setShowConfetti(false), 5000);
+    socket.on(
+      "session-ended",
+      ({
+        leaderboard: finalLeaderboard,
+        totalParticipants,
+        totalQuestions: total,
+      }) => {
+        console.log("🏁 Quiz ended!");
+        setLeaderboard(finalLeaderboard);
+        setTotalQuestions(total);
+        setQuizEnded(true);
+
+        // Show confetti if user is in top 3
+        const myRank =
+          finalLeaderboard.findIndex((entry) => entry.userId === user._id) + 1;
+        if (myRank > 0 && myRank <= 3) {
+          setShowConfetti(true);
+          // Stop confetti after 5 seconds
+          setTimeout(() => setShowConfetti(false), 5000);
+        }
       }
-    });
+    );
 
     // Host disconnected
-    socket.on('host-disconnected', ({ message }) => {
-      console.warn('⚠️ Host disconnected');
+    socket.on("host-disconnected", ({ message }) => {
+      console.warn("⚠️ Host disconnected");
       alert(message);
-      navigate('/student-dashboard');
+      navigate("/student-dashboard");
     });
 
     return () => {
-      socket.off('quiz-started');
-      socket.off('question-started');
-      socket.off('leaderboard-updated');
-      socket.off('session-ended');
-      socket.off('host-disconnected');
+      socket.off("quiz-started");
+      socket.off("question-started");
+      socket.off("leaderboard-updated");
+      socket.off("session-ended");
+      socket.off("host-disconnected");
     };
   }, [socket, hasJoined, navigate]);
 
@@ -164,7 +197,7 @@ const LiveSessionJoin = () => {
         if (prev <= 1) {
           clearInterval(timer);
           // Auto-submit empty answer when time runs out
-          handleSubmitAnswer('');
+          handleSubmitAnswer("");
           return 0;
         }
         return prev - 1;
@@ -175,31 +208,47 @@ const LiveSessionJoin = () => {
   }, [currentQuestion, hasAnswered, quizEnded]);
 
   // Submit answer
-  const handleSubmitAnswer = useCallback((answer) => {
-    if (hasAnswered || !currentQuestion) return;
+  const handleSubmitAnswer = useCallback(
+    (answer) => {
+      if (hasAnswered || !currentQuestion) return;
 
-    const timeTaken = 30 - timeLeft;
-    console.log('📝 Submitting answer:', answer);
+      const timeTaken = 30 - timeLeft;
+      console.log("📝 Submitting answer:", answer);
 
-    socket.emit('submit-answer', {
-      sessionCode: sessionCode.toUpperCase(),
-      userId: user._id,
-      questionIndex: currentQuestionIndex,
-      answer: answer,
-      timeSpent: timeTaken,
-    }, (response) => {
-      console.log('✅ Answer submitted:', response);
-      setHasAnswered(true);
-      setAnswerResult(response);
-      
-      // Play sound effect based on correctness
-      if (response.isCorrect) {
-        play('correct');
-      } else {
-        play('incorrect');
-      }
-    });
-  }, [socket, sessionCode, user, currentQuestionIndex, hasAnswered, currentQuestion, timeLeft, play]);
+      socket.emit(
+        "submit-answer",
+        {
+          sessionCode: sessionCode.toUpperCase(),
+          userId: user._id,
+          questionIndex: currentQuestionIndex,
+          answer: answer,
+          timeSpent: timeTaken,
+        },
+        (response) => {
+          console.log("✅ Answer submitted:", response);
+          setHasAnswered(true);
+          setAnswerResult(response);
+
+          // Play sound effect based on correctness
+          if (response.isCorrect) {
+            play("correct");
+          } else {
+            play("incorrect");
+          }
+        }
+      );
+    },
+    [
+      socket,
+      sessionCode,
+      user,
+      currentQuestionIndex,
+      hasAnswered,
+      currentQuestion,
+      timeLeft,
+      play,
+    ]
+  );
 
   // Handle answer selection
   const handleAnswerClick = (option) => {
@@ -213,10 +262,14 @@ const LiveSessionJoin = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-900 dark:to-purple-900">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Login Required</h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-4">Please login to join a live session</p>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+            Login Required
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            Please login to join a live session
+          </p>
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => navigate("/login")}
             className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition"
           >
             Go to Login
@@ -239,8 +292,12 @@ const LiveSessionJoin = () => {
             <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <LogIn className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Join Live Quiz</h1>
-            <p className="text-gray-600 dark:text-gray-300">Enter the 6-character session code</p>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+              Join Live Quiz
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              Enter the 6-character session code
+            </p>
           </div>
 
           {connectionError && (
@@ -295,7 +352,7 @@ const LiveSessionJoin = () => {
 
           <div className="mt-6 text-center">
             <button
-              onClick={() => navigate('/student-dashboard')}
+              onClick={() => navigate("/student-dashboard")}
               className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
             >
               Back to Dashboard
@@ -318,14 +375,25 @@ const LiveSessionJoin = () => {
           <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
             <Clock className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">You're In!</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+            You're In!
+          </h2>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
             Waiting for the host to start the quiz...
           </p>
           <div className="flex items-center justify-center gap-2">
-            <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-            <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            <div
+              className="w-3 h-3 bg-purple-500 rounded-full animate-bounce"
+              style={{ animationDelay: "0ms" }}
+            ></div>
+            <div
+              className="w-3 h-3 bg-blue-500 rounded-full animate-bounce"
+              style={{ animationDelay: "150ms" }}
+            ></div>
+            <div
+              className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce"
+              style={{ animationDelay: "300ms" }}
+            ></div>
           </div>
         </motion.div>
       </div>
@@ -334,8 +402,10 @@ const LiveSessionJoin = () => {
 
   // Quiz Ended
   if (quizEnded) {
-    const myRank = leaderboard.findIndex(entry => entry.userId === user._id) + 1;
-    const myScore = leaderboard.find(entry => entry.userId === user._id)?.score || 0;
+    const myRank =
+      leaderboard.findIndex((entry) => entry.userId === user._id) + 1;
+    const myScore =
+      leaderboard.find((entry) => entry.userId === user._id)?.score || 0;
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 py-8 px-4">
@@ -347,22 +417,34 @@ const LiveSessionJoin = () => {
             className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 text-center mb-6"
           >
             <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-4" />
-            <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">Quiz Complete!</h1>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">Great job completing the quiz!</p>
+            <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">
+              Quiz Complete!
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Great job completing the quiz!
+            </p>
 
             <div className="grid grid-cols-2 gap-4 max-w-md mx-auto mb-6">
               <div className="bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl p-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Your Rank</p>
-                <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">#{myRank}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  Your Rank
+                </p>
+                <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                  #{myRank}
+                </p>
               </div>
               <div className="bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl p-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Your Score</p>
-                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{myScore.toFixed(1)}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  Your Score
+                </p>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                  {myScore.toFixed(1)}
+                </p>
               </div>
             </div>
 
             <button
-              onClick={() => navigate('/student-dashboard')}
+              onClick={() => navigate("/student-dashboard")}
               className="px-8 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-xl font-bold transition shadow-lg hover:shadow-xl"
             >
               Back to Dashboard
@@ -400,8 +482,20 @@ const LiveSessionJoin = () => {
                 )}
               </button>
               <div className="flex items-center gap-2">
-                <Clock className={`w-5 h-5 ${timeLeft <= 10 ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'}`} />
-                <span className={`text-2xl font-bold ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-gray-800 dark:text-white'}`}>
+                <Clock
+                  className={`w-5 h-5 ${
+                    timeLeft <= 10
+                      ? "text-red-500"
+                      : "text-gray-600 dark:text-gray-400"
+                  }`}
+                />
+                <span
+                  className={`text-2xl font-bold ${
+                    timeLeft <= 10
+                      ? "text-red-500 animate-pulse"
+                      : "text-gray-800 dark:text-white"
+                  }`}
+                >
                   {timeLeft}s
                 </span>
               </div>
@@ -426,20 +520,23 @@ const LiveSessionJoin = () => {
               const isCorrect = answerResult?.correctAnswer === option;
               const showResult = hasAnswered;
 
-              let buttonClass = 'p-6 rounded-xl border-2 transition-all transform hover:scale-105 cursor-pointer ';
-              
+              let buttonClass =
+                "p-6 rounded-xl border-2 transition-all transform hover:scale-105 cursor-pointer ";
+
               if (showResult) {
                 if (isCorrect) {
-                  buttonClass += 'border-green-500 bg-green-50 dark:bg-green-900/20';
+                  buttonClass +=
+                    "border-green-500 bg-green-50 dark:bg-green-900/20";
                 } else if (isSelected && !isCorrect) {
-                  buttonClass += 'border-red-500 bg-red-50 dark:bg-red-900/20';
+                  buttonClass += "border-red-500 bg-red-50 dark:bg-red-900/20";
                 } else {
-                  buttonClass += 'border-gray-300 dark:border-gray-600 opacity-60';
+                  buttonClass +=
+                    "border-gray-300 dark:border-gray-600 opacity-60";
                 }
               } else {
                 buttonClass += isSelected
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 scale-105'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-700';
+                  ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20 scale-105"
+                  : "border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-700";
               }
 
               return (
@@ -450,22 +547,28 @@ const LiveSessionJoin = () => {
                   className={buttonClass}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
-                      showResult && isCorrect
-                        ? 'bg-green-500 text-white'
-                        : showResult && isSelected && !isCorrect
-                        ? 'bg-red-500 text-white'
-                        : isSelected
-                        ? 'bg-purple-500 text-white'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                    }`}>
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
+                        showResult && isCorrect
+                          ? "bg-green-500 text-white"
+                          : showResult && isSelected && !isCorrect
+                          ? "bg-red-500 text-white"
+                          : isSelected
+                          ? "bg-purple-500 text-white"
+                          : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                      }`}
+                    >
                       {String.fromCharCode(65 + index)}
                     </div>
                     <span className="text-lg font-medium text-gray-800 dark:text-white flex-1 text-left">
                       {option}
                     </span>
-                    {showResult && isCorrect && <CheckCircle className="w-6 h-6 text-green-500" />}
-                    {showResult && isSelected && !isCorrect && <XCircle className="w-6 h-6 text-red-500" />}
+                    {showResult && isCorrect && (
+                      <CheckCircle className="w-6 h-6 text-green-500" />
+                    )}
+                    {showResult && isSelected && !isCorrect && (
+                      <XCircle className="w-6 h-6 text-red-500" />
+                    )}
                   </div>
                 </button>
               );
@@ -479,8 +582,8 @@ const LiveSessionJoin = () => {
               animate={{ opacity: 1, y: 0 }}
               className={`mt-6 p-6 rounded-xl ${
                 answerResult.isCorrect
-                  ? 'bg-green-50 dark:bg-green-900/20 border-2 border-green-500'
-                  : 'bg-red-50 dark:bg-red-900/20 border-2 border-red-500'
+                  ? "bg-green-50 dark:bg-green-900/20 border-2 border-green-500"
+                  : "bg-red-50 dark:bg-red-900/20 border-2 border-red-500"
               }`}
             >
               <div className="flex items-center gap-3 mb-3">
@@ -489,10 +592,14 @@ const LiveSessionJoin = () => {
                 ) : (
                   <XCircle className="w-6 h-6 text-red-500" />
                 )}
-                <h3 className={`text-xl font-bold ${
-                  answerResult.isCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
-                }`}>
-                  {answerResult.isCorrect ? 'Correct!' : 'Incorrect'}
+                <h3
+                  className={`text-xl font-bold ${
+                    answerResult.isCorrect
+                      ? "text-green-700 dark:text-green-400"
+                      : "text-red-700 dark:text-red-400"
+                  }`}
+                >
+                  {answerResult.isCorrect ? "Correct!" : "Incorrect"}
                 </h3>
                 <div className="ml-auto text-right">
                   <div className="text-2xl font-bold text-gray-800 dark:text-white">
