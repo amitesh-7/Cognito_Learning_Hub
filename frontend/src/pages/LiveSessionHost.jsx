@@ -541,15 +541,71 @@ const LiveSessionHost = () => {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center"
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8"
               >
                 <Trophy className="w-20 h-20 text-yellow-500 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+                <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2 text-center">
                   Quiz Completed!
                 </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                <p className="text-gray-600 dark:text-gray-300 mb-6 text-center">
                   {participants.length} participants completed the quiz
                 </p>
+
+                {/* Quiz Statistics */}
+                {leaderboard.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl p-4 text-center">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                        Avg Score
+                      </p>
+                      <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        {(
+                          leaderboard.reduce((sum, p) => sum + p.score, 0) /
+                          leaderboard.length
+                        ).toFixed(1)}
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 rounded-xl p-4 text-center">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                        Avg Accuracy
+                      </p>
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {(
+                          leaderboard.reduce(
+                            (sum, p) => sum + (p.accuracy || 0),
+                            0
+                          ) / leaderboard.length
+                        ).toFixed(0)}
+                        %
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/30 rounded-xl p-4 text-center">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                        Avg Time
+                      </p>
+                      <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                        {(
+                          leaderboard.reduce(
+                            (sum, p) => sum + (p.avgTimePerQuestion || 0),
+                            0
+                          ) / leaderboard.length
+                        ).toFixed(1)}
+                        s
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl p-4 text-center">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                        Top Score
+                      </p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {Math.max(...leaderboard.map((p) => p.score)).toFixed(
+                          1
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-4 justify-center">
                   <button
                     onClick={() => navigate("/teacher-dashboard")}
