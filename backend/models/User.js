@@ -9,8 +9,7 @@ const UserSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
-      index: false, // Don't auto-create index (we create it manually below)
+      // unique: true creates an index automatically - removed to prevent duplicate index warning
     },
     password: {
       type: String,
@@ -21,9 +20,8 @@ const UserSchema = new mongoose.Schema(
     },
     googleId: {
       type: String,
-      unique: true,
       sparse: true, // Allows multiple null values
-      index: false, // Don't auto-create index (we create it manually below)
+      // unique: true creates an index automatically - removed to prevent duplicate index warning
     },
     picture: {
       type: String, // Google profile picture URL
