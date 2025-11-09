@@ -48,7 +48,7 @@ const hpp = require("hpp");
 // --- CONFIGURATION ---
 const app = express();
 const server = http.createServer(app); // <-- NEW: Wrap Express with HTTP server
-const PORT = 3001;
+const PORT = process.env.PORT || 3001; // Use environment PORT or default to 3001
 
 const MONGO_URI = process.env.MONGO_URI;
 const API_KEY = process.env.API_KEY;
@@ -100,6 +100,7 @@ const corsOptions = {
     const isAllowed =
       allowedOrigins.includes(origin) ||
       origin.endsWith(".vercel.app") ||
+      origin.endsWith(".onrender.com") || // Allow Render deployments
       origin.endsWith("localhost:5173") ||
       origin.endsWith("localhost:3000");
 
