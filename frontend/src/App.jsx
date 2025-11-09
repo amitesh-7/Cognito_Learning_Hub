@@ -1,15 +1,13 @@
-import React, { useState, useContext, Suspense, lazy } from "react";
-import { Routes, Route, Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "./context/AuthContext";
-import { useTheme } from "./hooks/useTheme";
-import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Sun, Moon, Menu, X } from "lucide-react";
+import React, { useContext, Suspense, lazy } from "react";
+import { Routes, Route } from "react-router-dom";
+import { motion } from "framer-motion";
 import { ToastProvider } from "./components/ui/Toast";
-import Button from "./components/ui/Button";
-import { fadeInUp, staggerContainer, staggerItem } from "./lib/utils";
 import ParticleBackground from "./components/ParticleBackground";
 import FloatingShapes from "./components/FloatingShapes";
 import LoadingSpinner from "./components/LoadingSpinner";
+import Navbar from "./components/Navbar";
+import LenisScroll from "./components/LenisScroll";
+import { useTheme } from "./hooks/useTheme";
 
 // Import route wrapper components (never lazy load these)
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -55,402 +53,22 @@ const DuelMode = lazy(() => import("./pages/DuelMode"));
 const DuelBattle = lazy(() => import("./pages/DuelBattle"));
 
 function App() {
-  const { user, logout } = useContext(AuthContext);
-  const [theme, toggleTheme] = useTheme();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    setIsMenuOpen(false);
-    navigate("/");
-  };
-
-  const closeMenu = () => setIsMenuOpen(false);
+  const [theme] = useTheme();
 
   return (
     <SocketProvider>
       <ToastProvider>
-        <div className="min-h-screen bg-white dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300 relative overflow-hidden">
-          {/* Animated Background Layers */}
-          <ParticleBackground isDark={theme === "dark"} />
-          <FloatingShapes />
-          {/* Glass-morphism Navbar with Reduced Height */}
-          <motion.header
-            className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl sticky top-0 z-50 border-b border-indigo-100/50 dark:border-indigo-900/50 shadow-sm"
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          >
-            <nav className="container mx-auto px-6 md:px-8 py-3 flex justify-between items-center">
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Link to="/" className="flex items-center space-x-3 group">
-                  <motion.div
-                    className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30"
-                    whileHover={{ rotate: 5, scale: 1.1 }}
-                    animate={{
-                      boxShadow: [
-                        "0 10px 25px -5px rgba(99, 102, 241, 0.3)",
-                        "0 10px 25px -5px rgba(139, 92, 246, 0.4)",
-                        "0 10px 25px -5px rgba(99, 102, 241, 0.3)",
-                      ],
-                    }}
-                    transition={{
-                      rotate: { duration: 0.2 },
-                      scale: { duration: 0.2 },
-                      boxShadow: { duration: 3, repeat: Infinity },
-                    }}
-                  >
-                    <Brain className="h-6 w-6" />
-                  </motion.div>
-                  <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-indigo-600 transition-all duration-300 tracking-tight">
-                    Cognito Learning Hub
-                  </h1>
-                </Link>
-              </motion.div>
-
-              {/* Desktop Navigation */}
-              <motion.div
-                className="hidden lg:flex items-center space-x-1 xl:space-x-2"
-                variants={staggerContainer}
-                initial="initial"
-                animate="animate"
-              >
-                {user ? (
-                  <>
-                    <motion.span
-                      className="font-medium text-gray-700 dark:text-gray-300 mr-4"
-                      variants={staggerItem}
-                    >
-                      Welcome,{" "}
-                      <span className="font-semibold text-indigo-600 dark:text-indigo-400">
-                        {user.name}!
-                      </span>
-                    </motion.span>
-
-                    <motion.div variants={staggerItem}>
-                      <Link
-                        to="/dashboard"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
-                      >
-                        Dashboard
-                      </Link>
-                    </motion.div>
-
-                    <motion.div variants={staggerItem}>
-                      <Link
-                        to="/quizzes"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
-                      >
-                        Take a Quiz
-                      </Link>
-                    </motion.div>
-
-                    <motion.div variants={staggerItem}>
-                      <Link
-                        to="/doubt-solver"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
-                      >
-                        AI Tutor
-                      </Link>
-                    </motion.div>
-
-                    <motion.div variants={staggerItem}>
-                      <Link
-                        to="/achievements"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
-                      >
-                        Achievements
-                      </Link>
-                    </motion.div>
-
-                    <motion.div variants={staggerItem}>
-                      <Link
-                        to="/social"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
-                      >
-                        Social Hub
-                      </Link>
-                    </motion.div>
-
-                    <motion.div variants={staggerItem}>
-                      <Link
-                        to="/chat"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
-                      >
-                        Chat
-                      </Link>
-                    </motion.div>
-
-                    {user.role === "Teacher" && (
-                      <motion.div variants={staggerItem}>
-                        <Link
-                          to="/teacher-dashboard"
-                          className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
-                        >
-                          My Quizzes
-                        </Link>
-                      </motion.div>
-                    )}
-
-                    {user.role === "Admin" && (
-                      <motion.div variants={staggerItem}>
-                        <Link
-                          to="/admin-broadcast"
-                          className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900 transition-all duration-200 whitespace-nowrap"
-                        >
-                          Broadcast
-                        </Link>
-                      </motion.div>
-                    )}
-
-                    {(user.role === "Admin" || user.role === "Moderator") && (
-                      <motion.div variants={staggerItem}>
-                        <Link
-                          to="/moderator"
-                          className="px-3 py-2 font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 rounded-lg hover:bg-green-50 dark:hover:bg-green-900 transition-all duration-200 whitespace-nowrap"
-                        >
-                          Moderator
-                        </Link>
-                      </motion.div>
-                    )}
-
-                    {user.role === "Admin" && (
-                      <motion.div variants={staggerItem}>
-                        <Link
-                          to="/admin"
-                          className="px-3 py-2 font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-900 transition-all duration-200 whitespace-nowrap"
-                        >
-                          Admin
-                        </Link>
-                      </motion.div>
-                    )}
-
-                    <motion.div variants={staggerItem}>
-                      <Button
-                        onClick={handleLogout}
-                        variant="default"
-                        size="sm"
-                      >
-                        Logout
-                      </Button>
-                    </motion.div>
-                  </>
-                ) : (
-                  <>
-                    <motion.div variants={staggerItem}>
-                      <Link
-                        to="/features"
-                        className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-all duration-200 relative group"
-                      >
-                        Features
-                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-600 dark:bg-indigo-400 group-hover:w-full transition-all duration-300"></span>
-                      </Link>
-                    </motion.div>
-                    <motion.div variants={staggerItem}>
-                      <Link
-                        to="/login"
-                        className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50/50 dark:hover:bg-indigo-900/30 transition-all duration-200"
-                      >
-                        Login
-                      </Link>
-                    </motion.div>
-                    <motion.div variants={staggerItem}>
-                      <Link
-                        to="/signup"
-                        className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5 transition-all duration-300"
-                      >
-                        Sign Up
-                      </Link>
-                    </motion.div>
-                  </>
-                )}
-
-                <motion.div variants={staggerItem}>
-                  <motion.button
-                    onClick={toggleTheme}
-                    className="ml-3 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <motion.div
-                      initial={false}
-                      animate={{ rotate: theme === "light" ? 0 : 180 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      {theme === "light" ? (
-                        <Moon className="w-5 h-5 text-indigo-600" />
-                      ) : (
-                        <Sun className="w-5 h-5 text-yellow-400" />
-                      )}
-                    </motion.div>
-                  </motion.button>
-                </motion.div>
-              </motion.div>
-
-              {/* Mobile Menu Button */}
-              <div className="md:hidden flex items-center space-x-2">
-                <Button onClick={toggleTheme} variant="ghost" size="icon">
-                  {theme === "light" ? (
-                    <Moon className="w-5 h-5" />
-                  ) : (
-                    <Sun className="w-5 h-5" />
-                  )}
-                </Button>
-                <Button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  variant="ghost"
-                  size="icon"
-                >
-                  {isMenuOpen ? (
-                    <X className="w-6 h-6" />
-                  ) : (
-                    <Menu className="w-6 h-6" />
-                  )}
-                </Button>
-              </div>
-            </nav>
-          </motion.header>
-          {/* Mobile Menu Overlay */}
-          <AnimatePresence>
-            {isMenuOpen && (
-              <motion.div
-                className="md:hidden fixed inset-0 bg-white dark:bg-gray-900 z-40 p-6"
-                initial={{ opacity: 0, y: "-50%" }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: "-50%" }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-              >
-                <div className="flex flex-col space-y-6 pt-20 text-center text-xl">
-                  {user ? (
-                    <>
-                      <Link
-                        onClick={closeMenu}
-                        to="/dashboard"
-                        className="text-gray-800 dark:text-gray-200 hover:text-indigo-600"
-                      >
-                        Dashboard
-                      </Link>
-                      <Link
-                        onClick={closeMenu}
-                        to="/quizzes"
-                        className="text-gray-800 dark:text-gray-200 hover:text-indigo-600"
-                      >
-                        Take a Quiz
-                      </Link>
-                      <Link
-                        onClick={closeMenu}
-                        to="/doubt-solver"
-                        className="text-gray-800 dark:text-gray-200 hover:text-indigo-600"
-                      >
-                        AI Tutor
-                      </Link>
-                      <Link
-                        onClick={closeMenu}
-                        to="/achievements"
-                        className="text-gray-800 dark:text-gray-200 hover:text-indigo-600"
-                      >
-                        Achievements
-                      </Link>
-                      <Link
-                        onClick={closeMenu}
-                        to="/social"
-                        className="text-gray-800 dark:text-gray-200 hover:text-indigo-600"
-                      >
-                        Social Hub
-                      </Link>
-                      <Link
-                        onClick={closeMenu}
-                        to="/chat"
-                        className="text-gray-800 dark:text-gray-200 hover:text-indigo-600"
-                      >
-                        Chat
-                      </Link>
-                      {user.role === "Teacher" && (
-                        <>
-                          <Link
-                            onClick={closeMenu}
-                            to="/teacher-dashboard"
-                            className="text-gray-800 dark:text-gray-200 hover:text-indigo-600"
-                          >
-                            My Quizzes
-                          </Link>
-                          <Link
-                            onClick={closeMenu}
-                            to="/quiz-maker"
-                            className="text-gray-800 dark:text-gray-200 hover:text-indigo-600"
-                          >
-                            Quiz Maker
-                          </Link>
-                        </>
-                      )}
-                      {(user.role === "Admin" || user.role === "Moderator") && (
-                        <Link
-                          onClick={closeMenu}
-                          to="/moderator"
-                          className="text-gray-800 dark:text-gray-200 hover:text-indigo-600"
-                        >
-                          Moderator
-                        </Link>
-                      )}
-                      {user.role === "Admin" && (
-                        <Link
-                          onClick={closeMenu}
-                          to="/admin"
-                          className="text-gray-800 dark:text-gray-200 hover:text-indigo-600"
-                        >
-                          Admin
-                        </Link>
-                      )}
-                      {user.role === "Admin" && (
-                        <Link
-                          onClick={closeMenu}
-                          to="/admin-broadcast"
-                          className="text-gray-800 dark:text-gray-200 hover:text-red-600"
-                        >
-                          Broadcast
-                        </Link>
-                      )}
-                      <button
-                        onClick={handleLogout}
-                        className="mt-6 w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg"
-                      >
-                        Logout
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <Link
-                        onClick={closeMenu}
-                        to="/features"
-                        className="text-gray-800 dark:text-gray-200 hover:text-indigo-600"
-                      >
-                        Features
-                      </Link>
-                      <Link
-                        onClick={closeMenu}
-                        to="/login"
-                        className="text-gray-800 dark:text-gray-200 hover:text-indigo-600"
-                      >
-                        Login
-                      </Link>
-                      <Link
-                        onClick={closeMenu}
-                        to="/signup"
-                        className="mt-4 w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg"
-                      >
-                        Sign Up
-                      </Link>
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <main className="container mx-auto p-6 lg:p-8 mt-4 relative z-10">
+        <LenisScroll>
+          <div className="min-h-screen bg-white dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300 relative overflow-x-hidden">
+            {/* Animated Background Layers */}
+            <ParticleBackground isDark={theme === "dark"} />
+            <FloatingShapes />
+            
+            {/* Modern Glassmorphism Navbar with Scroll Behavior */}
+            <Navbar />
+            
+            {/* Main Content with top padding for fixed navbar */}
+            <main className="container mx-auto px-6 lg:px-8 pt-32 lg:pt-36 relative z-10">
             <Suspense
               fallback={
                 <div className="flex items-center justify-center min-h-[60vh]">
@@ -698,29 +316,66 @@ function App() {
                 />
               </Routes>
             </Suspense>
-          </main>{" "}
-          <footer className="bg-white dark:bg-gray-900 mt-12 py-6 border-t border-gray-200 dark:border-gray-700">
-            <div className="container mx-auto px-4 text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+          </main>
+          
+          {/* Modern Footer with Glassmorphism */}
+          <motion.footer 
+            className="relative mt-12 py-8 bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl border-t border-indigo-100/50 dark:border-indigo-900/50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5 pointer-events-none" />
+            <div className="container mx-auto px-4 text-center relative z-10">
+              <motion.p 
+                className="text-sm text-gray-600 dark:text-gray-400"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
                 &copy; 2025{" "}
-                <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                <span className="font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
                   Cognito Learning Hub
                 </span>
                 . All Rights Reserved.
-              </p>
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
-                Made with <span className="text-red-500">❤️</span> by team
-                <span className="font-medium"> OPTIMISTIC MUTANT CODERS</span>
-              </p>
+              </motion.p>
+              
+              <motion.p 
+                className="mt-2 text-sm text-gray-500 dark:text-gray-500"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+              >
+                Made with{" "}
+                <motion.span 
+                  className="inline-block text-red-500"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                >
+                  ❤️
+                </motion.span>{" "}
+                by team{" "}
+                <span className="font-medium bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+                  OPTIMISTIC MUTANT CODERS
+                </span>
+              </motion.p>
 
               {/* Social Links */}
-              <div className="mt-4 flex justify-center space-x-4">
+              <motion.div 
+                className="mt-6 flex justify-center space-x-6"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+              >
                 {/* LinkedIn */}
-                <a
+                <motion.a
                   href="https://www.linkedin.com/company/optimistic-mutant-coders/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  className="p-3 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 text-gray-600 dark:text-gray-400 hover:from-indigo-500 hover:to-purple-600 hover:text-white dark:hover:from-indigo-500 dark:hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-lg"
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -730,14 +385,16 @@ function App() {
                   >
                     <path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1 4.98 2.12 4.98 3.5zM.5 8.5h4V24h-4V8.5zm7 0h3.8v2.1h.1c.5-1 1.7-2.1 3.6-2.1 3.9 0 4.6 2.6 4.6 6V24h-4v-7.7c0-1.8 0-4.1-2.5-4.1s-2.9 2-2.9 4V24h-4V8.5z" />
                   </svg>
-                </a>
+                </motion.a>
 
                 {/* GitHub */}
-                <a
+                <motion.a
                   href="https://github.com/amitesh-7"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  className="p-3 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 text-gray-600 dark:text-gray-400 hover:from-indigo-500 hover:to-purple-600 hover:text-white dark:hover:from-indigo-500 dark:hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-lg"
+                  whileHover={{ scale: 1.1, rotate: -5 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -747,11 +404,12 @@ function App() {
                   >
                     <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.3.8-.6v-2c-3.34.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.2-.9.1-.9.1-.9 1.3.1 2 1.3 2 1.3 1.2 2 3.2 1.4 4 .9.1-.9.5-1.4.9-1.7-2.7-.3-5.6-1.3-5.6-6 0-1.3.5-2.4 1.2-3.3-.1-.3-.5-1.6.1-3.3 0 0 1-.3 3.4 1.2a11.7 11.7 0 0 1 6.2 0C18 5.3 19 5.6 19 5.6c.6 1.7.2 3 .1 3.3.8.9 1.2 2 1.2 3.3 0 4.7-2.9 5.6-5.6 6 .5.4 1 .8 1 1.8v2.7c0 .3.2.7.8.6C20.6 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z" />
                   </svg>
-                </a>
-              </div>
+                </motion.a>
+              </motion.div>
             </div>
-          </footer>
-        </div>
+          </motion.footer>
+          </div>
+        </LenisScroll>
       </ToastProvider>
     </SocketProvider>
   );

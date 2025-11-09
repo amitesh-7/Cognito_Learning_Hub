@@ -94,7 +94,14 @@ const allowedOrigins = process.env.FRONTEND_URLS
       "https://quizwise-ai-server.onrender.com",
       "https://cognito-learning-hub-frontend.vercel.app",
     ]
-  : ["http://localhost:3000", "http://localhost:5173", "http://localhost:5174"];
+  : [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:5174",
+    ];
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -106,8 +113,8 @@ const corsOptions = {
       allowedOrigins.includes(origin) ||
       origin.endsWith(".vercel.app") ||
       origin.endsWith(".onrender.com") || // Allow Render deployments
-      origin.endsWith("localhost:5173") ||
-      origin.endsWith("localhost:3000");
+      origin.includes("localhost") ||
+      origin.includes("127.0.0.1");
 
     if (isAllowed) {
       callback(null, true);
@@ -132,10 +139,16 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com"],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://accounts.google.com",
+          "https://fonts.googleapis.com",
+        ],
         scriptSrc: [
           "'self'",
           "'unsafe-inline'",
+          "'unsafe-eval'",
           "https://accounts.google.com",
           "https://apis.google.com",
         ],
@@ -154,7 +167,13 @@ app.use(
           "'self'",
           "https://generativelanguage.googleapis.com",
           "https://accounts.google.com",
+          "https://oauth2.googleapis.com",
+          "ws://localhost:3001",
+          "ws://127.0.0.1:3001",
+          "http://localhost:3001",
+          "http://127.0.0.1:3001",
         ],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
       },
     },
     crossOriginEmbedderPolicy: false,
@@ -244,10 +263,15 @@ app.get("/", (req, res) => {
 
 // --- SOCKET.IO SETUP ---
 const io = new Server(server, {
-  cors: corsOptions, // Use same CORS options
+  cors: {
+    origin: allowedOrigins, // Allow same origins as main CORS
+    credentials: true,
+    methods: ["GET", "POST"],
+  },
   transports: ["websocket", "polling"], // Support both for compatibility
   pingTimeout: 60000, // 60 seconds before considering connection lost
   pingInterval: 25000, // Send ping every 25 seconds
+  allowEIO3: true, // Allow Engine.IO v3 clients
 });
 
 // Store active sessions in memory for fast access
