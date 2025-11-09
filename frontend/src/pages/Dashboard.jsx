@@ -367,6 +367,25 @@ export default function Dashboard() {
                         Join Live Quiz
                       </Button>
                     </Link>
+                    <Link to="/duel">
+                      <Button className="w-full justify-start bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white border-0 shadow-lg transform hover:scale-105 transition-all duration-300 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                        <svg
+                          className="w-5 h-5 mr-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M8 7l4-4m0 0l4 4m-4-4v18M3 12l4 4m-4-4l4-4m10 8l-4-4m4 4l-4 4"
+                          />
+                        </svg>
+                        1v1 Duel Mode 🔥
+                      </Button>
+                    </Link>
                     <Link to="/quizzes">
                       <Button className="w-full justify-start bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg transform hover:scale-105 transition-all duration-300">
                         <ClipboardList className="w-5 h-5 mr-3" />

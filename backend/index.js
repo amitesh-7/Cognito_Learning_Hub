@@ -29,6 +29,7 @@ const {
 } = require("./models/Achievement");
 const QuizPDFGenerator = require("./utils/pdfGenerator");
 const LiveSession = require("./models/LiveSession"); // <-- NEW: Live session model
+const DuelMatch = require("./models/DuelMatch"); // <-- NEW: 1v1 Duel model
 const {
   Friendship,
   Challenge,
@@ -781,6 +782,290 @@ io.on("connection", (socket) => {
   });
 
   // ========================================
+  // 1v1 DUEL EVENTS
+  // ========================================
+
+  // EVENT: find-duel-match
+  // Student searches for a 1v1 opponent with the same quiz
+  socket.on("find-duel-match", async (data, callback) => {
+    try {
+      const { quizId, userId, username, avatar } = data;
+
+      // Find existing waiting match for this quiz
+      let match = await DuelMatch.findOne({
+        quizId,
+        status: "waiting",
+        "player1.userId": { $ne: userId }, // Don't match with yourself
+      }).populate("quizId");
+
+      if (match) {
+        // Join existing match as player 2
+        match.player2 = {
+          userId,
+          socketId: socket.id,
+          score: 0,
+          correctAnswers: 0,
+          totalTime: 0,
+          answers: [],
+          isReady: false,
+          isActive: true,
+        };
+        match.status = "ready";
+        await match.save();
+
+        // Both players join the match room
+        socket.join(match.matchId);
+        const player1Socket = io.sockets.sockets.get(match.player1.socketId);
+        if (player1Socket) {
+          player1Socket.join(match.matchId);
+        }
+
+        console.log(
+          `[Duel] Match found: ${match.matchId} - ${match.player1.userId} vs ${userId}`
+        );
+
+        // Notify both players
+        io.to(match.matchId).emit("match-found", {
+          matchId: match.matchId,
+          quiz: {
+            id: match.quizId._id,
+            title: match.quizId.title,
+            description: match.quizId.description,
+            totalQuestions: match.quizId.questions.length,
+          },
+          opponent: {
+            player1: {
+              userId: match.player1.userId,
+              username: match.player1.username || "Player 1",
+              avatar: match.player1.avatar,
+            },
+            player2: {
+              userId: match.player2.userId,
+              username: username,
+              avatar: avatar,
+            },
+          },
+        });
+
+        callback({ success: true, matchId: match.matchId, role: "player2" });
+      } else {
+        // Create new waiting match
+        const matchId = await DuelMatch.generateMatchId();
+
+        match = new DuelMatch({
+          matchId,
+          quizId,
+          player1: {
+            userId,
+            socketId: socket.id,
+            username,
+            avatar,
+            score: 0,
+            correctAnswers: 0,
+            totalTime: 0,
+            answers: [],
+            isReady: false,
+            isActive: true,
+          },
+          status: "waiting",
+        });
+
+        await match.save();
+        socket.join(matchId);
+
+        console.log(`[Duel] Waiting for opponent: ${matchId} - ${userId}`);
+
+        callback({ success: true, matchId, role: "player1", waiting: true });
+      }
+    } catch (error) {
+      console.error("[Duel] Error finding match:", error);
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  // EVENT: duel-ready
+  // Player is ready to start
+  socket.on("duel-ready", async (data, callback) => {
+    try {
+      const { matchId, userId } = data;
+
+      const match = await DuelMatch.findOne({ matchId }).populate("quizId");
+      if (!match) {
+        return callback({ success: false, error: "Match not found" });
+      }
+
+      // Mark player as ready
+      if (match.player1.userId.toString() === userId) {
+        match.player1.isReady = true;
+      } else if (match.player2.userId.toString() === userId) {
+        match.player2.isReady = true;
+      }
+
+      await match.save();
+
+      // Notify room
+      io.to(matchId).emit("player-ready", { userId });
+
+      // Start if both ready
+      if (match.player1.isReady && match.player2.isReady) {
+        match.status = "active";
+        match.startedAt = new Date();
+        match.currentQuestionIndex = 0;
+        await match.save();
+
+        const currentQuestion = match.quizId.questions[0];
+
+        io.to(matchId).emit("duel-started", {
+          currentQuestion: {
+            index: 0,
+            question: currentQuestion.question,
+            options: currentQuestion.options,
+            timeLimit: match.timePerQuestion,
+          },
+        });
+
+        console.log(`[Duel] Match started: ${matchId}`);
+      }
+
+      callback({ success: true });
+    } catch (error) {
+      console.error("[Duel] Error in ready:", error);
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  // EVENT: duel-answer
+  // Player submits answer
+  socket.on("duel-answer", async (data, callback) => {
+    try {
+      const { matchId, userId, questionIndex, answer, timeSpent } = data;
+
+      const match = await DuelMatch.findOne({ matchId }).populate("quizId");
+      if (!match) {
+        return callback({ success: false, error: "Match not found" });
+      }
+
+      const question = match.quizId.questions[questionIndex];
+      const isCorrect = answer === question.correct_answer;
+      const pointsEarned = isCorrect ? 100 : 0;
+
+      // Record answer
+      const answerRecord = {
+        questionIndex,
+        answer,
+        isCorrect,
+        timeSpent,
+        timestamp: new Date(),
+      };
+
+      let player;
+      if (match.player1.userId.toString() === userId) {
+        player = match.player1;
+      } else if (match.player2.userId.toString() === userId) {
+        player = match.player2;
+      }
+
+      if (player) {
+        player.answers.push(answerRecord);
+        if (isCorrect) {
+          player.correctAnswers += 1;
+          player.score += pointsEarned;
+        }
+        player.totalTime += timeSpent;
+      }
+
+      await match.save();
+
+      // Check if both answered
+      const bothAnswered =
+        match.player1.answers.some((a) => a.questionIndex === questionIndex) &&
+        match.player2.answers.some((a) => a.questionIndex === questionIndex);
+
+      callback({
+        success: true,
+        isCorrect,
+        correctAnswer: question.correct_answer,
+        pointsEarned,
+        explanation: question.explanation,
+      });
+
+      if (bothAnswered) {
+        // Move to next question or end match
+        if (questionIndex < match.quizId.questions.length - 1) {
+          match.currentQuestionIndex += 1;
+          await match.save();
+
+          const nextQuestion =
+            match.quizId.questions[match.currentQuestionIndex];
+
+          setTimeout(() => {
+            io.to(matchId).emit("next-question", {
+              currentQuestion: {
+                index: match.currentQuestionIndex,
+                question: nextQuestion.question,
+                options: nextQuestion.options,
+                timeLimit: match.timePerQuestion,
+              },
+            });
+          }, 2000);
+        } else {
+          // Match completed
+          match.status = "completed";
+          match.completedAt = new Date();
+          match.winner = match.determineWinner();
+          await match.save();
+
+          io.to(matchId).emit("duel-ended", {
+            winner: match.winner,
+            finalScores: {
+              player1: {
+                userId: match.player1.userId,
+                score: match.player1.score,
+                correctAnswers: match.player1.correctAnswers,
+                totalTime: match.player1.totalTime,
+              },
+              player2: {
+                userId: match.player2.userId,
+                score: match.player2.score,
+                correctAnswers: match.player2.correctAnswers,
+                totalTime: match.player2.totalTime,
+              },
+            },
+          });
+
+          console.log(
+            `[Duel] Match ended: ${matchId} - Winner: ${match.winner || "Tie"}`
+          );
+        }
+      }
+    } catch (error) {
+      console.error("[Duel] Error submitting answer:", error);
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  // EVENT: cancel-duel
+  // Cancel waiting for match
+  socket.on("cancel-duel", async (data, callback) => {
+    try {
+      const { matchId } = data;
+
+      const match = await DuelMatch.findOne({ matchId });
+      if (match && match.status === "waiting") {
+        match.status = "cancelled";
+        await match.save();
+
+        console.log(`[Duel] Match cancelled: ${matchId}`);
+      }
+
+      callback({ success: true });
+    } catch (error) {
+      console.error("[Duel] Error cancelling:", error);
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  // ========================================
   // EVENT: disconnect
   // Handle client disconnection
   // ========================================
@@ -790,6 +1075,48 @@ io.on("connection", (socket) => {
     );
 
     try {
+      // Handle duel matches
+      const duelMatches = await DuelMatch.find({
+        $or: [
+          { "player1.socketId": socket.id },
+          { "player2.socketId": socket.id },
+        ],
+        status: { $in: ["waiting", "ready", "active"] },
+      });
+
+      for (const match of duelMatches) {
+        if (match.status === "waiting") {
+          // Cancel waiting match
+          match.status = "cancelled";
+          await match.save();
+        } else {
+          // Player disconnected during active match - opponent wins
+          let disconnectedPlayer, opponentId;
+
+          if (match.player1.socketId === socket.id) {
+            disconnectedPlayer = "player1";
+            opponentId = match.player2.userId;
+          } else {
+            disconnectedPlayer = "player2";
+            opponentId = match.player1.userId;
+          }
+
+          match.status = "completed";
+          match.winner = opponentId;
+          match.completedAt = new Date();
+          await match.save();
+
+          io.to(match.matchId).emit("opponent-disconnected", {
+            winner: opponentId,
+            reason: "Opponent disconnected",
+          });
+
+          console.log(
+            `[Duel] Player disconnected from match ${match.matchId}, ${disconnectedPlayer} forfeited`
+          );
+        }
+      }
+
       // Find all sessions where this socket is a participant or host
       const sessions = await LiveSession.find({
         $or: [
@@ -1495,14 +1822,23 @@ app.post(
       .withMessage("Password must contain at least one letter and one number"),
     body("role")
       .optional()
-      .isIn(["User", "Teacher"])
+      .isIn(["User", "Student", "Teacher"])
       .withMessage("Invalid role"),
   ],
   async (req, res) => {
     try {
+      // Log the incoming request for debugging
+      console.log("📝 Registration request received:", {
+        name: req.body.name,
+        email: req.body.email,
+        role: req.body.role,
+        hasPassword: !!req.body.password,
+      });
+
       // Check for validation errors
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.log("❌ Validation errors:", errors.array());
         return res.status(400).json({
           message: "Validation failed",
           errors: errors.array(),

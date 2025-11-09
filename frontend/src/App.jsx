@@ -51,6 +51,8 @@ const LiveSessionHost = lazy(() => import("./pages/LiveSessionHost"));
 const LiveSessionJoin = lazy(() => import("./pages/LiveSessionJoin"));
 const LiveSessionAnalytics = lazy(() => import("./pages/LiveSessionAnalytics"));
 const LiveSessionHistory = lazy(() => import("./pages/LiveSessionHistory"));
+const DuelMode = lazy(() => import("./pages/DuelMode"));
+const DuelBattle = lazy(() => import("./pages/DuelBattle"));
 
 function App() {
   const { user, logout } = useContext(AuthContext);
@@ -639,6 +641,24 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <LiveSessionHistory />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* 1v1 Duel Routes */}
+                <Route
+                  path="/duel"
+                  element={
+                    <ProtectedRoute>
+                      <DuelMode />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/duel/:quizId"
+                  element={
+                    <ProtectedRoute>
+                      <DuelBattle />
                     </ProtectedRoute>
                   }
                 />

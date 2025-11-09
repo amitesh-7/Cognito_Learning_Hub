@@ -35,7 +35,7 @@ export const SocketProvider = ({ children }) => {
       reconnectionDelayMax: 5000,
       reconnectionAttempts: maxReconnectAttempts,
       timeout: 10000,
-      autoConnect: false, // Don't auto-connect, wait for manual connection
+      autoConnect: true, // Auto-connect enabled
     });
 
     socketRef.current = socketInstance;

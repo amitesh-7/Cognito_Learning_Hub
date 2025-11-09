@@ -1,8 +1,16 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Users, TrendingUp, BarChart3, Eye, Trash2, Download } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Calendar,
+  Users,
+  TrendingUp,
+  BarChart3,
+  Eye,
+  Trash2,
+  Download,
+} from "lucide-react";
 
 const LiveSessionHistory = () => {
   const navigate = useNavigate();
@@ -10,50 +18,109 @@ const LiveSessionHistory = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('all'); // all, completed, active
+  const [filter, setFilter] = useState("all"); // all, completed, active
 
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/live-sessions/host/my-sessions`,
-          {
-            headers: {
-              'x-auth-token': localStorage.getItem('token'),
-            },
-          }
+        // Use the same token key as AuthContext
+        const token =
+          localStorage.getItem("quizwise-token") ||
+          localStorage.getItem("token");
+
+        console.log("🔍 Debug Info:", {
+          hasToken: !!token,
+          tokenLength: token?.length,
+          hasUser: !!user,
+          userRole: user?.role,
+          userName: user?.name,
+        });
+
+        if (!token) {
+          console.warn("⚠️ No token found in localStorage");
+          setError("Please login to view session history");
+          setLoading(false);
+          return;
+        }
+
+        console.log("📡 Fetching sessions from backend...");
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+        const fullUrl = `${apiUrl}/api/live-sessions/host/my-sessions`;
+        console.log("🌐 Request URL:", fullUrl);
+
+        const response = await fetch(fullUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        console.log(
+          "📥 Response status:",
+          response.status,
+          response.statusText
         );
 
-        if (!response.ok) throw new Error('Failed to fetch sessions');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("❌ Fetch failed:", {
+            status: response.status,
+            statusText: response.statusText,
+            errorData,
+          });
+          throw new Error(
+            errorData.message || `Failed to fetch sessions (${response.status})`
+          );
+        }
+
         const data = await response.json();
-        setSessions(data);
+        console.log("✅ Sessions fetched successfully:", data);
+
+        const sessionsList = data.sessions || data || [];
+        console.log("📊 Total sessions:", sessionsList.length);
+
+        setSessions(sessionsList);
+        setError(null);
       } catch (err) {
+        console.error("❌ Error fetching sessions:", err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    if (user && user.role === 'Teacher') {
+    console.log("🚀 useEffect triggered, user:", user);
+
+    if (user) {
       fetchSessions();
+    } else {
+      console.warn("⚠️ No user object, skipping fetch");
+      setLoading(false);
     }
   }, [user]);
 
-  const filteredSessions = sessions.filter(session => {
-    if (filter === 'all') return true;
+  const filteredSessions = sessions.filter((session) => {
+    if (filter === "all") return true;
     return session.status === filter;
   });
 
   const getStatusBadge = (status) => {
     const styles = {
-      waiting: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      completed: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+      waiting:
+        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+      active:
+        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+      completed:
+        "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+      cancelled: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     };
 
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${styles[status] || styles.waiting}`}>
+      <span
+        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+          styles[status] || styles.waiting
+        }`}
+      >
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
@@ -86,14 +153,14 @@ const LiveSessionHistory = () => {
 
         {/* Filters */}
         <div className="mb-6 flex gap-4">
-          {['all', 'completed', 'active', 'waiting'].map((filterOption) => (
+          {["all", "completed", "active", "waiting"].map((filterOption) => (
             <button
               key={filterOption}
               onClick={() => setFilter(filterOption)}
               className={`px-6 py-2 rounded-lg font-medium transition ${
                 filter === filterOption
-                  ? 'bg-purple-500 text-white shadow-lg'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900'
+                  ? "bg-purple-500 text-white shadow-lg"
+                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900"
               }`}
             >
               {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
@@ -115,12 +182,12 @@ const LiveSessionHistory = () => {
               No sessions found
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {filter === 'all'
+              {filter === "all"
                 ? "You haven't hosted any live sessions yet."
                 : `No ${filter} sessions found.`}
             </p>
             <button
-              onClick={() => navigate('/teacher-dashboard')}
+              onClick={() => navigate("/teacher-dashboard")}
               className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition"
             >
               Host a Session
@@ -128,10 +195,10 @@ const LiveSessionHistory = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout">
               {filteredSessions.map((session, index) => (
                 <motion.div
-                  key={session._id}
+                  key={session._id || session.sessionCode || `session-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
@@ -142,7 +209,7 @@ const LiveSessionHistory = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-xl font-bold text-gray-800 dark:text-white">
-                          {session.quizTitle || 'Untitled Quiz'}
+                          {session.quizTitle || "Untitled Quiz"}
                         </h3>
                         {getStatusBadge(session.status)}
                       </div>
@@ -155,23 +222,29 @@ const LiveSessionHistory = () => {
                         </div>
                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                           <Users className="w-4 h-4" />
-                          <span className="text-sm">{session.participantCount} participants</span>
+                          <span className="text-sm">
+                            {session.participantCount} participants
+                          </span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                           <TrendingUp className="w-4 h-4" />
-                          <span className="text-sm font-mono">{session.sessionCode}</span>
+                          <span className="text-sm font-mono">
+                            {session.sessionCode}
+                          </span>
                         </div>
                         {session.averageScore !== undefined && (
                           <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                             <BarChart3 className="w-4 h-4" />
-                            <span className="text-sm">Avg: {session.averageScore.toFixed(1)}</span>
+                            <span className="text-sm">
+                              Avg: {session.averageScore.toFixed(1)}
+                            </span>
                           </div>
                         )}
                       </div>
                     </div>
 
                     <div className="flex gap-2">
-                      {session.status === 'completed' && (
+                      {session.status === "completed" && (
                         <Link to={`/live/analytics/${session.sessionCode}`}>
                           <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center gap-2">
                             <Eye className="w-4 h-4" />
