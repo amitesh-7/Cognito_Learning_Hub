@@ -977,11 +977,6 @@ io.on("connection", (socket) => {
 
       await match.save();
 
-      // Check if both answered
-      const bothAnswered =
-        match.player1.answers.some((a) => a.questionIndex === questionIndex) &&
-        match.player2.answers.some((a) => a.questionIndex === questionIndex);
-
       callback({
         success: true,
         isCorrect,
@@ -990,27 +985,24 @@ io.on("connection", (socket) => {
         explanation: question.explanation,
       });
 
-      if (bothAnswered) {
-        // Move to next question or end match
-        if (questionIndex < match.quizId.questions.length - 1) {
-          match.currentQuestionIndex += 1;
-          await match.save();
+      // Check if THIS player has finished all questions
+      const playerFinished = player.answers.length === match.quizId.questions.length;
 
-          const nextQuestion =
-            match.quizId.questions[match.currentQuestionIndex];
+      if (playerFinished) {
+        // This player is done - send them a completion signal
+        socket.emit("player-completed", {
+          message: "Waiting for opponent to finish...",
+          yourScore: player.score,
+          yourCorrect: player.correctAnswers,
+        });
+        
+        // Check if BOTH players are finished
+        const bothFinished = 
+          match.player1.answers.length === match.quizId.questions.length &&
+          match.player2.answers.length === match.quizId.questions.length;
 
-          setTimeout(() => {
-            io.to(matchId).emit("next-question", {
-              currentQuestion: {
-                index: match.currentQuestionIndex,
-                question: nextQuestion.question,
-                options: nextQuestion.options,
-                timeLimit: match.timePerQuestion,
-              },
-            });
-          }, 2000);
-        } else {
-          // Match completed
+        if (bothFinished) {
+          // Both finished - end the match
           match.status = "completed";
           match.completedAt = new Date();
           match.winner = match.determineWinner();
@@ -1038,6 +1030,21 @@ io.on("connection", (socket) => {
             `[Duel] Match ended: ${matchId} - Winner: ${match.winner || "Tie"}`
           );
         }
+      } else {
+        // Send next question to THIS player only
+        const nextQuestionIndex = player.answers.length;
+        const nextQuestion = match.quizId.questions[nextQuestionIndex];
+
+        setTimeout(() => {
+          socket.emit("next-question", {
+            currentQuestion: {
+              index: nextQuestionIndex,
+              question: nextQuestion.question,
+              options: nextQuestion.options,
+              timeLimit: match.timePerQuestion,
+            },
+          });
+        }, 1500);
       }
     } catch (error) {
       console.error("[Duel] Error submitting answer:", error);
@@ -4073,11 +4080,11 @@ app.delete("/api/live-sessions/:code", auth, async (req, res) => {
 
 // --- START THE SERVER ---
 // Start server on all network interfaces (0.0.0.0) for Render/Railway deployment
-const HOST = process.env.HOST || '0.0.0.0';
+const HOST = process.env.HOST || "0.0.0.0";
 
 server.listen(PORT, HOST, () => {
   console.log(`Server with Socket.IO running on ${HOST}:${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
 });
 
 // Export for serverless platforms (if needed)

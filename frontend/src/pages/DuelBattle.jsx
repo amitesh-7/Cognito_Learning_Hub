@@ -43,6 +43,7 @@ const DuelBattle = () => {
 
   const [winner, setWinner] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [waitingForOpponent, setWaitingForOpponent] = useState(false);
 
   const questionStartTime = useRef(null);
   const timerInterval = useRef(null);
@@ -123,6 +124,12 @@ const DuelBattle = () => {
       questionStartTime.current = Date.now();
       setHasAnswered(false);
       setSelectedAnswer(null);
+      setWaitingForOpponent(false); // Reset waiting state
+    });
+
+    socket.on("player-completed", (data) => {
+      console.log("✅ You finished! Waiting for opponent...");
+      setWaitingForOpponent(true);
     });
 
     socket.on("duel-ended", (data) => {
@@ -163,6 +170,7 @@ const DuelBattle = () => {
       socket.off("player-ready");
       socket.off("duel-started");
       socket.off("next-question");
+      socket.off("player-completed");
       socket.off("duel-ended");
       socket.off("opponent-disconnected");
     };
@@ -448,12 +456,19 @@ const DuelBattle = () => {
               ))}
             </div>
 
-            {hasAnswered && (
-              <div className="mt-6 text-center">
-                <p className="text-gray-600 dark:text-gray-400">
-                  Waiting for opponent...
+            {waitingForOpponent && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl text-center"
+              >
+                <p className="text-yellow-800 dark:text-yellow-300 font-semibold">
+                  🎉 You've completed all questions!
                 </p>
-              </div>
+                <p className="text-yellow-700 dark:text-yellow-400 text-sm mt-1">
+                  Waiting for opponent to finish...
+                </p>
+              </motion.div>
             )}
           </motion.div>
         </div>

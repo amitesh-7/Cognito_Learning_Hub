@@ -1,6 +1,7 @@
 # 🚀 Backend Deployment Guide for Render.com
 
 ## Prerequisites
+
 - GitHub account with your repository
 - Render.com account (free tier available)
 - MongoDB Atlas database URL
@@ -11,6 +12,7 @@
 ## Step-by-Step Deployment
 
 ### Step 1: Sign Up / Login to Render
+
 1. Go to [Render.com](https://render.com)
 2. Click **"Get Started for Free"** or **"Sign In"**
 3. Sign in with your **GitHub account**
@@ -18,6 +20,7 @@
 ---
 
 ### Step 2: Create a New Web Service
+
 1. Click **"New +"** button in the top right
 2. Select **"Web Service"**
 3. Connect your GitHub repository:
@@ -32,6 +35,7 @@
 Fill in the following settings:
 
 #### Basic Settings:
+
 - **Name:** `cognito-learning-hub-backend` (or any name you prefer)
 - **Region:** Choose closest to your users (e.g., `Oregon (US West)` or `Frankfurt (EU Central)`)
 - **Branch:** `main`
@@ -41,6 +45,7 @@ Fill in the following settings:
 - **Start Command:** `npm start`
 
 #### Instance Type:
+
 - Select **"Free"** (or upgrade to paid if needed)
 
 ---
@@ -72,6 +77,7 @@ PORT=3001
 ---
 
 ### Step 5: Deploy!
+
 1. Click **"Create Web Service"** button
 2. Wait for the deployment (usually 2-5 minutes)
 3. You'll see the build logs in real-time
@@ -80,7 +86,9 @@ PORT=3001
 ---
 
 ### Step 6: Copy Your Backend URL
+
 Once deployment is complete:
+
 1. Copy the URL (e.g., `https://cognito-learning-hub-backend.onrender.com`)
 2. Keep it handy for frontend configuration
 
@@ -137,6 +145,7 @@ VITE_SOCKET_URL=https://cognito-learning-hub-backend.onrender.com
 ## Important Notes
 
 ### Free Tier Limitations:
+
 - ⚠️ **Spins down after 15 minutes of inactivity**
 - ⚠️ **First request after spin-down takes 30-60 seconds** (cold start)
 - ✅ **750 hours/month free** (enough for one always-on service)
@@ -144,6 +153,7 @@ VITE_SOCKET_URL=https://cognito-learning-hub-backend.onrender.com
 - ✅ **No request timeouts** for Socket.IO
 
 ### To Keep Service Always Active (Optional):
+
 - Upgrade to **Starter plan** ($7/month) - no spin-down
 - Or use a service like [UptimeRobot](https://uptimerobot.com/) to ping your backend every 10 minutes
 
@@ -152,16 +162,19 @@ VITE_SOCKET_URL=https://cognito-learning-hub-backend.onrender.com
 ## Monitoring Your Deployment
 
 ### View Logs:
+
 1. Go to Render Dashboard
 2. Click on your web service
 3. Click **"Logs"** tab
 4. See real-time logs
 
 ### Check Health:
+
 1. Visit: `https://your-backend.onrender.com/`
 2. Should see: Server running message
 
 ### Test Socket.IO:
+
 1. Open browser console on your frontend
 2. Should see: `✅ Socket.IO connected!`
 3. Should NOT see WebSocket errors
@@ -171,19 +184,25 @@ VITE_SOCKET_URL=https://cognito-learning-hub-backend.onrender.com
 ## Troubleshooting
 
 ### Issue: "Application failed to respond"
+
 **Solution:** Check logs in Render dashboard, verify environment variables
 
 ### Issue: CORS errors
+
 **Solution:** Verify `CLIENT_URL` in environment variables matches frontend URL exactly
 
 ### Issue: Socket.IO not connecting
-**Solution:** 
+
+**Solution:**
+
 - Check backend logs
 - Verify `VITE_SOCKET_URL` in frontend matches backend URL
 - Check that port is not specified in URL (Render uses 443 for HTTPS)
 
 ### Issue: Cold starts (slow first request)
-**Solution:** 
+
+**Solution:**
+
 - This is normal on free tier
 - Upgrade to paid plan to avoid spin-down
 - Or use UptimeRobot to keep it active
@@ -210,6 +229,7 @@ VITE_SOCKET_URL=https://cognito-learning-hub-backend.onrender.com
 ## Environment Variables Quick Reference
 
 ### Backend (Render):
+
 ```env
 MONGO_URI=<your-mongodb-connection-string>
 API_KEY=<your-google-gemini-api-key>
@@ -222,6 +242,7 @@ PORT=3001
 ```
 
 ### Frontend (Vercel):
+
 ```env
 VITE_API_URL=https://cognito-learning-hub-backend.onrender.com
 VITE_SOCKET_URL=https://cognito-learning-hub-backend.onrender.com
@@ -243,6 +264,7 @@ VITE_GOOGLE_CLIENT_ID=<your-google-client-id>
 ## Alternative: Upgrade to Paid Plan
 
 **Render Starter Plan ($7/month):**
+
 - ✅ No cold starts
 - ✅ Always online
 - ✅ Better performance
