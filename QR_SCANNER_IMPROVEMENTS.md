@@ -1,14 +1,17 @@
 # QR Scanner Improvements - Camera Permission Fix
 
 ## Problem
+
 Students were experiencing camera permission issues when trying to scan QR codes to join live quizzes. Even after granting browser camera permissions, the scanner would still show "Permission denied by system" errors.
 
 ## Solution
+
 Implemented a **dual-method QR scanning approach** with file upload as the primary method and camera scanning as a secondary option.
 
 ## Changes Made
 
 ### 1. Added File Upload QR Scanner (Primary Method)
+
 - **New Function**: `handleQRImageUpload(file)`
   - Uses `Html5Qrcode.scanFile()` for image-based scanning
   - More reliable than camera access (no permission issues)
@@ -16,6 +19,7 @@ Implemented a **dual-method QR scanning approach** with file upload as the prima
   - Students can screenshot the QR code and upload it
 
 ### 2. Enhanced Camera Scanner (Secondary Method)
+
 - **Improved Configuration**:
   ```javascript
   {
@@ -30,18 +34,22 @@ Implemented a **dual-method QR scanning approach** with file upload as the prima
 - Added torch/flashlight support for low-light scanning
 
 ### 3. Enhanced UI/UX
+
 - **Two-Option Layout**:
+
   1. **Upload QR Code** (Highlighted/Primary)
+
      - Large, prominent upload button
      - Clear instructions: "Take a screenshot and upload"
      - Purple gradient styling to draw attention
-  
+
   2. **Use Camera** (Alternative)
      - Smaller, secondary option below
      - For users who can successfully grant camera access
      - Falls back gracefully if permissions fail
 
 ### 4. Better Error Handling
+
 - Validates QR code format before processing
 - Extracts session code from URL (6-character validation)
 - Clear error messages for invalid codes
@@ -51,6 +59,7 @@ Implemented a **dual-method QR scanning approach** with file upload as the prima
 ## How It Works
 
 ### File Upload Flow:
+
 1. Student clicks "Scan QR" mode
 2. Teacher shows QR code on screen
 3. Student takes screenshot (phone/tablet)
@@ -59,6 +68,7 @@ Implemented a **dual-method QR scanning approach** with file upload as the prima
 6. Auto-fills code and joins session
 
 ### Camera Scan Flow:
+
 1. Student clicks "Scan QR" mode
 2. Grants camera permission (if needed)
 3. Points camera at teacher's QR code
@@ -96,11 +106,13 @@ Implemented a **dual-method QR scanning approach** with file upload as the prima
 ## Technical Details
 
 ### QR Code Format Expected:
+
 ```
 http://localhost:5173/live/join?code=ABC123
 ```
 
 ### Extraction Logic:
+
 ```javascript
 const url = new URL(decodedText);
 const code = url.searchParams.get("code");
@@ -110,8 +122,9 @@ if (code && code.length === 6) {
 ```
 
 ### File Upload Implementation:
+
 ```javascript
-const { Html5Qrcode } = await import('html5-qrcode');
+const { Html5Qrcode } = await import("html5-qrcode");
 const html5QrCode = new Html5Qrcode("qr-file-reader");
 const result = await html5QrCode.scanFile(file, true);
 ```

@@ -59,30 +59,34 @@ const LiveSessionJoin = () => {
     if (!file) return;
 
     try {
-      const { Html5Qrcode } = await import('html5-qrcode');
+      const { Html5Qrcode } = await import("html5-qrcode");
       const html5QrCode = new Html5Qrcode("qr-file-reader");
-      
+
       const result = await html5QrCode.scanFile(file, true);
       console.log("🎯 QR Code from image:", result);
-      
+
       // Extract session code from URL
       try {
         const url = new URL(result);
         const code = url.searchParams.get("code");
-        
+
         if (code && code.length === 6) {
           setSessionCode(code.toUpperCase());
           setShowQRScanner(false);
           setJoinError("");
         } else {
-          setJoinError("Invalid QR code. Please scan the correct code from the teacher's screen.");
+          setJoinError(
+            "Invalid QR code. Please scan the correct code from the teacher's screen."
+          );
         }
       } catch (error) {
         setJoinError("Invalid QR code format. Please try again.");
       }
     } catch (error) {
       console.error("QR scan error:", error);
-      setJoinError("Could not read QR code from image. Please try again or enter the code manually.");
+      setJoinError(
+        "Could not read QR code from image. Please try again or enter the code manually."
+      );
     }
   };
 
@@ -90,7 +94,7 @@ const LiveSessionJoin = () => {
   useEffect(() => {
     if (showQRScanner && !hasJoined) {
       let scanner = null;
-      
+
       const initScanner = async () => {
         const element = document.getElementById("qr-reader");
         if (!element) {
@@ -102,19 +106,20 @@ const LiveSessionJoin = () => {
         try {
           // First, explicitly request camera permissions
           console.log("📷 Requesting camera permissions...");
-          
+
           try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-              video: { facingMode: "environment" } 
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: "environment" },
             });
-            
+
             // Permission granted! Stop the test stream
             console.log("✅ Camera permission granted!");
-            stream.getTracks().forEach(track => track.stop());
-            
+            stream.getTracks().forEach((track) => track.stop());
           } catch (permError) {
             console.error("❌ Camera permission denied:", permError);
-            setJoinError("Camera access denied. Please allow camera access in your browser settings, or use the file upload option below.");
+            setJoinError(
+              "Camera access denied. Please allow camera access in your browser settings, or use the file upload option below."
+            );
             return;
           }
 
@@ -129,8 +134,8 @@ const LiveSessionJoin = () => {
               showTorchButtonIfSupported: true,
               formatsToSupport: [0], // QR_CODE only
               videoConstraints: {
-                facingMode: "environment" // Prefer back camera on mobile
-              }
+                facingMode: "environment", // Prefer back camera on mobile
+              },
             },
             /* verbose= */ false
           );
@@ -138,29 +143,33 @@ const LiveSessionJoin = () => {
           scanner.render(
             (decodedText) => {
               console.log("🎯 QR Code scanned:", decodedText);
-              
+
               try {
                 const url = new URL(decodedText);
                 const code = url.searchParams.get("code");
-                
+
                 if (code && code.length === 6) {
                   setSessionCode(code.toUpperCase());
                   setShowQRScanner(false);
                   setJoinError("");
-                  
+
                   if (scanner) {
                     scanner.clear().catch(console.error);
                   }
-                  
+
                   // Auto-join after scanning
                   setTimeout(() => {
-                    const joinButton = document.querySelector('button:not([disabled])');
-                    if (joinButton && joinButton.textContent.includes('Join')) {
+                    const joinButton = document.querySelector(
+                      "button:not([disabled])"
+                    );
+                    if (joinButton && joinButton.textContent.includes("Join")) {
                       joinButton.click();
                     }
                   }, 500);
                 } else {
-                  setJoinError("Invalid QR code. Please scan the correct code from the teacher's screen.");
+                  setJoinError(
+                    "Invalid QR code. Please scan the correct code from the teacher's screen."
+                  );
                 }
               } catch (error) {
                 setJoinError("Invalid QR code format. Please try again.");
@@ -174,7 +183,9 @@ const LiveSessionJoin = () => {
           qrScannerRef.current = scanner;
         } catch (error) {
           console.error("Scanner initialization error:", error);
-          setJoinError("Could not initialize camera. Please use file upload or enter code manually.");
+          setJoinError(
+            "Could not initialize camera. Please use file upload or enter code manually."
+          );
         }
       };
 
@@ -490,7 +501,9 @@ const LiveSessionJoin = () => {
               Join Live Quiz
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              {showQRScanner ? "Scan the QR code" : "Enter the 6-character session code"}
+              {showQRScanner
+                ? "Scan the QR code"
+                : "Enter the 6-character session code"}
             </p>
           </div>
 
@@ -589,9 +602,12 @@ const LiveSessionJoin = () => {
                     Point your camera at the teacher's QR code
                   </p>
                 </div>
-                
+
                 {/* QR Scanner Container */}
-                <div id="qr-reader" className="rounded-lg overflow-hidden"></div>
+                <div
+                  id="qr-reader"
+                  className="rounded-lg overflow-hidden"
+                ></div>
               </div>
 
               {/* File Upload Alternative */}
@@ -613,7 +629,7 @@ const LiveSessionJoin = () => {
                     Screenshot the QR code and upload it
                   </p>
                 </div>
-                
+
                 <label className="block">
                   <input
                     type="file"
@@ -632,7 +648,7 @@ const LiveSessionJoin = () => {
                       file:transition"
                   />
                 </label>
-                
+
                 <div id="qr-file-reader" className="hidden"></div>
               </div>
             </div>
