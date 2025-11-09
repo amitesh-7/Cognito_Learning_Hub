@@ -10,6 +10,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      index: false, // Don't auto-create index (we create it manually below)
     },
     password: {
       type: String,
@@ -22,6 +23,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       unique: true,
       sparse: true, // Allows multiple null values
+      index: false, // Don't auto-create index (we create it manually below)
     },
     picture: {
       type: String, // Google profile picture URL
@@ -50,8 +52,8 @@ const UserSchema = new mongoose.Schema(
 );
 
 // Performance Indexes
-UserSchema.index({ email: 1 }); // Fast email lookups (login)
-UserSchema.index({ googleId: 1 }); // Fast Google OAuth lookups
+UserSchema.index({ email: 1 }, { unique: true }); // Fast email lookups (login)
+UserSchema.index({ googleId: 1 }, { unique: true, sparse: true }); // Fast Google OAuth lookups
 UserSchema.index({ role: 1 }); // Filter by role (Teacher, Admin, etc.)
 UserSchema.index({ status: 1, lastSeen: -1 }); // Online user queries
 UserSchema.index({ createdAt: -1 }); // Recent user queries
