@@ -50,7 +50,7 @@ const app = express();
 
 // Trust proxy - IMPORTANT for Render deployment
 // This allows express-rate-limit to correctly identify users behind Render's proxy
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 
 const server = http.createServer(app); // <-- NEW: Wrap Express with HTTP server
 const PORT = process.env.PORT || 3001; // Use environment PORT or default to 3001
@@ -991,7 +991,8 @@ io.on("connection", (socket) => {
       });
 
       // Check if THIS player has finished all questions
-      const playerFinished = player.answers.length === match.quizId.questions.length;
+      const playerFinished =
+        player.answers.length === match.quizId.questions.length;
 
       if (playerFinished) {
         // This player is done - send them a completion signal
@@ -1000,9 +1001,9 @@ io.on("connection", (socket) => {
           yourScore: player.score,
           yourCorrect: player.correctAnswers,
         });
-        
+
         // Check if BOTH players are finished
-        const bothFinished = 
+        const bothFinished =
           match.player1.answers.length === match.quizId.questions.length &&
           match.player2.answers.length === match.quizId.questions.length;
 
@@ -1072,13 +1073,13 @@ io.on("connection", (socket) => {
       }
 
       // Only call callback if it's a function
-      if (typeof callback === 'function') {
+      if (typeof callback === "function") {
         callback({ success: true });
       }
     } catch (error) {
       console.error("[Duel] Error cancelling:", error);
       // Only call callback if it's a function
-      if (typeof callback === 'function') {
+      if (typeof callback === "function") {
         callback({ success: false, error: error.message });
       }
     }
@@ -1189,9 +1190,9 @@ io.on("connection", (socket) => {
 });
 
 // Suppress Mongoose index warnings in production
-mongoose.set('strictQuery', false);
-if (process.env.NODE_ENV === 'production') {
-  mongoose.set('autoIndex', false); // Don't auto-create indexes in production
+mongoose.set("strictQuery", false);
+if (process.env.NODE_ENV === "production") {
+  mongoose.set("autoIndex", false); // Don't auto-create indexes in production
 }
 
 // MongoDB connection
