@@ -29,6 +29,7 @@ const {
 } = require("./models/Achievement");
 const QuizPDFGenerator = require("./utils/pdfGenerator");
 const LiveSession = require("./models/LiveSession"); // <-- NEW: Live session model
+const DuelMatch = require("./models/DuelMatch"); // <-- NEW: 1v1 Duel model
 const {
   Friendship,
   Challenge,
@@ -37,10 +38,22 @@ const {
   Notification,
   Broadcast,
 } = require("./models/SocialFeatures");
+
+// --- SECURITY MIDDLEWARE IMPORTS ---
+const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
+const { body, validationResult } = require("express-validator");
+const hpp = require("hpp");
+
 // --- CONFIGURATION ---
 const app = express();
+
+// Trust proxy - IMPORTANT for Render deployment
+// This allows express-rate-limit to correctly identify users behind Render's proxy
+app.set("trust proxy", 1);
+
 const server = http.createServer(app); // <-- NEW: Wrap Express with HTTP server
-const PORT = 3001;
+const PORT = process.env.PORT || 3001; // Use environment PORT or default to 3001
 
 const MONGO_URI = process.env.MONGO_URI;
 const API_KEY = process.env.API_KEY;
@@ -92,6 +105,7 @@ const corsOptions = {
     const isAllowed =
       allowedOrigins.includes(origin) ||
       origin.endsWith(".vercel.app") ||
+      origin.endsWith(".onrender.com") || // Allow Render deployments
       origin.endsWith("localhost:5173") ||
       origin.endsWith("localhost:3000");
 
@@ -110,6 +124,110 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// --- SECURITY MIDDLEWARE ---
+// 1. Helmet - Set security HTTP headers
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://accounts.google.com",
+          "https://apis.google.com",
+        ],
+        frameSrc: [
+          "'self'",
+          "https://accounts.google.com",
+          "https://www.google.com",
+        ],
+        imgSrc: [
+          "'self'",
+          "data:",
+          "https:",
+          "https://*.googleusercontent.com",
+        ],
+        connectSrc: [
+          "'self'",
+          "https://generativelanguage.googleapis.com",
+          "https://accounts.google.com",
+        ],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }, // Allow Google OAuth popups
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
+
+// 2. Data Sanitization against NoSQL Injection (Express 5 compatible)
+// Custom middleware to sanitize user input
+const sanitizeInput = (obj) => {
+  if (obj && typeof obj === "object") {
+    for (const key in obj) {
+      if (typeof obj[key] === "string") {
+        // Remove $ and . from beginning of keys to prevent NoSQL injection
+        obj[key] = obj[key].replace(/^\$/, "").replace(/^\./g, "");
+      } else if (typeof obj[key] === "object") {
+        sanitizeInput(obj[key]);
+      }
+    }
+    // Remove keys that start with $ or .
+    Object.keys(obj).forEach((key) => {
+      if (key.startsWith("$") || key.startsWith(".")) {
+        delete obj[key];
+      }
+    });
+  }
+  return obj;
+};
+
+app.use((req, res, next) => {
+  if (req.body) req.body = sanitizeInput(req.body);
+  if (req.query) req.query = sanitizeInput(req.query);
+  if (req.params) req.params = sanitizeInput(req.params);
+  next();
+});
+
+// 3. Prevent HTTP Parameter Pollution
+app.use(hpp());
+
+// 4. Rate Limiting - General API
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 5. Rate Limiting - Authentication endpoints (stricter)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 login/signup attempts per windowMs
+  message:
+    "Too many authentication attempts, please try again after 15 minutes.",
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true, // Don't count successful requests
+});
+
+// 6. Rate Limiting - Quiz generation (moderate)
+const quizGenerationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Limit to 20 quiz generations per 15 minutes
+  message: "Quiz generation limit reached. Please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply general rate limiting to all routes
+app.use("/api/", generalLimiter);
+
+// --- END SECURITY MIDDLEWARE ---
 
 // Root route for Vercel health check
 app.get("/", (req, res) => {
@@ -178,6 +296,14 @@ io.on("connection", (socket) => {
       socket.join(sessionCode);
 
       console.log(
+        `[Socket.IO] 🎓 Host joined room ${sessionCode}. Socket ID: ${socket.id}`
+      );
+      console.log(
+        `[Socket.IO] 🚪 Room members after host join:`,
+        io.sockets.adapter.rooms.get(sessionCode)
+      );
+
+      console.log(
         `[Socket.IO] Session created: ${sessionCode} by host ${hostId}`
       );
 
@@ -220,6 +346,19 @@ io.on("connection", (socket) => {
       );
       let isReconnection = false;
 
+      console.log(`[Socket.IO] 🔍 Checking for existing participant:`, {
+        userId,
+        username,
+        existingParticipant: existingParticipant
+          ? {
+              userId: existingParticipant.userId,
+              username: existingParticipant.username,
+              socketId: existingParticipant.socketId,
+            }
+          : null,
+        totalParticipants: session.participants.length,
+      });
+
       if (existingParticipant) {
         // Reconnection detected
         isReconnection = true;
@@ -227,7 +366,7 @@ io.on("connection", (socket) => {
         existingParticipant.disconnectedAt = null;
         await session.save();
         console.log(
-          `[Socket.IO] User ${username} reconnected to session ${sessionCode}`
+          `[Socket.IO] ♻️ User ${username} reconnected to session ${sessionCode}`
         );
       } else {
         // New participant joining
@@ -264,12 +403,26 @@ io.on("connection", (socket) => {
 
       // Notify everyone in the room (only if new join, not reconnection)
       if (!isReconnection) {
+        console.log(
+          `[Socket.IO] 📢 EMITTING participant-joined to room ${sessionCode}`
+        );
+        console.log(`[Socket.IO] 👤 Participant: ${username} (${userId})`);
+        console.log(
+          `[Socket.IO] 📊 Participant count: ${session.participantCount + 1}`
+        );
+        console.log(
+          `[Socket.IO] 🚪 Room members:`,
+          io.sockets.adapter.rooms.get(sessionCode)
+        );
+
         io.to(sessionCode).emit("participant-joined", {
           userId,
           username,
           avatar,
           participantCount: session.participantCount + 1,
         });
+
+        console.log(`[Socket.IO] ✅ participant-joined event emitted`);
       }
 
       console.log(
@@ -387,7 +540,13 @@ io.on("connection", (socket) => {
 
       // Get correct answer
       const question = session.quizId.questions[questionIndex];
-      const isCorrect = answer === question.correctAnswer;
+      const isCorrect = answer === question.correct_answer;
+
+      console.log(`[Socket.IO] 📝 Answer check:`, {
+        submitted: answer,
+        correct: question.correct_answer,
+        isCorrect: isCorrect,
+      });
 
       // Calculate points with speed bonus and streak multiplier
       let pointsEarned = 0;
@@ -459,7 +618,7 @@ io.on("connection", (socket) => {
         pointsEarned,
         streakBonus,
         correctAnswer: session.settings.showCorrectAnswers
-          ? question.correctAnswer
+          ? question.correct_answer
           : undefined,
         explanation: session.settings.showCorrectAnswers
           ? question.explanation
@@ -629,6 +788,304 @@ io.on("connection", (socket) => {
   });
 
   // ========================================
+  // 1v1 DUEL EVENTS
+  // ========================================
+
+  // EVENT: find-duel-match
+  // Student searches for a 1v1 opponent with the same quiz
+  socket.on("find-duel-match", async (data, callback) => {
+    try {
+      const { quizId, userId, username, avatar } = data;
+
+      // Find existing waiting match for this quiz
+      let match = await DuelMatch.findOne({
+        quizId,
+        status: "waiting",
+        "player1.userId": { $ne: userId }, // Don't match with yourself
+      }).populate("quizId");
+
+      if (match) {
+        // Join existing match as player 2
+        match.player2 = {
+          userId,
+          socketId: socket.id,
+          score: 0,
+          correctAnswers: 0,
+          totalTime: 0,
+          answers: [],
+          isReady: false,
+          isActive: true,
+        };
+        match.status = "ready";
+        await match.save();
+
+        // Both players join the match room
+        socket.join(match.matchId);
+        const player1Socket = io.sockets.sockets.get(match.player1.socketId);
+        if (player1Socket) {
+          player1Socket.join(match.matchId);
+        }
+
+        console.log(
+          `[Duel] Match found: ${match.matchId} - ${match.player1.userId} vs ${userId}`
+        );
+
+        // Notify both players
+        io.to(match.matchId).emit("match-found", {
+          matchId: match.matchId,
+          quiz: {
+            id: match.quizId._id,
+            title: match.quizId.title,
+            description: match.quizId.description,
+            totalQuestions: match.quizId.questions.length,
+          },
+          opponent: {
+            player1: {
+              userId: match.player1.userId,
+              username: match.player1.username || "Player 1",
+              avatar: match.player1.avatar,
+            },
+            player2: {
+              userId: match.player2.userId,
+              username: username,
+              avatar: avatar,
+            },
+          },
+        });
+
+        callback({ success: true, matchId: match.matchId, role: "player2" });
+      } else {
+        // Create new waiting match
+        const matchId = await DuelMatch.generateMatchId();
+
+        match = new DuelMatch({
+          matchId,
+          quizId,
+          player1: {
+            userId,
+            socketId: socket.id,
+            username,
+            avatar,
+            score: 0,
+            correctAnswers: 0,
+            totalTime: 0,
+            answers: [],
+            isReady: false,
+            isActive: true,
+          },
+          status: "waiting",
+        });
+
+        await match.save();
+        socket.join(matchId);
+
+        console.log(`[Duel] Waiting for opponent: ${matchId} - ${userId}`);
+
+        callback({ success: true, matchId, role: "player1", waiting: true });
+      }
+    } catch (error) {
+      console.error("[Duel] Error finding match:", error);
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  // EVENT: duel-ready
+  // Player is ready to start
+  socket.on("duel-ready", async (data, callback) => {
+    try {
+      const { matchId, userId } = data;
+
+      const match = await DuelMatch.findOne({ matchId }).populate("quizId");
+      if (!match) {
+        return callback({ success: false, error: "Match not found" });
+      }
+
+      // Mark player as ready
+      if (match.player1.userId.toString() === userId) {
+        match.player1.isReady = true;
+      } else if (match.player2.userId.toString() === userId) {
+        match.player2.isReady = true;
+      }
+
+      await match.save();
+
+      // Notify room
+      io.to(matchId).emit("player-ready", { userId });
+
+      // Start if both ready
+      if (match.player1.isReady && match.player2.isReady) {
+        match.status = "active";
+        match.startedAt = new Date();
+        match.currentQuestionIndex = 0;
+        await match.save();
+
+        const currentQuestion = match.quizId.questions[0];
+
+        io.to(matchId).emit("duel-started", {
+          currentQuestion: {
+            index: 0,
+            question: currentQuestion.question,
+            options: currentQuestion.options,
+            timeLimit: match.timePerQuestion,
+          },
+        });
+
+        console.log(`[Duel] Match started: ${matchId}`);
+      }
+
+      callback({ success: true });
+    } catch (error) {
+      console.error("[Duel] Error in ready:", error);
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  // EVENT: duel-answer
+  // Player submits answer
+  socket.on("duel-answer", async (data, callback) => {
+    try {
+      const { matchId, userId, questionIndex, answer, timeSpent } = data;
+
+      const match = await DuelMatch.findOne({ matchId }).populate("quizId");
+      if (!match) {
+        return callback({ success: false, error: "Match not found" });
+      }
+
+      const question = match.quizId.questions[questionIndex];
+      const isCorrect = answer === question.correct_answer;
+      const pointsEarned = isCorrect ? 100 : 0;
+
+      // Record answer
+      const answerRecord = {
+        questionIndex,
+        answer,
+        isCorrect,
+        timeSpent,
+        timestamp: new Date(),
+      };
+
+      let player;
+      if (match.player1.userId.toString() === userId) {
+        player = match.player1;
+      } else if (match.player2.userId.toString() === userId) {
+        player = match.player2;
+      }
+
+      if (player) {
+        player.answers.push(answerRecord);
+        if (isCorrect) {
+          player.correctAnswers += 1;
+          player.score += pointsEarned;
+        }
+        player.totalTime += timeSpent;
+      }
+
+      await match.save();
+
+      callback({
+        success: true,
+        isCorrect,
+        correctAnswer: question.correct_answer,
+        pointsEarned,
+        explanation: question.explanation,
+      });
+
+      // Check if THIS player has finished all questions
+      const playerFinished =
+        player.answers.length === match.quizId.questions.length;
+
+      if (playerFinished) {
+        // This player is done - send them a completion signal
+        socket.emit("player-completed", {
+          message: "Waiting for opponent to finish...",
+          yourScore: player.score,
+          yourCorrect: player.correctAnswers,
+        });
+
+        // Check if BOTH players are finished
+        const bothFinished =
+          match.player1.answers.length === match.quizId.questions.length &&
+          match.player2.answers.length === match.quizId.questions.length;
+
+        if (bothFinished) {
+          // Both finished - end the match
+          match.status = "completed";
+          match.completedAt = new Date();
+          match.winner = match.determineWinner();
+          await match.save();
+
+          io.to(matchId).emit("duel-ended", {
+            winner: match.winner,
+            finalScores: {
+              player1: {
+                userId: match.player1.userId,
+                score: match.player1.score,
+                correctAnswers: match.player1.correctAnswers,
+                totalTime: match.player1.totalTime,
+              },
+              player2: {
+                userId: match.player2.userId,
+                score: match.player2.score,
+                correctAnswers: match.player2.correctAnswers,
+                totalTime: match.player2.totalTime,
+              },
+            },
+          });
+
+          console.log(
+            `[Duel] Match ended: ${matchId} - Winner: ${match.winner || "Tie"}`
+          );
+        }
+      } else {
+        // Send next question to THIS player only
+        const nextQuestionIndex = player.answers.length;
+        const nextQuestion = match.quizId.questions[nextQuestionIndex];
+
+        setTimeout(() => {
+          socket.emit("next-question", {
+            currentQuestion: {
+              index: nextQuestionIndex,
+              question: nextQuestion.question,
+              options: nextQuestion.options,
+              timeLimit: match.timePerQuestion,
+            },
+          });
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("[Duel] Error submitting answer:", error);
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  // EVENT: cancel-duel
+  // Cancel waiting for match
+  socket.on("cancel-duel", async (data, callback) => {
+    try {
+      const { matchId } = data;
+
+      const match = await DuelMatch.findOne({ matchId });
+      if (match && match.status === "waiting") {
+        match.status = "cancelled";
+        await match.save();
+
+        console.log(`[Duel] Match cancelled: ${matchId}`);
+      }
+
+      // Only call callback if it's a function
+      if (typeof callback === "function") {
+        callback({ success: true });
+      }
+    } catch (error) {
+      console.error("[Duel] Error cancelling:", error);
+      // Only call callback if it's a function
+      if (typeof callback === "function") {
+        callback({ success: false, error: error.message });
+      }
+    }
+  });
+
+  // ========================================
   // EVENT: disconnect
   // Handle client disconnection
   // ========================================
@@ -638,6 +1095,48 @@ io.on("connection", (socket) => {
     );
 
     try {
+      // Handle duel matches
+      const duelMatches = await DuelMatch.find({
+        $or: [
+          { "player1.socketId": socket.id },
+          { "player2.socketId": socket.id },
+        ],
+        status: { $in: ["waiting", "ready", "active"] },
+      });
+
+      for (const match of duelMatches) {
+        if (match.status === "waiting") {
+          // Cancel waiting match
+          match.status = "cancelled";
+          await match.save();
+        } else {
+          // Player disconnected during active match - opponent wins
+          let disconnectedPlayer, opponentId;
+
+          if (match.player1.socketId === socket.id) {
+            disconnectedPlayer = "player1";
+            opponentId = match.player2.userId;
+          } else {
+            disconnectedPlayer = "player2";
+            opponentId = match.player1.userId;
+          }
+
+          match.status = "completed";
+          match.winner = opponentId;
+          match.completedAt = new Date();
+          await match.save();
+
+          io.to(match.matchId).emit("opponent-disconnected", {
+            winner: opponentId,
+            reason: "Opponent disconnected",
+          });
+
+          console.log(
+            `[Duel] Player disconnected from match ${match.matchId}, ${disconnectedPlayer} forfeited`
+          );
+        }
+      }
+
       // Find all sessions where this socket is a participant or host
       const sessions = await LiveSession.find({
         $or: [
@@ -690,6 +1189,12 @@ io.on("connection", (socket) => {
   });
 });
 
+// Suppress Mongoose index warnings in production
+mongoose.set("strictQuery", false);
+if (process.env.NODE_ENV === "production") {
+  mongoose.set("autoIndex", false); // Don't auto-create indexes in production
+}
+
 // MongoDB connection
 mongoose
   .connect(MONGO_URI)
@@ -719,16 +1224,184 @@ function extractJson(text) {
   return JSON.parse(jsonString);
 }
 
-// ** UPDATED ** GENERATE QUIZ FROM TOPIC (now protected and saves to DB)
-app.post("/api/generate-quiz-topic", auth, async (req, res) => {
+// ============================
+// ADAPTIVE DIFFICULTY HELPERS
+// ============================
+
+// Calculate user's adaptive difficulty based on performance
+async function calculateAdaptiveDifficulty(userId) {
   try {
-    const { topic, numQuestions, difficulty } = req.body;
-    const prompt = `
+    // Get user's last 10 quiz results
+    const recentResults = await Result.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate("quizId", "difficulty");
+
+    if (recentResults.length === 0) {
+      return {
+        suggestedDifficulty: "Easy",
+        reason: "No quiz history - starting with Easy difficulty",
+        avgScore: 0,
+        totalAttempts: 0,
+        trend: "new_user",
+      };
+    }
+
+    // Calculate average score percentage
+    const scores = recentResults.map((r) => (r.score / r.totalQuestions) * 100);
+    const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+
+    // Analyze recent trend (last 5 vs previous 5)
+    let trend = "stable";
+    if (recentResults.length >= 6) {
+      const recentAvg = scores.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
+      const previousAvg = scores.slice(5, 10).reduce((a, b) => a + b, 0) / 5;
+
+      if (recentAvg > previousAvg + 10) trend = "improving";
+      else if (recentAvg < previousAvg - 10) trend = "declining";
+    }
+
+    // Determine difficulty based on performance
+    let suggestedDifficulty;
+    let reason;
+
+    if (avgScore >= 85 && trend === "improving") {
+      suggestedDifficulty = "Hard";
+      reason = `Excellent performance (${avgScore.toFixed(
+        0
+      )}%) and improving - ready for harder challenges!`;
+    } else if (
+      avgScore >= 75 &&
+      (trend === "improving" || trend === "stable")
+    ) {
+      suggestedDifficulty = "Hard";
+      reason = `Strong performance (${avgScore.toFixed(
+        0
+      )}%) - challenging yourself with Hard difficulty`;
+    } else if (avgScore >= 60 && trend !== "declining") {
+      suggestedDifficulty = "Medium";
+      reason = `Good progress (${avgScore.toFixed(
+        0
+      )}%) - Medium difficulty is optimal for growth`;
+    } else if (avgScore >= 50 || trend === "improving") {
+      suggestedDifficulty = "Medium";
+      reason = `Building confidence (${avgScore.toFixed(
+        0
+      )}%) - stick with Medium to improve`;
+    } else {
+      suggestedDifficulty = "Easy";
+      reason = `Focus on fundamentals (${avgScore.toFixed(
+        0
+      )}%) - Easy difficulty helps build foundation`;
+    }
+
+    // Analyze weak areas by topic
+    const topicPerformance = {};
+    for (const result of recentResults) {
+      const quiz = await Quiz.findById(result.quizId);
+      if (quiz && quiz.title) {
+        const topic = quiz.title.replace("AI Quiz: ", "").split(" ")[0];
+        if (!topicPerformance[topic]) {
+          topicPerformance[topic] = { total: 0, count: 0 };
+        }
+        topicPerformance[topic].total +=
+          (result.score / result.totalQuestions) * 100;
+        topicPerformance[topic].count += 1;
+      }
+    }
+
+    const weakAreas = Object.entries(topicPerformance)
+      .map(([topic, data]) => ({ topic, avg: data.total / data.count }))
+      .filter((t) => t.avg < 60)
+      .map((t) => t.topic);
+
+    return {
+      suggestedDifficulty,
+      reason,
+      avgScore: parseFloat(avgScore.toFixed(1)),
+      totalAttempts: recentResults.length,
+      trend,
+      weakAreas: weakAreas.length > 0 ? weakAreas : null,
+      recentScores: scores.slice(0, 5).map((s) => parseFloat(s.toFixed(1))),
+    };
+  } catch (error) {
+    console.error("Error calculating adaptive difficulty:", error);
+    return {
+      suggestedDifficulty: "Medium",
+      reason: "Error analyzing performance - defaulting to Medium",
+      avgScore: 0,
+      totalAttempts: 0,
+      trend: "unknown",
+    };
+  }
+}
+
+// GET adaptive difficulty recommendation
+app.get("/api/adaptive-difficulty", auth, async (req, res) => {
+  try {
+    const adaptiveData = await calculateAdaptiveDifficulty(req.user.id);
+    res.json(adaptiveData);
+  } catch (error) {
+    console.error("Error getting adaptive difficulty:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to calculate adaptive difficulty" });
+  }
+});
+
+// ** UPDATED ** GENERATE QUIZ FROM TOPIC (now with adaptive difficulty support)
+app.post(
+  "/api/generate-quiz-topic",
+  auth,
+  quizGenerationLimiter,
+  async (req, res) => {
+    try {
+      const { topic, numQuestions, difficulty, useAdaptive } = req.body;
+
+      // If adaptive mode is enabled, calculate optimal difficulty
+      let actualDifficulty = difficulty;
+      let adaptiveInfo = null;
+
+      if (useAdaptive) {
+        const adaptiveData = await calculateAdaptiveDifficulty(req.user.id);
+        actualDifficulty = adaptiveData.suggestedDifficulty;
+        adaptiveInfo = {
+          originalDifficulty: difficulty,
+          adaptedDifficulty: actualDifficulty,
+          reason: adaptiveData.reason,
+          avgScore: adaptiveData.avgScore,
+          trend: adaptiveData.trend,
+        };
+        console.log(
+          `🎯 Adaptive AI: Changed difficulty from ${difficulty} to ${actualDifficulty} for user ${req.user.id}`
+        );
+      }
+
+      // Enhanced prompt with user context for adaptive mode
+      let prompt = `
       You are an expert quiz maker.
       Create a quiz based on the following topic: "${topic}".
       The quiz should have ${numQuestions} questions.
-      The difficulty level should be ${difficulty}.
+      The difficulty level should be ${actualDifficulty}.
+    `;
 
+      // Add adaptive context to AI prompt
+      if (useAdaptive && adaptiveInfo) {
+        const adaptiveData = await calculateAdaptiveDifficulty(req.user.id);
+        if (adaptiveData.weakAreas && adaptiveData.weakAreas.length > 0) {
+          prompt += `\n      
+      ADAPTIVE MODE: This user has shown weakness in: ${adaptiveData.weakAreas.join(
+        ", "
+      )}.
+      Include questions that reinforce these areas while maintaining ${actualDifficulty} difficulty.
+      User's average score: ${
+        adaptiveData.avgScore
+      }% - tailor complexity accordingly.
+      `;
+        }
+      }
+
+      prompt += `
       IMPORTANT: Your response MUST be a valid JSON object. Do not include any text, explanation, or markdown formatting before or after the JSON object.
       The JSON object should be an array of question objects, where each object has the following structure:
       {
@@ -736,31 +1409,37 @@ app.post("/api/generate-quiz-topic", auth, async (req, res) => {
         "options": ["Option A", "Option B", "Option C", "Option D"],
         "correct_answer": "The correct option text"
       }
-    `; // Your existing prompt
+    `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
 
-    const questions = extractJson(text); // Use the helper function
-    // Save the new quiz to the database
-    const newQuiz = new Quiz({
-      title: `AI Quiz: ${topic}`,
-      questions: questions,
-      difficulty: difficulty,
-      createdBy: req.user.id, // From auth middleware
-    });
-    const savedQuiz = await newQuiz.save();
+      const questions = extractJson(text);
 
-    console.log(
-      `AI-Topic quiz "${savedQuiz.title}" saved for user ${req.user.id}`
-    );
-    res.status(201).json({ quiz: savedQuiz });
-  } catch (error) {
-    console.error("Error in AI Topic Generation:", error);
-    res.status(500).json({ message: "Failed to generate quiz from topic." });
+      // Save the new quiz to the database
+      const newQuiz = new Quiz({
+        title: `AI Quiz: ${topic}${useAdaptive ? " (Adaptive)" : ""}`,
+        questions: questions,
+        difficulty: actualDifficulty,
+        createdBy: req.user.id,
+      });
+      const savedQuiz = await newQuiz.save();
+
+      console.log(
+        `AI-Topic quiz "${savedQuiz.title}" saved for user ${req.user.id}`
+      );
+
+      res.status(201).json({
+        quiz: savedQuiz,
+        adaptiveInfo: useAdaptive ? adaptiveInfo : null,
+      });
+    } catch (error) {
+      console.error("Error in AI Topic Generation:", error);
+      res.status(500).json({ message: "Failed to generate quiz from topic." });
+    }
   }
-});
+);
 // --- QUIZ ROUTES ---
 
 // ** NEW ** GET ALL QUIZZES
@@ -775,13 +1454,8 @@ app.get("/api/quizzes", async (req, res) => {
   }
 });
 
-// TEACHER DASHBOARD STASTISTICS
+// MY QUIZZES - Available for all authenticated users
 app.get("/api/quizzes/my-quizzes", auth, async (req, res) => {
-  if (req.user.role !== "Teacher") {
-    return res
-      .status(403)
-      .json({ message: "Access denied. Only for teachers." });
-  }
   try {
     const quizzes = await Quiz.find({ createdBy: req.user.id });
 
@@ -868,6 +1542,7 @@ app.post("/api/save-manual-quiz", auth, async (req, res) => {
 app.post(
   "/api/generate-quiz-file",
   auth,
+  quizGenerationLimiter,
   upload.single("quizFile"),
   async (req, res) => {
     if (!req.file) {
@@ -875,8 +1550,8 @@ app.post(
     }
 
     const filePath = req.file.path;
-    // Get numQuestions from the form data body
-    const { numQuestions } = req.body;
+    // Get numQuestions and useAdaptive from the form data body
+    const { numQuestions, useAdaptive, difficulty } = req.body;
     console.log(`Processing file: ${filePath}`);
 
     try {
@@ -897,18 +1572,52 @@ app.post(
 
       console.log(`Extracted ${extractedText.length} characters of text.`);
 
-      // 2. Generate quiz from the extracted text using AI
-      const prompt = `
+      // 2. Determine difficulty (adaptive or manual)
+      let actualDifficulty = difficulty || "Medium";
+      let adaptiveInfo = null;
+
+      if (useAdaptive === "true" || useAdaptive === true) {
+        const adaptiveData = await calculateAdaptiveDifficulty(req.user.id);
+        actualDifficulty = adaptiveData.suggestedDifficulty;
+        adaptiveInfo = {
+          originalDifficulty: difficulty || "Medium",
+          adaptedDifficulty: actualDifficulty,
+          reason: adaptiveData.reason,
+          avgScore: adaptiveData.avgScore,
+          trend: adaptiveData.trend,
+          weakAreas: adaptiveData.weakAreas,
+        };
+        console.log(
+          `Adaptive mode: ${difficulty || "Medium"} → ${actualDifficulty}`
+        );
+      }
+
+      // 3. Generate quiz from the extracted text using AI
+      let prompt = `
             You are an expert quiz maker.
             Create a quiz with ${
               numQuestions || 5
-            } questions based on the following text content:
+            } questions at ${actualDifficulty} difficulty level based on the following text content:
             ---
             ${extractedText.substring(0, 8000)} 
-            ---
-            IMPORTANT: Your response MUST be a valid JSON object. Do not include any text, explanation, or markdown formatting before or after the JSON object.
-            The JSON object should be an array of question objects, each with "question", "options", and "correct_answer" keys.
-        `;
+            ---`;
+
+      // Add adaptive context if available
+      if (adaptiveInfo) {
+        prompt += `\n\nIMPORTANT CONTEXT: This quiz is being generated for a user with:
+        - Average performance: ${adaptiveInfo.avgScore?.toFixed(1)}%
+        - Performance trend: ${adaptiveInfo.trend}
+        ${
+          adaptiveInfo.weakAreas?.length > 0
+            ? `- Weak areas: ${adaptiveInfo.weakAreas.join(", ")}`
+            : ""
+        }
+        
+        Please adjust the difficulty and focus areas accordingly.`;
+      }
+
+      prompt += `\n\nIMPORTANT: Your response MUST be a valid JSON object. Do not include any text, explanation, or markdown formatting before or after the JSON object.
+            The JSON object should be an array of question objects, each with "question", "options", and "correct_answer" keys.`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -916,11 +1625,14 @@ app.post(
 
       const questions = extractJson(text); // Use the helper function
 
-      // 3. Save the new quiz to the database
+      // 4. Save the new quiz to the database
+      const quizTitle = `AI Quiz: ${req.file.originalname}${
+        adaptiveInfo ? " (Adaptive)" : ""
+      }`;
       const newQuiz = new Quiz({
-        title: `AI Quiz: ${req.file.originalname}`,
+        title: quizTitle,
         questions: questions,
-        difficulty: "Medium", // Default difficulty for file uploads
+        difficulty: actualDifficulty,
         createdBy: req.user.id, // From auth middleware
       });
       const savedQuiz = await newQuiz.save();
@@ -929,15 +1641,18 @@ app.post(
         `AI-File quiz "${savedQuiz.title}" saved for user ${req.user.id}`
       );
 
-      // 4. Send the saved quiz object back to the client
-      res.status(201).json({ quiz: savedQuiz });
+      // 5. Send the saved quiz object back to the client with adaptive info
+      res.status(201).json({
+        quiz: savedQuiz,
+        adaptiveInfo: adaptiveInfo,
+      });
     } catch (error) {
       console.error("Error processing file:", error);
       res
         .status(500)
         .json({ message: "An error occurred while processing the file." });
     } finally {
-      // 5. Clean up: delete the uploaded file
+      // 6. Clean up: delete the uploaded file
       fs.unlinkSync(filePath);
       console.log(`Deleted temporary file: ${filePath}`);
     }
@@ -1043,7 +1758,7 @@ app.post("/api/generate-pdf-questions", auth, async (req, res) => {
               questionTypes[0] === "mcq"
                 ? ["Option A", "Option B", "Option C", "Option D"]
                 : [],
-            correctAnswer:
+            correct_answer:
               questionTypes[0] === "truefalse"
                 ? "True"
                 : questionTypes[0] === "mcq"
@@ -1110,104 +1825,171 @@ app.get("/api/results/my-results", auth, async (req, res) => {
 });
 
 // *** NEW AUTHENTICATION ROUTE ***
-app.post("/api/auth/register", async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
+app.post(
+  "/api/auth/register",
+  authLimiter, // Apply strict rate limiting
+  [
+    // Input validation
+    body("name")
+      .trim()
+      .isLength({ min: 2, max: 50 })
+      .withMessage("Name must be between 2 and 50 characters")
+      .matches(/^[a-zA-Z\s]+$/)
+      .withMessage("Name can only contain letters and spaces"),
+    body("email")
+      .trim()
+      .isEmail()
+      .normalizeEmail()
+      .withMessage("Please provide a valid email address"),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters long")
+      .matches(/^(?=.*[A-Za-z])(?=.*\d)/)
+      .withMessage("Password must contain at least one letter and one number"),
+    body("role")
+      .optional()
+      .isIn(["User", "Student", "Teacher"])
+      .withMessage("Invalid role"),
+  ],
+  async (req, res) => {
+    try {
+      // Log the incoming request for debugging
+      console.log("📝 Registration request received:", {
+        name: req.body.name,
+        email: req.body.email,
+        role: req.body.role,
+        hasPassword: !!req.body.password,
+      });
 
-    // Security Check: Prevent users from assigning themselves Admin or Moderator roles.
-    if (role === "Admin" || role === "Moderator") {
-      return res
-        .status(403)
-        .json({ message: "Cannot register with this role." });
+      // Check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        console.log("❌ Validation errors:", errors.array());
+        return res.status(400).json({
+          message: "Validation failed",
+          errors: errors.array(),
+        });
+      }
+
+      const { name, email, password, role } = req.body;
+
+      // Security Check: Prevent users from assigning themselves Admin or Moderator roles.
+      if (role === "Admin" || role === "Moderator") {
+        return res
+          .status(403)
+          .json({ message: "Cannot register with this role." });
+      }
+
+      // 1. Check if user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res
+          .status(400)
+          .json({ message: "User with this email already exists." });
+      }
+
+      // 2. Hash the password
+      const salt = await bcrypt.genSalt(10); // Generate a salt
+      const hashedPassword = await bcrypt.hash(password, salt); // Hash the password with the salt
+
+      // 3. Create a new user instance
+      const newUser = new User({
+        name,
+        email,
+        password: hashedPassword, // Store the hashed password
+        role,
+      });
+
+      // 4. Save the user to the database
+      const savedUser = await newUser.save();
+
+      console.log("New user registered:", savedUser.email);
+
+      // Send a success response (don't send the password back)
+      res.status(201).json({
+        message: "User registered successfully!",
+        user: {
+          id: savedUser._id,
+          name: savedUser.name,
+          email: savedUser.email,
+          role: savedUser.role,
+        },
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Server error during registration." });
     }
-
-    // 1. Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "User with this email already exists." });
-    }
-
-    // 2. Hash the password
-    const salt = await bcrypt.genSalt(10); // Generate a salt
-    const hashedPassword = await bcrypt.hash(password, salt); // Hash the password with the salt
-
-    // 3. Create a new user instance
-    const newUser = new User({
-      name,
-      email,
-      password: hashedPassword, // Store the hashed password
-      role,
-    });
-
-    // 4. Save the user to the database
-    const savedUser = await newUser.save();
-
-    console.log("New user registered:", savedUser.email);
-
-    // Send a success response (don't send the password back)
-    res.status(201).json({
-      message: "User registered successfully!",
-      user: {
-        id: savedUser._id,
-        name: savedUser.name,
-        email: savedUser.email,
-        role: savedUser.role,
-      },
-    });
-  } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({ message: "Server error during registration." });
   }
-});
+);
 
 // *** NEW LOGIN ROUTE ***
-app.post("/api/auth/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // 1. Find the user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res
-        .status(400)
-        .json({ message: "Invalid credentials. User not found." });
-    }
-
-    // 2. Compare the submitted password with the hashed password in the database
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res
-        .status(400)
-        .json({ message: "Invalid credentials. Password incorrect." });
-    }
-
-    // 3. If passwords match, create a JWT payload
-    const payload = {
-      user: {
-        id: user.id,
-        name: user.name,
-        role: user.role,
-      },
-    };
-
-    // 4. Sign the token with the secret key
-    jwt.sign(
-      payload,
-      JWT_SECRET,
-      { expiresIn: "1h" }, // Token expires in 1 hour
-      (err, token) => {
-        if (err) throw err;
-        // 5. Send the token back to the client
-        res.json({ token });
+app.post(
+  "/api/auth/login",
+  authLimiter, // Apply strict rate limiting
+  [
+    // Input validation
+    body("email")
+      .trim()
+      .isEmail()
+      .normalizeEmail()
+      .withMessage("Please provide a valid email address"),
+    body("password").notEmpty().withMessage("Password is required"),
+  ],
+  async (req, res) => {
+    try {
+      // Check for validation errors
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          message: "Validation failed",
+          errors: errors.array(),
+        });
       }
-    );
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Server error during login." });
+
+      const { email, password } = req.body;
+
+      // 1. Find the user by email
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res
+          .status(400)
+          .json({ message: "Invalid credentials. User not found." });
+      }
+
+      // 2. Compare the submitted password with the hashed password in the database
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res
+          .status(400)
+          .json({ message: "Invalid credentials. Password incorrect." });
+      }
+
+      // 3. If passwords match, create a JWT payload
+      const payload = {
+        user: {
+          id: user.id,
+          name: user.name,
+          role: user.role,
+        },
+      };
+
+      // 4. Sign the token with the secret key
+      jwt.sign(
+        payload,
+        JWT_SECRET,
+        { expiresIn: "1h" }, // Token expires in 1 hour
+        (err, token) => {
+          if (err) throw err;
+          // 5. Send the token back to the client
+          res.json({ token });
+        }
+      );
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Server error during login." });
+    }
   }
-});
+);
 
 // *** GOOGLE OAUTH LOGIN ROUTE ***
 app.post("/api/auth/google", async (req, res) => {
@@ -2106,10 +2888,25 @@ app.get("/api/admin/users", auth, admin, async (req, res) => {
       .skip((page - 1) * limit)
       .exec();
     const count = await User.countDocuments(query);
+
+    // Get total counts for all roles
+    const totalUsers = await User.countDocuments();
+    const totalStudents = await User.countDocuments({ role: "Student" });
+    const totalTeachers = await User.countDocuments({ role: "Teacher" });
+    const totalModerators = await User.countDocuments({ role: "Moderator" });
+    const totalAdmins = await User.countDocuments({ role: "Admin" });
+
     res.json({
       users,
       totalPages: Math.ceil(count / limit),
       currentPage: page,
+      stats: {
+        totalUsers,
+        totalStudents,
+        totalTeachers,
+        totalModerators,
+        totalAdmins,
+      },
     });
   } catch (error) {
     res.status(500).send("Server Error");
@@ -2127,10 +2924,13 @@ app.get("/api/admin/quizzes", auth, admin, async (req, res) => {
       .skip((page - 1) * limit)
       .exec();
     const count = await Quiz.countDocuments(query);
+    const totalQuizzes = await Quiz.countDocuments();
+
     res.json({
       quizzes,
       totalPages: Math.ceil(count / limit),
       currentPage: page,
+      totalQuizzes,
     });
   } catch (error) {
     res.status(500).send("Server Error");
@@ -3297,12 +4097,13 @@ app.delete("/api/live-sessions/:code", auth, async (req, res) => {
 });
 
 // --- START THE SERVER ---
-// For local development
-if (process.env.NODE_ENV !== "production") {
-  server.listen(PORT, () => {
-    console.log(`Server with Socket.IO running on port ${PORT}`);
-  });
-}
+// Start server on all network interfaces (0.0.0.0) for Render/Railway deployment
+const HOST = process.env.HOST || "0.0.0.0";
 
-// Export for Vercel serverless
+server.listen(PORT, HOST, () => {
+  console.log(`Server with Socket.IO running on ${HOST}:${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+});
+
+// Export for serverless platforms (if needed)
 module.exports = app;

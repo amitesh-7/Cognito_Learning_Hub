@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, Suspense, lazy } from "react";
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "./context/AuthContext";
 import { useTheme } from "./hooks/useTheme";
@@ -7,44 +7,52 @@ import { Brain, Sun, Moon, Menu, X } from "lucide-react";
 import { ToastProvider } from "./components/ui/Toast";
 import Button from "./components/ui/Button";
 import { fadeInUp, staggerContainer, staggerItem } from "./lib/utils";
+import ParticleBackground from "./components/ParticleBackground";
+import FloatingShapes from "./components/FloatingShapes";
+import LoadingSpinner from "./components/LoadingSpinner";
 
-// Import Components
+// Import route wrapper components (never lazy load these)
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import ModeratorRoute from "./components/ModeratorRoute";
+import { SocketProvider } from "./context/SocketContext";
 
-// Import Pages
+// Lazy load pages for better performance (code splitting)
+// Critical pages - load immediately
 import Home from "./pages/Home";
-import QuizList from "./pages/QuizList";
-import QuizTaker from "./pages/QuizTaker";
-import Dashboard from "./pages/Dashboard";
-import TeacherDashboard from "./pages/TeacherDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import ModeratorDashboard from "./pages/ModeratorDashboard";
-import EditQuiz from "./pages/EditQuiz";
-import QuizMaker from "./pages/QuizMaker";
-import TopicQuizGenerator from "./pages/TopicQuizGenerator";
-import ManualQuizCreator from "./pages/ManualQuizCreator";
-import FileQuizGenerator from "./pages/FileQuizGenerator";
-import DoubtSolver from "./pages/DoubtSolver";
-import ChatSystem from "./pages/ChatSystem";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
-import Leaderboard from "./pages/Leaderboard";
-import ReportsDashboard from "./pages/ReportsDashboard";
-import AchievementDashboard from "./pages/AchievementDashboard";
-import EnhancedQuizCreator from "./pages/EnhancedQuizCreator";
-import GamifiedQuizTaker from "./pages/GamifiedQuizTaker";
-import PDFQuizGenerator from "./pages/PDFQuizGenerator";
-import SocialDashboard from "./pages/SocialDashboard";
-import ChallengeCreator from "./pages/ChallengeCreator";
-import AdminBroadcast from "./pages/AdminBroadcast";
-import Features from "./pages/Features";
-import LiveSessionHost from "./pages/LiveSessionHost";
-import LiveSessionJoin from "./pages/LiveSessionJoin";
-import LiveSessionAnalytics from "./pages/LiveSessionAnalytics";
-import LiveSessionHistory from "./pages/LiveSessionHistory";
-import { SocketProvider } from "./context/SocketContext";
+
+// Less critical pages - lazy load
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const QuizList = lazy(() => import("./pages/QuizList"));
+const QuizTaker = lazy(() => import("./pages/QuizTaker"));
+const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const ModeratorDashboard = lazy(() => import("./pages/ModeratorDashboard"));
+const EditQuiz = lazy(() => import("./pages/EditQuiz"));
+const QuizMaker = lazy(() => import("./pages/QuizMaker"));
+const TopicQuizGenerator = lazy(() => import("./pages/TopicQuizGenerator"));
+const ManualQuizCreator = lazy(() => import("./pages/ManualQuizCreator"));
+const FileQuizGenerator = lazy(() => import("./pages/FileQuizGenerator"));
+const DoubtSolver = lazy(() => import("./pages/DoubtSolver"));
+const ChatSystem = lazy(() => import("./pages/ChatSystem"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const ReportsDashboard = lazy(() => import("./pages/ReportsDashboard"));
+const AchievementDashboard = lazy(() => import("./pages/AchievementDashboard"));
+const EnhancedQuizCreator = lazy(() => import("./pages/EnhancedQuizCreator"));
+const GamifiedQuizTaker = lazy(() => import("./pages/GamifiedQuizTaker"));
+const PDFQuizGenerator = lazy(() => import("./pages/PDFQuizGenerator"));
+const SocialDashboard = lazy(() => import("./pages/SocialDashboard"));
+const ChallengeCreator = lazy(() => import("./pages/ChallengeCreator"));
+const AdminBroadcast = lazy(() => import("./pages/AdminBroadcast"));
+const Features = lazy(() => import("./pages/Features"));
+const LiveSessionHost = lazy(() => import("./pages/LiveSessionHost"));
+const LiveSessionJoin = lazy(() => import("./pages/LiveSessionJoin"));
+const LiveSessionAnalytics = lazy(() => import("./pages/LiveSessionAnalytics"));
+const LiveSessionHistory = lazy(() => import("./pages/LiveSessionHistory"));
+const DuelMode = lazy(() => import("./pages/DuelMode"));
+const DuelBattle = lazy(() => import("./pages/DuelBattle"));
 
 function App() {
   const { user, logout } = useContext(AuthContext);
@@ -63,27 +71,42 @@ function App() {
   return (
     <SocketProvider>
       <ToastProvider>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300">
+        <div className="min-h-screen bg-white dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300 relative overflow-hidden">
+          {/* Animated Background Layers */}
+          <ParticleBackground isDark={theme === "dark"} />
+          <FloatingShapes />
+          {/* Glass-morphism Navbar with Reduced Height */}
           <motion.header
-            className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700"
+            className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl sticky top-0 z-50 border-b border-indigo-100/50 dark:border-indigo-900/50 shadow-sm"
             initial={{ y: -100 }}
             animate={{ y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
+            <nav className="container mx-auto px-6 md:px-8 py-3 flex justify-between items-center">
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <Link to="/" className="flex items-center space-x-3 group">
                   <motion.div
-                    className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg"
+                    className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30"
                     whileHover={{ rotate: 5, scale: 1.1 }}
-                    transition={{ duration: 0.2 }}
+                    animate={{
+                      boxShadow: [
+                        "0 10px 25px -5px rgba(99, 102, 241, 0.3)",
+                        "0 10px 25px -5px rgba(139, 92, 246, 0.4)",
+                        "0 10px 25px -5px rgba(99, 102, 241, 0.3)",
+                      ],
+                    }}
+                    transition={{
+                      rotate: { duration: 0.2 },
+                      scale: { duration: 0.2 },
+                      boxShadow: { duration: 3, repeat: Infinity },
+                    }}
                   >
                     <Brain className="h-6 w-6" />
                   </motion.div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-indigo-600 transition-all duration-300">
+                  <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-indigo-600 transition-all duration-300 tracking-tight">
                     Cognito Learning Hub
                   </h1>
                 </Link>
@@ -91,7 +114,7 @@ function App() {
 
               {/* Desktop Navigation */}
               <motion.div
-                className="hidden md:flex items-center space-x-2"
+                className="hidden lg:flex items-center space-x-1 xl:space-x-2"
                 variants={staggerContainer}
                 initial="initial"
                 animate="animate"
@@ -111,7 +134,7 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/dashboard"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                       >
                         Dashboard
                       </Link>
@@ -120,7 +143,7 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/quizzes"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                       >
                         Take a Quiz
                       </Link>
@@ -129,7 +152,7 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/doubt-solver"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                       >
                         AI Tutor
                       </Link>
@@ -138,7 +161,7 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/achievements"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                       >
                         Achievements
                       </Link>
@@ -147,7 +170,7 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/social"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                       >
                         Social Hub
                       </Link>
@@ -156,7 +179,7 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/chat"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                       >
                         Chat
                       </Link>
@@ -166,7 +189,7 @@ function App() {
                       <motion.div variants={staggerItem}>
                         <Link
                           to="/teacher-dashboard"
-                          className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                          className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200 whitespace-nowrap"
                         >
                           My Quizzes
                         </Link>
@@ -177,7 +200,7 @@ function App() {
                       <motion.div variants={staggerItem}>
                         <Link
                           to="/admin-broadcast"
-                          className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900 transition-all duration-200"
+                          className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900 transition-all duration-200 whitespace-nowrap"
                         >
                           Broadcast
                         </Link>
@@ -188,7 +211,7 @@ function App() {
                       <motion.div variants={staggerItem}>
                         <Link
                           to="/moderator"
-                          className="px-3 py-2 font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 rounded-lg hover:bg-green-50 dark:hover:bg-green-900 transition-all duration-200"
+                          className="px-3 py-2 font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 rounded-lg hover:bg-green-50 dark:hover:bg-green-900 transition-all duration-200 whitespace-nowrap"
                         >
                           Moderator
                         </Link>
@@ -199,7 +222,7 @@ function App() {
                       <motion.div variants={staggerItem}>
                         <Link
                           to="/admin"
-                          className="px-3 py-2 font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-900 transition-all duration-200"
+                          className="px-3 py-2 font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-900 transition-all duration-200 whitespace-nowrap"
                         >
                           Admin
                         </Link>
@@ -221,40 +244,50 @@ function App() {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/features"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-all duration-200 relative group"
                       >
                         Features
+                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-600 dark:bg-indigo-400 group-hover:w-full transition-all duration-300"></span>
                       </Link>
                     </motion.div>
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/login"
-                        className="px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900 transition-all duration-200"
+                        className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-lg hover:bg-indigo-50/50 dark:hover:bg-indigo-900/30 transition-all duration-200"
                       >
                         Login
                       </Link>
                     </motion.div>
                     <motion.div variants={staggerItem}>
-                      <Button asChild variant="default" size="sm">
-                        <Link to="/signup">Sign Up</Link>
-                      </Button>
+                      <Link
+                        to="/signup"
+                        className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5 transition-all duration-300"
+                      >
+                        Sign Up
+                      </Link>
                     </motion.div>
                   </>
                 )}
 
                 <motion.div variants={staggerItem}>
-                  <Button
+                  <motion.button
                     onClick={toggleTheme}
-                    variant="ghost"
-                    size="icon"
-                    className="ml-2"
+                    className="ml-3 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    {theme === "light" ? (
-                      <Moon className="w-5 h-5" />
-                    ) : (
-                      <Sun className="w-5 h-5" />
-                    )}
-                  </Button>
+                    <motion.div
+                      initial={false}
+                      animate={{ rotate: theme === "light" ? 0 : 180 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {theme === "light" ? (
+                        <Moon className="w-5 h-5 text-indigo-600" />
+                      ) : (
+                        <Sun className="w-5 h-5 text-yellow-400" />
+                      )}
+                    </motion.div>
+                  </motion.button>
                 </motion.div>
               </motion.div>
 
@@ -281,7 +314,6 @@ function App() {
               </div>
             </nav>
           </motion.header>
-
           {/* Mobile Menu Overlay */}
           <AnimatePresence>
             {isMenuOpen && (
@@ -418,231 +450,255 @@ function App() {
               </motion.div>
             )}
           </AnimatePresence>
+          <main className="container mx-auto p-6 lg:p-8 mt-4 relative z-10">
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center min-h-[60vh]">
+                  <LoadingSpinner />
+                </div>
+              }
+            >
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/features" element={<Features />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<SignUp />} />
 
-          <main className="container mx-auto p-6 lg:p-8 mt-8">
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/features" element={<Features />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<SignUp />} />
+                {/* Protected Routes */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/teacher-dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <TeacherDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quizzes"
+                  element={
+                    <ProtectedRoute>
+                      <QuizList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/:quizId"
+                  element={
+                    <ProtectedRoute>
+                      <QuizTaker />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/edit/:quizId"
+                  element={
+                    <ProtectedRoute>
+                      <EditQuiz />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/:quizId/leaderboard"
+                  element={
+                    <ProtectedRoute>
+                      <Leaderboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker"
+                  element={
+                    <ProtectedRoute>
+                      <QuizMaker />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/topic"
+                  element={
+                    <ProtectedRoute>
+                      <TopicQuizGenerator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/manual"
+                  element={
+                    <ProtectedRoute>
+                      <ManualQuizCreator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/enhanced"
+                  element={
+                    <ProtectedRoute>
+                      <EnhancedQuizCreator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/file"
+                  element={
+                    <ProtectedRoute>
+                      <FileQuizGenerator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/pdf-quiz-generator"
+                  element={
+                    <ProtectedRoute>
+                      <PDFQuizGenerator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/social"
+                  element={
+                    <ProtectedRoute>
+                      <SocialDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/create-challenge"
+                  element={
+                    <ProtectedRoute>
+                      <ChallengeCreator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/:quizId/gamified"
+                  element={
+                    <ProtectedRoute>
+                      <GamifiedQuizTaker />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/achievements"
+                  element={
+                    <ProtectedRoute>
+                      <AchievementDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/doubt-solver"
+                  element={
+                    <ProtectedRoute>
+                      <DoubtSolver />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/chat"
+                  element={
+                    <ProtectedRoute>
+                      <ChatSystem />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Protected Routes */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/teacher-dashboard"
-                element={
-                  <ProtectedRoute>
-                    <TeacherDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quizzes"
-                element={
-                  <ProtectedRoute>
-                    <QuizList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz/:quizId"
-                element={
-                  <ProtectedRoute>
-                    <QuizTaker />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz/edit/:quizId"
-                element={
-                  <ProtectedRoute>
-                    <EditQuiz />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz/:quizId/leaderboard"
-                element={
-                  <ProtectedRoute>
-                    <Leaderboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz-maker"
-                element={
-                  <ProtectedRoute>
-                    <QuizMaker />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz-maker/topic"
-                element={
-                  <ProtectedRoute>
-                    <TopicQuizGenerator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz-maker/manual"
-                element={
-                  <ProtectedRoute>
-                    <ManualQuizCreator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz-maker/enhanced"
-                element={
-                  <ProtectedRoute>
-                    <EnhancedQuizCreator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz-maker/file"
-                element={
-                  <ProtectedRoute>
-                    <FileQuizGenerator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/pdf-quiz-generator"
-                element={
-                  <ProtectedRoute>
-                    <PDFQuizGenerator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/social"
-                element={
-                  <ProtectedRoute>
-                    <SocialDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/create-challenge"
-                element={
-                  <ProtectedRoute>
-                    <ChallengeCreator />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/quiz/:quizId/gamified"
-                element={
-                  <ProtectedRoute>
-                    <GamifiedQuizTaker />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/achievements"
-                element={
-                  <ProtectedRoute>
-                    <AchievementDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/doubt-solver"
-                element={
-                  <ProtectedRoute>
-                    <DoubtSolver />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/chat"
-                element={
-                  <ProtectedRoute>
-                    <ChatSystem />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Live Session Routes */}
+                <Route
+                  path="/live/host/:quizId"
+                  element={
+                    <ProtectedRoute>
+                      <LiveSessionHost />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/live/join"
+                  element={
+                    <ProtectedRoute>
+                      <LiveSessionJoin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/live/analytics/:sessionCode"
+                  element={
+                    <ProtectedRoute>
+                      <LiveSessionAnalytics />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/live/history"
+                  element={
+                    <ProtectedRoute>
+                      <LiveSessionHistory />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Live Session Routes */}
-              <Route
-                path="/live/host/:quizId"
-                element={
-                  <ProtectedRoute>
-                    <LiveSessionHost />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/live/join"
-                element={
-                  <ProtectedRoute>
-                    <LiveSessionJoin />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/live/analytics/:sessionCode"
-                element={
-                  <ProtectedRoute>
-                    <LiveSessionAnalytics />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/live/history"
-                element={
-                  <ProtectedRoute>
-                    <LiveSessionHistory />
-                  </ProtectedRoute>
-                }
-              />
+                {/* 1v1 Duel Routes */}
+                <Route
+                  path="/duel"
+                  element={
+                    <ProtectedRoute>
+                      <DuelMode />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/duel/:quizId"
+                  element={
+                    <ProtectedRoute>
+                      <DuelBattle />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Admin & Moderator Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/admin-broadcast"
-                element={
-                  <AdminRoute>
-                    <AdminBroadcast />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="/moderator"
-                element={
-                  <ModeratorRoute>
-                    <ModeratorDashboard />
-                  </ModeratorRoute>
-                }
-              />
-              <Route
-                path="/reports"
-                element={
-                  <ModeratorRoute>
-                    <ReportsDashboard />
-                  </ModeratorRoute>
-                }
-              />
-            </Routes>
-          </main>
-
+                {/* Admin & Moderator Routes */}
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin-broadcast"
+                  element={
+                    <AdminRoute>
+                      <AdminBroadcast />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/moderator"
+                  element={
+                    <ModeratorRoute>
+                      <ModeratorDashboard />
+                    </ModeratorRoute>
+                  }
+                />
+                <Route
+                  path="/reports"
+                  element={
+                    <ModeratorRoute>
+                      <ReportsDashboard />
+                    </ModeratorRoute>
+                  }
+                />
+              </Routes>
+            </Suspense>
+          </main>{" "}
           <footer className="bg-white dark:bg-gray-900 mt-12 py-6 border-t border-gray-200 dark:border-gray-700">
             <div className="container mx-auto px-4 text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">

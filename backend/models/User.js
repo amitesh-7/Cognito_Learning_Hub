@@ -1,6 +1,7 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-  const UserSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema(
+  {
     name: {
       type: String,
       required: true,
@@ -8,19 +9,19 @@ const mongoose = require('mongoose');
     email: {
       type: String,
       required: true,
-      unique: true,
+      // unique: true creates an index automatically - removed to prevent duplicate index warning
     },
     password: {
       type: String,
-      required: function() {
+      required: function () {
         // Password is required only if googleId is not present
         return !this.googleId;
       },
     },
     googleId: {
       type: String,
-      unique: true,
       sparse: true, // Allows multiple null values
+      // unique: true creates an index automatically - removed to prevent duplicate index warning
     },
     picture: {
       type: String, // Google profile picture URL
@@ -28,22 +29,31 @@ const mongoose = require('mongoose');
     role: {
       type: String,
       // Add the new roles to the enum
-      enum: ['Student', 'Teacher', 'Moderator', 'Admin'], 
+      enum: ["Student", "Teacher", "Moderator", "Admin"],
       required: true,
     },
     status: {
       type: String,
-      enum: ['online', 'offline', 'away'],
-      default: 'offline'
+      enum: ["online", "offline", "away"],
+      default: "offline",
     },
     lastSeen: {
       type: Date,
-      default: Date.now
+      default: Date.now,
     },
     lastActivity: {
       type: Date,
-      default: Date.now
-    }
-  }, { timestamps: true });
+      default: Date.now,
+    },
+  },
+  { timestamps: true }
+);
 
-  module.exports = mongoose.model('User', UserSchema);
+// Performance Indexes
+UserSchema.index({ email: 1 }, { unique: true }); // Fast email lookups (login)
+UserSchema.index({ googleId: 1 }, { unique: true, sparse: true }); // Fast Google OAuth lookups
+UserSchema.index({ role: 1 }); // Filter by role (Teacher, Admin, etc.)
+UserSchema.index({ status: 1, lastSeen: -1 }); // Online user queries
+UserSchema.index({ createdAt: -1 }); // Recent user queries
+
+module.exports = mongoose.model("User", UserSchema);

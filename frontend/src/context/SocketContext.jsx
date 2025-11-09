@@ -19,6 +19,7 @@ export const SocketProvider = ({ children }) => {
   const [connectionError, setConnectionError] = useState(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  const socketRef = useRef(null);
 
   useEffect(() => {
     // Get backend URL from environment (with trailing slash removed)
@@ -26,7 +27,7 @@ export const SocketProvider = ({ children }) => {
 
     console.log("🔌 Initializing Socket.IO connection to:", SOCKET_URL);
 
-    // Create socket connection
+    // Create socket connection with optimized settings
     const socketInstance = io(SOCKET_URL, {
       transports: ["websocket", "polling"],
       reconnection: true,
@@ -34,7 +35,10 @@ export const SocketProvider = ({ children }) => {
       reconnectionDelayMax: 5000,
       reconnectionAttempts: maxReconnectAttempts,
       timeout: 10000,
+      autoConnect: true, // Auto-connect enabled
     });
+
+    socketRef.current = socketInstance;
 
     // Connection established
     socketInstance.on("connect", () => {
@@ -66,10 +70,12 @@ export const SocketProvider = ({ children }) => {
       console.warn("⚠️ Socket.IO disconnected. Reason:", reason);
       setIsConnected(false);
 
+      // Only auto-reconnect if it was an unexpected disconnect
       if (reason === "io server disconnect") {
         // Server disconnected, manually reconnect
         socketInstance.connect();
       }
+      // Don't reconnect on "io client disconnect" (manual disconnect)
     });
 
     // Reconnection attempt
@@ -96,7 +102,9 @@ export const SocketProvider = ({ children }) => {
     // Cleanup on unmount
     return () => {
       console.log("🔌 Disconnecting Socket.IO...");
-      socketInstance.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
     };
   }, []);
 

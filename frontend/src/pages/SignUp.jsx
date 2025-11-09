@@ -253,6 +253,14 @@ export default function SignUp() {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
+    
+    console.log("📤 Submitting registration:", {
+      name: formData.name,
+      email: formData.email,
+      role: formData.role,
+      hasPassword: !!formData.password,
+    });
+    
     try {
       const response = await fetch(apiUrl("/api/auth/register"), {
         method: "POST",
@@ -260,11 +268,20 @@ export default function SignUp() {
         body: JSON.stringify(formData),
       });
       const data = await response.json();
+      
+      console.log("📥 Registration response:", data);
+      
       if (!response.ok) {
+        // Show detailed validation errors if available
+        if (data.errors && Array.isArray(data.errors)) {
+          const errorMessages = data.errors.map(err => err.msg).join(", ");
+          throw new Error(errorMessages);
+        }
         throw new Error(data.message || "Something went wrong");
       }
       setShowSuccessModal(true);
     } catch (err) {
+      console.error("❌ Registration error:", err);
       setError(err.message);
     } finally {
       setIsSubmitting(false);

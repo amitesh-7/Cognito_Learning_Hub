@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Trophy, 
-  Star, 
-  Clock, 
-  Zap, 
-  Award, 
+import React, { useState, useEffect, useContext } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Trophy,
+  Star,
+  Clock,
+  Zap,
+  Award,
   Target,
   CheckCircle,
   XCircle,
@@ -21,19 +21,37 @@ import {
   Lightbulb,
   ArrowRight,
   ArrowLeft,
-  Flag
-} from 'lucide-react';
-import Confetti from 'react-confetti';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import Progress from '../components/ui/Progress';
-import Badge from '../components/ui/Badge';
-import { LoadingSpinner } from '../components/ui/Loading';
-import { useToast } from '../components/ui/Toast';
+  Flag,
+} from "lucide-react";
+import Confetti from "react-confetti";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import Progress from "../components/ui/Progress";
+import Badge from "../components/ui/Badge";
+import { LoadingSpinner } from "../components/ui/Loading";
+import { useToast } from "../components/ui/Toast";
+import TextToSpeech from "../components/TextToSpeech";
 
-const QuestionCard = ({ question, onAnswer, selectedAnswer, isAnswered, timeLeft, totalTime, onNext, onPrevious, questionNumber, totalQuestions, showExplanation }) => {
+const QuestionCard = ({
+  question,
+  onAnswer,
+  selectedAnswer,
+  isAnswered,
+  timeLeft,
+  totalTime,
+  onNext,
+  onPrevious,
+  questionNumber,
+  totalQuestions,
+  showExplanation,
+}) => {
   const progressPercentage = ((totalTime - timeLeft) / totalTime) * 100;
-  
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
@@ -42,7 +60,15 @@ const QuestionCard = ({ question, onAnswer, selectedAnswer, isAnswered, timeLeft
             <Badge variant="outline">
               Question {questionNumber} of {totalQuestions}
             </Badge>
-            <Badge variant={question.difficulty === 'Easy' ? 'success' : question.difficulty === 'Medium' ? 'warning' : 'destructive'}>
+            <Badge
+              variant={
+                question.difficulty === "Easy"
+                  ? "success"
+                  : question.difficulty === "Medium"
+                  ? "warning"
+                  : "destructive"
+              }
+            >
               {question.difficulty}
             </Badge>
             <Badge variant="secondary" className="flex items-center gap-1">
@@ -50,11 +76,17 @@ const QuestionCard = ({ question, onAnswer, selectedAnswer, isAnswered, timeLeft
               {question.points} pts
             </Badge>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-gray-500" />
-              <span className={`font-bold ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-gray-700 dark:text-gray-300'}`}>
+              <span
+                className={`font-bold ${
+                  timeLeft <= 10
+                    ? "text-red-500 animate-pulse"
+                    : "text-gray-700 dark:text-gray-300"
+                }`}
+              >
                 {timeLeft}s
               </span>
             </div>
@@ -63,14 +95,22 @@ const QuestionCard = ({ question, onAnswer, selectedAnswer, isAnswered, timeLeft
             </div>
           </div>
         </div>
-        
-        <CardTitle className="text-xl font-bold text-gray-800 dark:text-gray-200">
-          {question.question}
-        </CardTitle>
+
+        <div className="flex items-start justify-between gap-4">
+          <CardTitle className="text-xl font-bold text-gray-800 dark:text-gray-200 flex-1">
+            {question.question}
+          </CardTitle>
+          {/* Text-to-Speech Button */}
+          <TextToSpeech
+            text={question.question}
+            autoPlay={false}
+            className="flex-shrink-0"
+          />
+        </div>
       </CardHeader>
-      
+
       <CardContent>
-        {question.type === 'multiple-choice' && (
+        {question.type === "multiple-choice" && (
           <div className="space-y-3">
             {question.options.map((option, index) => (
               <motion.button
@@ -81,37 +121,39 @@ const QuestionCard = ({ question, onAnswer, selectedAnswer, isAnswered, timeLeft
                   selectedAnswer === option
                     ? isAnswered
                       ? option === question.correct_answer
-                        ? 'border-green-500 bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300'
-                        : 'border-red-500 bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300'
-                      : 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900'
+                        ? "border-green-500 bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300"
+                        : "border-red-500 bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300"
+                      : "border-indigo-500 bg-indigo-50 dark:bg-indigo-900"
                     : isAnswered && option === question.correct_answer
-                    ? 'border-green-500 bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600'
+                    ? "border-green-500 bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300"
+                    : "border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600"
                 }`}
                 whileHover={!isAnswered ? { scale: 1.02 } : {}}
                 whileTap={!isAnswered ? { scale: 0.98 } : {}}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{option}</span>
-                  {isAnswered && selectedAnswer === option && (
-                    option === question.correct_answer ? (
+                  {isAnswered &&
+                    selectedAnswer === option &&
+                    (option === question.correct_answer ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
                       <XCircle className="w-5 h-5 text-red-500" />
-                    )
-                  )}
-                  {isAnswered && selectedAnswer !== option && option === question.correct_answer && (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                  )}
+                    ))}
+                  {isAnswered &&
+                    selectedAnswer !== option &&
+                    option === question.correct_answer && (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    )}
                 </div>
               </motion.button>
             ))}
           </div>
         )}
 
-        {question.type === 'true-false' && (
+        {question.type === "true-false" && (
           <div className="grid grid-cols-2 gap-4">
-            {['True', 'False'].map((option) => (
+            {["True", "False"].map((option) => (
               <motion.button
                 key={option}
                 onClick={() => !isAnswered && onAnswer(option)}
@@ -120,35 +162,37 @@ const QuestionCard = ({ question, onAnswer, selectedAnswer, isAnswered, timeLeft
                   selectedAnswer === option
                     ? isAnswered
                       ? option === question.correct_answer
-                        ? 'border-green-500 bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300'
-                        : 'border-red-500 bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300'
-                      : 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900'
+                        ? "border-green-500 bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300"
+                        : "border-red-500 bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300"
+                      : "border-indigo-500 bg-indigo-50 dark:bg-indigo-900"
                     : isAnswered && option === question.correct_answer
-                    ? 'border-green-500 bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600'
+                    ? "border-green-500 bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300"
+                    : "border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600"
                 }`}
                 whileHover={!isAnswered ? { scale: 1.02 } : {}}
                 whileTap={!isAnswered ? { scale: 0.98 } : {}}
               >
                 <div className="text-center">
                   <div className="text-2xl font-bold mb-2">{option}</div>
-                  {isAnswered && selectedAnswer === option && (
-                    option === question.correct_answer ? (
+                  {isAnswered &&
+                    selectedAnswer === option &&
+                    (option === question.correct_answer ? (
                       <CheckCircle className="w-6 h-6 text-green-500 mx-auto" />
                     ) : (
                       <XCircle className="w-6 h-6 text-red-500 mx-auto" />
-                    )
-                  )}
-                  {isAnswered && selectedAnswer !== option && option === question.correct_answer && (
-                    <CheckCircle className="w-6 h-6 text-green-500 mx-auto" />
-                  )}
+                    ))}
+                  {isAnswered &&
+                    selectedAnswer !== option &&
+                    option === question.correct_answer && (
+                      <CheckCircle className="w-6 h-6 text-green-500 mx-auto" />
+                    )}
                 </div>
               </motion.button>
             ))}
           </div>
         )}
 
-        {question.type === 'descriptive' && (
+        {question.type === "descriptive" && (
           <div>
             <textarea
               onChange={(e) => onAnswer(e.target.value)}
@@ -169,8 +213,12 @@ const QuestionCard = ({ question, onAnswer, selectedAnswer, isAnswered, timeLeft
             <div className="flex items-start gap-3">
               <Lightbulb className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
               <div>
-                <h4 className="font-medium text-blue-700 dark:text-blue-300 mb-1">Explanation</h4>
-                <p className="text-blue-600 dark:text-blue-400 text-sm">{question.explanation}</p>
+                <h4 className="font-medium text-blue-700 dark:text-blue-300 mb-1">
+                  Explanation
+                </h4>
+                <p className="text-blue-600 dark:text-blue-400 text-sm">
+                  {question.explanation}
+                </p>
               </div>
             </div>
           </motion.div>
@@ -182,12 +230,18 @@ const QuestionCard = ({ question, onAnswer, selectedAnswer, isAnswered, timeLeft
             animate={{ opacity: 1, y: 0 }}
             className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700"
           >
-            <Button onClick={onPrevious} variant="outline" disabled={questionNumber === 1}>
+            <Button
+              onClick={onPrevious}
+              variant="outline"
+              disabled={questionNumber === 1}
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Previous
             </Button>
             <Button onClick={onNext}>
-              {questionNumber === totalQuestions ? 'Finish Quiz' : 'Next Question'}
+              {questionNumber === totalQuestions
+                ? "Finish Quiz"
+                : "Next Question"}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </motion.div>
@@ -207,30 +261,41 @@ const GameStatsPanel = ({ stats, currentStreak }) => (
     </CardHeader>
     <CardContent className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-600 dark:text-gray-400">Current Streak</span>
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          Current Streak
+        </span>
         <div className="flex items-center gap-1">
           <Flame className="w-4 h-4 text-orange-500" />
           <span className="font-bold text-orange-500">{currentStreak}</span>
         </div>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-600 dark:text-gray-400">Total Score</span>
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          Total Score
+        </span>
         <div className="flex items-center gap-1">
           <Star className="w-4 h-4 text-yellow-500" />
           <span className="font-bold text-yellow-500">{stats.score}</span>
         </div>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-600 dark:text-gray-400">Bonus Points</span>
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          Bonus Points
+        </span>
         <div className="flex items-center gap-1">
           <Zap className="w-4 h-4 text-blue-500" />
           <span className="font-bold text-blue-500">{stats.bonusPoints}</span>
         </div>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-600 dark:text-gray-400">Accuracy</span>
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          Accuracy
+        </span>
         <span className="font-bold text-green-500">
-          {stats.totalAnswered > 0 ? Math.round((stats.correct / stats.totalAnswered) * 100) : 0}%
+          {stats.totalAnswered > 0
+            ? Math.round((stats.correct / stats.totalAnswered) * 100)
+            : 0}
+          %
         </span>
       </div>
     </CardContent>
@@ -271,7 +336,7 @@ export default function GamifiedQuizTaker() {
   const [isFinished, setIsFinished] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  
+
   // Game stats
   const [gameStats, setGameStats] = useState({
     score: 0,
@@ -280,9 +345,9 @@ export default function GamifiedQuizTaker() {
     totalAnswered: 0,
     bonusPoints: 0,
     totalTime: 0,
-    averageTime: 0
+    averageTime: 0,
   });
-  
+
   const [currentStreak, setCurrentStreak] = useState(0);
   const [achievements, setAchievements] = useState([]);
   const [showAchievement, setShowAchievement] = useState(null);
@@ -300,7 +365,7 @@ export default function GamifiedQuizTaker() {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && !isAnswered) {
-      handleAnswer(''); // Auto-submit empty answer when time runs out
+      handleAnswer(""); // Auto-submit empty answer when time runs out
     }
   }, [timeLeft, isAnswered, currentQuestion]);
 
@@ -313,19 +378,22 @@ export default function GamifiedQuizTaker() {
 
   const fetchQuiz = async () => {
     try {
-      const token = localStorage.getItem('quizwise-token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/quizzes/${quizId}`, {
-        headers: { 'x-auth-token': token }
-      });
-      
-      if (!response.ok) throw new Error('Failed to fetch quiz');
-      
+      const token = localStorage.getItem("quizwise-token");
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/quizzes/${quizId}`,
+        {
+          headers: { "x-auth-token": token },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch quiz");
+
       const data = await response.json();
       setQuiz(data);
       setTimeLeft(data.questions[0]?.timeLimit || 30);
     } catch (error) {
-      console.error('Error fetching quiz:', error);
-      showError('Failed to load quiz');
+      console.error("Error fetching quiz:", error);
+      showError("Failed to load quiz");
     } finally {
       setLoading(false);
     }
@@ -336,18 +404,24 @@ export default function GamifiedQuizTaker() {
 
     const timeTaken = Math.round((Date.now() - questionStartTime) / 1000);
     const isCorrect = answer === currentQuestion.correct_answer;
-    
+
     // Calculate points
     let pointsEarned = 0;
     let bonusPoints = 0;
-    
+
     if (isCorrect) {
       pointsEarned = currentQuestion.points || 1;
-      
+
       // Time bonus (extra points for quick answers)
-      const timeBonus = Math.max(0, Math.floor((timeLeft / (currentQuestion.timeLimit || 30)) * (currentQuestion.points || 1)));
+      const timeBonus = Math.max(
+        0,
+        Math.floor(
+          (timeLeft / (currentQuestion.timeLimit || 30)) *
+            (currentQuestion.points || 1)
+        )
+      );
       bonusPoints += timeBonus;
-      
+
       // Streak bonus
       const newStreak = currentStreak + 1;
       if (newStreak >= 3) {
@@ -359,26 +433,26 @@ export default function GamifiedQuizTaker() {
     }
 
     // Update answers
-    setAnswers(prev => ({
+    setAnswers((prev) => ({
       ...prev,
       [currentQuestionIndex]: {
         answer,
         isCorrect,
         timeTaken,
         pointsEarned,
-        bonusPoints
-      }
+        bonusPoints,
+      },
     }));
 
     // Update game stats
-    setGameStats(prev => ({
+    setGameStats((prev) => ({
       ...prev,
       totalAnswered: prev.totalAnswered + 1,
       correct: isCorrect ? prev.correct + 1 : prev.correct,
       wrong: isCorrect ? prev.wrong : prev.wrong + 1,
       score: prev.score + pointsEarned,
       bonusPoints: prev.bonusPoints + bonusPoints,
-      totalTime: prev.totalTime + timeTaken
+      totalTime: prev.totalTime + timeTaken,
     }));
 
     // Check for achievements
@@ -386,10 +460,10 @@ export default function GamifiedQuizTaker() {
 
     // Play sound effect
     if (isCorrect) {
-      const audio = new Audio('/sounds/correct.mp3');
+      const audio = new Audio("/sounds/correct.mp3");
       audio.play().catch(() => {}); // Ignore errors
     } else {
-      const audio = new Audio('/sounds/incorrect.mp3');
+      const audio = new Audio("/sounds/incorrect.mp3");
       audio.play().catch(() => {});
     }
   };
@@ -399,19 +473,19 @@ export default function GamifiedQuizTaker() {
 
     // Speed achievements
     if (isCorrect && timeTaken <= 5) {
-      newAchievements.push({ name: 'Lightning Fast!', icon: '⚡' });
+      newAchievements.push({ name: "Lightning Fast!", icon: "⚡" });
     }
 
     // Streak achievements
     if (currentStreak + 1 === 5) {
-      newAchievements.push({ name: 'On Fire!', icon: '🔥' });
+      newAchievements.push({ name: "On Fire!", icon: "🔥" });
     } else if (currentStreak + 1 === 10) {
-      newAchievements.push({ name: 'Unstoppable!', icon: '👑' });
+      newAchievements.push({ name: "Unstoppable!", icon: "👑" });
     }
 
     // Point achievements
     if (gameStats.score + totalPoints >= 100) {
-      newAchievements.push({ name: 'Century Club!', icon: '💯' });
+      newAchievements.push({ name: "Century Club!", icon: "💯" });
     }
 
     if (newAchievements.length > 0) {
@@ -436,16 +510,21 @@ export default function GamifiedQuizTaker() {
 
   const finishQuiz = async () => {
     setIsFinished(true);
-    
+
     try {
-      const token = localStorage.getItem('quizwise-token');
-      
+      const token = localStorage.getItem("quizwise-token");
+
       // Calculate final results
-      const finalScore = Object.values(answers).reduce((sum, answer) => 
-        sum + (answer?.pointsEarned || 0) + (answer?.bonusPoints || 0), 0);
-      
-      const percentage = Math.round((gameStats.correct / quiz.questions.length) * 100);
-      
+      const finalScore = Object.values(answers).reduce(
+        (sum, answer) =>
+          sum + (answer?.pointsEarned || 0) + (answer?.bonusPoints || 0),
+        0
+      );
+
+      const percentage = Math.round(
+        (gameStats.correct / quiz.questions.length) * 100
+      );
+
       const resultData = {
         score: gameStats.correct,
         totalQuestions: quiz.questions.length,
@@ -461,22 +540,25 @@ export default function GamifiedQuizTaker() {
           isCorrect: answer.isCorrect,
           timeTaken: answer.timeTaken,
           pointsEarned: answer.pointsEarned,
-          bonusPoints: answer.bonusPoints
+          bonusPoints: answer.bonusPoints,
         })),
         streakAtCompletion: currentStreak,
-        experienceGained: finalScore
+        experienceGained: finalScore,
       };
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/quizzes/${quizId}/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        },
-        body: JSON.stringify(resultData)
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/quizzes/${quizId}/submit`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-auth-token": token,
+          },
+          body: JSON.stringify(resultData),
+        }
+      );
 
-      if (!response.ok) throw new Error('Failed to submit quiz');
+      if (!response.ok) throw new Error("Failed to submit quiz");
 
       // Show confetti for good performance
       if (percentage >= 80) {
@@ -485,45 +567,54 @@ export default function GamifiedQuizTaker() {
       }
 
       setShowResults(true);
-      success('Quiz completed successfully!');
+      success("Quiz completed successfully!");
     } catch (error) {
-      console.error('Error submitting quiz:', error);
-      showError('Failed to submit quiz results');
+      console.error("Error submitting quiz:", error);
+      showError("Failed to submit quiz results");
     }
   };
 
   if (loading) return <LoadingSpinner />;
 
   if (showResults) {
-    const percentage = Math.round((gameStats.correct / quiz.questions.length) * 100);
+    const percentage = Math.round(
+      (gameStats.correct / quiz.questions.length) * 100
+    );
     const passed = percentage >= (quiz.passingScore || 60);
-    
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950 p-6">
-        {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} />}
-        
+        {showConfetti && (
+          <Confetti width={window.innerWidth} height={window.innerHeight} />
+        )}
+
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <div className={`w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center ${
-              passed ? 'bg-green-100 dark:bg-green-900' : 'bg-orange-100 dark:bg-orange-900'
-            }`}>
+            <div
+              className={`w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center ${
+                passed
+                  ? "bg-green-100 dark:bg-green-900"
+                  : "bg-orange-100 dark:bg-orange-900"
+              }`}
+            >
               {passed ? (
                 <Trophy className="w-10 h-10 text-green-600 dark:text-green-400" />
               ) : (
                 <Target className="w-10 h-10 text-orange-600 dark:text-orange-400" />
               )}
             </div>
-            
+
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              {passed ? 'Congratulations!' : 'Good Effort!'}
+              {passed ? "Congratulations!" : "Good Effort!"}
             </h1>
-            
+
             <p className="text-xl text-gray-600 dark:text-gray-400">
-              You scored {gameStats.correct} out of {quiz.questions.length} ({percentage}%)
+              You scored {gameStats.correct} out of {quiz.questions.length} (
+              {percentage}%)
             </p>
           </motion.div>
 
@@ -534,37 +625,44 @@ export default function GamifiedQuizTaker() {
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {gameStats.score + gameStats.bonusPoints}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Total Points</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Total Points
+                </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-6 text-center">
                 <Timer className="w-8 h-8 text-blue-500 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {Math.round(gameStats.totalTime / 60)}m {gameStats.totalTime % 60}s
+                  {Math.round(gameStats.totalTime / 60)}m{" "}
+                  {gameStats.totalTime % 60}s
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Total Time</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Total Time
+                </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-6 text-center">
                 <Flame className="w-8 h-8 text-orange-500 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {currentStreak}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Final Streak</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Final Streak
+                </div>
               </CardContent>
             </Card>
           </div>
 
           <div className="flex justify-center gap-4">
-            <Button onClick={() => navigate('/dashboard')}>
+            <Button onClick={() => navigate("/dashboard")}>
               <BarChart className="w-4 h-4 mr-2" />
               View Dashboard
             </Button>
-            <Button onClick={() => navigate('/quiz-list')} variant="outline">
+            <Button onClick={() => navigate("/quiz-list")} variant="outline">
               Take Another Quiz
             </Button>
           </div>
@@ -591,21 +689,23 @@ export default function GamifiedQuizTaker() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{quiz.title}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {quiz.title}
+            </h1>
             <p className="text-gray-600 dark:text-gray-400">
               Question {currentQuestionIndex + 1} of {quiz.questions.length}
             </p>
           </div>
-          
-          <Button onClick={() => navigate('/quiz-list')} variant="outline">
+
+          <Button onClick={() => navigate("/quiz-list")} variant="outline">
             Exit Quiz
           </Button>
         </div>
 
         {/* Progress Bar */}
         <div className="mb-8">
-          <Progress 
-            value={((currentQuestionIndex + 1) / quiz.questions.length) * 100} 
+          <Progress
+            value={((currentQuestionIndex + 1) / quiz.questions.length) * 100}
             className="h-3"
           />
         </div>
