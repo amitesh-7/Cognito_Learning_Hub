@@ -64,6 +64,12 @@ const LiveSessionJoin = () => {
 
   // Join session
   const handleJoinSession = useCallback(async () => {
+    // Prevent duplicate joins
+    if (hasJoined) {
+      console.log("⚠️ Already joined, skipping duplicate join attempt");
+      return;
+    }
+
     if (!sessionCode || sessionCode.length !== 6) {
       setJoinError("Please enter a valid 6-character session code");
       return;
@@ -107,7 +113,7 @@ const LiveSessionJoin = () => {
         }
       }
     );
-  }, [socket, isConnected, sessionCode, user]);
+  }, [socket, isConnected, sessionCode, user, hasJoined]);
 
   // Auto-join if code in URL
   useEffect(() => {
@@ -187,7 +193,7 @@ const LiveSessionJoin = () => {
     socket.on("host-disconnected", ({ message }) => {
       console.warn("⚠️ Host disconnected");
       alert(message);
-      navigate("/student-dashboard");
+      navigate("/dashboard");
     });
 
     return () => {
@@ -224,19 +230,33 @@ const LiveSessionJoin = () => {
       if (hasAnswered || !currentQuestion) return;
 
       const timeTaken = 30 - timeLeft;
+      const userId = user?._id || user?.id;
+
       console.log("📝 Submitting answer:", answer);
+      console.log("👤 User ID for submission:", userId);
+
+      if (!userId) {
+        console.error("❌ No user ID available");
+        return;
+      }
 
       socket.emit(
         "submit-answer",
         {
           sessionCode: sessionCode.toUpperCase(),
-          userId: user._id,
+          userId: userId,
           questionIndex: currentQuestionIndex,
           answer: answer,
           timeSpent: timeTaken,
         },
         (response) => {
           console.log("✅ Answer submitted:", response);
+
+          if (!response.success) {
+            console.error("❌ Answer submission failed:", response.error);
+            return;
+          }
+
           setHasAnswered(true);
           setAnswerResult(response);
 
@@ -363,7 +383,7 @@ const LiveSessionJoin = () => {
 
           <div className="mt-6 text-center">
             <button
-              onClick={() => navigate("/student-dashboard")}
+              onClick={() => navigate("/dashboard")}
               className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
             >
               Back to Dashboard
@@ -455,7 +475,7 @@ const LiveSessionJoin = () => {
             </div>
 
             <button
-              onClick={() => navigate("/student-dashboard")}
+              onClick={() => navigate("/dashboard")}
               className="px-8 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-xl font-bold transition shadow-lg hover:shadow-xl"
             >
               Back to Dashboard
@@ -614,7 +634,7 @@ const LiveSessionJoin = () => {
                 </h3>
                 <div className="ml-auto text-right">
                   <div className="text-2xl font-bold text-gray-800 dark:text-white">
-                    +{answerResult.pointsEarned.toFixed(1)} pts
+                    +{(answerResult.pointsEarned || 0).toFixed(1)} pts
                   </div>
                   {answerResult.streakBonus > 0 && (
                     <div className="text-sm text-orange-600 dark:text-orange-400 font-semibold flex items-center gap-1 justify-end">

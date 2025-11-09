@@ -188,6 +188,14 @@ const LiveSessionHost = () => {
       console.log("📋 Current participants before update:", participants);
 
       setParticipants((prev) => {
+        // Check if participant already exists
+        const alreadyExists = prev.some((p) => p.userId === userId);
+
+        if (alreadyExists) {
+          console.log("⚠️ Participant already in list, skipping duplicate");
+          return prev;
+        }
+
         const updated = [...prev, { userId, username, avatar }];
         console.log("📋 Updated participants:", updated);
         return updated;

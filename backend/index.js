@@ -339,6 +339,19 @@ io.on("connection", (socket) => {
       );
       let isReconnection = false;
 
+      console.log(`[Socket.IO] 🔍 Checking for existing participant:`, {
+        userId,
+        username,
+        existingParticipant: existingParticipant
+          ? {
+              userId: existingParticipant.userId,
+              username: existingParticipant.username,
+              socketId: existingParticipant.socketId,
+            }
+          : null,
+        totalParticipants: session.participants.length,
+      });
+
       if (existingParticipant) {
         // Reconnection detected
         isReconnection = true;
@@ -346,7 +359,7 @@ io.on("connection", (socket) => {
         existingParticipant.disconnectedAt = null;
         await session.save();
         console.log(
-          `[Socket.IO] User ${username} reconnected to session ${sessionCode}`
+          `[Socket.IO] ♻️ User ${username} reconnected to session ${sessionCode}`
         );
       } else {
         // New participant joining
@@ -520,7 +533,13 @@ io.on("connection", (socket) => {
 
       // Get correct answer
       const question = session.quizId.questions[questionIndex];
-      const isCorrect = answer === question.correctAnswer;
+      const isCorrect = answer === question.correct_answer;
+
+      console.log(`[Socket.IO] 📝 Answer check:`, {
+        submitted: answer,
+        correct: question.correct_answer,
+        isCorrect: isCorrect,
+      });
 
       // Calculate points with speed bonus and streak multiplier
       let pointsEarned = 0;
@@ -592,7 +611,7 @@ io.on("connection", (socket) => {
         pointsEarned,
         streakBonus,
         correctAnswer: session.settings.showCorrectAnswers
-          ? question.correctAnswer
+          ? question.correct_answer
           : undefined,
         explanation: session.settings.showCorrectAnswers
           ? question.explanation
@@ -1386,7 +1405,7 @@ app.post("/api/generate-pdf-questions", auth, async (req, res) => {
               questionTypes[0] === "mcq"
                 ? ["Option A", "Option B", "Option C", "Option D"]
                 : [],
-            correctAnswer:
+            correct_answer:
               questionTypes[0] === "truefalse"
                 ? "True"
                 : questionTypes[0] === "mcq"
