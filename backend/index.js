@@ -4072,12 +4072,13 @@ app.delete("/api/live-sessions/:code", auth, async (req, res) => {
 });
 
 // --- START THE SERVER ---
-// For local development
-if (process.env.NODE_ENV !== "production") {
-  server.listen(PORT, () => {
-    console.log(`Server with Socket.IO running on port ${PORT}`);
-  });
-}
+// Start server on all network interfaces (0.0.0.0) for Render/Railway deployment
+const HOST = process.env.HOST || '0.0.0.0';
 
-// Export for Vercel serverless
+server.listen(PORT, HOST, () => {
+  console.log(`Server with Socket.IO running on ${HOST}:${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Export for serverless platforms (if needed)
 module.exports = app;
