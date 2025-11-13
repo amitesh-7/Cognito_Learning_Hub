@@ -6,7 +6,7 @@ import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Badge } from "../components/ui/Badge";
 import GoogleAuthButton from "../components/ui/GoogleAuthButton";
-import { apiUrl } from "../lib/apiConfig";
+import { apiUrl, getApiUrl } from "../lib/apiConfig";
 import {
   Sparkles,
   Gamepad2,
@@ -205,8 +205,7 @@ export default function SignUp() {
       setMessage("");
 
       // Send credential to backend for verification
-      const backendApiUrl = getApiUrl();
-      console.log("Using API URL:", backendApiUrl);
+      console.log("Using API URL:", getApiUrl());
 
       const response = await fetch(apiUrl("/api/auth/google"), {
         method: "POST",
@@ -253,14 +252,14 @@ export default function SignUp() {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
-    
+
     console.log("📤 Submitting registration:", {
       name: formData.name,
       email: formData.email,
       role: formData.role,
       hasPassword: !!formData.password,
     });
-    
+
     try {
       const response = await fetch(apiUrl("/api/auth/register"), {
         method: "POST",
@@ -268,13 +267,13 @@ export default function SignUp() {
         body: JSON.stringify(formData),
       });
       const data = await response.json();
-      
+
       console.log("📥 Registration response:", data);
-      
+
       if (!response.ok) {
         // Show detailed validation errors if available
         if (data.errors && Array.isArray(data.errors)) {
-          const errorMessages = data.errors.map(err => err.msg).join(", ");
+          const errorMessages = data.errors.map((err) => err.msg).join(", ");
           throw new Error(errorMessages);
         }
         throw new Error(data.message || "Something went wrong");
