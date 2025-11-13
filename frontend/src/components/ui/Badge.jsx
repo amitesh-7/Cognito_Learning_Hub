@@ -19,13 +19,13 @@ const Badge = React.forwardRef(({
     success: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-400",
     warning: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-400",
     outline: "border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300",
-    gradient: "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg"
+    gradient: "bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 text-white shadow-xl shadow-indigo-500/50 hover:shadow-2xl hover:shadow-purple-500/50 border border-white/20"
   };
 
   const sizes = {
     default: "px-2.5 py-0.5 text-xs",
     sm: "px-2 py-0.5 text-xs",
-    lg: "px-3 py-1 text-sm"
+    lg: "px-4 py-2 text-sm font-semibold"
   };
 
   const BadgeComponent = (

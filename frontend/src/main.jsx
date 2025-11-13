@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext"; // Import the provider
 import App from "./App.jsx";
 import "./index.css";
 import "./enhanced-animations.css"; // Modern animations and effects
+import "./glassmorphism.css"; // Glassmorphism utilities
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

@@ -260,17 +260,79 @@ export default function HomePage() {
         <div className="relative z-10 space-y-20 md:space-y-32">
           {/* Hero Section - Left Aligned with Optimized Spacing */}
           <motion.section
-            className="grid md:grid-cols-[1.2fr_1fr] gap-16 items-center pt-8 pb-16 md:pt-12 md:pb-20"
+            className="grid md:grid-cols-[1.2fr_1fr] gap-16 items-center pt-4 pb-16 md:pt-6 md:pb-20"
             variants={staggerContainer}
             initial="initial"
             animate="animate"
             aria-labelledby="hero-heading"
           >
             <motion.div className="text-left space-y-8" variants={staggerItem}>
-              <motion.div variants={fadeInUp}>
-                <Badge variant="gradient" size="lg" className="mb-6">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  🔥 AI-Powered Learning Platform
+              <motion.div 
+                variants={fadeInUp}
+                className="inline-block"
+              >
+                <Badge 
+                  variant="gradient" 
+                  size="lg" 
+                  className="mb-6 relative overflow-hidden group cursor-default pulse-glow"
+                >
+                  {/* Animated background gradient */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 opacity-80"
+                    animate={{
+                      backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                    }}
+                    transition={{
+                      duration: 5,
+                      repeat: Infinity,
+                      ease: 'linear',
+                    }}
+                    style={{
+                      backgroundSize: '200% 200%',
+                    }}
+                  />
+                  
+                  {/* Shine effect */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '100%' }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 1,
+                      ease: 'easeInOut',
+                    }}
+                  />
+                  
+                  {/* Content */}
+                  <span className="relative z-10 flex items-center gap-2">
+                    <motion.div
+                      animate={{
+                        rotate: [0, 360],
+                        scale: [1, 1.2, 1],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                      }}
+                    >
+                      <Sparkles className="w-4 h-4" />
+                    </motion.div>
+                    <motion.span
+                      animate={{
+                        scale: [1, 1.05, 1],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                      }}
+                    >
+                      🔥 AI-Powered Learning Platform
+                    </motion.span>
+                  </span>
                 </Badge>
               </motion.div>
 
