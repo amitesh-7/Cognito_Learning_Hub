@@ -28,12 +28,87 @@ import {
   Award,
   Globe,
   Palette,
+  Swords,
+  Mic,
+  Volume2,
 } from "lucide-react";
 
 const Features = () => {
   const [activeFeature, setActiveFeature] = useState(0);
 
   const features = [
+    {
+      id: "ai-quiz-generator",
+      title: "AI Quiz Generation",
+      subtitle: "Smart Quiz Creation in Seconds",
+      description:
+        "Create comprehensive quizzes instantly using AI. Generate from topics, upload PDFs, or create manually. Our AI analyzes content and creates relevant questions automatically.",
+      icon: Sparkles,
+      color: "from-blue-500 to-indigo-500",
+      highlights: [
+        "Generate from any topic instantly",
+        "Upload PDF/text files for auto-generation",
+        "Manual quiz creation with flexible options",
+        "Multiple question types (MCQ, True/False, Fill-in-blanks)",
+        "Adaptive difficulty adjustment",
+        "Automatic grading and feedback",
+      ],
+      demo: 'Create a quiz on "Quantum Physics" or upload your study material for instant quiz generation',
+    },
+    {
+      id: "1v1-duel",
+      title: "1v1 Duel Battle Mode",
+      subtitle: "Real-time Competitive Learning",
+      description:
+        "Challenge your friends or random opponents in exciting 1v1 quiz battles! Real-time competitive gameplay with instant scoring and dynamic leaderboards.",
+      icon: Gamepad2,
+      color: "from-red-500 to-orange-500",
+      highlights: [
+        "Real-time 1v1 quiz battles",
+        "Challenge friends or find random opponents",
+        "Live scoring and competition tracking",
+        "Time-based challenges for extra excitement",
+        "Winner rankings and battle history",
+        "Earn rewards and achievements",
+      ],
+      demo: "Challenge your friends to a quiz battle and prove your knowledge supremacy!",
+    },
+    {
+      id: "live-multiplayer",
+      title: "Live Multiplayer Quizzes",
+      subtitle: "Host Interactive Quiz Sessions",
+      description:
+        "Host live quiz sessions with multiple participants. Use 6-digit codes for instant joining, real-time leaderboards, and interactive gameplay with Socket.IO technology.",
+      icon: Users,
+      color: "from-green-500 to-emerald-500",
+      highlights: [
+        "Host live sessions with unique 6-digit codes",
+        "Real-time participant tracking",
+        "Live leaderboard updates",
+        "Interactive gameplay with instant feedback",
+        "Support for large groups",
+        "Session recording and analytics",
+      ],
+      demo: "Create a live session, share the code, and watch as participants join in real-time!",
+    },
+    {
+      id: "adaptive-difficulty",
+      title: "Adaptive AI Difficulty",
+      subtitle: "Personalized Learning Experience",
+      description:
+        "Our AI adapts quiz difficulty based on your performance. Get questions that match your skill level for optimal learning and continuous improvement.",
+      icon: Target,
+      color: "from-purple-500 to-violet-500",
+      highlights: [
+        "AI-powered difficulty adjustment",
+        "Performance-based question selection",
+        "Personalized learning paths",
+        "Smart question distribution",
+        "Progress tracking and analytics",
+        "Optimal challenge level maintenance",
+      ],
+      demo: "Experience questions that adapt to your skill level for maximum learning efficiency",
+    },
     {
       id: "ai-chatbot",
       title: "AI Doubt Solver",
@@ -50,6 +125,92 @@ const Features = () => {
         "Contextual learning support",
       ],
       demo: 'Ask questions like "Explain photosynthesis" or "How to solve quadratic equations"',
+    },
+    {
+      id: "quiz-creation",
+      title: "Quiz Creation Studio",
+      subtitle: "AI & Manual Quiz Builder",
+      description:
+        "Create quizzes instantly using AI from topics, PDFs, or build manually. Supports multiple question types and adaptive difficulty.",
+      icon: FileText,
+      color: "from-indigo-500 to-blue-500",
+      highlights: [
+        "AI-powered quiz generation",
+        "Create from topic, PDF, or text",
+        "Manual quiz builder",
+        "Adaptive difficulty",
+        "Multiple question formats",
+        "Instant preview and sharing",
+      ],
+      demo: "Generate a quiz from your study material or build one manually for your class.",
+    },
+    {
+      id: "duel-mode",
+      title: "1v1 Duel & Battle Mode",
+      subtitle: "Real-time Multiplayer Quiz Battles",
+      description:
+        "Challenge friends or random opponents in real-time quiz duels. Live scoring, speed bonuses, and competitive leaderboards.",
+      icon: Swords,
+      color: "from-red-500 to-orange-500",
+      highlights: [
+        "Live multiplayer quiz battles",
+        "Socket.IO powered real-time sessions",
+        "Speed-based scoring",
+        "Session codes for private matches",
+        "Global and friend leaderboards",
+        "Performance analytics",
+      ],
+      demo: "Invite a friend for a 1v1 quiz duel and see who wins in real time!",
+    },
+    {
+      id: "adaptive-difficulty",
+      title: "Adaptive Quiz Difficulty",
+      subtitle: "Personalized Challenge Level",
+      description:
+        "AI adjusts quiz difficulty based on your performance, ensuring optimal learning and engagement.",
+      icon: Target,
+      color: "from-emerald-500 to-green-500",
+      highlights: [
+        "Performance-based difficulty",
+        "Personalized question selection",
+        "Progressive challenge",
+        "Instant feedback",
+        "Motivational analytics",
+      ],
+      demo: "Take a quiz and watch the questions adapt to your skill level.",
+    },
+    {
+      id: "speech-questions",
+      title: "Speech-Based Questions",
+      subtitle: "Voice-Enabled Learning",
+      description:
+        "Answer quiz questions using your voice. Text-to-speech and speech recognition for hands-free learning.",
+      icon: Mic,
+      color: "from-yellow-500 to-pink-500",
+      highlights: [
+        "Text-to-speech for all questions",
+        "Speech recognition answers",
+        "Accessible learning",
+        "Mobile-friendly",
+      ],
+      demo: "Try answering a quiz question by speaking instead of typing.",
+    },
+    {
+      id: "multiplayer-quizzes",
+      title: "Live Multiplayer Quizzes",
+      subtitle: "Group Learning & Competition",
+      description:
+        "Host or join live quiz sessions with friends or classmates. Real-time updates, scoring, and collaborative fun.",
+      icon: Users,
+      color: "from-blue-500 to-teal-500",
+      highlights: [
+        "Host/join live quiz sessions",
+        "6-digit session codes",
+        "Collaborative and competitive modes",
+        "Live scoring and feedback",
+        "Group leaderboards",
+      ],
+      demo: "Join a live quiz session and compete with your group in real time.",
     },
     {
       id: "chat-system",
@@ -177,6 +338,42 @@ const Features = () => {
       ],
       demo: "View detailed insights about your learning journey",
     },
+    {
+      id: "text-to-speech",
+      title: "Text-to-Speech Questions",
+      subtitle: "Audio-Enhanced Learning",
+      description:
+        "Listen to quiz questions with our advanced text-to-speech feature. Perfect for auditory learners and accessibility needs.",
+      icon: Bot,
+      color: "from-cyan-500 to-blue-500",
+      highlights: [
+        "Natural voice synthesis",
+        "Multiple voice options",
+        "Adjustable speech speed",
+        "Audio playback controls",
+        "Enhanced accessibility",
+        "Multi-language support",
+      ],
+      demo: "Enable audio mode to hear questions read aloud during quizzes",
+    },
+    {
+      id: "achievements",
+      title: "Achievements & Rewards",
+      subtitle: "Gamified Learning Experience",
+      description:
+        "Earn badges, achievements, and rewards as you progress. Track your accomplishments and unlock special features.",
+      icon: Award,
+      color: "from-amber-500 to-yellow-500",
+      highlights: [
+        "Achievement badges system",
+        "Streak tracking",
+        "Milestone rewards",
+        "Performance-based unlocks",
+        "Leaderboard rankings",
+        "Special recognition badges",
+      ],
+      demo: "Complete challenges and earn achievements to showcase your learning journey",
+    },
   ];
 
   const userRoles = [
@@ -184,25 +381,32 @@ const Features = () => {
       role: "Students",
       icon: BookOpen,
       features: [
+        "AI Quiz Generation",
+        "1v1 Duel Battles",
+        "Live Multiplayer Quizzes",
         "AI Doubt Solver",
         "Friend Challenges",
-        "Leaderboard",
+        "Leaderboard & Achievements",
         "Chat System",
+        "Adaptive Learning",
       ],
       description:
-        "Comprehensive learning platform with AI assistance and social features",
+        "Comprehensive learning platform with AI assistance, competitive gaming, and social features",
     },
     {
       role: "Teachers",
       icon: UserCheck,
       features: [
-        "Quiz Creation",
-        "Student Analytics",
+        "AI-Powered Quiz Creation",
+        "Live Session Hosting",
+        "Student Analytics Dashboard",
+        "Performance Tracking",
         "Community Management",
-        "Progress Tracking",
+        "PDF Quiz Generator",
+        "Custom Question Banks",
       ],
       description:
-        "Advanced tools for educators to create, manage, and track student progress",
+        "Advanced tools for educators to create, manage, and track student progress with AI assistance",
     },
     {
       role: "Administrators",
@@ -212,9 +416,12 @@ const Features = () => {
         "Content Moderation",
         "System Analytics",
         "Broadcast Messages",
+        "Quiz Monitoring",
+        "Battle System Control",
+        "Platform Statistics",
       ],
       description:
-        "Complete platform control with administrative tools and oversight",
+        "Complete platform control with administrative tools, oversight, and advanced analytics",
     },
   ];
 
@@ -222,7 +429,7 @@ const Features = () => {
     { number: "10,000+", label: "Active Users", icon: Users },
     { number: "50,000+", label: "Quizzes Created", icon: FileText },
     { number: "1M+", label: "Questions Answered", icon: CheckCircle },
-    { number: "95%", label: "User Satisfaction", icon: Star },
+    { number: "25,000+", label: "1v1 Battles Played", icon: Gamepad2 },
   ];
 
   return (
