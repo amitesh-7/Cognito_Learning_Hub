@@ -20,8 +20,7 @@ const UserSchema = new mongoose.Schema(
     },
     googleId: {
       type: String,
-      sparse: true, // Allows multiple null values
-      // unique: true creates an index automatically - removed to prevent duplicate index warning
+      // Note: Index is created manually below, not here
     },
     picture: {
       type: String, // Google profile picture URL

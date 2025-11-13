@@ -1221,8 +1221,22 @@ if (process.env.NODE_ENV === "production") {
 
 // MongoDB connection
 mongoose
-  .connect(MONGO_URI)
-  .then(() => console.log("MongoDB connected successfully"))
+  .connect(MONGO_URI, {
+    autoIndex: true, // Build indexes
+  })
+  .then(async () => {
+    console.log("MongoDB connected successfully");
+
+    // Sync indexes to remove duplicates (only in development)
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        await User.syncIndexes();
+        console.log("✓ User indexes synchronized");
+      } catch (err) {
+        console.log("Index sync warning (can be ignored):", err.message);
+      }
+    }
+  })
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // --- ROUTES ---
