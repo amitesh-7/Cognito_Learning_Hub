@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   resolve: {
     alias: {
@@ -44,9 +44,8 @@ export default defineConfig({
     minify: "terser",
     terserOptions: {
       compress: {
-        drop_console: true, // Remove console.logs in production
+        drop_console: mode === "production", // Remove console in production
         drop_debugger: true,
-        pure_funcs: ["console.log", "console.info", "console.debug"],
         passes: 2, // Multiple passes for better compression
       },
       mangle: {
@@ -87,4 +86,4 @@ export default defineConfig({
     strictPort: true,
     compress: true,
   },
-});
+}));
