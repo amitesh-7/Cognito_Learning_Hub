@@ -132,6 +132,29 @@ const DuelBattle = () => {
       setWaitingForOpponent(true);
     });
 
+    socket.on("duel-score-update", (data) => {
+      console.log("📊 Live score update:", data);
+      const userId = user._id || user.id;
+
+      // Update both players' scores
+      const myData =
+        data.player1.userId === userId ? data.player1 : data.player2;
+      const oppData =
+        data.player1.userId === userId ? data.player2 : data.player1;
+
+      setMyScore((prev) => ({
+        score: myData.score,
+        correct: myData.correctAnswers,
+        time: prev.time, // Keep accumulated time
+      }));
+
+      setOpponentScore({
+        score: oppData.score,
+        correct: oppData.correctAnswers,
+        time: 0, // Don't show opponent's time during battle
+      });
+    });
+
     socket.on("duel-ended", (data) => {
       console.log("🏁 Duel ended:", data);
       const userId = user._id || user.id;
@@ -171,6 +194,7 @@ const DuelBattle = () => {
       socket.off("duel-started");
       socket.off("next-question");
       socket.off("player-completed");
+      socket.off("duel-score-update");
       socket.off("duel-ended");
       socket.off("opponent-disconnected");
     };
@@ -232,11 +256,10 @@ const DuelBattle = () => {
       (response) => {
         if (response.success) {
           console.log(`${response.isCorrect ? "✅" : "❌"} Answer submitted`);
-
+          // Score will be updated via "duel-score-update" event
+          // Just update time spent
           setMyScore((prev) => ({
-            score:
-              prev.score + (response.isCorrect ? response.pointsEarned : 0),
-            correct: prev.correct + (response.isCorrect ? 1 : 0),
+            ...prev,
             time: prev.time + timeSpent,
           }));
         }

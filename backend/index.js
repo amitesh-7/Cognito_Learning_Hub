@@ -1033,6 +1033,26 @@ io.on("connection", (socket) => {
         explanation: question.explanation,
       });
 
+      // Emit live score update to BOTH players
+      io.to(matchId).emit("duel-score-update", {
+        player1: {
+          userId: match.player1.userId,
+          score: match.player1.score,
+          correctAnswers: match.player1.correctAnswers,
+          answeredCount: match.player1.answers.length,
+        },
+        player2: {
+          userId: match.player2.userId,
+          score: match.player2.score,
+          correctAnswers: match.player2.correctAnswers,
+          answeredCount: match.player2.answers.length,
+        },
+      });
+
+      console.log(
+        `[Duel] Score update - Player1: ${match.player1.score}, Player2: ${match.player2.score}`
+      );
+
       // Check if THIS player has finished all questions
       const playerFinished =
         player.answers.length === match.quizId.questions.length;
