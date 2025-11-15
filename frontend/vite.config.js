@@ -18,11 +18,18 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor chunk for node_modules
+          // Core React libraries
           "vendor-react": ["react", "react-dom", "react-router-dom"],
+          // UI and animation libraries
           "vendor-ui": ["framer-motion", "lucide-react"],
+          // Chart libraries
           "vendor-charts": ["recharts"],
-          "vendor-utils": ["socket.io-client", "react-confetti"],
+          // Markdown and math rendering (heavy dependencies)
+          "vendor-markdown": ["react-markdown", "remark-math", "rehype-katex"],
+          // Socket and real-time features
+          "vendor-realtime": ["socket.io-client"],
+          // Other utilities
+          "vendor-utils": ["react-confetti"],
         },
         // Asset file naming for better caching
         assetFileNames: (assetInfo) => {

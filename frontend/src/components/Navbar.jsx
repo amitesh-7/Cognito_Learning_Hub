@@ -1,9 +1,15 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { motion, AnimatePresence, useMotionValueEvent, useScroll } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValueEvent,
+  useScroll,
+} from "framer-motion";
 import { Brain, Sun, Moon, Menu, X, Sparkles } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useTheme } from "../hooks/useTheme";
+import { useReducedMotion, useIsMobile } from "../hooks/useReducedMotion";
 import Button from "./ui/Button";
 
 const Navbar = () => {
@@ -14,6 +20,8 @@ const Navbar = () => {
   const { scrollY } = useScroll();
   const navigate = useNavigate();
   const location = useLocation();
+  const shouldReduceMotion = useReducedMotion();
+  const isMobile = useIsMobile();
 
   // Track scroll position for navbar appearance changes (always visible)
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -32,22 +40,22 @@ const Navbar = () => {
   const staggerContainer = {
     animate: {
       transition: {
-        staggerChildren: 0.05
-      }
-    }
+        staggerChildren: 0.05,
+      },
+    },
   };
 
   const staggerItem = {
     initial: { opacity: 0, y: -10 },
-    animate: { 
-      opacity: 1, 
+    animate: {
+      opacity: 1,
       y: 0,
       transition: {
         type: "spring",
         stiffness: 300,
-        damping: 20
-      }
-    }
+        damping: 20,
+      },
+    },
   };
 
   const mobileMenuVariants = {
@@ -57,8 +65,8 @@ const Navbar = () => {
       transition: {
         type: "spring",
         stiffness: 400,
-        damping: 40
-      }
+        damping: 40,
+      },
     },
     open: {
       opacity: 1,
@@ -68,52 +76,60 @@ const Navbar = () => {
         stiffness: 300,
         damping: 30,
         staggerChildren: 0.07,
-        delayChildren: 0.2
-      }
-    }
+        delayChildren: 0.2,
+      },
+    },
   };
 
   const mobileItemVariants = {
-    closed: { 
-      x: 50, 
-      opacity: 0 
+    closed: {
+      x: 50,
+      opacity: 0,
     },
-    open: { 
-      x: 0, 
+    open: {
+      x: 0,
       opacity: 1,
       transition: {
         type: "spring",
         stiffness: 300,
-        damping: 24
-      }
-    }
+        damping: 24,
+      },
+    },
   };
 
   return (
     <>
       {/* Main Navbar with Enhanced Glassmorphism - Always Visible (Sticky) */}
       <motion.header
-        initial={{ y: -100, opacity: 0 }}
+        initial={shouldReduceMotion ? { opacity: 1 } : { y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{
-          type: "spring",
-          stiffness: 300,
-          damping: 30,
-          duration: 0.6
-        }}
+        transition={
+          shouldReduceMotion
+            ? { duration: 0 }
+            : {
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+                duration: 0.6,
+              }
+        }
         className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-700 ${
           isScrolled
-            ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl shadow-2xl shadow-indigo-500/20 border-b border-white/40 dark:border-indigo-400/30"
-            : "bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border-b border-white/30 dark:border-indigo-500/20 shadow-xl shadow-indigo-500/10"
+            ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl md:backdrop-blur-3xl shadow-lg md:shadow-2xl shadow-indigo-500/20 border-b border-white/40 dark:border-indigo-400/30"
+            : "bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg md:backdrop-blur-2xl border-b border-white/30 dark:border-indigo-500/20 shadow-md md:shadow-xl shadow-indigo-500/10"
         }`}
       >
-        {/* Multi-layer Gradient overlays for premium depth */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-indigo-500/10 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-purple-500/5 dark:via-white/[0.02] dark:to-purple-500/10 pointer-events-none" />
-        {/* Subtle noise texture for glassmorphism realism */}
-        <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.025] pointer-events-none mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]" />
-        
-        <motion.nav 
+        {/* Multi-layer Gradient overlays for premium depth - simplified on mobile */}
+        {!isMobile && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-indigo-500/10 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-purple-500/5 dark:via-white/[0.02] dark:to-purple-500/10 pointer-events-none" />
+            {/* Subtle noise texture for glassmorphism realism */}
+            <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.025] pointer-events-none mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]" />
+          </>
+        )}
+
+        <motion.nav
           className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10"
           animate={{
             paddingTop: isScrolled ? "0.5rem" : "0.75rem",
@@ -122,44 +138,61 @@ const Navbar = () => {
           transition={{
             type: "spring",
             stiffness: 200,
-            damping: 20
+            damping: 20,
           }}
         >
           <div className="flex justify-between items-center h-16 lg:h-18">
             {/* Logo */}
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
+              initial={
+                shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -20 }
+              }
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              whileHover={{ scale: 1.02 }}
+              transition={
+                shouldReduceMotion ? { duration: 0 } : { duration: 0.5 }
+              }
+              whileHover={shouldReduceMotion ? {} : { scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <Link to="/" className="flex items-center space-x-3 group">
+              <Link
+                to="/"
+                className="flex items-center space-x-2 sm:space-x-3 group"
+              >
                 <motion.div
-                  className="relative p-3 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 shadow-2xl shadow-blue-500/40 dark:shadow-purple-500/30"
-                  whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.05 }}
-                  transition={{ duration: 0.5 }}
+                  className="relative p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 shadow-lg sm:shadow-2xl shadow-blue-500/40 dark:shadow-purple-500/30"
+                  whileHover={
+                    shouldReduceMotion
+                      ? {}
+                      : { rotate: [0, -10, 10, -10, 0], scale: 1.05 }
+                  }
+                  transition={
+                    shouldReduceMotion ? { duration: 0 } : { duration: 0.5 }
+                  }
                 >
-                  {/* Enhanced multi-layer glow effect */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400 via-purple-500 to-indigo-600 blur-2xl opacity-60 group-hover:opacity-90 transition-all duration-500 animate-pulse" />
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/20 to-transparent opacity-40" />
-                  <Brain className="h-7 w-7 text-white relative z-10 drop-shadow-lg" />
-                  
+                  {/* Enhanced multi-layer glow effect - simplified on mobile */}
+                  {!isMobile && (
+                    <>
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400 via-purple-500 to-indigo-600 blur-2xl opacity-60 group-hover:opacity-90 transition-all duration-500 animate-pulse" />
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/20 to-transparent opacity-40" />
+                    </>
+                  )}
+                  <Brain className="h-6 w-6 sm:h-7 sm:w-7 text-white relative z-10 drop-shadow-lg" />
+
                   {/* Enhanced sparkle effect on hover */}
                   <motion.div
                     className="absolute -top-1 -right-1"
                     initial={{ scale: 0, opacity: 0, rotate: 0 }}
-                    whileHover={{ 
-                      scale: [0, 1.2, 1], 
+                    whileHover={{
+                      scale: [0, 1.2, 1],
                       opacity: [0, 1, 0.8],
-                      rotate: [0, 180, 360]
+                      rotate: [0, 180, 360],
                     }}
                     transition={{ duration: 0.6 }}
                   >
                     <Sparkles className="h-4 w-4 text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.8)]" />
                   </motion.div>
                 </motion.div>
-                
+
                 <div className="hidden sm:block">
                   <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-indigo-600 group-hover:to-blue-600 transition-all duration-700 tracking-tight drop-shadow-sm">
                     Cognito Learning Hub
@@ -213,13 +246,19 @@ const Navbar = () => {
                           <motion.div
                             layoutId="activeTab"
                             className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-indigo-500/20 dark:from-blue-500/25 dark:via-purple-500/25 dark:to-indigo-500/25 rounded-xl border border-white/60 dark:border-indigo-400/40 shadow-lg shadow-blue-500/20 backdrop-blur-xl"
-                            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 380,
+                              damping: 30,
+                            }}
                           />
                         )}
-                        
+
                         {/* Hover effect */}
-                        <span className="relative z-10 drop-shadow-sm">{link.label}</span>
-                        
+                        <span className="relative z-10 drop-shadow-sm">
+                          {link.label}
+                        </span>
+
                         <motion.div
                           className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg shadow-blue-500/50"
                           initial={{ scaleX: 0 }}
@@ -309,7 +348,9 @@ const Navbar = () => {
                       to="/signup"
                       className="relative px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:shadow-purple-500/50 overflow-hidden group transition-all duration-300 border border-white/20"
                     >
-                      <span className="relative z-10 drop-shadow-md">Sign Up</span>
+                      <span className="relative z-10 drop-shadow-md">
+                        Sign Up
+                      </span>
                       {/* Enhanced shine effect */}
                       <motion.div
                         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"
@@ -365,7 +406,7 @@ const Navbar = () => {
                   <Sun className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_6px_rgba(250,204,21,0.5)]" />
                 )}
               </motion.button>
-              
+
               <motion.button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-2.5 rounded-xl bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white shadow-xl shadow-blue-500/40 border border-white/20 backdrop-blur-xl"
@@ -413,7 +454,7 @@ const Navbar = () => {
               onClick={closeMenu}
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
             />
-            
+
             {/* Mobile Menu */}
             <motion.div
               variants={mobileMenuVariants}
@@ -425,7 +466,7 @@ const Navbar = () => {
               {/* Enhanced gradient overlays */}
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/15 via-purple-500/15 to-indigo-500/15 dark:from-blue-500/20 dark:via-purple-500/20 dark:to-indigo-500/20 pointer-events-none" />
               <div className="absolute inset-0 bg-gradient-to-tl from-white/10 via-transparent to-purple-500/10 pointer-events-none" />
-              
+
               <div className="relative h-full overflow-y-auto p-6">
                 {/* Close button */}
                 <motion.button
@@ -447,11 +488,15 @@ const Navbar = () => {
                         variants={mobileItemVariants}
                         className="p-5 rounded-2xl bg-gradient-to-br from-blue-500/25 via-purple-500/25 to-indigo-500/25 dark:from-blue-500/30 dark:via-purple-500/30 dark:to-indigo-500/30 border border-white/60 dark:border-indigo-400/40 mb-6 shadow-xl shadow-blue-500/20 backdrop-blur-xl"
                       >
-                        <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Logged in as</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+                          Logged in as
+                        </p>
                         <p className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-300 bg-clip-text text-transparent drop-shadow-sm">
                           {user.name}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">{user.role}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
+                          {user.role}
+                        </p>
                       </motion.div>
 
                       {/* Nav links */}
@@ -532,7 +577,10 @@ const Navbar = () => {
                         </>
                       )}
 
-                      <motion.div variants={mobileItemVariants} className="pt-4">
+                      <motion.div
+                        variants={mobileItemVariants}
+                        className="pt-4"
+                      >
                         <button
                           onClick={handleLogout}
                           className="w-full px-6 py-3.5 bg-gradient-to-r from-red-600 via-pink-600 to-red-700 hover:from-red-700 hover:via-pink-700 hover:to-red-800 text-white font-bold rounded-xl shadow-xl shadow-red-500/40 hover:shadow-2xl hover:shadow-red-500/50 transition-all duration-300 border border-white/20 backdrop-blur-xl"
@@ -561,7 +609,10 @@ const Navbar = () => {
                           Login
                         </Link>
                       </motion.div>
-                      <motion.div variants={mobileItemVariants} className="pt-4">
+                      <motion.div
+                        variants={mobileItemVariants}
+                        className="pt-4"
+                      >
                         <Link
                           onClick={closeMenu}
                           to="/signup"

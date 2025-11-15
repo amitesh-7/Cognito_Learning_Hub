@@ -7,6 +7,11 @@ import App from "./App.jsx";
 import "./index.css";
 import "./enhanced-animations.css"; // Modern animations and effects
 import "./glassmorphism.css"; // Glassmorphism utilities
+import "./styles/mobile-optimizations.css"; // Mobile performance optimizations
+import { registerServiceWorker } from "./utils/serviceWorkerRegistration";
+
+// Register service worker for offline support
+registerServiceWorker();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

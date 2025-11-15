@@ -8,6 +8,7 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import Navbar from "./components/Navbar";
 import LenisScroll from "./components/LenisScroll";
 import { useTheme } from "./hooks/useTheme";
+import { useIsMobile } from "./hooks/useReducedMotion";
 
 // Import route wrapper components (never lazy load these)
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -54,15 +55,20 @@ const DuelBattle = lazy(() => import("./pages/DuelBattle"));
 
 function App() {
   const [theme] = useTheme();
+  const isMobile = useIsMobile();
 
   return (
     <SocketProvider>
       <ToastProvider>
         <LenisScroll>
           <div className="min-h-screen bg-white dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300 relative overflow-x-hidden">
-            {/* Animated Background Layers */}
-            <ParticleBackground isDark={theme === "dark"} />
-            <FloatingShapes />
+            {/* Animated Background Layers - Disabled on mobile for performance */}
+            {!isMobile && (
+              <>
+                <ParticleBackground isDark={theme === "dark"} />
+                <FloatingShapes />
+              </>
+            )}
 
             {/* Modern Glassmorphism Navbar with Scroll Behavior */}
             <Navbar />

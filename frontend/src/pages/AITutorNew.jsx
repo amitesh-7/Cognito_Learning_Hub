@@ -315,7 +315,7 @@ const AITutor = () => {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-black flex overflow-hidden">
+    <div className="min-h-screen sm:h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-black flex flex-col sm:flex-row overflow-hidden">
       {/* Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -324,7 +324,7 @@ const AITutor = () => {
             animate={{ x: 0 }}
             exit={{ x: -280 }}
             transition={{ type: "spring", damping: 20 }}
-            className="fixed lg:relative z-40 w-72 bg-white dark:bg-gray-900 h-full border-r border-gray-200 dark:border-gray-800 flex flex-col shadow-xl"
+            className="fixed sm:relative z-40 w-full sm:w-64 md:w-72 bg-white dark:bg-gray-900 h-full border-r border-gray-200 dark:border-gray-800 flex flex-col shadow-xl"
           >
             {/* New Chat Button */}
             <div className="p-4 border-b border-gray-200 dark:border-gray-800">
@@ -403,15 +403,23 @@ const AITutor = () => {
         )}
       </AnimatePresence>
 
+      {/* Mobile Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 sm:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-full bg-white dark:bg-gray-900">
         {/* Header */}
         <div className="sticky top-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 sm:p-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 {sidebarOpen ? (
                   <X className="w-5 h-5" />
@@ -419,26 +427,31 @@ const AITutor = () => {
                   <Menu className="w-5 h-5" />
                 )}
               </button>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
-                  <Sparkles className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg sm:rounded-xl">
+                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                <div className="hidden sm:block">
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                     AI Study Assistant
                   </h1>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500">
                     Your personal learning companion
                   </p>
+                </div>
+                <div className="block sm:hidden">
+                  <h1 className="text-base font-bold text-gray-900 dark:text-white">
+                    AI Tutor
+                  </h1>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               {/* Voice Controls */}
               <button
                 onClick={() => setVoiceEnabled(!voiceEnabled)}
-                className={`p-2 rounded-lg transition-all ${
+                className={`p-2.5 rounded-lg transition-all min-h-[44px] min-w-[44px] flex items-center justify-center ${
                   voiceEnabled
                     ? "bg-green-100 dark:bg-green-900 text-green-600"
                     : "hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -455,15 +468,15 @@ const AITutor = () => {
               {isSpeaking && (
                 <button
                   onClick={stopSpeaking}
-                  className="p-2 rounded-lg bg-red-50 dark:bg-red-900 text-red-600 hover:bg-red-100 dark:hover:bg-red-800 transition-all"
+                  className="p-2.5 rounded-lg bg-red-50 dark:bg-red-900 text-red-600 hover:bg-red-100 dark:hover:bg-red-800 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
                   title="Stop speaking"
                 >
                   <VolumeX className="w-5 h-5" />
                 </button>
               )}
 
-              {/* Font Size Controls */}
-              <div className="flex items-center gap-1 border border-gray-300 dark:border-gray-600 rounded-lg p-1 bg-white dark:bg-gray-800">
+              {/* Font Size Controls - Hidden on mobile */}
+              <div className="hidden md:flex items-center gap-1 border border-gray-300 dark:border-gray-600 rounded-lg p-1 bg-white dark:bg-gray-800">
                 <button
                   onClick={() => setFontSize("small")}
                   className={`p-1 rounded text-xs transition-colors ${
