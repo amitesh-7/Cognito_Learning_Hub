@@ -177,52 +177,157 @@ LiveSessionSchema.statics.generateSessionCode = async function () {
   return code;
 };
 
-// Method to add participant
-LiveSessionSchema.methods.addParticipant = function (participantData) {
-  // Check if user already joined
-  const existingIndex = this.participants.findIndex(
-    (p) => p.userId.toString() === participantData.userId.toString()
-  );
+// Method to add participant with retry logic
+LiveSessionSchema.methods.addParticipant = async function (
+  participantData,
+  retries = 5
+) {
+  let attempt = 0;
 
-  if (existingIndex !== -1) {
-    // Update existing participant (rejoin scenario)
-    this.participants[existingIndex].socketId = participantData.socketId;
-    this.participants[existingIndex].isActive = true;
-    this.participants[existingIndex].leftAt = undefined;
-  } else {
-    // Add new participant
-    this.participants.push(participantData);
+  while (attempt < retries) {
+    try {
+      // Get fresh document
+      const session = await this.constructor.findById(this._id);
+
+      if (!session) {
+        throw new Error("Session not found");
+      }
+
+      // Check if user already joined
+      const existingIndex = session.participants.findIndex(
+        (p) => p.userId.toString() === participantData.userId.toString()
+      );
+
+      if (existingIndex !== -1) {
+        // Update existing participant (rejoin scenario)
+        session.participants[existingIndex].socketId = participantData.socketId;
+        session.participants[existingIndex].isActive = true;
+        session.participants[existingIndex].leftAt = undefined;
+      } else {
+        // Add new participant
+        session.participants.push(participantData);
+      }
+
+      await session.save();
+
+      // Update current instance
+      this.participants = session.participants;
+      this.__v = session.__v;
+
+      return session;
+    } catch (error) {
+      if (error.name === "VersionError" && attempt < retries - 1) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, attempt) * 10)
+        );
+        attempt++;
+        console.log(
+          `[LiveSession] Retry attempt ${attempt} for adding participant`
+        );
+        continue;
+      }
+      throw error;
+    }
   }
-
-  return this.save();
 };
 
-// Method to remove participant
-LiveSessionSchema.methods.removeParticipant = function (userId) {
-  const participant = this.participants.find(
-    (p) => p.userId.toString() === userId.toString()
-  );
+// Method to remove participant with retry logic
+LiveSessionSchema.methods.removeParticipant = async function (
+  userId,
+  retries = 5
+) {
+  let attempt = 0;
 
-  if (participant) {
-    participant.isActive = false;
-    participant.leftAt = new Date();
+  while (attempt < retries) {
+    try {
+      const session = await this.constructor.findById(this._id);
+
+      if (!session) {
+        throw new Error("Session not found");
+      }
+
+      const participant = session.participants.find(
+        (p) => p.userId.toString() === userId.toString()
+      );
+
+      if (participant) {
+        participant.isActive = false;
+        participant.leftAt = new Date();
+      }
+
+      await session.save();
+
+      this.participants = session.participants;
+      this.__v = session.__v;
+
+      return session;
+    } catch (error) {
+      if (error.name === "VersionError" && attempt < retries - 1) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, attempt) * 10)
+        );
+        attempt++;
+        console.log(
+          `[LiveSession] Retry attempt ${attempt} for removing participant`
+        );
+        continue;
+      }
+      throw error;
+    }
   }
-
-  return this.save();
 };
 
-// Method to record answer
-LiveSessionSchema.methods.recordAnswer = function (userId, answerData) {
-  const participant = this.participants.find(
-    (p) => p.userId.toString() === userId.toString()
-  );
+// Method to record answer with retry logic for concurrent updates
+LiveSessionSchema.methods.recordAnswer = async function (
+  userId,
+  answerData,
+  retries = 5
+) {
+  let attempt = 0;
 
-  if (participant) {
-    participant.answers.push(answerData);
-    participant.score += answerData.pointsEarned;
+  while (attempt < retries) {
+    try {
+      // Find the fresh document to avoid version conflicts
+      const session = await this.constructor.findById(this._id);
+
+      if (!session) {
+        throw new Error("Session not found");
+      }
+
+      const participant = session.participants.find(
+        (p) => p.userId.toString() === userId.toString()
+      );
+
+      if (!participant) {
+        throw new Error("Participant not found");
+      }
+
+      participant.answers.push(answerData);
+      participant.score += answerData.pointsEarned;
+
+      // Save with version check
+      await session.save();
+
+      // Update current instance with saved data
+      this.participants = session.participants;
+      this.__v = session.__v;
+
+      return session;
+    } catch (error) {
+      if (error.name === "VersionError" && attempt < retries - 1) {
+        // Exponential backoff: wait before retry
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, attempt) * 10)
+        );
+        attempt++;
+        console.log(
+          `[LiveSession] Retry attempt ${attempt} for user ${userId}`
+        );
+        continue;
+      }
+      throw error;
+    }
   }
-
-  return this.save();
 };
 
 // Method to get current leaderboard
