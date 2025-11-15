@@ -30,6 +30,7 @@ import {
   FileText,
   Radio,
   History,
+  Book,
 } from "lucide-react";
 
 // Enhanced ConfirmationModal with modern styling
@@ -869,7 +870,7 @@ export default function TeacherDashboard() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-indigo-100 dark:bg-indigo-900 rounded-lg">
-                                <BookIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                <BookOpen className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                               </div>
                               <div className="ml-4">
                                 <div className="text-sm font-medium text-gray-900 dark:text-white">

@@ -19,6 +19,8 @@ const LiveSessionHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all"); // all, completed, active
+  const [selectedQuiz, setSelectedQuiz] = useState("all");
+  const [sortBy, setSortBy] = useState("recent");
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -45,7 +47,7 @@ const LiveSessionHistory = () => {
 
         console.log("📡 Fetching sessions from backend...");
         const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
-        const fullUrl = `${apiUrl}/api/live-sessions/host/my-sessions`;
+        const fullUrl = `${apiUrl}/api/live-sessions/teacher/history`;
         console.log("🌐 Request URL:", fullUrl);
 
         const response = await fetch(fullUrl, {
@@ -99,10 +101,33 @@ const LiveSessionHistory = () => {
     }
   }, [user]);
 
-  const filteredSessions = sessions.filter((session) => {
-    if (filter === "all") return true;
-    return session.status === filter;
-  });
+  const uniqueQuizzes = [
+    ...new Map(
+      sessions.map((s) => [s.quizId, { id: s.quizId, title: s.quizTitle }])
+    ).values(),
+  ];
+
+  const filteredSessions = sessions
+    .filter((session) => {
+      if (filter === "all") return true;
+      return session.status === filter;
+    })
+    .filter((s) => selectedQuiz === "all" || s.quizId === selectedQuiz)
+    .sort((a, b) => {
+      if (sortBy === "recent") return new Date(b.endedAt) - new Date(a.endedAt);
+      if (sortBy === "participants")
+        return b.participantCount - a.participantCount;
+      if (sortBy === "score") return b.averageScore - a.averageScore;
+      return 0;
+    });
+
+  const formatDuration = (minutes) => {
+    if (!minutes) return "N/A";
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
 
   const getStatusBadge = (status) => {
     const styles = {
@@ -152,20 +177,60 @@ const LiveSessionHistory = () => {
         </motion.div>
 
         {/* Filters */}
-        <div className="mb-6 flex gap-4">
-          {["all", "completed", "active", "waiting"].map((filterOption) => (
-            <button
-              key={filterOption}
-              onClick={() => setFilter(filterOption)}
-              className={`px-6 py-2 rounded-lg font-medium transition ${
-                filter === filterOption
-                  ? "bg-purple-500 text-white shadow-lg"
-                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900"
-              }`}
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Status
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {["all", "completed", "active", "waiting"].map((filterOption) => (
+                <button
+                  key={filterOption}
+                  onClick={() => setFilter(filterOption)}
+                  className={`px-4 py-2 rounded-lg font-medium transition text-sm ${
+                    filter === filterOption
+                      ? "bg-purple-500 text-white shadow-lg"
+                      : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-purple-100 dark:hover:bg-purple-900"
+                  }`}
+                >
+                  {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Filter by Quiz
+            </label>
+            <select
+              value={selectedQuiz}
+              onChange={(e) => setSelectedQuiz(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
-              {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
-            </button>
-          ))}
+              <option value="all">All Quizzes</option>
+              {uniqueQuizzes.map((quiz) => (
+                <option key={quiz.id} value={quiz.id}>
+                  {quiz.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Sort By
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+              <option value="recent">Most Recent</option>
+              <option value="participants">Most Participants</option>
+              <option value="score">Highest Avg. Score</option>
+            </select>
+          </div>
         </div>
 
         {/* Sessions List */}
@@ -228,15 +293,16 @@ const LiveSessionHistory = () => {
                         </div>
                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                           <TrendingUp className="w-4 h-4" />
-                          <span className="text-sm font-mono">
-                            {session.sessionCode}
+                          <span className="text-sm">
+                            {formatDuration(session.duration)}
                           </span>
                         </div>
                         {session.averageScore !== undefined && (
                           <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                             <BarChart3 className="w-4 h-4" />
                             <span className="text-sm">
-                              Avg: {session.averageScore.toFixed(1)}
+                              Avg: {session.averageScore} | Top:{" "}
+                              {session.topScore || 0}
                             </span>
                           </div>
                         )}
@@ -244,14 +310,12 @@ const LiveSessionHistory = () => {
                     </div>
 
                     <div className="flex gap-2">
-                      {session.status === "completed" && (
-                        <Link to={`/live/analytics/${session.sessionCode}`}>
-                          <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center gap-2">
-                            <Eye className="w-4 h-4" />
-                            Analytics
-                          </button>
-                        </Link>
-                      )}
+                      <Link to={`/live-session-analytics/${session.sessionId}`}>
+                        <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center gap-2">
+                          <Eye className="w-4 h-4" />
+                          View Details
+                        </button>
+                      </Link>
                       <button
                         className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center gap-2"
                         title="Export session data"

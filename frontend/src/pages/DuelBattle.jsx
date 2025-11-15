@@ -136,11 +136,22 @@ const DuelBattle = () => {
       console.log("📊 Live score update:", data);
       const userId = user._id || user.id;
 
-      // Update both players' scores
+      // Update both players' scores - convert ObjectIds to strings for comparison
       const myData =
-        data.player1.userId === userId ? data.player1 : data.player2;
+        data.player1.userId.toString() === userId.toString()
+          ? data.player1
+          : data.player2;
       const oppData =
-        data.player1.userId === userId ? data.player2 : data.player1;
+        data.player1.userId.toString() === userId.toString()
+          ? data.player2
+          : data.player1;
+
+      console.log(
+        "📊 My score:",
+        myData.score,
+        "Opponent score:",
+        oppData.score
+      );
 
       setMyScore((prev) => ({
         score: myData.score,

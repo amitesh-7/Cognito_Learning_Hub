@@ -136,6 +136,21 @@ const LiveSessionSchema = new mongoose.Schema(
     endedAt: {
       type: Date,
     },
+    finalLeaderboard: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        username: String,
+        avatar: String,
+        score: Number,
+        correctAnswers: Number,
+        totalTime: Number,
+        accuracy: Number,
+        rank: Number,
+      },
+    ],
     expiresAt: {
       type: Date,
       default: () => new Date(Date.now() + 24 * 60 * 60 * 1000), // Expire after 24 hours
@@ -373,6 +388,112 @@ LiveSessionSchema.methods.getLeaderboard = function () {
       ...p,
       rank: index + 1,
     }));
+};
+
+// Method to finalize session and save results
+LiveSessionSchema.methods.finalizeSession = async function () {
+  try {
+    const Result = require("./Result");
+    const Quiz = require("./Quiz");
+
+    // Get final leaderboard
+    const leaderboard = this.getLeaderboard();
+    this.finalLeaderboard = leaderboard;
+    this.status = "completed";
+    this.endedAt = new Date();
+
+    // Get quiz details
+    const quiz = await Quiz.findById(this.quizId);
+    if (!quiz) {
+      throw new Error("Quiz not found");
+    }
+
+    // Create Result documents for each participant
+    const resultPromises = this.participants
+      .filter((p) => p.isActive && p.answers.length > 0)
+      .map(async (participant) => {
+        const correctAnswers = participant.answers.filter(
+          (a) => a.isCorrect
+        ).length;
+        const totalTime = participant.answers.reduce(
+          (sum, a) => sum + a.timeSpent,
+          0
+        );
+        const percentage = (correctAnswers / quiz.questions.length) * 100;
+
+        // Map participant answers to question results
+        const questionResults = participant.answers.map((answer) => ({
+          questionId: quiz.questions[answer.questionIndex]?._id,
+          userAnswer: answer.answer,
+          correctAnswer: quiz.questions[answer.questionIndex]?.correct_answer,
+          isCorrect: answer.isCorrect,
+          timeTaken: answer.timeSpent,
+          pointsEarned: answer.pointsEarned,
+          bonusPoints: 0,
+        }));
+
+        // Check if result already exists (update instead of create)
+        const existingResult = await Result.findOne({
+          user: participant.userId,
+          quiz: this.quizId,
+          createdAt: { $gte: this.createdAt }, // Only for this session
+        });
+
+        if (existingResult) {
+          // Update existing result
+          existingResult.score = correctAnswers;
+          existingResult.pointsEarned = participant.score;
+          existingResult.totalTimeTaken = totalTime;
+          existingResult.averageTimePerQuestion =
+            totalTime / participant.answers.length;
+          existingResult.percentage = percentage;
+          existingResult.passed = percentage >= (quiz.passingPercentage || 50);
+          existingResult.questionResults = questionResults;
+          existingResult.rank = this.getRankByPercentage(percentage);
+          return await existingResult.save();
+        } else {
+          // Create new result
+          return await Result.create({
+            user: participant.userId,
+            quiz: this.quizId,
+            score: correctAnswers,
+            totalQuestions: quiz.questions.length,
+            pointsEarned: participant.score,
+            bonusPoints: 0,
+            totalTimeTaken: totalTime,
+            averageTimePerQuestion: totalTime / participant.answers.length,
+            percentage: percentage,
+            passed: percentage >= (quiz.passingPercentage || 50),
+            rank: this.getRankByPercentage(percentage),
+            questionResults: questionResults,
+            streakAtCompletion: 0,
+            achievementsUnlocked: [],
+            experienceGained: Math.floor(participant.score / 10),
+          });
+        }
+      });
+
+    await Promise.all(resultPromises);
+    await this.save();
+
+    return leaderboard;
+  } catch (error) {
+    console.error("[LiveSession] Error finalizing session:", error);
+    throw error;
+  }
+};
+
+// Helper method to determine rank based on percentage
+LiveSessionSchema.methods.getRankByPercentage = function (percentage) {
+  if (percentage >= 95) return "A+";
+  if (percentage >= 90) return "A";
+  if (percentage >= 85) return "B+";
+  if (percentage >= 80) return "B";
+  if (percentage >= 75) return "C+";
+  if (percentage >= 70) return "C";
+  if (percentage >= 65) return "D+";
+  if (percentage >= 60) return "D";
+  return "F";
 };
 
 module.exports = mongoose.model("LiveSession", LiveSessionSchema);

@@ -22,6 +22,10 @@ const ResultSchema = new mongoose.Schema(
       ref: "Quiz",
       required: true,
     },
+    liveSession: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "LiveSession",
+    },
     score: {
       type: Number,
       required: true,

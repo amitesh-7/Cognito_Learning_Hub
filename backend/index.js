@@ -811,6 +811,17 @@ io.on("connection", (socket) => {
         await result.save();
       }
 
+      // Finalize session and save final leaderboard
+      try {
+        await session.finalizeSession();
+        console.log(
+          `[Socket.IO] Session ${sessionCode} finalized with results saved`
+        );
+      } catch (finalizeError) {
+        console.error("[Socket.IO] Error finalizing session:", finalizeError);
+        // Continue even if finalization fails
+      }
+
       // Broadcast session end
       io.to(sessionCode).emit("session-ended", {
         leaderboard,
@@ -962,6 +973,18 @@ io.on("connection", (socket) => {
         match.currentQuestionIndex = 0;
         await match.save();
 
+        // Ensure both players are in the room
+        socket.join(matchId);
+        const player1Socket = io.sockets.sockets.get(match.player1.socketId);
+        const player2Socket = io.sockets.sockets.get(match.player2.socketId);
+
+        if (player1Socket) player1Socket.join(matchId);
+        if (player2Socket) player2Socket.join(matchId);
+
+        console.log(
+          `[Duel] Both players joined room ${matchId}. Starting duel...`
+        );
+
         const currentQuestion = match.quizId.questions[0];
 
         io.to(matchId).emit("duel-started", {
@@ -1033,16 +1056,23 @@ io.on("connection", (socket) => {
         explanation: question.explanation,
       });
 
+      // Get room members for debugging
+      const roomMembers = io.sockets.adapter.rooms.get(matchId);
+      console.log(
+        `[Duel] Room ${matchId} has ${roomMembers?.size || 0} members:`,
+        roomMembers ? Array.from(roomMembers) : []
+      );
+
       // Emit live score update to BOTH players
       io.to(matchId).emit("duel-score-update", {
         player1: {
-          userId: match.player1.userId,
+          userId: match.player1.userId.toString(),
           score: match.player1.score,
           correctAnswers: match.player1.correctAnswers,
           answeredCount: match.player1.answers.length,
         },
         player2: {
-          userId: match.player2.userId,
+          userId: match.player2.userId.toString(),
           score: match.player2.score,
           correctAnswers: match.player2.correctAnswers,
           answeredCount: match.player2.answers.length,
@@ -1050,7 +1080,7 @@ io.on("connection", (socket) => {
       });
 
       console.log(
-        `[Duel] Score update - Player1: ${match.player1.score}, Player2: ${match.player2.score}`
+        `[Duel] Score update emitted to room ${matchId} - Player1: ${match.player1.score}, Player2: ${match.player2.score}`
       );
 
       // Check if THIS player has finished all questions
@@ -4136,6 +4166,172 @@ app.get("/api/live-sessions/:code/analytics", auth, async (req, res) => {
   } catch (error) {
     console.error("Error fetching session analytics:", error);
     res.status(500).json({ message: "Failed to fetch analytics" });
+  }
+});
+
+// Get session history for a specific quiz (teacher view)
+app.get("/api/live-sessions/quiz/:quizId/history", auth, async (req, res) => {
+  try {
+    const { quizId } = req.params;
+
+    // Find all completed sessions for this quiz
+    const sessions = await LiveSession.find({
+      quizId: quizId,
+      status: "completed",
+    })
+      .populate("quizId", "title description")
+      .populate("hostId", "name email")
+      .sort({ endedAt: -1 })
+      .limit(50); // Last 50 sessions
+
+    const sessionHistory = sessions.map((session) => ({
+      sessionId: session._id,
+      sessionCode: session.sessionCode,
+      quizTitle: session.quizId?.title,
+      hostName: session.hostId?.name,
+      participantCount: session.participants.filter((p) => p.isActive).length,
+      startedAt: session.startedAt,
+      endedAt: session.endedAt,
+      duration: session.endedAt
+        ? Math.floor((session.endedAt - session.startedAt) / 1000 / 60)
+        : 0,
+      finalLeaderboard: session.finalLeaderboard || [],
+      averageScore:
+        session.finalLeaderboard?.length > 0
+          ? Math.round(
+              session.finalLeaderboard.reduce((sum, p) => sum + p.score, 0) /
+                session.finalLeaderboard.length
+            )
+          : 0,
+    }));
+
+    res.json({
+      success: true,
+      sessions: sessionHistory,
+      total: sessionHistory.length,
+    });
+  } catch (error) {
+    console.error("Error fetching session history:", error);
+    res.status(500).json({ message: "Failed to fetch session history" });
+  }
+});
+
+// Get detailed session results with participant attempts
+app.get("/api/live-sessions/:sessionId/results", auth, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    const session = await LiveSession.findById(sessionId)
+      .populate("quizId", "title description questions")
+      .populate("hostId", "name email");
+
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    // Get detailed participant data
+    const participantDetails = session.participants
+      .filter((p) => p.isActive)
+      .map((p) => ({
+        userId: p.userId,
+        username: p.username,
+        avatar: p.avatar,
+        score: p.score,
+        correctAnswers: p.answers.filter((a) => a.isCorrect).length,
+        totalAnswers: p.answers.length,
+        totalTime: p.answers.reduce((sum, a) => sum + a.timeSpent, 0),
+        accuracy:
+          p.answers.length > 0
+            ? (
+                (p.answers.filter((a) => a.isCorrect).length /
+                  p.answers.length) *
+                100
+              ).toFixed(1)
+            : 0,
+        answers: p.answers.map((a) => ({
+          questionIndex: a.questionIndex,
+          answer: a.answer,
+          isCorrect: a.isCorrect,
+          timeSpent: a.timeSpent,
+          pointsEarned: a.pointsEarned,
+          answeredAt: a.answeredAt,
+        })),
+        joinedAt: p.joinedAt,
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    res.json({
+      success: true,
+      session: {
+        sessionCode: session.sessionCode,
+        quizTitle: session.quizId?.title,
+        hostName: session.hostId?.name,
+        status: session.status,
+        startedAt: session.startedAt,
+        endedAt: session.endedAt,
+        totalQuestions: session.quizId?.questions.length || 0,
+      },
+      participants: participantDetails,
+      leaderboard: session.finalLeaderboard || session.getLeaderboard(),
+    });
+  } catch (error) {
+    console.error("Error fetching session results:", error);
+    res.status(500).json({ message: "Failed to fetch session results" });
+  }
+});
+
+// Get all session history for teacher (all their quizzes)
+app.get("/api/live-sessions/teacher/history", auth, async (req, res) => {
+  try {
+    const Quiz = require("./models/Quiz");
+
+    // Find all quizzes created by this teacher
+    const teacherQuizzes = await Quiz.find({ createdBy: req.user.id }).select(
+      "_id"
+    );
+    const quizIds = teacherQuizzes.map((q) => q._id);
+
+    // Find all completed sessions for these quizzes
+    const sessions = await LiveSession.find({
+      quizId: { $in: quizIds },
+      status: "completed",
+    })
+      .populate("quizId", "title description category")
+      .populate("hostId", "name")
+      .sort({ endedAt: -1 })
+      .limit(100);
+
+    const sessionHistory = sessions.map((session) => ({
+      sessionId: session._id,
+      sessionCode: session.sessionCode,
+      quizId: session.quizId?._id,
+      quizTitle: session.quizId?.title,
+      category: session.quizId?.category,
+      hostName: session.hostId?.name,
+      participantCount: session.participants.filter((p) => p.isActive).length,
+      startedAt: session.startedAt,
+      endedAt: session.endedAt,
+      duration: session.endedAt
+        ? Math.floor((session.endedAt - session.startedAt) / 1000 / 60)
+        : 0,
+      topScore: session.finalLeaderboard?.[0]?.score || 0,
+      averageScore:
+        session.finalLeaderboard?.length > 0
+          ? Math.round(
+              session.finalLeaderboard.reduce((sum, p) => sum + p.score, 0) /
+                session.finalLeaderboard.length
+            )
+          : 0,
+    }));
+
+    res.json({
+      success: true,
+      sessions: sessionHistory,
+      total: sessionHistory.length,
+    });
+  } catch (error) {
+    console.error("Error fetching teacher session history:", error);
+    res.status(500).json({ message: "Failed to fetch session history" });
   }
 });
 
