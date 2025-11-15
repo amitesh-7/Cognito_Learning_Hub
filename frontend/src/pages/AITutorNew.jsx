@@ -18,6 +18,19 @@ import {
   X,
   Trash2,
   MessageSquare,
+  Mic,
+  MicOff,
+  Maximize2,
+  Minimize2,
+  Settings,
+  BookOpen,
+  ChevronDown,
+  Heart,
+  ThumbsUp,
+  Zap,
+  Star,
+  Brain,
+  Lightbulb,
 } from "lucide-react";
 
 const AITutor = () => {
@@ -29,13 +42,75 @@ const AITutor = () => {
   const [copiedId, setCopiedId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [fontSize, setFontSize] = useState("medium");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [favoriteMessages, setFavoriteMessages] = useState([]);
   const messagesEndRef = useRef(null);
+  const speechSynthesis = window.speechSynthesis;
 
   const examplePrompts = [
     "Explain photosynthesis",
     "Help with quadratic equations",
     "World War II causes",
     "Newton's laws of motion",
+  ];
+
+  const quickActions = [
+    {
+      icon: "🔍",
+      text: "Explain this concept",
+      color: "from-blue-500 to-indigo-600",
+    },
+    {
+      icon: "📝",
+      text: "Help with homework",
+      color: "from-green-500 to-emerald-600",
+    },
+    {
+      icon: "🧮",
+      text: "Solve this problem",
+      color: "from-purple-500 to-pink-600",
+    },
+    {
+      icon: "💡",
+      text: "Give me examples",
+      color: "from-orange-500 to-red-600",
+    },
+  ];
+
+  const suggestedQuestions = [
+    {
+      category: "Science",
+      icon: "⚛️",
+      questions: [
+        "Explain photosynthesis in simple terms",
+        "What is Newton's First Law of Motion?",
+        "How does DNA replication work?",
+        "What causes earthquakes?",
+      ],
+    },
+    {
+      category: "Mathematics",
+      icon: "📐",
+      questions: [
+        "Solve quadratic equations step by step",
+        "Explain calculus derivatives",
+        "How to find the area of a circle?",
+        "What is the Pythagorean theorem?",
+      ],
+    },
+    {
+      category: "History",
+      icon: "📚",
+      questions: [
+        "Summarize the main causes of World War II",
+        "Explain the Industrial Revolution",
+        "What was the Renaissance period?",
+        "Timeline of Ancient Egyptian civilization",
+      ],
+    },
   ];
 
   // Load from localStorage
@@ -58,12 +133,15 @@ const AITutor = () => {
   const currentMessages =
     conversations.find((c) => c.id === currentConvId)?.messages || [];
 
-  // Auto-scroll only when messages change (not when typing)
+  // Auto-scroll only when loading completes (new message received)
   useEffect(() => {
-    if (currentMessages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!isLoading && currentMessages.length > 0) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
     }
-  }, [currentMessages.length]); // Only trigger on message count change
+  }, [isLoading]); // Only scroll when loading state changes
 
   const handleSend = async (e, promptText = null) => {
     e?.preventDefault();
@@ -145,8 +223,7 @@ const AITutor = () => {
       );
 
       if (voiceEnabled && "speechSynthesis" in window) {
-        const utterance = new SpeechSynthesisUtterance(aiMsg.content);
-        window.speechSynthesis.speak(utterance);
+        setTimeout(() => speakMessage(aiMsg.content), 500);
       }
     } catch (error) {
       console.error("Error details:", error);
@@ -182,6 +259,59 @@ const AITutor = () => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // Voice Recognition
+  const startListening = () => {
+    if (!("webkitSpeechRecognition" in window)) {
+      alert("Speech recognition not supported in this browser");
+      return;
+    }
+
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+    };
+
+    recognition.start();
+  };
+
+  // Text-to-Speech
+  const speakMessage = (text) => {
+    if (!voiceEnabled) return;
+
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 0.8;
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+
+    speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
+
+  // Toggle favorite message
+  const toggleFavorite = (messageId) => {
+    setFavoriteMessages((prev) =>
+      prev.includes(messageId)
+        ? prev.filter((id) => id !== messageId)
+        : [...prev, messageId]
+    );
   };
 
   return (
@@ -304,20 +434,84 @@ const AITutor = () => {
               </div>
             </div>
 
-            <button
-              onClick={() => setVoiceEnabled(!voiceEnabled)}
-              className={`p-2 rounded-lg transition-all ${
-                voiceEnabled
-                  ? "bg-green-100 dark:bg-green-900 text-green-600"
-                  : "hover:bg-gray-100 dark:hover:bg-gray-800"
-              }`}
-            >
-              {voiceEnabled ? (
-                <Volume2 className="w-5 h-5" />
-              ) : (
-                <VolumeX className="w-5 h-5" />
+            <div className="flex items-center gap-2">
+              {/* Voice Controls */}
+              <button
+                onClick={() => setVoiceEnabled(!voiceEnabled)}
+                className={`p-2 rounded-lg transition-all ${
+                  voiceEnabled
+                    ? "bg-green-100 dark:bg-green-900 text-green-600"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+                title={voiceEnabled ? "Disable voice" : "Enable voice"}
+              >
+                {voiceEnabled ? (
+                  <Volume2 className="w-5 h-5" />
+                ) : (
+                  <VolumeX className="w-5 h-5" />
+                )}
+              </button>
+
+              {isSpeaking && (
+                <button
+                  onClick={stopSpeaking}
+                  className="p-2 rounded-lg bg-red-50 dark:bg-red-900 text-red-600 hover:bg-red-100 dark:hover:bg-red-800 transition-all"
+                  title="Stop speaking"
+                >
+                  <VolumeX className="w-5 h-5" />
+                </button>
               )}
-            </button>
+
+              {/* Font Size Controls */}
+              <div className="flex items-center gap-1 border border-gray-300 dark:border-gray-600 rounded-lg p-1 bg-white dark:bg-gray-800">
+                <button
+                  onClick={() => setFontSize("small")}
+                  className={`p-1 rounded text-xs transition-colors ${
+                    fontSize === "small"
+                      ? "bg-purple-500 text-white"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                  title="Small font"
+                >
+                  A
+                </button>
+                <button
+                  onClick={() => setFontSize("medium")}
+                  className={`p-1 rounded text-sm transition-colors ${
+                    fontSize === "medium"
+                      ? "bg-purple-500 text-white"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                  title="Medium font"
+                >
+                  A
+                </button>
+                <button
+                  onClick={() => setFontSize("large")}
+                  className={`p-1 rounded text-base transition-colors ${
+                    fontSize === "large"
+                      ? "bg-purple-500 text-white"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                  title="Large font"
+                >
+                  A
+                </button>
+              </div>
+
+              {/* Fullscreen Toggle */}
+              <button
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="w-5 h-5" />
+                ) : (
+                  <Maximize2 className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -393,7 +587,15 @@ const AITutor = () => {
                           }`}
                         >
                           {msg.role === "assistant" ? (
-                            <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:leading-relaxed prose-pre:bg-gray-800 prose-pre:text-gray-100 prose-code:text-purple-600 dark:prose-code:text-purple-400 prose-code:bg-gray-200 dark:prose-code:bg-gray-700 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-ul:list-disc prose-ol:list-decimal prose-li:my-1 prose-strong:font-bold prose-strong:text-gray-900 dark:prose-strong:text-white">
+                            <div
+                              className={`prose max-w-none dark:prose-invert prose-headings:font-bold prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:leading-relaxed prose-pre:bg-gray-800 prose-pre:text-gray-100 prose-code:text-purple-600 dark:prose-code:text-purple-400 prose-code:bg-gray-200 dark:prose-code:bg-gray-700 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-ul:list-disc prose-ol:list-decimal prose-li:my-1 prose-strong:font-bold prose-strong:text-gray-900 dark:prose-strong:text-white ${
+                                fontSize === "small"
+                                  ? "prose-sm"
+                                  : fontSize === "large"
+                                  ? "prose-lg"
+                                  : "prose-base"
+                              }`}
+                            >
                               <ReactMarkdown
                                 remarkPlugins={[remarkMath]}
                                 rehypePlugins={[rehypeKatex]}
@@ -402,26 +604,85 @@ const AITutor = () => {
                               </ReactMarkdown>
                             </div>
                           ) : (
-                            <p className="text-base leading-relaxed whitespace-pre-wrap">
+                            <p
+                              className={`leading-relaxed whitespace-pre-wrap ${
+                                fontSize === "small"
+                                  ? "text-sm"
+                                  : fontSize === "large"
+                                  ? "text-lg"
+                                  : "text-base"
+                              }`}
+                            >
                               {msg.content}
                             </p>
                           )}
                         </div>
 
                         {msg.role === "assistant" && (
-                          <div className="flex items-center gap-2 mt-2 ml-2">
+                          <div className="flex items-center gap-2 mt-2 ml-2 flex-wrap">
+                            <button
+                              onClick={() => toggleFavorite(msg.id)}
+                              className={`px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition text-xs flex items-center gap-1 ${
+                                favoriteMessages.includes(msg.id)
+                                  ? "text-red-500"
+                                  : "text-gray-500"
+                              }`}
+                              title={
+                                favoriteMessages.includes(msg.id)
+                                  ? "Remove from favorites"
+                                  : "Add to favorites"
+                              }
+                            >
+                              <Heart
+                                className={`w-3 h-3 ${
+                                  favoriteMessages.includes(msg.id)
+                                    ? "fill-red-500"
+                                    : ""
+                                }`}
+                              />
+                              {favoriteMessages.includes(msg.id)
+                                ? "Saved"
+                                : "Save"}
+                            </button>
                             <button
                               onClick={() =>
                                 copyToClipboard(msg.content, msg.id)
                               }
-                              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                              className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-xs flex items-center gap-1"
                               title="Copy"
                             >
                               {copiedId === msg.id ? (
-                                <Check className="w-4 h-4 text-green-500" />
+                                <>
+                                  <Check className="w-3 h-3 text-green-500" />{" "}
+                                  Copied
+                                </>
                               ) : (
-                                <Copy className="w-4 h-4" />
+                                <>
+                                  <Copy className="w-3 h-3" /> Copy
+                                </>
                               )}
+                            </button>
+                            {voiceEnabled && (
+                              <button
+                                onClick={() => speakMessage(msg.content)}
+                                disabled={isSpeaking}
+                                className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-xs flex items-center gap-1 disabled:opacity-50"
+                                title="Read aloud"
+                              >
+                                <Volume2
+                                  className={`w-3 h-3 ${
+                                    isSpeaking ? "animate-pulse" : ""
+                                  }`}
+                                />
+                                {isSpeaking ? "Speaking..." : "Speak"}
+                              </button>
+                            )}
+                            <button
+                              className="px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-xs flex items-center gap-1"
+                              title="Like this response"
+                            >
+                              <ThumbsUp className="w-3 h-3" />
+                              Like
                             </button>
                           </div>
                         )}
@@ -475,6 +736,23 @@ const AITutor = () => {
           <div className="max-w-4xl mx-auto px-6">
             <form onSubmit={handleSend} className="relative">
               <div className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3">
+                <button
+                  type="button"
+                  onClick={startListening}
+                  disabled={isListening || isLoading}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isListening
+                      ? "text-red-500 animate-pulse"
+                      : "text-gray-400 hover:text-purple-500"
+                  } disabled:opacity-50`}
+                  title={isListening ? "Listening..." : "Voice input"}
+                >
+                  {isListening ? (
+                    <MicOff className="w-5 h-5" />
+                  ) : (
+                    <Mic className="w-5 h-5" />
+                  )}
+                </button>
                 <input
                   type="text"
                   value={input}
@@ -492,6 +770,16 @@ const AITutor = () => {
                 </button>
               </div>
             </form>
+            {isListening && (
+              <motion.p
+                className="text-xs text-center text-red-500 mt-2 flex items-center justify-center gap-2"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+              >
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                Listening...
+              </motion.p>
+            )}
             <p className="text-xs text-center text-gray-400 mt-3">
               AI can make mistakes. Verify important information.
             </p>
