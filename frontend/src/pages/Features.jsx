@@ -295,59 +295,66 @@ const Features = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 px-4">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 dark:from-blue-400/5 dark:to-purple-400/5"></div>
-        <div className="relative max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4" />
-            Powered by Advanced AI Technology
-          </div>
-          <h1 className="text-5xl lg:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">
-            Cognito Learning Hub Features
-          </h1>
-          <p className="text-xl lg:text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed">
-            Discover the comprehensive suite of features that make QuizWise-AI
-            the ultimate platform for
-            <span className="text-blue-600 dark:text-blue-400 font-semibold">
-              {" "}
-              intelligent learning
-            </span>
-            ,
-            <span className="text-purple-600 dark:text-purple-400 font-semibold">
-              {" "}
-              social collaboration
-            </span>
-            , and
-            <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
-              {" "}
-              academic excellence
-            </span>
-            .
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2">
-              <Play className="w-5 h-5" />
-              Explore Features
-            </button>
-            <button className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white px-8 py-4 rounded-xl font-semibold text-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 flex items-center gap-2">
-              <Download className="w-5 h-5" />
-              Get Started
-            </button>
+        <div className="relative max-w-7xl mx-auto">
+          <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-3xl rounded-[3rem] p-12 md:p-16 border border-white/60 dark:border-gray-700/60 shadow-2xl">
+            <div className="text-center">
+              <div className="inline-flex items-center gap-2 bg-blue-200/60 dark:bg-blue-900/50 backdrop-blur-xl text-blue-700 dark:text-blue-300 px-5 py-2.5 rounded-full text-sm font-semibold mb-6 border border-blue-300/40 dark:border-blue-700/40 shadow-lg">
+                <Sparkles className="w-4 h-4" />
+                Powered by Advanced AI Technology
+              </div>
+              <h1 className="text-5xl lg:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">
+                Cognito Learning Hub Features
+              </h1>
+              <p className="text-xl lg:text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed">
+                Discover the comprehensive suite of features that make
+                QuizWise-AI the ultimate platform for
+                <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                  {" "}
+                  intelligent learning
+                </span>
+                ,
+                <span className="text-purple-600 dark:text-purple-400 font-semibold">
+                  {" "}
+                  social collaboration
+                </span>
+                , and
+                <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
+                  {" "}
+                  academic excellence
+                </span>
+                .
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <button className="bg-gradient-to-r from-blue-600 via-purple-600 to-purple-700 text-white px-8 py-4 rounded-3xl font-bold text-lg hover:from-blue-700 hover:via-purple-700 hover:to-purple-800 transition-all duration-500 transform hover:scale-105 shadow-2xl hover:shadow-3xl flex items-center gap-2 backdrop-blur-xl border border-white/20 group">
+                  <Play className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                  Explore Features
+                </button>
+                <button className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-2xl text-gray-800 dark:text-white px-8 py-4 rounded-3xl font-bold text-lg border-2 border-gray-200/60 dark:border-gray-600/60 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-500 flex items-center gap-2 shadow-xl hover:shadow-2xl hover:scale-105 group">
+                  <Download className="w-5 h-5 group-hover:translate-y-1 transition-transform duration-300" />
+                  Get Started
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 px-4 bg-white/50 dark:bg-gray-800 backdrop-blur-sm">
+      <section className="py-16 px-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
-              <div key={index} className="text-center group">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <stat.icon className="w-8 h-8 text-white" />
+              <div
+                key={index}
+                className="text-center group bg-white/70 dark:bg-gray-800/70 backdrop-blur-2xl rounded-3xl p-8 border border-white/60 dark:border-gray-700/60 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:border-blue-400/50 dark:hover:border-purple-400/50"
+              >
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-500 rounded-3xl mb-5 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-xl shadow-blue-500/30">
+                  <stat.icon className="w-10 h-10 text-white drop-shadow-lg" />
                 </div>
-                <div className="text-3xl lg:text-4xl font-bold text-gray-800 dark:text-white mb-2">
+                <div className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent mb-2">
                   {stat.number}
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 font-medium">
+                <div className="text-gray-600 dark:text-gray-400 font-semibold">
                   {stat.label}
                 </div>
               </div>
@@ -357,20 +364,23 @@ const Features = () => {
       </section>
 
       {/* Features Showcase */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-gradient-to-br from-green-50/30 via-blue-50/30 to-purple-50/30 dark:from-gray-900/50 dark:via-gray-800/50 dark:to-gray-900/50">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl font-bold text-gray-800 dark:text-white mb-6">
-              Powerful Features for
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                {" "}
-                Every Learner
-              </span>
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Explore our comprehensive feature set designed to transform your
-              learning experience
-            </p>
+          {/* Section Header with Glassmorphism */}
+          <div className="bg-gradient-to-br from-blue-400/20 via-purple-400/20 to-blue-500/20 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-blue-600/10 backdrop-blur-2xl rounded-[3rem] p-12 md:p-16 border border-white/40 dark:border-gray-700/40 shadow-2xl mb-16">
+            <div className="text-center">
+              <h2 className="text-4xl lg:text-6xl font-bold text-gray-800 dark:text-white mb-6">
+                Powerful Features for
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  {" "}
+                  Every Learner
+                </span>
+              </h2>
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                Explore our comprehensive feature set designed to transform your
+                learning experience
+              </p>
+            </div>
           </div>
 
           {/* Feature Navigation */}
@@ -379,29 +389,33 @@ const Features = () => {
               <button
                 key={feature.id}
                 onClick={() => setActiveFeature(index)}
-                className={`flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                className={`flex items-center gap-3 px-6 py-3.5 rounded-3xl font-semibold transition-all duration-500 backdrop-blur-2xl border shadow-lg hover:shadow-xl ${
                   activeFeature === index
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                    : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    ? "bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white shadow-2xl shadow-purple-500/40 border-white/30 scale-105"
+                    : "bg-white/70 dark:bg-gray-800/70 text-gray-700 dark:text-gray-300 hover:bg-white/90 dark:hover:bg-gray-700/90 border-white/50 dark:border-gray-700/50 hover:scale-105 hover:border-blue-400/50 dark:hover:border-purple-400/50"
                 }`}
               >
-                <feature.icon className="w-5 h-5" />
-                {feature.title}
+                <feature.icon
+                  className={`w-5 h-5 ${
+                    activeFeature === index ? "drop-shadow-lg" : ""
+                  }`}
+                />
+                <span>{feature.title}</span>
               </button>
             ))}
           </div>
 
           {/* Active Feature Display */}
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-3xl rounded-[2rem] shadow-2xl overflow-hidden border border-white/60 dark:border-gray-700/60 hover:shadow-3xl transition-all duration-500">
             <div className="grid lg:grid-cols-2 gap-0">
               {/* Content Side */}
               <div className="p-12">
                 <div className="flex items-center gap-4 mb-6">
                   <div
-                    className={`p-4 rounded-2xl bg-gradient-to-r ${features[activeFeature].color}`}
+                    className={`p-5 rounded-3xl bg-gradient-to-br ${features[activeFeature].color} shadow-xl shadow-blue-500/30`}
                   >
                     {React.createElement(features[activeFeature].icon, {
-                      className: "w-8 h-8 text-white",
+                      className: "w-9 h-9 text-white drop-shadow-lg",
                     })}
                   </div>
                   <div>
@@ -431,14 +445,16 @@ const Features = () => {
                   )}
                 </div>
 
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+                <div className="bg-gradient-to-br from-yellow-50/90 to-orange-50/90 dark:from-gray-700/60 dark:to-gray-600/60 backdrop-blur-2xl rounded-3xl p-6 border border-yellow-300/60 dark:border-gray-600/60 shadow-lg">
                   <div className="flex items-center gap-3 mb-3">
-                    <Lightbulb className="w-5 h-5 text-yellow-500" />
+                    <div className="p-2 bg-yellow-400/20 rounded-2xl">
+                      <Lightbulb className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                    </div>
                     <span className="font-semibold text-gray-800 dark:text-white">
                       Try it out:
                     </span>
                   </div>
-                  <p className="text-gray-600 dark:text-gray-400 italic">
+                  <p className="text-gray-700 dark:text-gray-300 italic">
                     {features[activeFeature].demo}
                   </p>
                 </div>
@@ -452,11 +468,11 @@ const Features = () => {
                   {React.createElement(features[activeFeature].icon, {
                     className: "w-32 h-32 mx-auto mb-6 opacity-80",
                   })}
-                  <h4 className="text-2xl font-bold mb-4">
+                  <h4 className="text-2xl font-bold mb-4 drop-shadow-lg">
                     {features[activeFeature].title}
                   </h4>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6">
-                    <p className="text-lg opacity-90">
+                  <div className="bg-white/30 backdrop-blur-xl rounded-3xl p-8 border border-white/40 shadow-2xl">
+                    <p className="text-lg opacity-95 font-medium">
                       Experience the power of{" "}
                       {features[activeFeature].title.toLowerCase()}
                       in QuizWise-AI's comprehensive learning platform.
@@ -489,11 +505,11 @@ const Features = () => {
             {userRoles.map((role, index) => (
               <div
                 key={index}
-                className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group"
+                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-3xl rounded-[2rem] p-10 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-3 group border border-white/60 dark:border-gray-700/60 hover:border-blue-400/60 dark:hover:border-purple-400/60"
               >
                 <div className="text-center mb-6">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <role.icon className="w-8 h-8 text-white" />
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-500 rounded-3xl mb-5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-xl shadow-blue-500/40">
+                    <role.icon className="w-10 h-10 text-white drop-shadow-lg" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
                     {role.role}
@@ -507,9 +523,11 @@ const Features = () => {
                   {role.features.map((feature, featureIndex) => (
                     <div
                       key={featureIndex}
-                      className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700 rounded-lg p-3"
+                      className="flex items-center gap-3 bg-white/70 dark:bg-gray-700/70 backdrop-blur-2xl rounded-2xl p-4 border border-white/50 dark:border-gray-600/50 hover:bg-white/90 dark:hover:bg-gray-700/90 transition-all duration-300 hover:shadow-lg hover:scale-102 hover:border-green-400/50"
                     >
-                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      <div className="p-1.5 bg-green-100/80 dark:bg-green-900/40 rounded-xl">
+                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                      </div>
                       <span className="text-gray-700 dark:text-gray-300 font-medium">
                         {feature}
                       </span>
@@ -517,9 +535,9 @@ const Features = () => {
                   ))}
                 </div>
 
-                <button className="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center justify-center gap-2">
+                <button className="w-full mt-8 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white py-4 rounded-2xl font-bold hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 transition-all duration-500 flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl backdrop-blur-xl border border-white/30 hover:scale-105 hover:border-white/50">
                   Learn More
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                 </button>
               </div>
             ))}
@@ -552,11 +570,11 @@ const Features = () => {
             ].map((tech, index) => (
               <div key={index} className="group">
                 <div
-                  className={`h-24 w-24 mx-auto rounded-2xl bg-gradient-to-r ${tech.color} flex items-center justify-center text-white font-bold text-lg group-hover:scale-110 transition-transform duration-300 shadow-lg`}
+                  className={`h-28 w-28 mx-auto rounded-3xl bg-gradient-to-br ${tech.color} flex items-center justify-center text-white font-bold text-xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-2xl backdrop-blur-2xl border border-white/30 hover:border-white/50`}
                 >
                   {tech.name.slice(0, 2)}
                 </div>
-                <p className="mt-3 font-medium text-gray-700 dark:text-gray-300">
+                <p className="mt-4 font-semibold text-gray-700 dark:text-gray-300">
                   {tech.name}
                 </p>
               </div>
@@ -567,23 +585,27 @@ const Features = () => {
 
       {/* CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="max-w-4xl mx-auto text-center text-white">
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-            Ready to Transform Your Learning?
-          </h2>
-          <p className="text-xl opacity-90 mb-8">
-            Join thousands of students and educators who are already
-            experiencing the power of AI-driven learning
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2">
-              <Zap className="w-5 h-5" />
-              Start Learning Now
-            </button>
-            <button className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-blue-600 transition-all duration-300 flex items-center gap-2">
-              <MessageCircle className="w-5 h-5" />
-              Contact Us
-            </button>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white/20 dark:bg-gray-900/30 backdrop-blur-3xl rounded-[3rem] p-12 md:p-16 border border-white/40 dark:border-white/20 shadow-2xl">
+            <div className="text-center text-white">
+              <h2 className="text-4xl lg:text-5xl font-bold mb-6">
+                Ready to Transform Your Learning?
+              </h2>
+              <p className="text-xl opacity-95 mb-8">
+                Join thousands of students and educators who are already
+                experiencing the power of AI-driven learning
+              </p>
+              <div className="flex flex-wrap justify-center gap-6">
+                <button className="bg-white/95 backdrop-blur-2xl text-blue-600 px-10 py-5 rounded-3xl font-bold text-lg hover:bg-white transition-all duration-500 transform hover:scale-105 shadow-2xl hover:shadow-3xl flex items-center gap-3 border border-white/60 hover:border-white group">
+                  <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
+                  Start Learning Now
+                </button>
+                <button className="bg-white/20 backdrop-blur-2xl border-2 border-white/70 text-white px-10 py-5 rounded-3xl font-bold text-lg hover:bg-white hover:text-blue-600 transition-all duration-500 flex items-center gap-3 shadow-xl hover:shadow-2xl hover:scale-105 group">
+                  <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" />
+                  Contact Us
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>

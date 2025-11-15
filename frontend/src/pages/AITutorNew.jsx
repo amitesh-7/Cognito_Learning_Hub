@@ -276,20 +276,29 @@ const AITutor = () => {
       return;
     }
 
-    const recognition = new window.webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = "en-US";
+    try {
+      const recognition = new window.webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
 
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
+      recognition.onstart = () => setIsListening(true);
+      recognition.onend = () => setIsListening(false);
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        setIsListening(false);
+      };
 
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setInput(transcript);
-    };
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+      };
 
-    recognition.start();
+      recognition.start();
+    } catch (error) {
+      console.error("Failed to start speech recognition:", error);
+      setIsListening(false);
+    }
   };
 
   // Text-to-Speech
@@ -324,7 +333,7 @@ const AITutor = () => {
 
   return (
     <div
-      className="min-h-screen sm:h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-black flex flex-col sm:flex-row overflow-hidden"
+      className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-black flex"
       {...swipeHandlers}
     >
       {/* Sidebar */}
@@ -335,7 +344,7 @@ const AITutor = () => {
             animate={{ x: 0 }}
             exit={{ x: -280 }}
             transition={{ type: "spring", damping: 20 }}
-            className="fixed sm:relative z-40 w-full sm:w-64 md:w-72 bg-white dark:bg-gray-900 h-full border-r border-gray-200 dark:border-gray-800 flex flex-col shadow-xl"
+            className="fixed sm:relative z-40 w-full sm:w-64 md:w-72 bg-white dark:bg-gray-900 h-screen border-r border-gray-200 dark:border-gray-800 flex flex-col shadow-xl"
           >
             {/* New Chat Button */}
             <div className="p-4 border-b border-gray-200 dark:border-gray-800">
@@ -348,8 +357,8 @@ const AITutor = () => {
               </button>
             </div>
 
-            {/* Chat History */}
-            <div className="flex-1 overflow-y-auto p-3">
+            {/* Chat History - Scrollable */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-3">
               <h3 className="px-3 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Recent Chats
               </h3>
@@ -394,8 +403,8 @@ const AITutor = () => {
               </div>
             </div>
 
-            {/* User Profile */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+            {/* User Profile - Fixed at Bottom */}
+            <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   {user?.name?.charAt(0) || "U"}
@@ -423,9 +432,9 @@ const AITutor = () => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-full bg-white dark:bg-gray-900">
+      <div className="flex-1 flex flex-col h-screen">
         {/* Header */}
-        <div className="sticky top-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="flex-shrink-0 bg-white dark:bg-gray-900 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 shadow-sm z-20">
           <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center gap-2 sm:gap-4">
               <button
@@ -539,10 +548,13 @@ const AITutor = () => {
           </div>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Messages - Scrollable Area with padding for fixed input */}
+        <div
+          className="flex-1 overflow-y-auto bg-white dark:bg-gray-900"
+          style={{ paddingBottom: "140px" }}
+        >
           {currentMessages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center px-6 pb-32">
+            <div className="h-full flex flex-col items-center justify-center px-6">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -604,10 +616,10 @@ const AITutor = () => {
                         }`}
                       >
                         <div
-                          className={`rounded-3xl px-6 py-4 shadow-md ${
+                          className={`rounded-3xl px-6 py-4 ${
                             msg.role === "user"
-                              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
-                              : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
+                              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
+                              : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-md border border-gray-200 dark:border-gray-700"
                           }`}
                         >
                           {msg.role === "assistant" ? (
@@ -755,9 +767,9 @@ const AITutor = () => {
           )}
         </div>
 
-        {/* Input Area */}
-        <div className="sticky bottom-0 bg-gradient-to-t from-white dark:from-gray-900 to-transparent pt-6 pb-6">
-          <div className="max-w-4xl mx-auto px-6">
+        {/* Input Area - Fixed at Bottom of Viewport */}
+        <div className="fixed bottom-0 right-0 left-0 sm:left-64 md:left-72 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 z-30">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
             <form onSubmit={handleSend} className="relative">
               <div className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3">
                 <button

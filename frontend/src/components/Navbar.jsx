@@ -6,7 +6,24 @@ import {
   useMotionValueEvent,
   useScroll,
 } from "framer-motion";
-import { Brain, Sun, Moon, Menu, X, Sparkles } from "lucide-react";
+import {
+  Brain,
+  Sun,
+  Moon,
+  Menu,
+  X,
+  Sparkles,
+  LayoutDashboard,
+  BookOpen,
+  Bot,
+  Trophy,
+  Users,
+  MessageSquare,
+  GraduationCap,
+  Shield,
+  UserCog,
+  Radio,
+} from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import { useReducedMotion, useIsMobile } from "../hooks/useReducedMotion";
@@ -22,6 +39,16 @@ const Navbar = () => {
   const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
   const isMobile = useIsMobile();
+
+  // Navigation links
+  const navLinks = [
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/quizzes", label: "Quizzes", icon: BookOpen },
+    { to: "/doubt-solver", label: "AI Tutor", icon: Bot },
+    { to: "/achievements", label: "Achievements", icon: Trophy },
+    { to: "/social", label: "Social Hub", icon: Users },
+    { to: "/chat", label: "Chat", icon: MessageSquare },
+  ];
 
   // Track scroll position for navbar appearance changes (always visible)
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -61,7 +88,8 @@ const Navbar = () => {
   const mobileMenuVariants = {
     closed: {
       opacity: 0,
-      x: "100%",
+      y: -20,
+      scale: 0.95,
       transition: {
         type: "spring",
         stiffness: 400,
@@ -70,13 +98,14 @@ const Navbar = () => {
     },
     open: {
       opacity: 1,
-      x: 0,
+      y: 0,
+      scale: 1,
       transition: {
         type: "spring",
         stiffness: 300,
         damping: 30,
-        staggerChildren: 0.07,
-        delayChildren: 0.2,
+        staggerChildren: 0.05,
+        delayChildren: 0.1,
       },
     },
   };
@@ -193,8 +222,8 @@ const Navbar = () => {
                   </motion.div>
                 </motion.div>
 
-                <div className="hidden sm:block">
-                  <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-indigo-600 group-hover:to-blue-600 transition-all duration-700 tracking-tight drop-shadow-sm">
+                <div>
+                  <h1 className="text-base sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-indigo-600 group-hover:to-blue-600 transition-all duration-700 tracking-tight drop-shadow-sm">
                     Cognito Learning Hub
                   </h1>
                 </div>
@@ -225,17 +254,25 @@ const Navbar = () => {
 
                   {/* Nav Links */}
                   {[
-                    { to: "/dashboard", label: "Dashboard" },
-                    { to: "/quizzes", label: "Quizzes" },
-                    { to: "/doubt-solver", label: "AI Tutor" },
-                    { to: "/achievements", label: "Achievements" },
-                    { to: "/social", label: "Social Hub" },
-                    { to: "/chat", label: "Chat" },
+                    {
+                      to: "/dashboard",
+                      label: "Dashboard",
+                      icon: LayoutDashboard,
+                    },
+                    { to: "/quizzes", label: "Quizzes", icon: BookOpen },
+                    { to: "/doubt-solver", label: "AI Tutor", icon: Bot },
+                    {
+                      to: "/achievements",
+                      label: "Achievements",
+                      icon: Trophy,
+                    },
+                    { to: "/social", label: "Social Hub", icon: Users },
+                    { to: "/chat", label: "Chat", icon: MessageSquare },
                   ].map((link) => (
                     <motion.div key={link.to} variants={staggerItem}>
                       <Link
                         to={link.to}
-                        className={`relative px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 group ${
+                        className={`relative px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 group flex items-center gap-2 ${
                           location.pathname === link.to
                             ? "text-blue-700 dark:text-blue-300"
                             : "text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
@@ -254,7 +291,8 @@ const Navbar = () => {
                           />
                         )}
 
-                        {/* Hover effect */}
+                        {/* Icon and Label */}
+                        <link.icon className="w-4 h-4 relative z-10" />
                         <span className="relative z-10 drop-shadow-sm">
                           {link.label}
                         </span>
@@ -273,8 +311,9 @@ const Navbar = () => {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/teacher-dashboard"
-                        className="px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 transition-all duration-300"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 transition-all duration-300"
                       >
+                        <GraduationCap className="w-4 h-4" />
                         My Quizzes
                       </Link>
                     </motion.div>
@@ -284,8 +323,9 @@ const Navbar = () => {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/moderator"
-                        className="px-3 py-2 text-sm font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
                       >
+                        <Shield className="w-4 h-4" />
                         Moderator
                       </Link>
                     </motion.div>
@@ -296,16 +336,18 @@ const Navbar = () => {
                       <motion.div variants={staggerItem}>
                         <Link
                           to="/admin"
-                          className="px-3 py-2 text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
                         >
+                          <UserCog className="w-4 h-4" />
                           Admin
                         </Link>
                       </motion.div>
                       <motion.div variants={staggerItem}>
                         <Link
                           to="/admin-broadcast"
-                          className="px-3 py-2 text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
                         >
+                          <Radio className="w-4 h-4" />
                           Broadcast
                         </Link>
                       </motion.div>
@@ -329,8 +371,9 @@ const Navbar = () => {
                   <motion.div variants={staggerItem}>
                     <Link
                       to="/features"
-                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 relative group"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 relative group"
                     >
+                      <Sparkles className="w-4 h-4" />
                       Features
                       <span className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 group-hover:w-full transition-all duration-300 rounded-full shadow-lg shadow-blue-500/50"></span>
                     </Link>
@@ -338,16 +381,18 @@ const Navbar = () => {
                   <motion.div variants={staggerItem}>
                     <Link
                       to="/login"
-                      className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl hover:bg-gradient-to-r hover:from-blue-500/10 hover:via-purple-500/10 hover:to-indigo-500/10 dark:hover:from-blue-500/20 dark:hover:via-purple-500/20 dark:hover:to-indigo-500/20 transition-all duration-300 border border-transparent hover:border-white/40 dark:hover:border-indigo-400/30 backdrop-blur-xl"
+                      className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl hover:bg-gradient-to-r hover:from-blue-500/10 hover:via-purple-500/10 hover:to-indigo-500/10 dark:hover:from-blue-500/20 dark:hover:via-purple-500/20 dark:hover:to-indigo-500/20 transition-all duration-300 border border-transparent hover:border-white/40 dark:hover:border-indigo-400/30 backdrop-blur-xl"
                     >
+                      <Users className="w-4 h-4" />
                       Login
                     </Link>
                   </motion.div>
                   <motion.div variants={staggerItem}>
                     <Link
                       to="/signup"
-                      className="relative px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:shadow-purple-500/50 overflow-hidden group transition-all duration-300 border border-white/20"
+                      className="relative flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:shadow-purple-500/50 overflow-hidden group transition-all duration-300 border border-white/20"
                     >
+                      <UserCog className="w-5 h-5 relative z-10" />
                       <span className="relative z-10 drop-shadow-md">
                         Sign Up
                       </span>
@@ -461,59 +506,53 @@ const Navbar = () => {
               initial="closed"
               animate="open"
               exit="closed"
-              className="fixed top-0 right-0 bottom-0 w-full sm:w-80 bg-white/90 dark:bg-slate-900/90 backdrop-blur-3xl z-50 lg:hidden shadow-2xl border-l border-white/50 dark:border-indigo-400/30"
+              className="fixed top-20 right-4 w-[90vw] max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl z-50 lg:hidden shadow-2xl rounded-3xl border border-white/60 dark:border-gray-700/40 overflow-hidden"
             >
               {/* Enhanced gradient overlays */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/15 via-purple-500/15 to-indigo-500/15 dark:from-blue-500/20 dark:via-purple-500/20 dark:to-indigo-500/20 pointer-events-none" />
-              <div className="absolute inset-0 bg-gradient-to-tl from-white/10 via-transparent to-purple-500/10 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-indigo-500/10 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-tl from-white/5 via-transparent to-purple-500/5 pointer-events-none" />
 
-              <div className="relative h-full overflow-y-auto p-6">
+              <div className="relative max-h-[85vh] overflow-y-auto p-6">
                 {/* Close button */}
                 <motion.button
                   variants={mobileItemVariants}
                   onClick={closeMenu}
-                  className="absolute top-6 right-6 p-2.5 rounded-xl bg-gradient-to-br from-red-500 via-pink-600 to-red-700 text-white shadow-xl shadow-red-500/40 border border-white/20 backdrop-blur-xl"
+                  className="absolute top-4 right-4 p-2 rounded-2xl bg-gradient-to-br from-red-500 via-pink-600 to-red-700 text-white shadow-lg shadow-red-500/30 border border-white/20 backdrop-blur-xl"
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5" />
                 </motion.button>
 
                 {/* Menu content */}
-                <div className="mt-16 space-y-4">
+                <div className="mt-2 space-y-3">
                   {user ? (
                     <>
                       {/* User info */}
                       <motion.div
                         variants={mobileItemVariants}
-                        className="p-5 rounded-2xl bg-gradient-to-br from-blue-500/25 via-purple-500/25 to-indigo-500/25 dark:from-blue-500/30 dark:via-purple-500/30 dark:to-indigo-500/30 border border-white/60 dark:border-indigo-400/40 mb-6 shadow-xl shadow-blue-500/20 backdrop-blur-xl"
+                        className="p-4 rounded-2xl bg-gradient-to-br from-blue-500/15 via-purple-500/15 to-indigo-500/15 dark:from-blue-500/20 dark:via-purple-500/20 dark:to-indigo-500/20 border border-white/50 dark:border-indigo-400/30 mb-4 shadow-lg backdrop-blur-xl"
                       >
-                        <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">
                           Logged in as
                         </p>
-                        <p className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-300 bg-clip-text text-transparent drop-shadow-sm">
+                        <p className="text-base font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-300 bg-clip-text text-transparent">
                           {user.name}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">
                           {user.role}
                         </p>
                       </motion.div>
 
                       {/* Nav links */}
-                      {[
-                        { to: "/dashboard", label: "Dashboard" },
-                        { to: "/quizzes", label: "Take a Quiz" },
-                        { to: "/doubt-solver", label: "AI Tutor" },
-                        { to: "/achievements", label: "Achievements" },
-                        { to: "/social", label: "Social Hub" },
-                        { to: "/chat", label: "Chat" },
-                      ].map((link) => (
-                        <motion.div key={link.to} variants={mobileItemVariants}>
+                      {navLinks.map((link, index) => (
+                        <motion.div key={index} variants={mobileItemVariants}>
                           <Link
                             onClick={closeMenu}
                             to={link.to}
-                            className="block px-5 py-3.5 text-gray-800 dark:text-gray-100 hover:text-blue-700 dark:hover:text-blue-300 font-semibold rounded-xl hover:bg-gradient-to-r hover:from-blue-500/20 hover:via-purple-500/20 hover:to-indigo-500/20 dark:hover:from-blue-500/25 dark:hover:via-purple-500/25 dark:hover:to-indigo-500/25 transition-all duration-300 border border-transparent hover:border-white/50 dark:hover:border-indigo-400/40 backdrop-blur-xl hover:shadow-lg"
+                            className="flex items-center gap-3 px-4 py-3 text-gray-800 dark:text-gray-100 hover:text-blue-700 dark:hover:text-blue-300 font-semibold rounded-2xl hover:bg-gradient-to-r hover:from-blue-500/10 hover:via-purple-500/10 hover:to-indigo-500/10 dark:hover:from-blue-500/15 dark:hover:via-purple-500/15 dark:hover:to-indigo-500/15 transition-all duration-300 border border-transparent hover:border-blue-400/30 dark:hover:border-indigo-400/30 backdrop-blur-xl hover:shadow-md"
                           >
+                            <link.icon className="w-5 h-5" />
                             {link.label}
                           </Link>
                         </motion.div>
@@ -525,8 +564,9 @@ const Navbar = () => {
                             <Link
                               onClick={closeMenu}
                               to="/teacher-dashboard"
-                              className="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-xl hover:bg-gradient-to-r hover:from-indigo-500/10 hover:to-purple-500/10 transition-all duration-300"
+                              className="flex items-center gap-3 px-4 py-2.5 text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-2xl hover:bg-gradient-to-r hover:from-indigo-500/10 hover:to-purple-500/10 transition-all duration-300"
                             >
+                              <GraduationCap className="w-5 h-5" />
                               My Quizzes
                             </Link>
                           </motion.div>
@@ -534,8 +574,9 @@ const Navbar = () => {
                             <Link
                               onClick={closeMenu}
                               to="/quiz-maker"
-                              className="block px-4 py-3 text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-xl hover:bg-gradient-to-r hover:from-indigo-500/10 hover:to-purple-500/10 transition-all duration-300"
+                              className="flex items-center gap-3 px-4 py-2.5 text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-2xl hover:bg-gradient-to-r hover:from-indigo-500/10 hover:to-purple-500/10 transition-all duration-300"
                             >
+                              <BookOpen className="w-5 h-5" />
                               Quiz Maker
                             </Link>
                           </motion.div>
@@ -547,8 +588,9 @@ const Navbar = () => {
                           <Link
                             onClick={closeMenu}
                             to="/moderator"
-                            className="block px-4 py-3 font-semibold text-green-600 dark:text-green-400 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
+                            className="flex items-center gap-3 px-4 py-2.5 font-semibold text-green-600 dark:text-green-400 rounded-2xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
                           >
+                            <Shield className="w-5 h-5" />
                             Moderator
                           </Link>
                         </motion.div>
@@ -560,8 +602,9 @@ const Navbar = () => {
                             <Link
                               onClick={closeMenu}
                               to="/admin"
-                              className="block px-4 py-3 font-semibold text-red-600 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
+                              className="flex items-center gap-3 px-4 py-2.5 font-semibold text-red-600 dark:text-red-400 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
                             >
+                              <UserCog className="w-5 h-5" />
                               Admin
                             </Link>
                           </motion.div>
@@ -569,8 +612,9 @@ const Navbar = () => {
                             <Link
                               onClick={closeMenu}
                               to="/admin-broadcast"
-                              className="block px-4 py-3 font-semibold text-red-600 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
+                              className="flex items-center gap-3 px-4 py-2.5 font-semibold text-red-600 dark:text-red-400 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
                             >
+                              <Radio className="w-5 h-5" />
                               Broadcast
                             </Link>
                           </motion.div>
@@ -579,11 +623,11 @@ const Navbar = () => {
 
                       <motion.div
                         variants={mobileItemVariants}
-                        className="pt-4"
+                        className="pt-3"
                       >
                         <button
                           onClick={handleLogout}
-                          className="w-full px-6 py-3.5 bg-gradient-to-r from-red-600 via-pink-600 to-red-700 hover:from-red-700 hover:via-pink-700 hover:to-red-800 text-white font-bold rounded-xl shadow-xl shadow-red-500/40 hover:shadow-2xl hover:shadow-red-500/50 transition-all duration-300 border border-white/20 backdrop-blur-xl"
+                          className="w-full px-6 py-3 bg-gradient-to-r from-red-600 via-pink-600 to-red-700 hover:from-red-700 hover:via-pink-700 hover:to-red-800 text-white font-bold rounded-2xl shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 border border-white/20 backdrop-blur-xl"
                         >
                           Logout
                         </button>
@@ -595,8 +639,9 @@ const Navbar = () => {
                         <Link
                           onClick={closeMenu}
                           to="/features"
-                          className="block px-5 py-3.5 text-gray-800 dark:text-gray-100 hover:text-blue-700 dark:hover:text-blue-300 font-semibold rounded-xl hover:bg-gradient-to-r hover:from-blue-500/20 hover:via-purple-500/20 hover:to-indigo-500/20 dark:hover:from-blue-500/25 dark:hover:via-purple-500/25 dark:hover:to-indigo-500/25 transition-all duration-300 border border-transparent hover:border-white/50 dark:hover:border-indigo-400/40 backdrop-blur-xl hover:shadow-lg"
+                          className="flex items-center gap-3 px-4 py-3 text-gray-800 dark:text-gray-100 hover:text-blue-700 dark:hover:text-blue-300 font-semibold rounded-2xl hover:bg-gradient-to-r hover:from-blue-500/10 hover:via-purple-500/10 hover:to-indigo-500/10 dark:hover:from-blue-500/15 dark:hover:via-purple-500/15 dark:hover:to-indigo-500/15 transition-all duration-300 border border-transparent hover:border-blue-400/30 dark:hover:border-indigo-400/30 backdrop-blur-xl hover:shadow-md"
                         >
+                          <Sparkles className="w-5 h-5" />
                           Features
                         </Link>
                       </motion.div>
@@ -604,20 +649,22 @@ const Navbar = () => {
                         <Link
                           onClick={closeMenu}
                           to="/login"
-                          className="block px-5 py-3.5 text-gray-800 dark:text-gray-100 hover:text-blue-700 dark:hover:text-blue-300 font-semibold rounded-xl hover:bg-gradient-to-r hover:from-blue-500/20 hover:via-purple-500/20 hover:to-indigo-500/20 dark:hover:from-blue-500/25 dark:hover:via-purple-500/25 dark:hover:to-indigo-500/25 transition-all duration-300 border border-transparent hover:border-white/50 dark:hover:border-indigo-400/40 backdrop-blur-xl hover:shadow-lg"
+                          className="flex items-center gap-3 px-4 py-3 text-gray-800 dark:text-gray-100 hover:text-blue-700 dark:hover:text-blue-300 font-semibold rounded-2xl hover:bg-gradient-to-r hover:from-blue-500/10 hover:via-purple-500/10 hover:to-indigo-500/10 dark:hover:from-blue-500/15 dark:hover:via-purple-500/15 dark:hover:to-indigo-500/15 transition-all duration-300 border border-transparent hover:border-blue-400/30 dark:hover:border-indigo-400/30 backdrop-blur-xl hover:shadow-md"
                         >
+                          <Users className="w-5 h-5" />
                           Login
                         </Link>
                       </motion.div>
                       <motion.div
                         variants={mobileItemVariants}
-                        className="pt-4"
+                        className="pt-3"
                       >
                         <Link
                           onClick={closeMenu}
                           to="/signup"
-                          className="block w-full px-6 py-3.5 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:shadow-purple-500/50 text-center transition-all duration-300 border border-white/20 backdrop-blur-xl"
+                          className="flex items-center justify-center gap-3 w-full px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-800 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300 border border-white/20 backdrop-blur-xl"
                         >
+                          <UserCog className="w-5 h-5" />
                           Sign Up
                         </Link>
                       </motion.div>
