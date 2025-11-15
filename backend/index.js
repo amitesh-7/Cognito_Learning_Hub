@@ -264,14 +264,33 @@ app.get("/", (req, res) => {
 // --- SOCKET.IO SETUP ---
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins, // Allow same origins as main CORS
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or postman)
+      if (!origin) return callback(null, true);
+
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app") ||
+        origin.endsWith(".onrender.com") ||
+        origin.includes("localhost") ||
+        origin.includes("127.0.0.1");
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        console.log("[Socket.IO] CORS blocked origin:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   },
   transports: ["websocket", "polling"], // Support both for compatibility
   pingTimeout: 60000, // 60 seconds before considering connection lost
   pingInterval: 25000, // Send ping every 25 seconds
   allowEIO3: true, // Allow Engine.IO v3 clients
+  allowUpgrades: true, // Allow transport upgrades
+  cookie: false, // Disable cookies for better CORS support
 });
 
 // Store active sessions in memory for fast access

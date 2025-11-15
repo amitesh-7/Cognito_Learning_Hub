@@ -36,6 +36,10 @@ export const SocketProvider = ({ children }) => {
       reconnectionAttempts: maxReconnectAttempts,
       timeout: 10000,
       autoConnect: true, // Auto-connect enabled
+      withCredentials: true, // Send cookies with requests
+      forceNew: false, // Reuse existing connection
+      upgrade: true, // Allow transport upgrades
+      rememberUpgrade: true, // Remember successful upgrade
     });
 
     socketRef.current = socketInstance;
