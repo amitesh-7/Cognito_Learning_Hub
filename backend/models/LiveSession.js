@@ -456,6 +456,7 @@ LiveSessionSchema.methods.finalizeSession = async function () {
           return await Result.create({
             user: participant.userId,
             quiz: this.quizId,
+            liveSession: this._id,
             score: correctAnswers,
             totalQuestions: quiz.questions.length,
             pointsEarned: participant.score,

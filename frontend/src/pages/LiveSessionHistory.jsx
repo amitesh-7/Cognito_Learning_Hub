@@ -10,6 +10,10 @@ import {
   Eye,
   Trash2,
   Download,
+  Trophy,
+  X,
+  Medal,
+  Award,
 } from "lucide-react";
 
 const LiveSessionHistory = () => {
@@ -21,6 +25,9 @@ const LiveSessionHistory = () => {
   const [filter, setFilter] = useState("all"); // all, completed, active
   const [selectedQuiz, setSelectedQuiz] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [leaderboardData, setLeaderboardData] = useState([]);
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -129,6 +136,48 @@ const LiveSessionHistory = () => {
     return `${hours}h ${mins}m`;
   };
 
+  const fetchLeaderboard = async (sessionCode) => {
+    try {
+      const token =
+        localStorage.getItem("quizwise-token") || localStorage.getItem("token");
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+      const response = await fetch(
+        `${apiUrl}/api/live-sessions/${sessionCode}/leaderboard`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch leaderboard");
+      }
+
+      const data = await response.json();
+      return data.leaderboard || [];
+    } catch (err) {
+      console.error("Error fetching leaderboard:", err);
+      return [];
+    }
+  };
+
+  const handleViewLeaderboard = async (session) => {
+    setSelectedSession(session);
+    setShowLeaderboard(true);
+    const leaderboard = await fetchLeaderboard(session.sessionCode);
+    setLeaderboardData(leaderboard);
+  };
+
+  const getRankIcon = (rank) => {
+    if (rank === 1) return <Trophy className="w-6 h-6 text-yellow-500" />;
+    if (rank === 2) return <Medal className="w-6 h-6 text-gray-400" />;
+    if (rank === 3) return <Award className="w-6 h-6 text-amber-600" />;
+    return <span className="text-lg font-bold text-gray-600">#{rank}</span>;
+  };
+
   const getStatusBadge = (status) => {
     const styles = {
       waiting:
@@ -161,6 +210,107 @@ const LiveSessionHistory = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 py-8 px-4">
+      {/* Leaderboard Modal */}
+      <AnimatePresence>
+        {showLeaderboard && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowLeaderboard(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-1">
+                      Session Leaderboard
+                    </h2>
+                    <p className="text-purple-100">
+                      {selectedSession?.quizTitle}
+                    </p>
+                    <p className="text-sm text-purple-200">
+                      Code: {selectedSession?.sessionCode}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowLeaderboard(false)}
+                    className="p-2 hover:bg-white/20 rounded-lg transition"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Leaderboard Content */}
+              <div className="p-6 overflow-y-auto max-h-[60vh]">
+                {leaderboardData.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">
+                      No participants in this session
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {leaderboardData.map((participant, index) => (
+                      <motion.div
+                        key={participant.userId || index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className={`flex items-center gap-4 p-4 rounded-xl ${
+                          index === 0
+                            ? "bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border-2 border-yellow-400"
+                            : index === 1
+                            ? "bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-800/50 dark:to-slate-800/50 border-2 border-gray-400"
+                            : index === 2
+                            ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-600"
+                            : "bg-gray-50 dark:bg-gray-700/50"
+                        }`}
+                      >
+                        {/* Rank */}
+                        <div className="flex-shrink-0 w-12 flex items-center justify-center">
+                          {getRankIcon(index + 1)}
+                        </div>
+
+                        {/* User Info */}
+                        <div className="flex-1">
+                          <h3 className="font-bold text-gray-800 dark:text-white">
+                            {participant.username}
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {participant.correctAnswers || 0} correct answers
+                          </p>
+                        </div>
+
+                        {/* Score */}
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                            {participant.score}
+                          </div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">
+                            points
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
@@ -309,11 +459,18 @@ const LiveSessionHistory = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => handleViewLeaderboard(session)}
+                        className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition flex items-center gap-2"
+                      >
+                        <Trophy className="w-4 h-4" />
+                        Leaderboard
+                      </button>
                       <Link to={`/live-session-analytics/${session.sessionId}`}>
                         <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center gap-2">
                           <Eye className="w-4 h-4" />
-                          View Details
+                          Details
                         </button>
                       </Link>
                       <button

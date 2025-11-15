@@ -813,9 +813,20 @@ io.on("connection", (socket) => {
 
       // Finalize session and save final leaderboard
       try {
+        console.log(`[Socket.IO] Before finalize - Status: ${session.status}`);
         await session.finalizeSession();
+        console.log(`[Socket.IO] After finalize - Status: ${session.status}`);
+        await session.save();
+        console.log(`[Socket.IO] After save - Status: ${session.status}`);
+
+        // Verify in database
+        const verifySession = await LiveSession.findOne({ sessionCode });
         console.log(
-          `[Socket.IO] Session ${sessionCode} finalized with results saved`
+          `[Socket.IO] Database verification - Status: ${verifySession.status}`
+        );
+
+        console.log(
+          `[Socket.IO] Session ${sessionCode} finalized with results saved and status updated to completed`
         );
       } catch (finalizeError) {
         console.error("[Socket.IO] Error finalizing session:", finalizeError);
@@ -1243,17 +1254,23 @@ io.on("connection", (socket) => {
 
       for (const session of sessions) {
         if (session.hostSocketId === socket.id) {
-          // Host disconnected - pause session
-          session.status = "paused";
-          await session.save();
+          // Host disconnected - pause session ONLY if not already completed
+          if (session.status !== "completed") {
+            session.status = "paused";
+            await session.save();
 
-          io.to(session.sessionCode).emit("host-disconnected", {
-            message: "Host disconnected. Session paused.",
-          });
+            io.to(session.sessionCode).emit("host-disconnected", {
+              message: "Host disconnected. Session paused.",
+            });
 
-          console.log(
-            `[Socket.IO] Host disconnected from session ${session.sessionCode}`
-          );
+            console.log(
+              `[Socket.IO] Host disconnected from session ${session.sessionCode} - status set to paused`
+            );
+          } else {
+            console.log(
+              `[Socket.IO] Host disconnected from session ${session.sessionCode} - already completed, not changing status`
+            );
+          }
         } else {
           // Participant disconnected
           const participant = session.participants.find(
@@ -4285,29 +4302,98 @@ app.get("/api/live-sessions/teacher/history", auth, async (req, res) => {
   try {
     const Quiz = require("./models/Quiz");
 
+    console.log(`[API] Fetching session history for teacher: ${req.user.id}`);
+
     // Find all quizzes created by this teacher
     const teacherQuizzes = await Quiz.find({ createdBy: req.user.id }).select(
-      "_id"
+      "_id title"
     );
     const quizIds = teacherQuizzes.map((q) => q._id);
+
+    console.log(
+      `[API] Teacher has ${teacherQuizzes.length} quizzes:`,
+      teacherQuizzes.map((q) => ({ id: q._id, title: q.title }))
+    );
+
+    // TEMP: Also check sessions hosted by this teacher
+    const hostedSessions = await LiveSession.find({
+      hostId: req.user.id,
+    })
+      .populate("quizId", "title description category createdBy")
+      .populate("hostId", "name")
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    console.log(
+      `[API] Found ${hostedSessions.length} sessions hosted by teacher`
+    );
+    console.log(
+      `[API] Hosted session details:`,
+      hostedSessions.map((s) => ({
+        code: s.sessionCode,
+        status: s.status,
+        quizTitle: s.quizId?.title,
+        quizCreatedBy: s.quizId?.createdBy?.toString(),
+        hasEndedAt: !!s.endedAt,
+      }))
+    );
 
     // Find all completed sessions for these quizzes
     const sessions = await LiveSession.find({
       quizId: { $in: quizIds },
-      status: "completed",
     })
       .populate("quizId", "title description category")
       .populate("hostId", "name")
-      .sort({ endedAt: -1 })
+      .sort({ createdAt: -1 })
       .limit(100);
 
-    const sessionHistory = sessions.map((session) => ({
+    console.log(
+      `[API] Found ${sessions.length} total sessions by quiz ownership`
+    );
+    console.log(
+      `[API] Session statuses:`,
+      sessions.map((s) => ({
+        code: s.sessionCode,
+        status: s.status,
+        hasEndedAt: !!s.endedAt,
+      }))
+    );
+
+    // Use hosted sessions instead (teacher can see sessions they hosted)
+    const allRelevantSessions = [
+      ...new Map(
+        [...hostedSessions, ...sessions].map((s) => [s._id.toString(), s])
+      ).values(),
+    ];
+    console.log(`[API] Total unique sessions: ${allRelevantSessions.length}`);
+
+    // Filter completed sessions
+    const completedSessions = allRelevantSessions.filter(
+      (s) => s.status === "completed"
+    );
+    console.log(`[API] ${completedSessions.length} completed sessions`);
+    console.log(
+      `[API] Completed session codes:`,
+      completedSessions.map((s) => s.sessionCode)
+    );
+
+    // DEBUG: Show why sessions were filtered out
+    const notCompleted = allRelevantSessions.filter(
+      (s) => s.status !== "completed"
+    );
+    console.log(
+      `[API] ${notCompleted.length} sessions NOT completed:`,
+      notCompleted.map((s) => ({ code: s.sessionCode, status: s.status }))
+    );
+
+    const sessionHistory = completedSessions.map((session) => ({
       sessionId: session._id,
       sessionCode: session.sessionCode,
       quizId: session.quizId?._id,
       quizTitle: session.quizId?.title,
       category: session.quizId?.category,
       hostName: session.hostId?.name,
+      status: session.status, // Add status field
       participantCount: session.participants.filter((p) => p.isActive).length,
       startedAt: session.startedAt,
       endedAt: session.endedAt,
@@ -4324,6 +4410,11 @@ app.get("/api/live-sessions/teacher/history", auth, async (req, res) => {
           : 0,
     }));
 
+    console.log(
+      `[API] Returning ${sessionHistory.length} sessions with IDs:`,
+      sessionHistory.map((s) => ({ code: s.sessionCode, id: s.sessionId }))
+    );
+
     res.json({
       success: true,
       sessions: sessionHistory,
@@ -4332,6 +4423,39 @@ app.get("/api/live-sessions/teacher/history", auth, async (req, res) => {
   } catch (error) {
     console.error("Error fetching teacher session history:", error);
     res.status(500).json({ message: "Failed to fetch session history" });
+  }
+});
+
+// Get leaderboard for a specific session
+app.get("/api/live-sessions/:sessionId/leaderboard", auth, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    console.log(`[API] Fetching leaderboard for session: ${sessionId}`);
+
+    const session = await LiveSession.findById(sessionId)
+      .populate("quizId", "title")
+      .populate("hostId", "name");
+
+    console.log(`[API] Session found:`, !!session);
+
+    if (!session) {
+      console.log(`[API] Session ${sessionId} not found`);
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    // Return final leaderboard if available, otherwise generate from participants
+    const leaderboard = session.finalLeaderboard || session.getLeaderboard();
+    console.log(`[API] Leaderboard has ${leaderboard.length} participants`);
+
+    res.json({
+      success: true,
+      leaderboard,
+      sessionCode: session.sessionCode,
+      quizTitle: session.quizId?.title,
+    });
+  } catch (error) {
+    console.error("Error fetching leaderboard:", error);
+    res.status(500).json({ message: "Failed to fetch leaderboard" });
   }
 });
 
