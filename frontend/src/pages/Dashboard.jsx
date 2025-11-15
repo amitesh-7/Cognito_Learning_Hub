@@ -32,6 +32,9 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
+import { usePullToRefresh } from "../hooks/usePullToRefresh";
+import { PullToRefreshIndicator } from "../components/ui/PullToRefreshIndicator";
+import { useHaptic } from "../hooks/useHaptic";
 
 // --- Animation Variants ---
 const containerVariants = {
@@ -62,52 +65,68 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [streakCount, setStreakCount] = useState(0);
   const [viewMode, setViewMode] = useState("overview"); // 'overview', 'detailed'
+  const { success } = useHaptic();
+
+  const fetchResults = async () => {
+    try {
+      const token = localStorage.getItem("quizwise-token");
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/results/my-results`,
+        {
+          headers: { "x-auth-token": token },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch your results.");
+      const data = await response.json();
+      setResults(data);
+
+      // Calculate streak (consecutive days with quiz attempts)
+      const sortedResults = data.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+      let streak = 0;
+      let currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0);
+
+      for (let i = 0; i < sortedResults.length; i++) {
+        const resultDate = new Date(sortedResults[i].createdAt);
+        resultDate.setHours(0, 0, 0, 0);
+        const daysDiff = Math.floor(
+          (currentDate - resultDate) / (1000 * 60 * 60 * 24)
+        );
+
+        if (daysDiff === streak) {
+          streak++;
+          currentDate = new Date(resultDate);
+        } else if (daysDiff > streak) {
+          break;
+        }
+      }
+      setStreakCount(streak);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchResults = async () => {
-      try {
-        const token = localStorage.getItem("quizwise-token");
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/results/my-results`,
-          {
-            headers: { "x-auth-token": token },
-          }
-        );
-        if (!response.ok) throw new Error("Failed to fetch your results.");
-        const data = await response.json();
-        setResults(data);
-
-        // Calculate streak (consecutive days with quiz attempts)
-        const sortedResults = data.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
-        let streak = 0;
-        let currentDate = new Date();
-        currentDate.setHours(0, 0, 0, 0);
-
-        for (let i = 0; i < sortedResults.length; i++) {
-          const resultDate = new Date(sortedResults[i].createdAt);
-          resultDate.setHours(0, 0, 0, 0);
-          const daysDiff = Math.floor(
-            (currentDate - resultDate) / (1000 * 60 * 60 * 24)
-          );
-
-          if (daysDiff === streak) {
-            streak++;
-            currentDate = new Date(resultDate);
-          } else if (daysDiff > streak) {
-            break;
-          }
-        }
-        setStreakCount(streak);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchResults();
   }, []);
+
+  // Pull-to-refresh functionality
+  const handleRefresh = async () => {
+    success(); // Haptic feedback on refresh
+    setLoading(true);
+    await fetchResults();
+  };
+
+  const { isPulling, pullDistance, isRefreshing, pullProgress } =
+    usePullToRefresh({
+      onRefresh: handleRefresh,
+      threshold: 80,
+      enabled: !loading,
+    });
 
   // --- Calculated Stats ---
   const quizzesCompleted = results.length;
@@ -246,6 +265,13 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8">
+      {/* Pull-to-refresh indicator */}
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        pullProgress={pullProgress}
+        isRefreshing={isRefreshing}
+      />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Header Section */}
         <motion.div
@@ -781,100 +807,107 @@ export default function Dashboard() {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Detailed Results
                 </h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-800">
-                      <tr>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                        >
-                          Quiz Title
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                        >
-                          Score
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                        >
-                          Performance
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                        >
-                          Date Taken
-                        </th>
-                        <th scope="col" className="relative px-6 py-3">
-                          <span className="sr-only">Actions</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                      {results.map((result) => (
-                        <tr
-                          key={result._id}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-800"
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-indigo-100 dark:bg-indigo-900 rounded-lg">
-                                <ClipboardList className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                  {result.quiz?.title || "Deleted Quiz"}
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead className="bg-gray-50 dark:bg-gray-800">
+                        <tr>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                          >
+                            Quiz Title
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                          >
+                            Score
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                          >
+                            Performance
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                          >
+                            Date Taken
+                          </th>
+                          <th scope="col" className="relative px-6 py-3">
+                            <span className="sr-only">Actions</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                        {results.map((result) => (
+                          <tr
+                            key={result._id}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-indigo-100 dark:bg-indigo-900 rounded-lg">
+                                  <ClipboardList className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {result.quiz?.title || "Deleted Quiz"}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900 dark:text-white">
-                              {result.score} / {result.totalQuestions}
-                            </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {(
-                                (result.score / result.totalQuestions) *
-                                100
-                              ).toFixed(0)}
-                              %
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Badge
-                              variant={
-                                result.score / result.totalQuestions >= 0.9
-                                  ? "default"
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900 dark:text-white">
+                                {result.score} / {result.totalQuestions}
+                              </div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                {(
+                                  (result.score / result.totalQuestions) *
+                                  100
+                                ).toFixed(0)}
+                                %
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <Badge
+                                variant={
+                                  result.score / result.totalQuestions >= 0.9
+                                    ? "default"
+                                    : result.score / result.totalQuestions >=
+                                      0.7
+                                    ? "secondary"
+                                    : "destructive"
+                                }
+                              >
+                                {result.score / result.totalQuestions >= 0.9
+                                  ? "Excellent"
                                   : result.score / result.totalQuestions >= 0.7
-                                  ? "secondary"
-                                  : "destructive"
-                              }
-                            >
-                              {result.score / result.totalQuestions >= 0.9
-                                ? "Excellent"
-                                : result.score / result.totalQuestions >= 0.7
-                                ? "Good"
-                                : "Needs Work"}
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {new Date(result.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <Link to={`/quiz/${result.quiz?._id}`}>
-                              <Button variant="outline" size="sm">
-                                Play Again
-                              </Button>
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                                  ? "Good"
+                                  : "Needs Work"}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {new Date(result.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <Link to={`/quiz/${result.quiz?._id}`}>
+                                <Button variant="outline" size="sm">
+                                  Play Again
+                                </Button>
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {/* Mobile scroll indicator */}
+                  <div className="text-xs text-center text-gray-500 dark:text-gray-400 mt-2 sm:hidden">
+                    ← Swipe to see more →
+                  </div>
                 </div>
               </Card>
             </motion.div>

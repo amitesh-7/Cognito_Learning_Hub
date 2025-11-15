@@ -9,6 +9,8 @@ import Navbar from "./components/Navbar";
 import LenisScroll from "./components/LenisScroll";
 import { useTheme } from "./hooks/useTheme";
 import { useIsMobile } from "./hooks/useReducedMotion";
+import NetworkStatusIndicator from "./components/ui/NetworkStatusIndicator";
+import PWAInstallPrompt from "./components/ui/PWAInstallPrompt";
 
 // Import route wrapper components (never lazy load these)
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -62,6 +64,12 @@ function App() {
       <ToastProvider>
         <LenisScroll>
           <div className="min-h-screen bg-white dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300 relative overflow-x-hidden">
+            {/* Network Status Indicator */}
+            <NetworkStatusIndicator />
+
+            {/* PWA Install Prompt */}
+            <PWAInstallPrompt />
+
             {/* Animated Background Layers - Disabled on mobile for performance */}
             {!isMobile && (
               <>

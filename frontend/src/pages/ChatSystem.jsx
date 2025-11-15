@@ -1,27 +1,27 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import { 
-  MessageCircle, 
-  Send, 
-  Users, 
+import React, { useState, useEffect, useContext, useRef } from "react";
+import { AuthContext } from "../context/AuthContext";
+import {
+  MessageCircle,
+  Send,
+  Users,
   ArrowLeft,
   Smile,
   Search,
   Loader,
   Image as ImageIcon,
   MoreVertical,
-  Clock
-} from 'lucide-react';
+  Clock,
+} from "lucide-react";
 
 const ChatSystem = () => {
   const { user } = useContext(AuthContext);
   const [friends, setFriends] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [friendsStatus, setFriendsStatus] = useState(new Map());
   const messageInputRef = useRef(null);
@@ -31,17 +31,17 @@ const ChatSystem = () => {
 
   useEffect(() => {
     fetchFriends();
-    updateUserStatus('online');
+    updateUserStatus("online");
     startStatusPolling();
     startActivityUpdates();
-    
+
     // Set user offline when component unmounts or page closes
     const handleBeforeUnload = () => {
-      updateUserStatus('offline');
+      updateUserStatus("offline");
     };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     return () => {
       if (chatPollingRef.current) {
         clearInterval(chatPollingRef.current);
@@ -52,8 +52,8 @@ const ChatSystem = () => {
       if (activityUpdateRef.current) {
         clearInterval(activityUpdateRef.current);
       }
-      updateUserStatus('offline');
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      updateUserStatus("offline");
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
 
@@ -86,17 +86,17 @@ const ChatSystem = () => {
 
   const updateUserStatus = async (status) => {
     try {
-      const token = localStorage.getItem('quizwise-token');
+      const token = localStorage.getItem("quizwise-token");
       await fetch(`${import.meta.env.VITE_API_URL}/api/user/status`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
+          "Content-Type": "application/json",
+          "x-auth-token": token,
         },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status }),
       });
     } catch (error) {
-      console.error('Error updating user status:', error);
+      console.error("Error updating user status:", error);
     }
   };
 
@@ -114,54 +114,60 @@ const ChatSystem = () => {
 
   const updateActivity = async () => {
     try {
-      const token = localStorage.getItem('quizwise-token');
+      const token = localStorage.getItem("quizwise-token");
       await fetch(`${import.meta.env.VITE_API_URL}/api/user/activity`, {
-        method: 'PUT',
-        headers: { 'x-auth-token': token }
+        method: "PUT",
+        headers: { "x-auth-token": token },
       });
     } catch (error) {
-      console.error('Error updating activity:', error);
+      console.error("Error updating activity:", error);
     }
   };
 
   const fetchFriendsStatus = async () => {
     try {
-      const token = localStorage.getItem('quizwise-token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/friends-status`, {
-        headers: { 'x-auth-token': token }
-      });
+      const token = localStorage.getItem("quizwise-token");
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/user/friends-status`,
+        {
+          headers: { "x-auth-token": token },
+        }
+      );
       const data = await response.json();
       if (response.ok) {
         const statusMap = new Map();
         const onlineSet = new Set();
-        
-        data.friendsStatus?.forEach(friend => {
+
+        data.friendsStatus?.forEach((friend) => {
           statusMap.set(friend.friendId, {
             status: friend.status,
             lastSeen: friend.lastSeen,
             lastActivity: friend.lastActivity,
-            isOnline: friend.isOnline
+            isOnline: friend.isOnline,
           });
-          
+
           if (friend.isOnline) {
             onlineSet.add(friend.friendId);
           }
         });
-        
+
         setFriendsStatus(statusMap);
         setOnlineUsers(onlineSet);
       }
     } catch (error) {
-      console.error('Error fetching friends status:', error);
+      console.error("Error fetching friends status:", error);
     }
   };
 
   const fetchFriends = async () => {
     try {
-      const token = localStorage.getItem('quizwise-token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/friends`, {
-        headers: { 'x-auth-token': token }
-      });
+      const token = localStorage.getItem("quizwise-token");
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends`,
+        {
+          headers: { "x-auth-token": token },
+        }
+      );
       const data = await response.json();
       if (response.ok) {
         setFriends(data.friends || []);
@@ -169,26 +175,28 @@ const ChatSystem = () => {
         fetchFriendsStatus();
       }
     } catch (error) {
-      console.error('Error fetching friends:', error);
+      console.error("Error fetching friends:", error);
     }
   };
 
   const fetchMessages = async (silent = false) => {
     if (!selectedChat) return;
-    
+
     if (!silent) setLoading(true);
     try {
-      const token = localStorage.getItem('quizwise-token');
+      const token = localStorage.getItem("quizwise-token");
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/chat/messages/${selectedChat.friend._id}`,
-        { headers: { 'x-auth-token': token } }
+        `${import.meta.env.VITE_API_URL}/api/chat/messages/${
+          selectedChat.friend._id
+        }`,
+        { headers: { "x-auth-token": token } }
       );
       const data = await response.json();
       if (response.ok) {
         setMessages(data.messages || []);
       }
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error("Error fetching messages:", error);
     } finally {
       if (!silent) setLoading(false);
     }
@@ -196,15 +204,20 @@ const ChatSystem = () => {
 
   const markMessagesAsRead = async () => {
     if (!selectedChat) return;
-    
+
     try {
-      const token = localStorage.getItem('quizwise-token');
-      await fetch(`${import.meta.env.VITE_API_URL}/api/chat/read/${selectedChat.friend._id}`, {
-        method: 'PUT',
-        headers: { 'x-auth-token': token }
-      });
+      const token = localStorage.getItem("quizwise-token");
+      await fetch(
+        `${import.meta.env.VITE_API_URL}/api/chat/read/${
+          selectedChat.friend._id
+        }`,
+        {
+          method: "PUT",
+          headers: { "x-auth-token": token },
+        }
+      );
     } catch (error) {
-      console.error('Error marking messages as read:', error);
+      console.error("Error marking messages as read:", error);
     }
   };
 
@@ -212,7 +225,7 @@ const ChatSystem = () => {
     if (!newMessage.trim() || !selectedChat || sendingMessage) return;
 
     const messageContent = newMessage.trim();
-    setNewMessage('');
+    setNewMessage("");
     setSendingMessage(true);
 
     // Optimistic UI update
@@ -221,46 +234,53 @@ const ChatSystem = () => {
       sender: { _id: user.id, name: user.name },
       content: messageContent,
       timestamp: new Date().toISOString(),
-      sending: true
+      sending: true,
     };
-    setMessages(prev => [...prev, tempMessage]);
+    setMessages((prev) => [...prev, tempMessage]);
 
     try {
-      const token = localStorage.getItem('quizwise-token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/chat/send`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        },
-        body: JSON.stringify({
-          recipientId: selectedChat.friend._id,
-          content: messageContent
-        })
-      });
+      const token = localStorage.getItem("quizwise-token");
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/chat/send`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-auth-token": token,
+          },
+          body: JSON.stringify({
+            recipientId: selectedChat.friend._id,
+            content: messageContent,
+          }),
+        }
+      );
 
       if (response.ok) {
         // Remove temp message and fetch real messages
-        setMessages(prev => prev.filter(msg => msg._id !== tempMessage._id));
+        setMessages((prev) =>
+          prev.filter((msg) => msg._id !== tempMessage._id)
+        );
         fetchMessages(true);
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to send message');
+        alert(error.message || "Failed to send message");
         setNewMessage(messageContent);
-        setMessages(prev => prev.filter(msg => msg._id !== tempMessage._id));
+        setMessages((prev) =>
+          prev.filter((msg) => msg._id !== tempMessage._id)
+        );
       }
     } catch (error) {
-      console.error('Error sending message:', error);
-      alert('Failed to send message');
+      console.error("Error sending message:", error);
+      alert("Failed to send message");
       setNewMessage(messageContent);
-      setMessages(prev => prev.filter(msg => msg._id !== tempMessage._id));
+      setMessages((prev) => prev.filter((msg) => msg._id !== tempMessage._id));
     } finally {
       setSendingMessage(false);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -270,34 +290,46 @@ const ChatSystem = () => {
     const date = new Date(timestamp);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    
+    const messageDate = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
+
     if (messageDate.getTime() === today.getTime()) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     }
   };
 
-  const filteredFriends = friends.filter(friendship =>
+  const filteredFriends = friends.filter((friendship) =>
     friendship.friend.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getLastSeen = (friendId) => {
     const status = friendsStatus.get(friendId);
-    
+
     if (!status) {
-      return 'Unknown';
+      return "Unknown";
     }
-    
+
     if (status.isOnline) {
-      return 'Online';
+      return "Online";
     }
-    
-    if (status.status === 'away') {
-      return 'Away';
+
+    if (status.status === "away") {
+      return "Away";
     }
-    
+
     // Calculate time difference for last seen
     if (status.lastSeen) {
       const lastSeenTime = new Date(status.lastSeen);
@@ -306,9 +338,9 @@ const ChatSystem = () => {
       const diffMinutes = Math.floor(diffMs / (1000 * 60));
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      
+
       if (diffMinutes < 1) {
-        return 'Just now';
+        return "Just now";
       } else if (diffMinutes < 60) {
         return `Last seen ${diffMinutes}m ago`;
       } else if (diffHours < 24) {
@@ -319,25 +351,25 @@ const ChatSystem = () => {
         return `Last seen ${lastSeenTime.toLocaleDateString()}`;
       }
     }
-    
-    return 'Offline';
+
+    return "Offline";
   };
 
   const getStatusIndicator = (friendId) => {
     const status = friendsStatus.get(friendId);
-    
+
     if (!status) {
       return null;
     }
-    
+
     if (status.isOnline) {
-      return 'bg-green-500'; // Online - Green
-    } else if (status.status === 'away') {
-      return 'bg-yellow-500'; // Away - Yellow
-    } else if (status.status === 'offline') {
-      return 'bg-gray-400'; // Offline - Gray
+      return "bg-green-500"; // Online - Green
+    } else if (status.status === "away") {
+      return "bg-yellow-500"; // Away - Yellow
+    } else if (status.status === "offline") {
+      return "bg-gray-400"; // Offline - Gray
     }
-    
+
     return null;
   };
 
@@ -346,12 +378,15 @@ const ChatSystem = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <div className="text-center bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-md">
           <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">No Friends to Chat With</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+            No Friends to Chat With
+          </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Add some friends first to start chatting! Go to the Social Hub to find and add friends.
+            Add some friends first to start chatting! Go to the Social Hub to
+            find and add friends.
           </p>
-          <button 
-            onClick={() => window.location.href = '/social'}
+          <button
+            onClick={() => (window.location.href = "/social")}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Go to Social Hub
@@ -363,16 +398,22 @@ const ChatSystem = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      <div className="flex h-screen">
+      <div className="flex min-h-screen sm:h-screen flex-col sm:flex-row">
         {/* Sidebar - Friends List */}
-        <div className={`${selectedChat ? 'hidden md:block' : 'block'} w-full md:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col`}>
+        <div
+          className={`${
+            selectedChat ? "hidden md:block" : "block"
+          } w-full md:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col`}
+        >
           {/* Header */}
           <div className="p-4 bg-blue-600 dark:bg-blue-700 text-white">
             <h1 className="text-xl font-bold flex items-center gap-2">
               <MessageCircle className="w-6 h-6" />
               Messages
             </h1>
-            <p className="text-sm text-blue-100 mt-1">{friends.length} friends available</p>
+            <p className="text-sm text-blue-100 mt-1">
+              {friends.length} friends available
+            </p>
           </div>
 
           {/* Search */}
@@ -393,7 +434,7 @@ const ChatSystem = () => {
           <div className="flex-1 overflow-y-auto">
             {filteredFriends.length === 0 ? (
               <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                {searchQuery ? 'No friends found' : 'No friends available'}
+                {searchQuery ? "No friends found" : "No friends available"}
               </div>
             ) : (
               filteredFriends.map((friendship) => (
@@ -401,7 +442,9 @@ const ChatSystem = () => {
                   key={friendship.friendshipId}
                   onClick={() => setSelectedChat(friendship)}
                   className={`p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
-                    selectedChat?.friendshipId === friendship.friendshipId ? 'bg-blue-50 dark:bg-blue-900 border-blue-200 dark:border-blue-700' : ''
+                    selectedChat?.friendshipId === friendship.friendshipId
+                      ? "bg-blue-50 dark:bg-blue-900 border-blue-200 dark:border-blue-700"
+                      : ""
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -410,12 +453,18 @@ const ChatSystem = () => {
                         {friendship.friend.name.charAt(0).toUpperCase()}
                       </div>
                       {getStatusIndicator(friendship.friend._id) && (
-                        <div className={`absolute -bottom-1 -right-1 w-4 h-4 ${getStatusIndicator(friendship.friend._id)} border-2 border-white dark:border-gray-800 rounded-full`}></div>
+                        <div
+                          className={`absolute -bottom-1 -right-1 w-4 h-4 ${getStatusIndicator(
+                            friendship.friend._id
+                          )} border-2 border-white dark:border-gray-800 rounded-full`}
+                        ></div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="font-medium text-gray-900 dark:text-white truncate">{friendship.friend.name}</p>
+                        <p className="font-medium text-gray-900 dark:text-white truncate">
+                          {friendship.friend.name}
+                        </p>
                         {friendsStatus.get(friendship.friend._id)?.isOnline && (
                           <div className="text-xs text-green-500 dark:text-green-400 flex items-center">
                             <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
@@ -435,13 +484,17 @@ const ChatSystem = () => {
         </div>
 
         {/* Chat Area */}
-        <div className={`${selectedChat ? 'block' : 'hidden md:block'} flex-1 flex flex-col`}>
+        <div
+          className={`${
+            selectedChat ? "block" : "hidden md:block"
+          } flex-1 flex flex-col`}
+        >
           {selectedChat ? (
             <>
               {/* Chat Header */}
               <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <button 
+                  <button
                     onClick={() => setSelectedChat(null)}
                     className="md:hidden text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                   >
@@ -452,11 +505,17 @@ const ChatSystem = () => {
                       {selectedChat.friend.name.charAt(0).toUpperCase()}
                     </div>
                     {getStatusIndicator(selectedChat.friend._id) && (
-                      <div className={`absolute -bottom-1 -right-1 w-3 h-3 ${getStatusIndicator(selectedChat.friend._id)} border-2 border-white dark:border-gray-800 rounded-full`}></div>
+                      <div
+                        className={`absolute -bottom-1 -right-1 w-3 h-3 ${getStatusIndicator(
+                          selectedChat.friend._id
+                        )} border-2 border-white dark:border-gray-800 rounded-full`}
+                      ></div>
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{selectedChat.friend.name}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {selectedChat.friend.name}
+                    </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {getLastSeen(selectedChat.friend._id)}
                     </p>
@@ -484,14 +543,27 @@ const ChatSystem = () => {
                   messages.map((message) => {
                     const isOwn = message.sender._id === user.id;
                     return (
-                      <div key={message._id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg relative ${
-                          isOwn 
-                            ? 'bg-blue-600 text-white' 
-                            : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-white border border-gray-200 dark:border-gray-600'
-                        } ${message.sending ? 'opacity-70' : ''}`}>
+                      <div
+                        key={message._id}
+                        className={`flex ${
+                          isOwn ? "justify-end" : "justify-start"
+                        }`}
+                      >
+                        <div
+                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg relative ${
+                            isOwn
+                              ? "bg-blue-600 text-white"
+                              : "bg-white dark:bg-gray-800 text-gray-800 dark:text-white border border-gray-200 dark:border-gray-600"
+                          } ${message.sending ? "opacity-70" : ""}`}
+                        >
                           <p className="text-sm">{message.content}</p>
-                          <p className={`text-xs mt-1 ${isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                          <p
+                            className={`text-xs mt-1 ${
+                              isOwn
+                                ? "text-blue-100"
+                                : "text-gray-500 dark:text-gray-400"
+                            }`}
+                          >
                             {formatTime(message.timestamp || message.createdAt)}
                           </p>
                           {message.sending && (
@@ -504,49 +576,54 @@ const ChatSystem = () => {
                 )}
               </div>
 
-              {/* Message Input */
-              <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
-                <div className="flex items-end gap-2">
-                  <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                    <ImageIcon className="w-5 h-5" />
-                  </button>
-                  <div className="flex-1 relative">
-                    <textarea
-                      ref={messageInputRef}
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Type a message..."
-                      rows="1"
-                      className="w-full resize-none border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-32 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                      style={{ minHeight: '42px' }}
-                    />
-                    <button className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                      <Smile className="w-4 h-4" />
+              {
+                /* Message Input */
+                <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+                  <div className="flex items-end gap-2">
+                    <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                      <ImageIcon className="w-5 h-5" />
+                    </button>
+                    <div className="flex-1 relative">
+                      <textarea
+                        ref={messageInputRef}
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Type a message..."
+                        rows="1"
+                        className="w-full resize-none border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-32 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        style={{ minHeight: "42px" }}
+                      />
+                      <button className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                        <Smile className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <button
+                      onClick={sendMessage}
+                      disabled={!newMessage.trim() || sendingMessage}
+                      className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {sendingMessage ? (
+                        <Loader className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Send className="w-5 h-5" />
+                      )}
                     </button>
                   </div>
-                  <button
-                    onClick={sendMessage}
-                    disabled={!newMessage.trim() || sendingMessage}
-                    className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {sendingMessage ? (
-                      <Loader className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Send className="w-5 h-5" />
-                    )}
-                  </button>
                 </div>
-              </div>
-}
-</>
+              }
+            </>
           ) : (
             // No chat selected
             <div className="hidden md:flex flex-1 items-center justify-center bg-gray-50 dark:bg-gray-900">
               <div className="text-center">
                 <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-                <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Select a Friend to Chat</h2>
-                <p className="text-gray-600 dark:text-gray-400">Choose a friend from the list to start messaging</p>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                  Select a Friend to Chat
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Choose a friend from the list to start messaging
+                </p>
               </div>
             </div>
           )}

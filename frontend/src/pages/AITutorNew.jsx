@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
+import { useSwipe } from "../hooks/useSwipe";
 import {
   Send,
   Plus,
@@ -49,6 +50,13 @@ const AITutor = () => {
   const [favoriteMessages, setFavoriteMessages] = useState([]);
   const messagesEndRef = useRef(null);
   const speechSynthesis = window.speechSynthesis;
+
+  // Swipe gesture support for sidebar
+  const swipeHandlers = useSwipe(
+    () => setSidebarOpen(false), // Swipe left to close
+    () => setSidebarOpen(true), // Swipe right to open
+    50 // Minimum swipe distance
+  );
 
   const examplePrompts = [
     "Explain photosynthesis",
@@ -315,7 +323,10 @@ const AITutor = () => {
   };
 
   return (
-    <div className="min-h-screen sm:h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-black flex flex-col sm:flex-row overflow-hidden">
+    <div
+      className="min-h-screen sm:h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-black flex flex-col sm:flex-row overflow-hidden"
+      {...swipeHandlers}
+    >
       {/* Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
