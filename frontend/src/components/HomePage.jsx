@@ -267,44 +267,41 @@ export default function HomePage() {
             aria-labelledby="hero-heading"
           >
             <motion.div className="text-left space-y-8" variants={staggerItem}>
-              <motion.div 
-                variants={fadeInUp}
-                className="inline-block"
-              >
-                <Badge 
-                  variant="gradient" 
-                  size="lg" 
+              <motion.div variants={fadeInUp} className="inline-block">
+                <Badge
+                  variant="gradient"
+                  size="lg"
                   className="mb-6 relative overflow-hidden group cursor-default pulse-glow"
                 >
                   {/* Animated background gradient */}
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 opacity-80"
                     animate={{
-                      backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                      backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                     }}
                     transition={{
                       duration: 5,
                       repeat: Infinity,
-                      ease: 'linear',
+                      ease: "linear",
                     }}
                     style={{
-                      backgroundSize: '200% 200%',
+                      backgroundSize: "200% 200%",
                     }}
                   />
-                  
+
                   {/* Shine effect */}
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                    initial={{ x: '-100%' }}
-                    animate={{ x: '100%' }}
+                    initial={{ x: "-100%" }}
+                    animate={{ x: "100%" }}
                     transition={{
                       duration: 2,
                       repeat: Infinity,
                       repeatDelay: 1,
-                      ease: 'easeInOut',
+                      ease: "easeInOut",
                     }}
                   />
-                  
+
                   {/* Content */}
                   <span className="relative z-10 flex items-center gap-2">
                     <motion.div
@@ -315,7 +312,7 @@ export default function HomePage() {
                       transition={{
                         duration: 3,
                         repeat: Infinity,
-                        ease: 'easeInOut',
+                        ease: "easeInOut",
                       }}
                     >
                       <Sparkles className="w-4 h-4" />
@@ -327,7 +324,7 @@ export default function HomePage() {
                       transition={{
                         duration: 2,
                         repeat: Infinity,
-                        ease: 'easeInOut',
+                        ease: "easeInOut",
                       }}
                     >
                       🔥 AI-Powered Learning Platform
@@ -1464,13 +1461,16 @@ export default function HomePage() {
               </motion.h2>
 
               <motion.p
-                className="text-base md:text-lg text-indigo-50 max-w-3xl mx-auto leading-relaxed"
+                className="text-base md:text-lg text-white max-w-3xl mx-auto leading-relaxed drop-shadow-lg font-medium"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
+                style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
               >
                 🌟 Join{" "}
-                <span className="font-bold text-yellow-300">10,000+</span>{" "}
+                <span className="font-bold text-yellow-300 drop-shadow-md">
+                  10,000+
+                </span>{" "}
                 students and educators who are already transforming education
                 with AI-powered learning. Start your journey today!
               </motion.p>
@@ -1486,10 +1486,10 @@ export default function HomePage() {
                   <Button
                     asChild
                     size="xl"
-                    className="group bg-white text-indigo-600 hover:bg-gray-50 font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 px-12 py-6 text-lg rounded-2xl"
+                    className="group bg-white text-indigo-700 hover:bg-gray-50 font-bold shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition-all duration-300 px-12 py-6 text-lg rounded-2xl"
                   >
                     <Link to="/signup">
-                      <span className="relative z-10 flex items-center gap-2">
+                      <span className="relative z-10 flex items-center gap-2 font-extrabold">
                         🚀 Start Learning for FREE
                         <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                       </span>
@@ -1502,10 +1502,13 @@ export default function HomePage() {
                     asChild
                     variant="outline"
                     size="xl"
-                    className="border-2 border-white text-white hover:bg-white hover:text-indigo-600 font-semibold backdrop-blur-sm px-12 py-6 text-lg rounded-2xl transition-all duration-300 hover:-translate-y-1"
+                    className="border-3 border-white text-white hover:bg-white hover:text-indigo-700 font-bold backdrop-blur-md px-12 py-6 text-lg rounded-2xl transition-all duration-300 hover:-translate-y-1 shadow-xl"
                   >
                     <Link to="/quizzes">
-                      <span className="relative z-10 flex items-center gap-2">
+                      <span
+                        className="relative z-10 flex items-center gap-2 font-extrabold drop-shadow-lg"
+                        style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}
+                      >
                         🎯 Explore Quizzes
                       </span>
                     </Link>
@@ -1515,12 +1518,13 @@ export default function HomePage() {
 
               {/* Social Proof */}
               <motion.div
-                className="flex flex-wrap justify-center items-center gap-6 pt-8 text-indigo-100"
+                className="flex flex-wrap justify-center items-center gap-6 pt-8 text-white font-semibold"
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 transition={{ delay: 1 }}
+                style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 drop-shadow-lg">
                   <motion.span
                     className="text-2xl"
                     animate={{ scale: [1, 1.2, 1] }}
@@ -1528,9 +1532,9 @@ export default function HomePage() {
                   >
                     🔥
                   </motion.span>
-                  <span className="font-semibold">10K+ Active Users</span>
+                  <span className="font-bold">10K+ Active Users</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 drop-shadow-lg">
                   <motion.span
                     className="text-2xl"
                     animate={{ rotate: [0, 10, -10, 0] }}
@@ -1538,9 +1542,9 @@ export default function HomePage() {
                   >
                     ⚡
                   </motion.span>
-                  <span className="font-semibold">50K+ Quizzes Created</span>
+                  <span className="font-bold">50K+ Quizzes Created</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 drop-shadow-lg">
                   <motion.span
                     className="text-2xl"
                     animate={{ y: [0, -5, 0] }}
@@ -1548,7 +1552,7 @@ export default function HomePage() {
                   >
                     🎖️
                   </motion.span>
-                  <span className="font-semibold">4.9/5 Rating</span>
+                  <span className="font-bold">4.9/5 Rating</span>
                 </div>
               </motion.div>
             </motion.div>

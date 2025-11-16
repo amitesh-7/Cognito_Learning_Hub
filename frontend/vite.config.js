@@ -79,12 +79,22 @@ export default defineConfig(({ mode }) => ({
 
   // Development server settings
   server: {
+    port: 5173,
+    strictPort: false,
+    host: true,
     // Enable HTTP/2 for faster loading
     hmr: {
       overlay: true,
+      clientPort: 5173,
     },
     // Compression for dev server
     compress: true,
+    // Configure headers for CORS and COOP
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+      "Cross-Origin-Embedder-Policy": "unsafe-none",
+      "Cross-Origin-Resource-Policy": "cross-origin",
+    },
   },
 
   // Preview server settings (for production preview)

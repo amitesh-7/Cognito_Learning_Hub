@@ -506,171 +506,166 @@ const Navbar = () => {
               initial="closed"
               animate="open"
               exit="closed"
-              className="fixed top-20 right-4 w-[90vw] max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl z-50 lg:hidden shadow-2xl rounded-3xl border border-white/60 dark:border-gray-700/40 overflow-hidden"
+              className="fixed top-4 left-4 right-4 mx-auto max-w-sm bg-white dark:bg-gray-800 z-50 lg:hidden shadow-2xl rounded-3xl overflow-hidden"
             >
-              {/* Enhanced gradient overlays */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-indigo-500/10 pointer-events-none" />
-              <div className="absolute inset-0 bg-gradient-to-tl from-white/5 via-transparent to-purple-500/5 pointer-events-none" />
-
-              <div className="relative max-h-[85vh] overflow-y-auto p-6">
+              {/* Header with User Info and Close Button */}
+              <div className="relative bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 p-6 pb-8">
                 {/* Close button */}
                 <motion.button
-                  variants={mobileItemVariants}
                   onClick={closeMenu}
-                  className="absolute top-4 right-4 p-2 rounded-2xl bg-gradient-to-br from-red-500 via-pink-600 to-red-700 text-white shadow-lg shadow-red-500/30 border border-white/20 backdrop-blur-xl"
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
+                  className="absolute top-4 right-4 p-2 rounded-xl bg-gray-100 hover:bg-white text-gray-800 shadow-lg"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="Close menu"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6" />
                 </motion.button>
 
-                {/* Menu content */}
-                <div className="mt-2 space-y-3">
-                  {user ? (
-                    <>
-                      {/* User info */}
-                      <motion.div
-                        variants={mobileItemVariants}
-                        className="p-4 rounded-2xl bg-gradient-to-br from-blue-500/15 via-purple-500/15 to-indigo-500/15 dark:from-blue-500/20 dark:via-purple-500/20 dark:to-indigo-500/20 border border-white/50 dark:border-indigo-400/30 mb-4 shadow-lg backdrop-blur-xl"
+                {/* User Info */}
+                {user ? (
+                  <div className="flex items-center gap-4 pr-12">
+                    <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center border-2 border-white/40">
+                      <span className="text-3xl font-bold text-white">
+                        {user.name?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">
+                        {user.name}
+                      </h3>
+                      <p className="text-sm text-purple-200 flex items-center gap-1">
+                        Made in India 🇮🇳
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-4 pr-12">
+                    <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center border-2 border-white/40">
+                      <Brain className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">
+                        Cognito Learning Hub
+                      </h3>
+                      <p className="text-sm text-purple-200">
+                        Made in India 🇮🇳
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Menu content */}
+              <div className="p-4 space-y-1 max-h-[70vh] overflow-y-auto">
+                {user ? (
+                  <>
+                    {/* Nav links */}
+                    {navLinks.map((link, index) => (
+                      <Link
+                        key={index}
+                        onClick={closeMenu}
+                        to={link.to}
+                        className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
                       >
-                        <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">
-                          Logged in as
-                        </p>
-                        <p className="text-base font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-300 bg-clip-text text-transparent">
-                          {user.name}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">
-                          {user.role}
-                        </p>
-                      </motion.div>
+                        <link.icon className="w-5 h-5" />
+                        <span>{link.label}</span>
+                      </Link>
+                    ))}
 
-                      {/* Nav links */}
-                      {navLinks.map((link, index) => (
-                        <motion.div key={index} variants={mobileItemVariants}>
-                          <Link
-                            onClick={closeMenu}
-                            to={link.to}
-                            className="flex items-center gap-3 px-4 py-3 text-gray-800 dark:text-gray-100 hover:text-blue-700 dark:hover:text-blue-300 font-semibold rounded-2xl hover:bg-gradient-to-r hover:from-blue-500/10 hover:via-purple-500/10 hover:to-indigo-500/10 dark:hover:from-blue-500/15 dark:hover:via-purple-500/15 dark:hover:to-indigo-500/15 transition-all duration-300 border border-transparent hover:border-blue-400/30 dark:hover:border-indigo-400/30 backdrop-blur-xl hover:shadow-md"
-                          >
-                            <link.icon className="w-5 h-5" />
-                            {link.label}
-                          </Link>
-                        </motion.div>
-                      ))}
-
-                      {user.role === "Teacher" && (
-                        <>
-                          <motion.div variants={mobileItemVariants}>
-                            <Link
-                              onClick={closeMenu}
-                              to="/teacher-dashboard"
-                              className="flex items-center gap-3 px-4 py-2.5 text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-2xl hover:bg-gradient-to-r hover:from-indigo-500/10 hover:to-purple-500/10 transition-all duration-300"
-                            >
-                              <GraduationCap className="w-5 h-5" />
-                              My Quizzes
-                            </Link>
-                          </motion.div>
-                          <motion.div variants={mobileItemVariants}>
-                            <Link
-                              onClick={closeMenu}
-                              to="/quiz-maker"
-                              className="flex items-center gap-3 px-4 py-2.5 text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium rounded-2xl hover:bg-gradient-to-r hover:from-indigo-500/10 hover:to-purple-500/10 transition-all duration-300"
-                            >
-                              <BookOpen className="w-5 h-5" />
-                              Quiz Maker
-                            </Link>
-                          </motion.div>
-                        </>
-                      )}
-
-                      {(user.role === "Admin" || user.role === "Moderator") && (
-                        <motion.div variants={mobileItemVariants}>
-                          <Link
-                            onClick={closeMenu}
-                            to="/moderator"
-                            className="flex items-center gap-3 px-4 py-2.5 font-semibold text-green-600 dark:text-green-400 rounded-2xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
-                          >
-                            <Shield className="w-5 h-5" />
-                            Moderator
-                          </Link>
-                        </motion.div>
-                      )}
-
-                      {user.role === "Admin" && (
-                        <>
-                          <motion.div variants={mobileItemVariants}>
-                            <Link
-                              onClick={closeMenu}
-                              to="/admin"
-                              className="flex items-center gap-3 px-4 py-2.5 font-semibold text-red-600 dark:text-red-400 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
-                            >
-                              <UserCog className="w-5 h-5" />
-                              Admin
-                            </Link>
-                          </motion.div>
-                          <motion.div variants={mobileItemVariants}>
-                            <Link
-                              onClick={closeMenu}
-                              to="/admin-broadcast"
-                              className="flex items-center gap-3 px-4 py-2.5 font-semibold text-red-600 dark:text-red-400 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
-                            >
-                              <Radio className="w-5 h-5" />
-                              Broadcast
-                            </Link>
-                          </motion.div>
-                        </>
-                      )}
-
-                      <motion.div
-                        variants={mobileItemVariants}
-                        className="pt-3"
-                      >
-                        <button
-                          onClick={handleLogout}
-                          className="w-full px-6 py-3 bg-gradient-to-r from-red-600 via-pink-600 to-red-700 hover:from-red-700 hover:via-pink-700 hover:to-red-800 text-white font-bold rounded-2xl shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 border border-white/20 backdrop-blur-xl"
-                        >
-                          Logout
-                        </button>
-                      </motion.div>
-                    </>
-                  ) : (
-                    <>
-                      <motion.div variants={mobileItemVariants}>
+                    {user.role === "Teacher" && (
+                      <>
                         <Link
                           onClick={closeMenu}
-                          to="/features"
-                          className="flex items-center gap-3 px-4 py-3 text-gray-800 dark:text-gray-100 hover:text-blue-700 dark:hover:text-blue-300 font-semibold rounded-2xl hover:bg-gradient-to-r hover:from-blue-500/10 hover:via-purple-500/10 hover:to-indigo-500/10 dark:hover:from-blue-500/15 dark:hover:via-purple-500/15 dark:hover:to-indigo-500/15 transition-all duration-300 border border-transparent hover:border-blue-400/30 dark:hover:border-indigo-400/30 backdrop-blur-xl hover:shadow-md"
+                          to="/teacher-dashboard"
+                          className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
                         >
-                          <Sparkles className="w-5 h-5" />
-                          Features
+                          <GraduationCap className="w-5 h-5" />
+                          <span>My Quizzes</span>
                         </Link>
-                      </motion.div>
-                      <motion.div variants={mobileItemVariants}>
                         <Link
                           onClick={closeMenu}
-                          to="/login"
-                          className="flex items-center gap-3 px-4 py-3 text-gray-800 dark:text-gray-100 hover:text-blue-700 dark:hover:text-blue-300 font-semibold rounded-2xl hover:bg-gradient-to-r hover:from-blue-500/10 hover:via-purple-500/10 hover:to-indigo-500/10 dark:hover:from-blue-500/15 dark:hover:via-purple-500/15 dark:hover:to-indigo-500/15 transition-all duration-300 border border-transparent hover:border-blue-400/30 dark:hover:border-indigo-400/30 backdrop-blur-xl hover:shadow-md"
+                          to="/quiz-maker"
+                          className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
                         >
-                          <Users className="w-5 h-5" />
-                          Login
+                          <BookOpen className="w-5 h-5" />
+                          <span>Quiz Maker</span>
                         </Link>
-                      </motion.div>
-                      <motion.div
-                        variants={mobileItemVariants}
-                        className="pt-3"
+                      </>
+                    )}
+
+                    {(user.role === "Admin" || user.role === "Moderator") && (
+                      <Link
+                        onClick={closeMenu}
+                        to="/moderator"
+                        className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
                       >
+                        <Shield className="w-5 h-5" />
+                        <span>Moderator</span>
+                      </Link>
+                    )}
+
+                    {user.role === "Admin" && (
+                      <>
                         <Link
                           onClick={closeMenu}
-                          to="/signup"
-                          className="flex items-center justify-center gap-3 w-full px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-800 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300 border border-white/20 backdrop-blur-xl"
+                          to="/admin"
+                          className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
                         >
                           <UserCog className="w-5 h-5" />
-                          Sign Up
+                          <span>Admin</span>
                         </Link>
-                      </motion.div>
-                    </>
-                  )}
-                </div>
+                        <Link
+                          onClick={closeMenu}
+                          to="/admin-broadcast"
+                          className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
+                        >
+                          <Radio className="w-5 h-5" />
+                          <span>Broadcast</span>
+                        </Link>
+                      </>
+                    )}
+
+                    {/* Logout Button */}
+                    <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200"
+                      >
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      onClick={closeMenu}
+                      to="/"
+                      className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
+                    >
+                      <Brain className="w-5 h-5" />
+                      <span>Home</span>
+                    </Link>
+                    <Link
+                      onClick={closeMenu}
+                      to="/features"
+                      className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
+                    >
+                      <Sparkles className="w-5 h-5" />
+                      <span>Features</span>
+                    </Link>
+
+                    {/* Login Button */}
+                    <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
+                      <Link
+                        onClick={closeMenu}
+                        to="/login"
+                        className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200"
+                      >
+                        <span>Login</span>
+                      </Link>
+                    </div>
+                  </>
+                )}
               </div>
             </motion.div>
           </>
