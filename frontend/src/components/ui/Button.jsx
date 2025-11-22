@@ -22,7 +22,7 @@ const Button = React.forwardRef(
     ref
   ) => {
     const [ripples, setRipples] = React.useState([]);
-    const { light, medium } = useHaptic();
+    const { haptic: hapticFeedback } = useHaptic();
 
     const baseStyles =
       "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none relative overflow-hidden group";
@@ -108,11 +108,11 @@ const Button = React.forwardRef(
       createRipple(e);
 
       // Trigger haptic feedback on click
-      if (haptic && !disabled && !loading) {
+      if (haptic && !disabled && !loading && hapticFeedback) {
         if (variant === "destructive") {
-          medium();
+          hapticFeedback.medium();
         } else {
-          light();
+          hapticFeedback.light();
         }
       }
 

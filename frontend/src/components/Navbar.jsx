@@ -42,7 +42,11 @@ const Navbar = () => {
 
   // Navigation links
   const navLinks = [
-    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    {
+      to: user?.role === "Teacher" ? "/teacher-dashboard" : "/dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+    },
     { to: "/quizzes", label: "Quizzes", icon: BookOpen },
     { to: "/doubt-solver", label: "AI Tutor", icon: Bot },
     { to: "/achievements", label: "Achievements", icon: Trophy },
@@ -255,7 +259,10 @@ const Navbar = () => {
                   {/* Nav Links */}
                   {[
                     {
-                      to: "/dashboard",
+                      to:
+                        user.role === "Teacher"
+                          ? "/teacher-dashboard"
+                          : "/dashboard",
                       label: "Dashboard",
                       icon: LayoutDashboard,
                     },

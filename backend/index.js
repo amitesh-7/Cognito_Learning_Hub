@@ -30,6 +30,7 @@ const {
 const QuizPDFGenerator = require("./utils/pdfGenerator");
 const LiveSession = require("./models/LiveSession"); // <-- NEW: Live session model
 const DuelMatch = require("./models/DuelMatch"); // <-- NEW: 1v1 Duel model
+const Meeting = require("./models/Meeting"); // <-- NEW: Meeting model (video calls)
 const {
   Friendship,
   Challenge,
@@ -296,6 +297,226 @@ const io = new Server(server, {
 // Store active sessions in memory for fast access
 // Format: Map<sessionCode, { hostSocketId, participantSockets: Map<userId, socketId> }>
 const activeSessions = new Map();
+
+// --- MEETING (WebRTC) NAMESPACE ---
+// Separate namespace for meeting signalling and controls. Frontend will connect to '/meeting'
+const meetingNsp = io.of("/meeting");
+
+// In-memory quick lookup for active meetings (redundant with DB for speed)
+const activeMeetings = new Map(); // roomId -> { hostSocketId, participants: Map(socketId, {userId,name,role}) }
+
+meetingNsp.on("connection", (socket) => {
+  console.log("[Meeting NS] client connected", socket.id);
+
+  // Create meeting (host)
+  socket.on("meeting:create", async (data, cb) => {
+    try {
+      const { roomId, hostUserId, title } = data;
+      // create roomId if not provided
+      const room = roomId || Math.random().toString(36).slice(2, 10);
+      // persist to DB
+      const meeting = new Meeting({
+        roomId: room,
+        hostUserId,
+        hostSocketId: socket.id,
+        title,
+      });
+      await meeting.save();
+
+      // memory store
+      activeMeetings.set(room, {
+        hostSocketId: socket.id,
+        participants: new Map(),
+      });
+
+      socket.join(room);
+      console.log(`[Meeting NS] meeting created ${room} by host ${hostUserId}`);
+      cb && cb({ success: true, roomId: room });
+    } catch (err) {
+      console.error("[Meeting NS] meeting:create error", err);
+      cb && cb({ success: false, error: err.message });
+    }
+  });
+
+  // Join meeting as participant
+  socket.on("meeting:join", async (data, cb) => {
+    try {
+      const { roomId, userId, name, role } = data;
+      const meeting = await Meeting.findOne({ roomId });
+      if (!meeting)
+        return cb && cb({ success: false, error: "Meeting not found" });
+      if (meeting.locked)
+        return cb && cb({ success: false, error: "Meeting locked" });
+
+      // add to DB participants if not exists
+      const exists = meeting.participants.find(
+        (p) =>
+          (p.userId && p.userId.toString() === (userId || "").toString()) ||
+          p.socketId === socket.id
+      );
+      if (!exists) {
+        meeting.participants.push({
+          userId: userId || null,
+          name,
+          role: role || "student",
+          socketId: socket.id,
+        });
+        await meeting.save();
+      }
+
+      // update memory
+      if (!activeMeetings.has(roomId))
+        activeMeetings.set(roomId, {
+          hostSocketId: meeting.hostSocketId || null,
+          participants: new Map(),
+        });
+      activeMeetings
+        .get(roomId)
+        .participants.set(socket.id, { userId, name, role });
+
+      socket.join(roomId);
+      meetingNsp
+        .to(roomId)
+        .emit("meeting:participants", { participants: meeting.participants });
+      console.log(`[Meeting NS] ${name} joined ${roomId}`);
+      cb &&
+        cb({
+          success: true,
+          meeting: { roomId, participants: meeting.participants },
+        });
+    } catch (err) {
+      console.error("[Meeting NS] meeting:join error", err);
+      cb && cb({ success: false, error: err.message });
+    }
+  });
+
+  // Signalling: forward offers/answers/candidates to specific socket ids
+  socket.on("media:offer", ({ to, offer, from }) => {
+    if (!to) return;
+    meetingNsp.to(to).emit("media:offer", { offer, from, socketId: socket.id });
+  });
+
+  socket.on("media:answer", ({ to, answer, from }) => {
+    if (!to) return;
+    meetingNsp
+      .to(to)
+      .emit("media:answer", { answer, from, socketId: socket.id });
+  });
+
+  socket.on("media:candidate", ({ to, candidate, from }) => {
+    if (!to) return;
+    meetingNsp
+      .to(to)
+      .emit("media:candidate", { candidate, from, socketId: socket.id });
+  });
+
+  // Chat
+  socket.on("chat:send", async (data, cb) => {
+    try {
+      const { roomId, message, userId, name } = data;
+      const msgObj = { message, userId, name, timestamp: new Date() };
+      meetingNsp.to(roomId).emit("chat:message", msgObj);
+      cb && cb({ success: true });
+    } catch (err) {
+      console.error("[Meeting NS] chat:send", err);
+      cb && cb({ success: false, error: err.message });
+    }
+  });
+
+  socket.on("chat:delete", ({ roomId, messageId, by }) => {
+    // Emit deletion request; frontend should remove message if authorized
+    meetingNsp.to(roomId).emit("chat:deleted", { messageId, by });
+  });
+
+  // Screen share notifications
+  socket.on("screen:start", ({ roomId, socketId }) => {
+    meetingNsp.to(roomId).emit("screen:started", { socketId });
+  });
+  socket.on("screen:stop", ({ roomId, socketId }) => {
+    meetingNsp.to(roomId).emit("screen:stopped", { socketId });
+  });
+
+  // Host controls
+  socket.on("control:mute", ({ roomId, targetSocketId }) => {
+    meetingNsp.to(targetSocketId).emit("control:mute", { by: socket.id });
+  });
+
+  socket.on("control:remove", async ({ roomId, targetSocketId }) => {
+    // Remove participant from room (server-side) and DB
+    try {
+      meetingNsp.to(targetSocketId).emit("control:removed", { by: socket.id });
+      // Remove from DB
+      const meeting = await Meeting.findOne({ roomId });
+      if (meeting) {
+        meeting.participants = meeting.participants.filter(
+          (p) => p.socketId !== targetSocketId
+        );
+        await meeting.save();
+        meetingNsp
+          .to(roomId)
+          .emit("meeting:participants", { participants: meeting.participants });
+      }
+    } catch (err) {
+      console.error("[Meeting NS] control:remove", err);
+    }
+  });
+
+  // End meeting
+  socket.on("meeting:end", async ({ roomId, by }) => {
+    try {
+      // notify all
+      meetingNsp.to(roomId).emit("meeting:ended", { by });
+      // leave all sockets in room
+      const sockets = await meetingNsp.in(roomId).fetchSockets();
+      for (const s of sockets) {
+        s.leave(roomId);
+      }
+      // remove DB record
+      await Meeting.findOneAndDelete({ roomId });
+      activeMeetings.delete(roomId);
+      console.log("[Meeting NS] meeting ended", roomId);
+    } catch (err) {
+      console.error("[Meeting NS] meeting:end error", err);
+    }
+  });
+
+  // Leave
+  socket.on("meeting:leave", async ({ roomId }) => {
+    try {
+      socket.leave(roomId);
+      const meeting = await Meeting.findOne({ roomId });
+      if (meeting) {
+        meeting.participants = meeting.participants.filter(
+          (p) => p.socketId !== socket.id
+        );
+        await meeting.save();
+        meetingNsp
+          .to(roomId)
+          .emit("meeting:participants", { participants: meeting.participants });
+      }
+      if (activeMeetings.has(roomId)) {
+        activeMeetings.get(roomId).participants.delete(socket.id);
+      }
+    } catch (err) {
+      console.error("[Meeting NS] meeting:leave", err);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("[Meeting NS] socket disconnected", socket.id);
+    // cleanup activeMeetings entries
+    for (const [roomId, info] of activeMeetings.entries()) {
+      if (info.participants.has(socket.id)) {
+        info.participants.delete(socket.id);
+        meetingNsp
+          .to(roomId)
+          .emit("meeting:participants", {
+            participants: Array.from(info.participants.values()),
+          });
+      }
+    }
+  });
+});
 
 // Socket.IO connection handler
 io.on("connection", (socket) => {

@@ -55,6 +55,11 @@ const LiveSessionHistory = lazy(() => import("./pages/LiveSessionHistory"));
 const DuelMode = lazy(() => import("./pages/DuelMode"));
 const DuelBattle = lazy(() => import("./pages/DuelBattle"));
 
+// Video Meeting Routes
+const TeacherMeetingStart = lazy(() => import("./pages/TeacherMeetingStart"));
+const StudentJoinMeeting = lazy(() => import("./pages/StudentJoinMeeting"));
+const MeetingRoom = lazy(() => import("./pages/MeetingRoom"));
+
 function App() {
   const [theme] = useTheme();
   const isMobile = useIsMobile();
@@ -291,6 +296,32 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <DuelBattle />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Video Meeting Routes */}
+                  <Route
+                    path="/meeting/create"
+                    element={
+                      <ProtectedRoute>
+                        <TeacherMeetingStart />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/meeting/join"
+                    element={
+                      <ProtectedRoute>
+                        <StudentJoinMeeting />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/meeting/:roomId"
+                    element={
+                      <ProtectedRoute>
+                        <MeetingRoom />
                       </ProtectedRoute>
                     }
                   />

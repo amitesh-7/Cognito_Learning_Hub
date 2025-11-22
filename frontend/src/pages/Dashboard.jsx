@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import {
   LineChart,
   Line,
@@ -31,6 +31,7 @@ import {
   User,
   Eye,
   EyeOff,
+  Video,
 } from "lucide-react";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "../components/ui/PullToRefreshIndicator";
@@ -59,13 +60,18 @@ const itemVariants = {
 };
 
 export default function Dashboard() {
-  const { user } = useContext(AuthContext);
+  const { user, loading: authLoading } = useContext(AuthContext);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [streakCount, setStreakCount] = useState(0);
   const [viewMode, setViewMode] = useState("overview"); // 'overview', 'detailed'
   const { success } = useHaptic();
+
+  // Redirect teachers to teacher dashboard (only after auth is loaded)
+  if (!authLoading && user?.role === "Teacher") {
+    return <Navigate to="/teacher-dashboard" replace />;
+  }
 
   const fetchResults = async () => {
     try {
@@ -428,6 +434,12 @@ export default function Dashboard() {
                       <Button className="w-full justify-start bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0 shadow-lg transform hover:scale-105 transition-all duration-300">
                         <Target className="w-5 h-5 mr-3" />
                         Doubt Solver
+                      </Button>
+                    </Link>
+                    <Link to="/meeting/join">
+                      <Button className="w-full justify-start bg-gradient-to-r from-violet-500 to-fuchsia-600 hover:from-violet-600 hover:to-fuchsia-700 text-white border-0 shadow-lg transform hover:scale-105 transition-all duration-300">
+                        <Video className="w-5 h-5 mr-3" />
+                        Join Video Meeting 🎥
                       </Button>
                     </Link>
                   </div>

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useMemo, useContext } from "react";
+import { Link, Navigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart,
@@ -31,6 +32,7 @@ import {
   Radio,
   History,
   Book,
+  Video,
 } from "lucide-react";
 
 // Enhanced ConfirmationModal with modern styling
@@ -95,6 +97,7 @@ const itemVariants = {
 };
 
 export default function TeacherDashboard() {
+  const { user, loading: authLoading } = useContext(AuthContext);
   const [quizzes, setQuizzes] = useState([]);
   const [stats, setStats] = useState({
     totalQuizzes: 0,
@@ -109,6 +112,11 @@ export default function TeacherDashboard() {
   const [sortBy, setSortBy] = useState("createdAt");
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState("overview"); // 'overview', 'detailed'
+
+  // Redirect non-teachers to student dashboard (only after auth is loaded)
+  if (!authLoading && user && user.role !== "Teacher") {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   useEffect(() => {
     const fetchTeacherData = async () => {
@@ -466,6 +474,15 @@ export default function TeacherDashboard() {
                         >
                           <History className="w-4 h-4 mr-3" />
                           📊 Live Session History
+                        </Button>
+                      </Link>
+                      <Link to="/meeting/create">
+                        <Button
+                          className="w-full justify-start bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900 dark:to-fuchsia-900 hover:from-violet-100 hover:to-fuchsia-100 dark:hover:from-violet-900 dark:hover:to-fuchsia-900 border-violet-200 dark:border-violet-700 text-violet-700 dark:text-violet-300 transition-all duration-300"
+                          variant="outline"
+                        >
+                          <Video className="w-4 h-4 mr-3" />
+                          🎥 Start Video Meeting
                         </Button>
                       </Link>
                     </div>
