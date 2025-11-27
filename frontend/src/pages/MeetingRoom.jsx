@@ -81,7 +81,9 @@ const MeetingRoom = () => {
     meetSocket.on(
       "media:offer",
       async ({ offer, from, socketId: fromSocket }) => {
-        console.log("[Meeting] Received offer from", fromSocket);
+        console.log("[Meeting] Received offer from", fromSocket, "from:", from);
+        console.log("[Meeting] Local stream available:", !!localStream);
+
         // Store the name of the peer
         setPeers((prev) => {
           const updated = new Map(prev);
@@ -89,15 +91,21 @@ const MeetingRoom = () => {
           updated.set(fromSocket, { ...existing, name: from });
           return updated;
         });
-        const pc = createPeerConnection(fromSocket);
-        await pc.setRemoteDescription(new RTCSessionDescription(offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        meetSocket.emit("media:answer", {
-          to: fromSocket,
-          answer,
-          from: user?.name,
-        });
+
+        try {
+          const pc = createPeerConnection(fromSocket);
+          await pc.setRemoteDescription(new RTCSessionDescription(offer));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          console.log("[Meeting] Sending answer to", fromSocket);
+          meetSocket.emit("media:answer", {
+            to: fromSocket,
+            answer,
+            from: user?.name,
+          });
+        } catch (err) {
+          console.error("[Meeting] Error handling offer:", err);
+        }
       }
     );
 
@@ -105,7 +113,12 @@ const MeetingRoom = () => {
     meetSocket.on(
       "media:answer",
       async ({ answer, from, socketId: fromSocket }) => {
-        console.log("[Meeting] Received answer from", fromSocket);
+        console.log(
+          "[Meeting] Received answer from",
+          fromSocket,
+          "from:",
+          from
+        );
         // Store the name of the peer
         setPeers((prev) => {
           const updated = new Map(prev);
@@ -114,8 +127,16 @@ const MeetingRoom = () => {
           return updated;
         });
         const pc = peerConnectionsRef.current.get(fromSocket);
-        if (pc)
-          await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        if (pc) {
+          try {
+            await pc.setRemoteDescription(new RTCSessionDescription(answer));
+            console.log("[Meeting] Answer set successfully for", fromSocket);
+          } catch (err) {
+            console.error("[Meeting] Error setting answer:", err);
+          }
+        } else {
+          console.warn("[Meeting] No peer connection found for", fromSocket);
+        }
       }
     );
 
@@ -262,21 +283,33 @@ const MeetingRoom = () => {
     console.log(`[Meeting] Creating new peer connection for ${remoteSocketId}`);
     const pc = new RTCPeerConnection(configuration);
 
-    // Add local tracks to peer connection
+    // Add local tracks to peer connection - MUST have localStream
     if (localStream) {
       localStream.getTracks().forEach((track) => {
+        console.log(
+          `[Meeting] Adding ${track.kind} track to peer ${remoteSocketId}`
+        );
         pc.addTrack(track, localStream);
       });
+    } else {
+      console.warn(
+        `[Meeting] No localStream available when creating peer connection for ${remoteSocketId}`
+      );
     }
 
     // Handle incoming remote stream
     pc.ontrack = (event) => {
-      console.log("[Meeting] Remote track received from", remoteSocketId);
+      console.log(
+        "[Meeting] Remote track received from",
+        remoteSocketId,
+        event.track.kind
+      );
       const remoteStream = event.streams[0];
       setPeers((prev) => {
         const updated = new Map(prev);
         const existing = updated.get(remoteSocketId) || {};
         updated.set(remoteSocketId, { ...existing, stream: remoteStream });
+        console.log(`[Meeting] Updated peer ${remoteSocketId} with stream`);
         return updated;
       });
     };
@@ -292,29 +325,53 @@ const MeetingRoom = () => {
       }
     };
 
+    // Monitor connection state
+    pc.onconnectionstatechange = () => {
+      console.log(
+        `[Meeting] Peer ${remoteSocketId} connection state: ${pc.connectionState}`
+      );
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log(
+        `[Meeting] Peer ${remoteSocketId} ICE connection state: ${pc.iceConnectionState}`
+      );
+    };
+
     peerConnectionsRef.current.set(remoteSocketId, pc);
     return pc;
   };
 
   // Call a peer: create offer
   const callPeer = async (remoteSocketId, peerName) => {
-    const pc = createPeerConnection(remoteSocketId);
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    // Store peer name immediately
-    if (peerName) {
-      setPeers((prev) => {
-        const updated = new Map(prev);
-        const existing = updated.get(remoteSocketId) || {};
-        updated.set(remoteSocketId, { ...existing, name: peerName });
-        return updated;
+    try {
+      console.log(
+        `[Meeting] Creating offer for ${remoteSocketId} (${peerName})`
+      );
+      const pc = createPeerConnection(remoteSocketId);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      console.log(`[Meeting] Offer created and set for ${remoteSocketId}`);
+
+      // Store peer name immediately
+      if (peerName) {
+        setPeers((prev) => {
+          const updated = new Map(prev);
+          const existing = updated.get(remoteSocketId) || {};
+          updated.set(remoteSocketId, { ...existing, name: peerName });
+          return updated;
+        });
+      }
+
+      socket?.emit("media:offer", {
+        to: remoteSocketId,
+        offer,
+        from: user?.name,
       });
+      console.log(`[Meeting] Offer sent to ${remoteSocketId}`);
+    } catch (err) {
+      console.error(`[Meeting] Error calling peer ${remoteSocketId}:`, err);
     }
-    socket?.emit("media:offer", {
-      to: remoteSocketId,
-      offer,
-      from: user?.name,
-    });
   };
 
   // Call all participants when local stream is ready
