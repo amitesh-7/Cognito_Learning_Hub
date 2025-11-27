@@ -359,39 +359,49 @@ const MeetingRoom = () => {
   useEffect(() => {
     if (!localStream || !socket) return;
     localStreamRef.current = localStream;
-    
+
     console.log("[Meeting] Local stream ready, updating all peer connections");
+
     peerConnectionsRef.current.forEach(async (pc, socketId) => {
       const senders = pc.getSenders();
       console.log(`[Meeting] Peer ${socketId} has ${senders.length} senders`);
-      
-      localStream.getTracks().forEach((track) => {
+
+      let needsRenegotiation = false;
+
+      for (const track of localStream.getTracks()) {
         const existingSender = senders.find(
           (sender) => sender.track && sender.track.kind === track.kind
         );
-        
+
         if (existingSender) {
-          console.log(`[Meeting] Replacing ${track.kind} track for peer ${socketId}`);
+          console.log(
+            `[Meeting] Replacing ${track.kind} track for peer ${socketId}`
+          );
           existingSender.replaceTrack(track);
         } else {
-          console.log(`[Meeting] Adding ${track.kind} track to peer ${socketId}`);
+          console.log(
+            `[Meeting] Adding ${track.kind} track to peer ${socketId}`
+          );
           pc.addTrack(track, localStream);
-          
-          // After adding track, create new offer to renegotiate
-          try {
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            socket.emit("media:offer", {
-              to: socketId,
-              offer,
-              from: user?.name,
-            });
-            console.log(`[Meeting] Sent renegotiation offer to ${socketId}`);
-          } catch (err) {
-            console.error(`[Meeting] Error renegotiating with ${socketId}:`, err);
-          }
+          needsRenegotiation = true;
         }
-      });
+      }
+
+      // After adding tracks, create new offer to renegotiate
+      if (needsRenegotiation) {
+        try {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socket.emit("media:offer", {
+            to: socketId,
+            offer,
+            from: user?.name,
+          });
+          console.log(`[Meeting] Sent renegotiation offer to ${socketId}`);
+        } catch (err) {
+          console.error(`[Meeting] Error renegotiating with ${socketId}:`, err);
+        }
+      }
     });
   }, [localStream, socket, user]);
 
