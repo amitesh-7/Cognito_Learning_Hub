@@ -348,21 +348,26 @@ meetingNsp.on("connection", (socket) => {
       if (meeting.locked)
         return cb && cb({ success: false, error: "Meeting locked" });
 
-      // add to DB participants if not exists
-      const exists = meeting.participants.find(
-        (p) =>
-          (p.userId && p.userId.toString() === (userId || "").toString()) ||
-          p.socketId === socket.id
-      );
-      if (!exists) {
-        meeting.participants.push({
-          userId: userId || null,
-          name,
-          role: role || "student",
-          socketId: socket.id,
-        });
-        await meeting.save();
+      // Remove any old entries for this user (in case of reconnection)
+      if (userId) {
+        meeting.participants = meeting.participants.filter(
+          (p) => !(p.userId && p.userId.toString() === userId.toString())
+        );
       }
+
+      // Remove any old entries with the same socketId
+      meeting.participants = meeting.participants.filter(
+        (p) => p.socketId !== socket.id
+      );
+
+      // Add new participant entry
+      meeting.participants.push({
+        userId: userId || null,
+        name,
+        role: role || "Student",
+        socketId: socket.id,
+      });
+      await meeting.save();
 
       // update memory
       if (!activeMeetings.has(roomId))
@@ -378,7 +383,9 @@ meetingNsp.on("connection", (socket) => {
       meetingNsp
         .to(roomId)
         .emit("meeting:participants", { participants: meeting.participants });
-      console.log(`[Meeting NS] ${name} joined ${roomId}`);
+      console.log(
+        `[Meeting NS] ${name} joined ${roomId} (socketId: ${socket.id})`
+      );
       cb &&
         cb({
           success: true,
@@ -502,17 +509,31 @@ meetingNsp.on("connection", (socket) => {
     }
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     console.log("[Meeting NS] socket disconnected", socket.id);
-    // cleanup activeMeetings entries
+    // cleanup activeMeetings entries and update DB
     for (const [roomId, info] of activeMeetings.entries()) {
       if (info.participants.has(socket.id)) {
         info.participants.delete(socket.id);
-        meetingNsp
-          .to(roomId)
-          .emit("meeting:participants", {
-            participants: Array.from(info.participants.values()),
-          });
+
+        // Remove from database and emit updated list
+        try {
+          const meeting = await Meeting.findOne({ roomId });
+          if (meeting) {
+            meeting.participants = meeting.participants.filter(
+              (p) => p.socketId !== socket.id
+            );
+            await meeting.save();
+            meetingNsp.to(roomId).emit("meeting:participants", {
+              participants: meeting.participants,
+            });
+            console.log(
+              `[Meeting NS] Participant ${socket.id} removed from ${roomId}`
+            );
+          }
+        } catch (err) {
+          console.error("[Meeting NS] Error removing participant:", err);
+        }
       }
     }
   });

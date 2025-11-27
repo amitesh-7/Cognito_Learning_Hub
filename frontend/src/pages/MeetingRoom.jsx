@@ -135,9 +135,32 @@ const MeetingRoom = () => {
         console.log("[Meeting] Participants updated", newParticipants);
         console.log("[Meeting] My socket ID:", meetSocket.id);
         setParticipants(newParticipants);
-        // Sync participant names to peers Map
+
+        // Clean up peers that are no longer in the participants list
         setPeers((prev) => {
           const updated = new Map(prev);
+          const participantSocketIds = new Set(
+            newParticipants.map((p) => p.socketId)
+          );
+
+          // Remove peers that left
+          for (const [socketId] of updated) {
+            if (!participantSocketIds.has(socketId)) {
+              console.log(
+                `[Meeting] Removing peer ${socketId} - no longer in participants`
+              );
+              // Close peer connection
+              const pc = peerConnectionsRef.current.get(socketId);
+              if (pc) {
+                pc.close();
+                peerConnectionsRef.current.delete(socketId);
+              }
+              calledPeersRef.current.delete(socketId);
+              updated.delete(socketId);
+            }
+          }
+
+          // Sync participant names to peers Map
           newParticipants.forEach((p) => {
             if (p.socketId && p.socketId !== meetSocket.id) {
               const existing = updated.get(p.socketId) || {};
@@ -226,10 +249,17 @@ const MeetingRoom = () => {
 
   // Create peer connection for a remote socket
   const createPeerConnection = (remoteSocketId) => {
+    // If peer connection already exists, close and recreate it
     if (peerConnectionsRef.current.has(remoteSocketId)) {
-      return peerConnectionsRef.current.get(remoteSocketId);
+      console.log(
+        `[Meeting] Peer connection already exists for ${remoteSocketId}, closing old one`
+      );
+      const oldPc = peerConnectionsRef.current.get(remoteSocketId);
+      oldPc.close();
+      peerConnectionsRef.current.delete(remoteSocketId);
     }
 
+    console.log(`[Meeting] Creating new peer connection for ${remoteSocketId}`);
     const pc = new RTCPeerConnection(configuration);
 
     // Add local tracks to peer connection
