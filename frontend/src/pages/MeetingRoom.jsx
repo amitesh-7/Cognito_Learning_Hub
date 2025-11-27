@@ -272,14 +272,9 @@ const MeetingRoom = () => {
 
   // Create peer connection for a remote socket
   const createPeerConnection = (remoteSocketId) => {
-    // If peer connection already exists, close and recreate it
+    // Reuse existing peer connection if present
     if (peerConnectionsRef.current.has(remoteSocketId)) {
-      console.log(
-        `[Meeting] Peer connection already exists for ${remoteSocketId}, closing old one`
-      );
-      const oldPc = peerConnectionsRef.current.get(remoteSocketId);
-      oldPc.close();
-      peerConnectionsRef.current.delete(remoteSocketId);
+      return peerConnectionsRef.current.get(remoteSocketId);
     }
 
     console.log(`[Meeting] Creating new peer connection for ${remoteSocketId}`);
@@ -339,11 +334,40 @@ const MeetingRoom = () => {
       console.log(
         `[Meeting] Peer ${remoteSocketId} ICE connection state: ${pc.iceConnectionState}`
       );
+      if (
+        pc.iceConnectionState === "failed" ||
+        pc.iceConnectionState === "disconnected"
+      ) {
+        console.warn(
+          `[Meeting] ICE state ${pc.iceConnectionState} for ${remoteSocketId}`
+        );
+      }
     };
 
     peerConnectionsRef.current.set(remoteSocketId, pc);
     return pc;
   };
+
+  // Ensure all peer connections have local tracks once stream is ready
+  useEffect(() => {
+    if (!localStream) return;
+    localStreamRef.current = localStream;
+    peerConnectionsRef.current.forEach((pc, socketId) => {
+      localStream.getTracks().forEach((track) => {
+        const existingSender = pc
+          .getSenders()
+          .find((sender) => sender.track && sender.track.kind === track.kind);
+        if (existingSender) {
+          existingSender.replaceTrack(track);
+        } else {
+          pc.addTrack(track, localStream);
+          console.log(
+            `[Meeting] Added ${track.kind} track to existing peer ${socketId}`
+          );
+        }
+      });
+    });
+  }, [localStream]);
 
   // Call a peer: create offer
   const callPeer = async (remoteSocketId, peerName) => {
