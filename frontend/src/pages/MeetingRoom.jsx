@@ -440,6 +440,24 @@ const MeetingRoom = () => {
   // Call all participants when local stream is ready
   useEffect(() => {
     if (localStream && socket && participants.length > 0 && mySocketId) {
+      console.log(
+        "[Meeting] === CALLING EFFECT TRIGGERED === Participants:",
+        participants.length
+      );
+      console.log(
+        "[Meeting] Participants to check:",
+        participants.map((p) => ({ id: p.socketId, name: p.name }))
+      );
+      console.log(
+        "[Meeting] Already called:",
+        Array.from(calledPeersRef.current)
+      );
+      console.log(
+        "[Meeting] Peer connections:",
+        Array.from(peerConnectionsRef.current.keys())
+      );
+      console.log("[Meeting] My socket ID:", mySocketId);
+
       // Initiate calls only if my socket ID is lexicographically smaller (polite peer pattern)
       // This prevents both peers from sending offers simultaneously
       participants.forEach((p) => {
@@ -454,21 +472,24 @@ const MeetingRoom = () => {
             `[Meeting] Peer ${p.socketId} (${p.name}): mySocketId=${mySocketId}, shouldInitiate=${shouldInitiate}`
           );
           if (shouldInitiate) {
-            console.log("[Meeting] Calling peer", p.socketId, p.name);
+            console.log("[Meeting] ✅ Calling peer", p.socketId, p.name);
             calledPeersRef.current.add(p.socketId);
             callPeer(p.socketId, p.name);
           } else {
             console.log(
-              "[Meeting] Waiting for peer",
+              "[Meeting] ⏳ Waiting for peer",
               p.socketId,
               p.name,
               "to call us"
             );
           }
         } else if (p.socketId === mySocketId) {
-          console.log(`[Meeting] Skipping self: ${p.socketId}`);
+          console.log(`[Meeting] ⊗ Skipping self: ${p.socketId}`);
+        } else if (calledPeersRef.current.has(p.socketId)) {
+          console.log(`[Meeting] ✓ Already called: ${p.socketId} (${p.name})`);
         }
       });
+      console.log("[Meeting] === CALLING EFFECT COMPLETE ===");
     }
   }, [localStream, socket, participants, mySocketId]);
 
