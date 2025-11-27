@@ -83,7 +83,10 @@ const MeetingRoom = () => {
       "media:offer",
       async ({ offer, from, socketId: fromSocket }) => {
         console.log("[Meeting] Received offer from", fromSocket, "from:", from);
-        console.log("[Meeting] Local stream available:", !!localStream);
+        console.log(
+          "[Meeting] Local stream available:",
+          !!localStreamRef.current
+        );
 
         // Store the name of the peer
         setPeers((prev) => {
@@ -95,7 +98,11 @@ const MeetingRoom = () => {
 
         try {
           const pc = createPeerConnection(fromSocket);
+          console.log(
+            "[Meeting] Peer connection created, setting remote description"
+          );
           await pc.setRemoteDescription(new RTCSessionDescription(offer));
+          console.log("[Meeting] Remote description set, creating answer");
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           console.log("[Meeting] Sending answer to", fromSocket);
@@ -350,24 +357,43 @@ const MeetingRoom = () => {
 
   // Ensure all peer connections have local tracks once stream is ready
   useEffect(() => {
-    if (!localStream) return;
+    if (!localStream || !socket) return;
     localStreamRef.current = localStream;
-    peerConnectionsRef.current.forEach((pc, socketId) => {
+    
+    console.log("[Meeting] Local stream ready, updating all peer connections");
+    peerConnectionsRef.current.forEach(async (pc, socketId) => {
+      const senders = pc.getSenders();
+      console.log(`[Meeting] Peer ${socketId} has ${senders.length} senders`);
+      
       localStream.getTracks().forEach((track) => {
-        const existingSender = pc
-          .getSenders()
-          .find((sender) => sender.track && sender.track.kind === track.kind);
+        const existingSender = senders.find(
+          (sender) => sender.track && sender.track.kind === track.kind
+        );
+        
         if (existingSender) {
+          console.log(`[Meeting] Replacing ${track.kind} track for peer ${socketId}`);
           existingSender.replaceTrack(track);
         } else {
+          console.log(`[Meeting] Adding ${track.kind} track to peer ${socketId}`);
           pc.addTrack(track, localStream);
-          console.log(
-            `[Meeting] Added ${track.kind} track to existing peer ${socketId}`
-          );
+          
+          // After adding track, create new offer to renegotiate
+          try {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            socket.emit("media:offer", {
+              to: socketId,
+              offer,
+              from: user?.name,
+            });
+            console.log(`[Meeting] Sent renegotiation offer to ${socketId}`);
+          } catch (err) {
+            console.error(`[Meeting] Error renegotiating with ${socketId}:`, err);
+          }
         }
       });
     });
-  }, [localStream]);
+  }, [localStream, socket, user]);
 
   // Call a peer: create offer
   const callPeer = async (remoteSocketId, peerName) => {
