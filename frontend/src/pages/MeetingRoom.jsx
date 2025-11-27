@@ -38,6 +38,7 @@ const MeetingRoom = () => {
   const [chatInput, setChatInput] = useState("");
 
   const localVideoRef = useRef(null);
+  const localStreamRef = useRef(null); // Ref to always access current localStream
   const peerConnectionsRef = useRef(new Map()); // socketId -> RTCPeerConnection
   const configuration = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -259,6 +260,7 @@ const MeetingRoom = () => {
           audio: true,
         });
         setLocalStream(stream);
+        localStreamRef.current = stream; // Keep ref in sync
         if (localVideoRef.current) localVideoRef.current.srcObject = stream;
         console.log("[Meeting] Local stream started");
       } catch (err) {
@@ -283,13 +285,14 @@ const MeetingRoom = () => {
     console.log(`[Meeting] Creating new peer connection for ${remoteSocketId}`);
     const pc = new RTCPeerConnection(configuration);
 
-    // Add local tracks to peer connection - MUST have localStream
-    if (localStream) {
-      localStream.getTracks().forEach((track) => {
+    // Add local tracks to peer connection - Use ref to get current stream
+    const currentStream = localStreamRef.current;
+    if (currentStream) {
+      currentStream.getTracks().forEach((track) => {
         console.log(
           `[Meeting] Adding ${track.kind} track to peer ${remoteSocketId}`
         );
-        pc.addTrack(track, localStream);
+        pc.addTrack(track, currentStream);
       });
     } else {
       console.warn(
