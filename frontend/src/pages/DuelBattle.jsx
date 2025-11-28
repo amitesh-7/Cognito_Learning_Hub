@@ -48,44 +48,23 @@ const DuelBattle = () => {
   const questionStartTime = useRef(null);
   const timerInterval = useRef(null);
 
-  // Find match
-  useEffect(() => {
-    if (!socket || !isConnected || !user || !quizId) return;
-
-    console.log("🔍 Searching for duel opponent...");
-
-    socket.emit(
-      "find-duel-match",
-      {
-        quizId,
-        userId: user._id || user.id,
-        username: user.name,
-        avatar: user.profilePicture,
-      },
-      (response) => {
-        if (response.success) {
-          setMatchId(response.matchId);
-          setRole(response.role);
-
-          if (response.waiting) {
-            setMatchState("waiting");
-            console.log("⏳ Waiting for opponent...");
-          } else {
-            setMatchState("matched");
-            console.log("✅ Opponent found!");
-          }
-        } else {
-          console.error("❌ Failed to find match:", response.error);
-          alert("Failed to find match: " + response.error);
-          navigate("/duel");
-        }
-      }
-    );
-  }, [socket, isConnected, user, quizId]);
-
-  // Socket event listeners
+  // Socket event listeners - SETUP FIRST before emitting any events
   useEffect(() => {
     if (!socket) return;
+
+    console.log("🔌 Setting up duel socket event listeners");
+
+    // Handle disconnect - clear match state
+    const handleDisconnect = () => {
+      console.log("🔌 Socket disconnected - clearing duel match state");
+      setMatchState("searching");
+      setMatchId(null);
+      setRole(null);
+      setOpponent(null);
+    };
+    socket.on("disconnect", handleDisconnect);
+
+    socket.on("disconnect", handleDisconnect);
 
     socket.on("match-found", (data) => {
       console.log("🎮 Match found:", data);
@@ -102,11 +81,18 @@ const DuelBattle = () => {
     });
 
     socket.on("player-ready", (data) => {
-      console.log("✅ Player ready:", data.userId);
+      const userId = user._id || user.id;
+      console.log("✅ Player ready event received:", {
+        readyUserId: data.userId,
+        myUserId: userId,
+        isMe:
+          data.userId === userId ||
+          data.userId.toString() === userId.toString(),
+      });
     });
 
     socket.on("duel-started", (data) => {
-      console.log("🎯 Duel started!");
+      console.log("🎯 Duel started! Question data:", data.currentQuestion);
       setCurrentQuestion(data.currentQuestion);
       setQuestionIndex(data.currentQuestion.index);
       setTimeLeft(data.currentQuestion.timeLimit);
@@ -178,10 +164,34 @@ const DuelBattle = () => {
           ? data.finalScores.player2
           : data.finalScores.player1;
 
-      setMyScore(myData);
-      setOpponentScore(oppData);
+      // Map backend fields to frontend state
+      setMyScore({
+        score: myData.score,
+        correct: myData.correctAnswers,
+        time: myData.totalTime || 0,
+      });
+      setOpponentScore({
+        score: oppData.score,
+        correct: oppData.correctAnswers,
+        time: oppData.totalTime || 0,
+      });
       setWinner(data.winner);
       setMatchState("ended");
+
+      console.log(
+        "📊 Final scores - Me:",
+        {
+          score: myData.score,
+          correct: myData.correctAnswers,
+          time: myData.totalTime,
+        },
+        "Opponent:",
+        {
+          score: oppData.score,
+          correct: oppData.correctAnswers,
+          time: oppData.totalTime,
+        }
+      );
 
       if (data.winner === userId) {
         setShowConfetti(true);
@@ -200,6 +210,8 @@ const DuelBattle = () => {
     });
 
     return () => {
+      console.log("🧹 Cleaning up duel socket listeners");
+      socket.off("disconnect", handleDisconnect);
       socket.off("match-found");
       socket.off("player-ready");
       socket.off("duel-started");
@@ -209,7 +221,63 @@ const DuelBattle = () => {
       socket.off("duel-ended");
       socket.off("opponent-disconnected");
     };
-  }, [socket, user]);
+  }, [socket, user, navigate]);
+
+  // Find match - EMIT AFTER listeners are set up (ONLY ONCE)
+  useEffect(() => {
+    if (!socket || !isConnected || !user || !quizId) return;
+
+    // Prevent duplicate match requests if already searching/matched
+    if (matchId) {
+      console.log(
+        "⚠️ Already in match:",
+        matchId,
+        "- skipping duplicate request"
+      );
+      return;
+    }
+
+    console.log("🔍 Searching for duel opponent...");
+
+    socket.emit(
+      "find-duel-match",
+      {
+        quizId,
+        userId: user._id || user.id,
+        username: user.name,
+        avatar: user.profilePicture,
+      },
+      (response) => {
+        if (response.success) {
+          setMatchId(response.matchId);
+          setRole(response.role);
+
+          if (response.waiting) {
+            setMatchState("waiting");
+            console.log("⏳ Waiting for opponent...");
+          } else {
+            setMatchState("matched");
+            console.log("✅ Opponent found!");
+          }
+        } else {
+          console.error("❌ Failed to find match:", response.error);
+          alert("Failed to find match: " + response.error);
+          navigate("/duel");
+        }
+      }
+    );
+  }, [socket, isConnected, user, quizId, navigate, matchId]);
+
+  // Cleanup on unmount - cancel pending matches
+  useEffect(() => {
+    return () => {
+      // If we're in waiting or searching state, cancel the match
+      if (matchId && (matchState === "waiting" || matchState === "searching")) {
+        console.log("🧹 Component unmounting - canceling match:", matchId);
+        socket?.emit("cancel-duel", { matchId });
+      }
+    };
+  }, [matchId, matchState, socket]);
 
   // Timer
   useEffect(() => {
@@ -231,15 +299,22 @@ const DuelBattle = () => {
   }, [matchState, hasAnswered]);
 
   const handleReady = () => {
+    const userId = user._id || user.id;
+    console.log("🎯 Sending duel-ready:", { matchId, userId });
+
     socket.emit(
       "duel-ready",
       {
         matchId,
-        userId: user._id || user.id,
+        userId,
       },
       (response) => {
+        console.log("📥 duel-ready response:", response);
         if (response.success) {
-          console.log("✅ Marked as ready");
+          console.log("✅ Marked as ready - waiting for opponent");
+        } else {
+          console.error("❌ Failed to mark ready:", response.error);
+          alert("Failed to mark ready: " + response.error);
         }
       }
     );

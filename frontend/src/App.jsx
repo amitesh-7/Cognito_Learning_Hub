@@ -26,6 +26,7 @@ import SignUp from "./pages/SignUp";
 
 // Less critical pages - lazy load
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const QuickActions = lazy(() => import("./pages/QuickActions"));
 const QuizList = lazy(() => import("./pages/QuizList"));
 const QuizTaker = lazy(() => import("./pages/QuizTaker"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboardModern"));
@@ -52,8 +53,10 @@ const LiveSessionHost = lazy(() => import("./pages/LiveSessionHost"));
 const LiveSessionJoin = lazy(() => import("./pages/LiveSessionJoin"));
 const LiveSessionAnalytics = lazy(() => import("./pages/LiveSessionAnalytics"));
 const LiveSessionHistory = lazy(() => import("./pages/LiveSessionHistory"));
+const LiveSessionSelector = lazy(() => import("./pages/LiveSessionSelector"));
 const DuelMode = lazy(() => import("./pages/DuelMode"));
 const DuelBattle = lazy(() => import("./pages/DuelBattle"));
+const TeachingHub = lazy(() => import("./pages/TeachingHub"));
 
 // Video Meeting Routes
 const TeacherMeetingStart = lazy(() => import("./pages/TeacherMeetingStart"));
@@ -125,10 +128,26 @@ function App() {
                     }
                   />
                   <Route
+                    path="/quick-actions"
+                    element={
+                      <ProtectedRoute>
+                        <QuickActions />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/teacher-dashboard"
                     element={
                       <ProtectedRoute>
                         <TeacherDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/teaching-hub"
+                    element={
+                      <ProtectedRoute>
+                        <TeachingHub />
                       </ProtectedRoute>
                     }
                   />
@@ -158,6 +177,14 @@ function App() {
                   />
                   <Route
                     path="/quiz/:quizId/leaderboard"
+                    element={
+                      <ProtectedRoute>
+                        <Leaderboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/leaderboard"
                     element={
                       <ProtectedRoute>
                         <Leaderboard />
@@ -291,6 +318,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <LiveSessionHistory />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/live/start"
+                    element={
+                      <ProtectedRoute>
+                        <LiveSessionSelector />
                       </ProtectedRoute>
                     }
                   />

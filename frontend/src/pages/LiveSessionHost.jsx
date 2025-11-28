@@ -65,7 +65,25 @@ const LiveSessionHost = () => {
       socket.connect();
     }
 
+    // Listen for disconnect to clear session
+    const handleDisconnect = () => {
+      console.log("🔌 Socket disconnected - clearing session state");
+      setSessionCode("");
+      setSessionId("");
+      setParticipants([]);
+      setSessionStatus("creating");
+    };
+
+    if (socket) {
+      socket.on("disconnect", handleDisconnect);
+    }
+
     return () => {
+      // Clean up disconnect listener
+      if (socket) {
+        socket.off("disconnect", handleDisconnect);
+      }
+
       // Disconnect when leaving the page
       if (socket && socket.connected) {
         console.log("🔌 Disconnecting socket...");
@@ -101,6 +119,86 @@ const LiveSessionHost = () => {
 
     fetchQuiz();
   }, [quizId]);
+
+  // Socket event handlers - Set up BEFORE session creation
+  useEffect(() => {
+    if (!socket) {
+      console.log("⏸️ No socket for event listeners");
+      return;
+    }
+
+    console.log("🎧 Setting up socket event listeners...", {
+      socketId: socket.id,
+      isConnected: socket.connected,
+    });
+
+    // Listen to ALL events for debugging
+    const originalOnevent = socket.onevent;
+    socket.onevent = function (packet) {
+      const args = packet.data || [];
+      console.log("🔔 Socket event received:", args[0], args.slice(1));
+      originalOnevent.call(this, packet);
+    };
+
+    // Participant joined
+    const handleParticipantJoined = ({
+      userId,
+      username,
+      avatar,
+      participantCount,
+    }) => {
+      console.log("🎉🎉🎉 PARTICIPANT JOINED EVENT RECEIVED! 🎉🎉🎉");
+      console.log("👤 User:", username, "ID:", userId);
+      console.log("📊 Participant count:", participantCount);
+      console.log("📋 Current participants before update:", participants);
+
+      // Also log to alert to make it very visible
+      console.warn("PARTICIPANT JOINED:", username);
+
+      setParticipants((prev) => {
+        // Check if participant already exists
+        const alreadyExists = prev.some((p) => p.userId === userId);
+
+        if (alreadyExists) {
+          console.log("⚠️ Participant already in list, skipping duplicate");
+          return prev;
+        }
+
+        const updated = [...prev, { userId, username, avatar }];
+        console.log("📋 Updated participants:", updated);
+        console.log("✅ Participants state should update now!");
+        return updated;
+      });
+    };
+
+    // Participant left
+    const handleParticipantLeft = ({ userId, username, participantCount }) => {
+      console.log("👋 Participant left:", username);
+      setParticipants((prev) => prev.filter((p) => p.userId !== userId));
+    };
+
+    // Leaderboard updated
+    const handleLeaderboardUpdate = ({
+      leaderboard: newLeaderboard,
+      questionIndex,
+    }) => {
+      console.log("🏆 Leaderboard updated for question", questionIndex);
+      setLeaderboard(newLeaderboard);
+    };
+
+    socket.on("participant-joined", handleParticipantJoined);
+    socket.on("participant-left", handleParticipantLeft);
+    socket.on("leaderboard-updated", handleLeaderboardUpdate);
+
+    console.log("✅ Socket event listeners registered");
+
+    return () => {
+      console.log("🧹 Cleaning up socket event listeners");
+      socket.off("participant-joined", handleParticipantJoined);
+      socket.off("participant-left", handleParticipantLeft);
+      socket.off("leaderboard-updated", handleLeaderboardUpdate);
+    };
+  }, [socket]);
 
   // Create session when connected
   useEffect(() => {
@@ -145,6 +243,9 @@ const LiveSessionHost = () => {
       (response) => {
         if (response.success) {
           console.log("✅ Session created:", response.sessionCode);
+          console.log("🚪 Host is in room:", response.sessionCode);
+          console.log("📡 Socket ID:", socket.id);
+
           setSessionCode(response.sessionCode);
           setSessionId(response.sessionId);
           setSessionStatus("waiting");
@@ -161,75 +262,6 @@ const LiveSessionHost = () => {
       }
     );
   }, [socket, isConnected, quiz, user, sessionCode]);
-
-  // Socket event handlers
-  useEffect(() => {
-    if (!socket) {
-      console.log("⏸️ No socket for event listeners");
-      return;
-    }
-
-    console.log("🎧 Setting up socket event listeners...", {
-      socketId: socket.id,
-      isConnected: socket.connected,
-      sessionCode: sessionCode,
-    });
-
-    // Participant joined
-    const handleParticipantJoined = ({
-      userId,
-      username,
-      avatar,
-      participantCount,
-    }) => {
-      console.log("🎉 PARTICIPANT JOINED EVENT RECEIVED!");
-      console.log("👤 User:", username, "ID:", userId);
-      console.log("📊 Participant count:", participantCount);
-      console.log("📋 Current participants before update:", participants);
-
-      setParticipants((prev) => {
-        // Check if participant already exists
-        const alreadyExists = prev.some((p) => p.userId === userId);
-
-        if (alreadyExists) {
-          console.log("⚠️ Participant already in list, skipping duplicate");
-          return prev;
-        }
-
-        const updated = [...prev, { userId, username, avatar }];
-        console.log("📋 Updated participants:", updated);
-        return updated;
-      });
-    };
-
-    // Participant left
-    const handleParticipantLeft = ({ userId, username, participantCount }) => {
-      console.log("👋 Participant left:", username);
-      setParticipants((prev) => prev.filter((p) => p.userId !== userId));
-    };
-
-    // Leaderboard updated
-    const handleLeaderboardUpdate = ({
-      leaderboard: newLeaderboard,
-      questionIndex,
-    }) => {
-      console.log("🏆 Leaderboard updated for question", questionIndex);
-      setLeaderboard(newLeaderboard);
-    };
-
-    socket.on("participant-joined", handleParticipantJoined);
-    socket.on("participant-left", handleParticipantLeft);
-    socket.on("leaderboard-updated", handleLeaderboardUpdate);
-
-    console.log("✅ Socket event listeners registered");
-
-    return () => {
-      console.log("🧹 Cleaning up socket event listeners");
-      socket.off("participant-joined", handleParticipantJoined);
-      socket.off("participant-left", handleParticipantLeft);
-      socket.off("leaderboard-updated", handleLeaderboardUpdate);
-    };
-  }, [socket, sessionCode]);
 
   // Start quiz
   const handleStartQuiz = useCallback(() => {

@@ -1202,54 +1202,105 @@ io.on("connection", (socket) => {
     try {
       const { matchId, userId } = data;
 
+      console.log(`[Duel] Player ready request:`, { matchId, userId });
+
       const match = await DuelMatch.findOne({ matchId }).populate("quizId");
       if (!match) {
+        console.error(`[Duel] Match not found: ${matchId}`);
         return callback({ success: false, error: "Match not found" });
       }
 
+      console.log(`[Duel] Current match state:`, {
+        matchId,
+        player1: {
+          userId: match.player1.userId,
+          isReady: match.player1.isReady,
+        },
+        player2: match.player2
+          ? { userId: match.player2.userId, isReady: match.player2.isReady }
+          : null,
+      });
+
       // Mark player as ready
-      if (match.player1.userId.toString() === userId) {
+      if (match.player1.userId.toString() === userId.toString()) {
         match.player1.isReady = true;
-      } else if (match.player2.userId.toString() === userId) {
+        console.log(`[Duel] Player 1 marked ready`);
+      } else if (
+        match.player2 &&
+        match.player2.userId.toString() === userId.toString()
+      ) {
         match.player2.isReady = true;
+        console.log(`[Duel] Player 2 marked ready`);
+      } else {
+        console.error(`[Duel] User ${userId} not found in match ${matchId}`);
+        return callback({ success: false, error: "User not in this match" });
       }
 
       await match.save();
 
+      console.log(
+        `[Duel] After save - Player1 ready: ${match.player1.isReady}, Player2 ready: ${match.player2?.isReady}`
+      );
+
       // Notify room
       io.to(matchId).emit("player-ready", { userId });
 
+      // Re-fetch match to get the latest state (handles race condition when both players click ready simultaneously)
+      const latestMatch = await DuelMatch.findOne({ matchId }).populate(
+        "quizId"
+      );
+
+      console.log(
+        `[Duel] Latest match state - Player1 ready: ${latestMatch.player1.isReady}, Player2 ready: ${latestMatch.player2?.isReady}`
+      );
+
       // Start if both ready
-      if (match.player1.isReady && match.player2.isReady) {
-        match.status = "active";
-        match.startedAt = new Date();
-        match.currentQuestionIndex = 0;
-        await match.save();
+      if (
+        latestMatch.player1.isReady &&
+        latestMatch.player2 &&
+        latestMatch.player2.isReady
+      ) {
+        console.log(
+          `[Duel] ✅ BOTH PLAYERS READY! Starting match ${matchId}...`
+        );
+
+        latestMatch.status = "active";
+        latestMatch.startedAt = new Date();
+        latestMatch.currentQuestionIndex = 0;
+        await latestMatch.save();
 
         // Ensure both players are in the room
         socket.join(matchId);
-        const player1Socket = io.sockets.sockets.get(match.player1.socketId);
-        const player2Socket = io.sockets.sockets.get(match.player2.socketId);
+        const player1Socket = io.sockets.sockets.get(
+          latestMatch.player1.socketId
+        );
+        const player2Socket = io.sockets.sockets.get(
+          latestMatch.player2.socketId
+        );
 
         if (player1Socket) player1Socket.join(matchId);
         if (player2Socket) player2Socket.join(matchId);
 
         console.log(
-          `[Duel] Both players joined room ${matchId}. Starting duel...`
+          `[Duel] Both players joined room ${matchId}. Emitting duel-started...`
         );
 
-        const currentQuestion = match.quizId.questions[0];
+        const currentQuestion = latestMatch.quizId.questions[0];
 
         io.to(matchId).emit("duel-started", {
           currentQuestion: {
             index: 0,
             question: currentQuestion.question,
             options: currentQuestion.options,
-            timeLimit: match.timePerQuestion,
+            timeLimit: latestMatch.timePerQuestion,
           },
         });
 
-        console.log(`[Duel] Match started: ${matchId}`);
+        console.log(`[Duel] ✅ Match started: ${matchId}`);
+      } else {
+        console.log(
+          `[Duel] ⏳ Waiting for other player. Player1: ${latestMatch.player1.isReady}, Player2: ${latestMatch.player2?.isReady}`
+        );
       }
 
       callback({ success: true });
@@ -2604,6 +2655,51 @@ app.get("/api/quizzes/:quizId/leaderboard", async (req, res) => {
     res.json(leaderboard);
   } catch (error) {
     console.error("Error fetching leaderboard:", error);
+    res.status(500).send("Server Error");
+  }
+});
+
+// Global Leaderboard - All users ranked by total points
+app.get("/api/users/leaderboard", auth, async (req, res) => {
+  try {
+    const leaderboard = await Result.aggregate([
+      // Group by user and sum their points
+      {
+        $group: {
+          _id: "$user",
+          totalPoints: { $sum: "$pointsEarned" },
+          quizzesTaken: { $sum: 1 },
+        },
+      },
+      // Filter out users with 0 points
+      { $match: { totalPoints: { $gt: 0 } } },
+      // Sort by total points (highest first)
+      { $sort: { totalPoints: -1 } },
+      // Limit to top 5
+      { $limit: 5 },
+      // Join with Users collection to get user details
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      // Project only needed fields
+      {
+        $project: {
+          _id: 0,
+          userName: { $arrayElemAt: ["$userDetails.name", 0] },
+          score: "$totalPoints",
+          totalQuestions: "$quizzesTaken",
+        },
+      },
+    ]);
+
+    res.json(leaderboard);
+  } catch (error) {
+    console.error("Error fetching global leaderboard:", error);
     res.status(500).send("Server Error");
   }
 });
