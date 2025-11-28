@@ -367,11 +367,11 @@ const Navbar = () => {
                       className="relative group"
                     >
                       <Link
-                        to="/teacher-dashboard"
+                        to="/teaching-hub"
                         className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-300 border border-indigo-200/60 dark:border-indigo-400/30"
                       >
                         <GraduationCap className="w-4 h-4" />
-                        Teacher Tools
+                        Teaching Hub
                       </Link>
                     </motion.div>
                   )}
@@ -633,7 +633,7 @@ const Navbar = () => {
                       <>
                         <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                           <p className="px-4 py-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                            Teacher Tools
+                            Teaching Hub
                           </p>
                         </div>
                         <Link
@@ -641,24 +641,32 @@ const Navbar = () => {
                           to="/teacher-dashboard"
                           className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all duration-200 text-base font-medium"
                         >
-                          <GraduationCap className="w-5 h-5" />
-                          <span>My Quizzes</span>
+                          <LayoutDashboard className="w-5 h-5" />
+                          <span>My Dashboard</span>
                         </Link>
                         <Link
                           onClick={closeMenu}
                           to="/quiz-maker"
                           className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all duration-200 text-base font-medium"
                         >
-                          <BookOpen className="w-5 h-5" />
-                          <span>Create Quiz</span>
+                          <Sparkles className="w-5 h-5" />
+                          <span>Quiz Generator</span>
+                        </Link>
+                        <Link
+                          onClick={closeMenu}
+                          to="/live/history"
+                          className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all duration-200 text-base font-medium"
+                        >
+                          <Radio className="w-5 h-5" />
+                          <span>Live Sessions</span>
                         </Link>
                         <Link
                           onClick={closeMenu}
                           to="/meeting/create"
                           className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all duration-200 text-base font-medium"
                         >
-                          <Radio className="w-5 h-5" />
-                          <span>Start Meeting</span>
+                          <Users className="w-5 h-5" />
+                          <span>Video Meeting</span>
                         </Link>
                       </>
                     )}

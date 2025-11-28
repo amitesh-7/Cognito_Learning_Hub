@@ -54,6 +54,7 @@ const LiveSessionAnalytics = lazy(() => import("./pages/LiveSessionAnalytics"));
 const LiveSessionHistory = lazy(() => import("./pages/LiveSessionHistory"));
 const DuelMode = lazy(() => import("./pages/DuelMode"));
 const DuelBattle = lazy(() => import("./pages/DuelBattle"));
+const TeachingHub = lazy(() => import("./pages/TeachingHub"));
 
 // Video Meeting Routes
 const TeacherMeetingStart = lazy(() => import("./pages/TeacherMeetingStart"));
@@ -129,6 +130,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <TeacherDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/teaching-hub"
+                    element={
+                      <ProtectedRoute>
+                        <TeachingHub />
                       </ProtectedRoute>
                     }
                   />
