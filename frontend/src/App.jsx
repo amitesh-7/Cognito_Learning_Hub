@@ -52,6 +52,7 @@ const LiveSessionHost = lazy(() => import("./pages/LiveSessionHost"));
 const LiveSessionJoin = lazy(() => import("./pages/LiveSessionJoin"));
 const LiveSessionAnalytics = lazy(() => import("./pages/LiveSessionAnalytics"));
 const LiveSessionHistory = lazy(() => import("./pages/LiveSessionHistory"));
+const LiveSessionSelector = lazy(() => import("./pages/LiveSessionSelector"));
 const DuelMode = lazy(() => import("./pages/DuelMode"));
 const DuelBattle = lazy(() => import("./pages/DuelBattle"));
 const TeachingHub = lazy(() => import("./pages/TeachingHub"));
@@ -300,6 +301,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <LiveSessionHistory />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/live/start"
+                    element={
+                      <ProtectedRoute>
+                        <LiveSessionSelector />
                       </ProtectedRoute>
                     }
                   />

@@ -36,8 +36,8 @@ const TeachingHub = () => {
       bgGradient: "from-purple-500/10 to-pink-500/10",
     },
     {
-      title: "Live Sessions",
-      description: "Host real-time quiz sessions with students",
+      title: "Session History",
+      description: "View all past live quiz sessions and analytics",
       icon: Radio,
       link: "/live/history",
       gradient: "from-orange-500 to-red-500",
@@ -60,10 +60,10 @@ const TeachingHub = () => {
       bgGradient: "from-red-500/10 to-rose-500/10",
     },
     {
-      title: "Quiz History",
-      description: "View all past quizzes and student submissions",
+      title: "Start Live Quiz",
+      description: "Host real-time quiz sessions - select a quiz to begin",
       icon: Calendar,
-      link: "/teacher-dashboard",
+      link: "/live/start",
       gradient: "from-indigo-500 to-blue-500",
       bgGradient: "from-indigo-500/10 to-blue-500/10",
     },
@@ -232,13 +232,13 @@ const TeachingHub = () => {
                   Create Quiz
                 </motion.button>
               </Link>
-              <Link to="/live/history">
+              <Link to="/teacher-dashboard">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="px-6 py-3 bg-indigo-700 text-white font-semibold rounded-xl hover:bg-indigo-800 transition-colors duration-200 shadow-lg border border-white/20"
                 >
-                  Start Live Session
+                  Go to Dashboard
                 </motion.button>
               </Link>
             </div>
