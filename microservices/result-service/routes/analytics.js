@@ -1,0 +1,249 @@
+/**
+ * Analytics Routes
+ * User statistics and quiz analytics with caching
+ */
+
+const express = require('express');
+const ApiResponse = require('../../shared/utils/response');
+const createLogger = require('../../shared/utils/logger');
+const { authenticateToken } = require('../../shared/middleware/auth');
+const Result = require('../models/Result');
+const cacheManager = require('../services/cacheManager');
+
+const router = express.Router();
+const logger = createLogger('analytics-routes');
+
+/**
+ * @route   GET /api/analytics/user/:userId/stats
+ * @desc    Get user performance statistics (cached)
+ * @access  Private
+ */
+router.get('/user/:userId/stats', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Verify user can only access their own stats (unless admin)
+    if (userId !== req.user.userId && req.user.role !== 'Admin') {
+      return res.status(403).json(ApiResponse.forbidden('Access denied'));
+    }
+
+    // Check cache first
+    let stats = await cacheManager.getCachedUserStats(userId);
+
+    if (!stats) {
+      // Cache miss - query database
+      logger.debug(`Querying user stats for ${userId}`);
+      stats = await Result.getUserStats(userId);
+
+      // Cache the result
+      await cacheManager.cacheUserStats(userId, stats);
+    }
+
+    res.json(
+      ApiResponse.success({
+        stats,
+        cached: !!stats,
+      })
+    );
+  } catch (error) {
+    logger.error('Get user stats error:', error);
+    res.status(500).json(ApiResponse.error('Failed to fetch user statistics', 500));
+  }
+});
+
+/**
+ * @route   GET /api/analytics/user/:userId/history
+ * @desc    Get user's quiz attempt history
+ * @access  Private
+ */
+router.get('/user/:userId/history', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    // Verify access
+    if (userId !== req.user.userId && req.user.role !== 'Admin') {
+      return res.status(403).json(ApiResponse.forbidden('Access denied'));
+    }
+
+    // Query with pagination
+    const results = await Result.find({ userId })
+      .sort({ completedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('quizId', 'title difficulty category')
+      .lean();
+
+    const total = await Result.countDocuments({ userId });
+
+    res.json(
+      ApiResponse.success({
+        results,
+        pagination: {
+          total,
+          page,
+          pages: Math.ceil(total / limit),
+          limit,
+        },
+      })
+    );
+  } catch (error) {
+    logger.error('Get user history error:', error);
+    res.status(500).json(ApiResponse.error('Failed to fetch history', 500));
+  }
+});
+
+/**
+ * @route   GET /api/analytics/quiz/:quizId
+ * @desc    Get quiz analytics (for quiz creators)
+ * @access  Private
+ */
+router.get('/quiz/:quizId', authenticateToken, async (req, res) => {
+  try {
+    const { quizId } = req.params;
+
+    // Check cache first
+    let analytics = await cacheManager.getCachedQuizAnalytics(quizId);
+
+    if (!analytics) {
+      // Cache miss - query database
+      logger.debug(`Querying quiz analytics for ${quizId}`);
+      const result = await Result.getQuizAnalytics(quizId);
+      analytics = result[0] || null;
+
+      if (analytics) {
+        // Cache the result
+        await cacheManager.cacheQuizAnalytics(quizId, analytics);
+      }
+    }
+
+    if (!analytics) {
+      return res.json(
+        ApiResponse.success({
+          message: 'No attempts yet for this quiz',
+          analytics: null,
+        })
+      );
+    }
+
+    res.json(
+      ApiResponse.success({
+        analytics,
+        cached: !!analytics,
+      })
+    );
+  } catch (error) {
+    logger.error('Get quiz analytics error:', error);
+    res.status(500).json(ApiResponse.error('Failed to fetch quiz analytics', 500));
+  }
+});
+
+/**
+ * @route   GET /api/analytics/result/:resultId
+ * @desc    Get detailed result analysis
+ * @access  Private
+ */
+router.get('/result/:resultId', authenticateToken, async (req, res) => {
+  try {
+    const { resultId } = req.params;
+
+    const result = await Result.findById(resultId)
+      .populate('quizId', 'title difficulty category questions')
+      .populate('userId', 'name email picture');
+
+    if (!result) {
+      return res.status(404).json(ApiResponse.notFound('Result not found'));
+    }
+
+    // Verify access
+    if (result.userId._id.toString() !== req.user.userId && req.user.role !== 'Admin') {
+      return res.status(403).json(ApiResponse.forbidden('Access denied'));
+    }
+
+    const analysis = result.getDetailedAnalysis();
+
+    res.json(
+      ApiResponse.success({
+        result: {
+          ...result.toObject(),
+          analysis,
+        },
+      })
+    );
+  } catch (error) {
+    logger.error('Get result analysis error:', error);
+    res.status(500).json(ApiResponse.error('Failed to fetch result', 500));
+  }
+});
+
+/**
+ * @route   GET /api/analytics/comparison
+ * @desc    Compare user performance across quizzes
+ * @access  Private
+ */
+router.get('/comparison', authenticateToken, async (req, res) => {
+  try {
+    const { userId, quizIds } = req.query;
+
+    if (!userId || !quizIds) {
+      return res.status(400).json(
+        ApiResponse.badRequest('userId and quizIds query parameters required')
+      );
+    }
+
+    // Verify access
+    if (userId !== req.user.userId && req.user.role !== 'Admin') {
+      return res.status(403).json(ApiResponse.forbidden('Access denied'));
+    }
+
+    const quizIdArray = quizIds.split(',');
+
+    const comparison = await Result.aggregate([
+      {
+        $match: {
+          userId: mongoose.Types.ObjectId(userId),
+          quizId: { $in: quizIdArray.map(id => mongoose.Types.ObjectId(id)) },
+        },
+      },
+      {
+        $group: {
+          _id: '$quizId',
+          attempts: { $sum: 1 },
+          bestScore: { $max: '$percentage' },
+          averageScore: { $avg: '$percentage' },
+          totalTime: { $sum: '$totalTimeSpent' },
+          avgTime: { $avg: '$totalTimeSpent' },
+        },
+      },
+      {
+        $lookup: {
+          from: 'quizzes',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'quiz',
+        },
+      },
+      { $unwind: '$quiz' },
+      {
+        $project: {
+          quizId: '$_id',
+          quizTitle: '$quiz.title',
+          attempts: 1,
+          bestScore: { $round: ['$bestScore', 2] },
+          averageScore: { $round: ['$averageScore', 2] },
+          totalTime: 1,
+          avgTime: { $round: ['$avgTime', 0] },
+        },
+      },
+    ]);
+
+    res.json(ApiResponse.success({ comparison }));
+  } catch (error) {
+    logger.error('Get comparison error:', error);
+    res.status(500).json(ApiResponse.error('Failed to fetch comparison', 500));
+  }
+});
+
+module.exports = router;

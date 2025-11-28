@@ -1,0 +1,149 @@
+/**
+ * Result Service - Main Server
+ * Port: 3003
+ * Features: Result processing, leaderboards, analytics with Redis caching
+ */
+
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
+const createLogger = require('../shared/utils/logger');
+const ApiResponse = require('../shared/utils/response');
+const { connectDB } = require('./models');
+const cacheManager = require('./services/cacheManager');
+
+const app = express();
+const logger = createLogger('result-service');
+const PORT = process.env.PORT || 3003;
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000, // 15 min
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use('/api/', limiter);
+
+// Request logging
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.path}`);
+  next();
+});
+
+// Routes
+app.use('/api/results', require('./routes/submission'));
+app.use('/api/leaderboards', require('./routes/leaderboards'));
+app.use('/api/analytics', require('./routes/analytics'));
+
+// Health check
+app.get('/health', async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    
+    const health = {
+      status: 'healthy',
+      service: 'result-service',
+      timestamp: new Date().toISOString(),
+      checks: {
+        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        redis: cacheManager.isConnected() ? 'connected' : 'disconnected',
+      },
+    };
+
+    // Get cache stats
+    const cacheStats = await cacheManager.getCacheStats();
+    if (cacheStats) {
+      health.cache = cacheStats;
+    }
+
+    res.json(health);
+  } catch (error) {
+    logger.error('Health check error:', error);
+    res.status(503).json({
+      status: 'unhealthy',
+      error: error.message,
+    });
+  }
+});
+
+// Cache management endpoint (admin only)
+app.post('/api/admin/cache/clear', async (req, res) => {
+  try {
+    // TODO: Add admin authentication
+    await cacheManager.redis.flushdb();
+    logger.info('Cache cleared by admin');
+    res.json(ApiResponse.success({ message: 'Cache cleared successfully' }));
+  } catch (error) {
+    logger.error('Cache clear error:', error);
+    res.status(500).json(ApiResponse.error('Failed to clear cache', 500));
+  }
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json(ApiResponse.notFound('Route not found'));
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  logger.error('Unhandled error:', err);
+  res.status(err.status || 500).json(
+    ApiResponse.error(err.message || 'Internal server error', err.status || 500)
+  );
+});
+
+// Graceful shutdown
+const shutdown = async (signal) => {
+  logger.info(`${signal} received, shutting down gracefully...`);
+
+  try {
+    if (server) {
+      await new Promise((resolve) => server.close(resolve));
+      logger.info('HTTP server closed');
+    }
+
+    const mongoose = require('mongoose');
+    await mongoose.connection.close();
+    logger.info('MongoDB connection closed');
+
+    await cacheManager.disconnect();
+    logger.info('Redis connection closed');
+
+    process.exit(0);
+  } catch (error) {
+    logger.error('Error during shutdown:', error);
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+// Start server
+let server;
+const startServer = async () => {
+  try {
+    await connectDB();
+    await cacheManager.connect();
+
+    server = app.listen(PORT, () => {
+      logger.info(`Result Service running on port ${PORT}`);
+      logger.info(`Health check: http://localhost:${PORT}/health`);
+    });
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
+
+module.exports = app;

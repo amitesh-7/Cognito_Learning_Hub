@@ -1,0 +1,187 @@
+/**
+ * Result Submission Routes
+ * Handles quiz result submission with cache invalidation
+ */
+
+const express = require('express');
+const ApiResponse = require('../../shared/utils/response');
+const createLogger = require('../../shared/utils/logger');
+const { authenticateToken } = require('../../shared/middleware/auth');
+const Result = require('../models/Result');
+const cacheManager = require('../services/cacheManager');
+
+const router = express.Router();
+const logger = createLogger('submission-routes');
+
+/**
+ * @route   POST /api/results/submit
+ * @desc    Submit quiz result
+ * @access  Private
+ */
+router.post('/submit', authenticateToken, async (req, res) => {
+  try {
+    const {
+      quizId,
+      sessionId,
+      answers,
+      startedAt,
+      completedAt,
+      quizMetadata,
+    } = req.body;
+
+    // Validation
+    if (!quizId || !answers || !startedAt || !completedAt) {
+      return res.status(400).json(
+        ApiResponse.badRequest('Missing required fields: quizId, answers, startedAt, completedAt')
+      );
+    }
+
+    // Calculate metrics
+    const totalQuestions = answers.length;
+    const correctAnswers = answers.filter(ans => ans.isCorrect).length;
+    const incorrectAnswers = totalQuestions - correctAnswers;
+    const score = answers.reduce((sum, ans) => sum + (ans.points || 0), 0);
+    const maxScore = answers.reduce((sum, ans) => sum + (ans.points || 10), 0); // Assume 10 if not provided
+    
+    const startTime = new Date(startedAt);
+    const endTime = new Date(completedAt);
+    const totalTimeSpent = endTime - startTime;
+
+    // Create result
+    const result = new Result({
+      userId: req.user.userId,
+      quizId,
+      sessionId: sessionId || null,
+      isMultiplayer: !!sessionId,
+      score,
+      maxScore,
+      correctAnswers,
+      incorrectAnswers,
+      totalQuestions,
+      startedAt: startTime,
+      completedAt: endTime,
+      totalTimeSpent,
+      answers,
+      quizMetadata: quizMetadata || {},
+    });
+
+    await result.save();
+    logger.info(`Result submitted: ${result._id} by user ${req.user.userId} for quiz ${quizId}`);
+
+    // Notify gamification service (non-blocking)
+    const axios = require('axios');
+    const GAMIFICATION_URL = process.env.GAMIFICATION_SERVICE_URL || 'http://localhost:3007';
+    axios.post(`${GAMIFICATION_URL}/api/events/quiz-completed`, {
+      userId: req.user.userId,
+      quizId,
+      resultData: {
+        percentage: (correctAnswers / totalQuestions) * 100,
+        pointsEarned: score,
+        bonusPoints: 0,
+        totalTimeTaken: totalTimeSpent / 1000, // Convert to seconds
+        passed: correctAnswers / totalQuestions >= 0.6, // 60% passing
+        experienceGained: Math.round(score / 10),
+        category: quizMetadata?.category || 'General'
+      }
+    }).catch(err => {
+      logger.error('Gamification notification failed:', err.message);
+    });
+
+    // Invalidate related caches asynchronously (don't block response)
+    cacheManager.invalidateResultCaches(req.user.userId, quizId)
+      .catch(err => logger.error('Cache invalidation error:', err));
+
+    res.status(201).json(
+      ApiResponse.created({
+        result: result.getSummary(),
+        analysis: result.getDetailedAnalysis(),
+      })
+    );
+  } catch (error) {
+    logger.error('Submit result error:', error);
+    res.status(500).json(ApiResponse.error('Failed to submit result', 500));
+  }
+});
+
+/**
+ * @route   POST /api/results/batch-submit
+ * @desc    Batch submit results (for multiplayer sessions)
+ * @access  Private (Server-to-server)
+ */
+router.post('/batch-submit', authenticateToken, async (req, res) => {
+  try {
+    const { results } = req.body;
+
+    if (!results || !Array.isArray(results) || results.length === 0) {
+      return res.status(400).json(ApiResponse.badRequest('Results array required'));
+    }
+
+    // Validate and prepare results
+    const preparedResults = results.map(r => {
+      const totalQuestions = r.answers.length;
+      const correctAnswers = r.answers.filter(ans => ans.isCorrect).length;
+      const score = r.answers.reduce((sum, ans) => sum + (ans.points || 0), 0);
+      const maxScore = r.answers.reduce((sum, ans) => sum + (ans.points || 10), 0);
+      
+      return {
+        userId: r.userId,
+        quizId: r.quizId,
+        sessionId: r.sessionId,
+        isMultiplayer: true,
+        score,
+        maxScore,
+        correctAnswers,
+        incorrectAnswers: totalQuestions - correctAnswers,
+        totalQuestions,
+        startedAt: r.startedAt,
+        completedAt: r.completedAt,
+        totalTimeSpent: new Date(r.completedAt) - new Date(r.startedAt),
+        answers: r.answers,
+        quizMetadata: r.quizMetadata || {},
+      };
+    });
+
+    // Batch insert
+    const savedResults = await Result.batchInsert(preparedResults);
+    logger.info(`Batch inserted ${savedResults.length} results`);
+
+    // Notify gamification service about batch results (non-blocking)
+    const axios = require('axios');
+    const GAMIFICATION_URL = process.env.GAMIFICATION_SERVICE_URL || 'http://localhost:3007';
+    for (const result of results) {
+      axios.post(`${GAMIFICATION_URL}/api/events/result-saved`, {
+        userId: result.userId,
+        resultId: result._id,
+        resultData: {
+          category: result.quizMetadata?.category || 'General',
+          totalPoints: result.score
+        }
+      }).catch(err => {
+        logger.error('Gamification leaderboard update failed:', err.message);
+      });
+    }
+
+    // Invalidate caches for affected quizzes and users
+    const uniqueQuizIds = [...new Set(results.map(r => r.quizId))];
+    const uniqueUserIds = [...new Set(results.map(r => r.userId))];
+    
+    Promise.all([
+      ...uniqueQuizIds.map(qid => cacheManager.invalidateQuizLeaderboard(qid)),
+      ...uniqueQuizIds.map(qid => cacheManager.invalidateQuizAnalytics(qid)),
+      ...uniqueUserIds.map(uid => cacheManager.invalidateUserStats(uid)),
+      cacheManager.invalidateGlobalLeaderboard(),
+    ]).catch(err => logger.error('Batch cache invalidation error:', err));
+
+    res.status(201).json(
+      ApiResponse.created({
+        message: `Successfully saved ${savedResults.length} results`,
+        count: savedResults.length,
+      })
+    );
+  } catch (error) {
+    logger.error('Batch submit error:', error);
+    res.status(500).json(ApiResponse.error('Failed to batch submit results', 500));
+  }
+});
+
+module.exports = router;
