@@ -23,7 +23,7 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // MongoDB Connection
-const mongoUri = process.env.MONGO_URI;
+const mongoUri = process.env.MONGODB_URI;
 if (!mongoUri) {
   logger.error('MONGO_URI environment variable is not defined');
   process.exit(1);

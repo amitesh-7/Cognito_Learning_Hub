@@ -24,19 +24,56 @@ class SessionManager {
    */
   async connect() {
     try {
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+      let redisConfig;
       
-      // Main Redis client
-      this.redis = new Redis(redisUrl, {
-        maxRetriesPerRequest: 3,
-        retryStrategy(times) {
-          const delay = Math.min(times * 50, 2000);
-          return delay;
-        },
-      });
+      // Check if Upstash Redis is configured
+      if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
+        logger.info('Connecting to Upstash Redis (cloud)...');
+        
+        const url = new URL(process.env.UPSTASH_REDIS_URL);
+        
+        redisConfig = {
+          host: url.hostname,
+          port: parseInt(url.port) || 6379,
+          password: process.env.UPSTASH_REDIS_TOKEN,
+          tls: {
+            rejectUnauthorized: false
+          },
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
+          retryStrategy(times) {
+            const delay = Math.min(times * 50, 2000);
+            return delay;
+          },
+        };
+        
+        // Main Redis client
+        this.redis = new Redis(redisConfig);
+        
+        // Subscriber client (for pub/sub) - clone config
+        this.subscriber = new Redis(redisConfig);
+      } else {
+        // Fallback to local Redis
+        logger.info('Connecting to local Redis...');
+        
+        const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+        
+        // Main Redis client
+        this.redis = new Redis(redisUrl, {
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
+          retryStrategy(times) {
+            const delay = Math.min(times * 50, 2000);
+            return delay;
+          },
+        });
 
-      // Subscriber client (for pub/sub)
-      this.subscriber = new Redis(redisUrl);
+        // Subscriber client (for pub/sub)
+        this.subscriber = new Redis(redisUrl, {
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
+        });
+      }
 
       this.redis.on('connect', () => {
         this.connected = true;

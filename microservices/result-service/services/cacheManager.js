@@ -27,13 +27,43 @@ class CacheManager {
    */
   async connect() {
     try {
-      this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-        maxRetriesPerRequest: 3,
-        retryStrategy(times) {
-          const delay = Math.min(times * 50, 2000);
-          return delay;
-        },
-      });
+      let redisConfig;
+      
+      // Check if Upstash Redis is configured
+      if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
+        logger.info('Connecting to Upstash Redis (cloud)...');
+        
+        const url = new URL(process.env.UPSTASH_REDIS_URL);
+        
+        redisConfig = {
+          host: url.hostname,
+          port: parseInt(url.port) || 6379,
+          password: process.env.UPSTASH_REDIS_TOKEN,
+          tls: {
+            rejectUnauthorized: false
+          },
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
+          retryStrategy(times) {
+            const delay = Math.min(times * 50, 2000);
+            return delay;
+          },
+        };
+        
+        this.redis = new Redis(redisConfig);
+      } else {
+        // Fallback to local Redis
+        logger.info('Connecting to local Redis...');
+        
+        this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
+          retryStrategy(times) {
+            const delay = Math.min(times * 50, 2000);
+            return delay;
+          },
+        });
+      }
 
       this.redis.on('connect', () => {
         this.connected = true;
