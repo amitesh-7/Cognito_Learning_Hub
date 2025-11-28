@@ -2659,6 +2659,51 @@ app.get("/api/quizzes/:quizId/leaderboard", async (req, res) => {
   }
 });
 
+// Global Leaderboard - All users ranked by total points
+app.get("/api/users/leaderboard", auth, async (req, res) => {
+  try {
+    const leaderboard = await Result.aggregate([
+      // Group by user and sum their points
+      {
+        $group: {
+          _id: "$user",
+          totalPoints: { $sum: "$pointsEarned" },
+          quizzesTaken: { $sum: 1 },
+        },
+      },
+      // Filter out users with 0 points
+      { $match: { totalPoints: { $gt: 0 } } },
+      // Sort by total points (highest first)
+      { $sort: { totalPoints: -1 } },
+      // Limit to top 5
+      { $limit: 5 },
+      // Join with Users collection to get user details
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      // Project only needed fields
+      {
+        $project: {
+          _id: 0,
+          userName: { $arrayElemAt: ["$userDetails.name", 0] },
+          score: "$totalPoints",
+          totalQuestions: "$quizzesTaken",
+        },
+      },
+    ]);
+
+    res.json(leaderboard);
+  } catch (error) {
+    console.error("Error fetching global leaderboard:", error);
+    res.status(500).send("Server Error");
+  }
+});
+
 // *** ENHANCED QUIZ CREATION AND GAMIFICATION ***
 
 // Create Enhanced Quiz with Multiple Question Types

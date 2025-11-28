@@ -26,6 +26,7 @@ import SignUp from "./pages/SignUp";
 
 // Less critical pages - lazy load
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const QuickActions = lazy(() => import("./pages/QuickActions"));
 const QuizList = lazy(() => import("./pages/QuizList"));
 const QuizTaker = lazy(() => import("./pages/QuizTaker"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboardModern"));
@@ -127,6 +128,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/quick-actions"
+                    element={
+                      <ProtectedRoute>
+                        <QuickActions />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/teacher-dashboard"
                     element={
                       <ProtectedRoute>
@@ -168,6 +177,14 @@ function App() {
                   />
                   <Route
                     path="/quiz/:quizId/leaderboard"
+                    element={
+                      <ProtectedRoute>
+                        <Leaderboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/leaderboard"
                     element={
                       <ProtectedRoute>
                         <Leaderboard />

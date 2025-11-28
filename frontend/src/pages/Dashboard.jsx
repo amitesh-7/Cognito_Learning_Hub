@@ -34,6 +34,7 @@ import {
   Video,
   Zap,
   Trophy,
+  ArrowLeft,
 } from "lucide-react";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "../components/ui/PullToRefreshIndicator";
@@ -488,73 +489,30 @@ export default function Dashboard() {
                   </div>
                 </Card>
 
-                {/* Quick Actions */}
-                <Card className="p-6 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-2xl">
-                  <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-6 flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-yellow-500" />
-                    Quick Actions
-                  </h3>
-                  <div className="space-y-3">
-                    <Link to="/live/join">
-                      <Button className="w-full justify-start bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white border-0 shadow-lg transform hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                        <svg
-                          className="w-5 h-5 mr-3 animate-pulse relative z-10"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                          <circle cx="12" cy="12" r="3" fill="currentColor" />
-                        </svg>
-                        <span className="relative z-10">Join Live Quiz 🎯</span>
-                      </Button>
-                    </Link>
-                    <Link to="/duel">
-                      <Button className="w-full justify-start bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white border-0 shadow-lg transform hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                        <svg
-                          className="w-5 h-5 mr-3 relative z-10"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M8 7l4-4m0 0l4 4m-4-4v18M3 12l4 4m-4-4l4-4m10 8l-4-4m4 4l-4 4"
-                          />
-                        </svg>
-                        <span className="relative z-10">1v1 Duel Mode 🔥</span>
-                      </Button>
-                    </Link>
-                    <Link to="/quizzes">
-                      <Button className="w-full justify-start bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg transform hover:scale-[1.02] transition-all duration-300">
-                        <ClipboardList className="w-5 h-5 mr-3" />
-                        Browse Quizzes 📚
-                      </Button>
-                    </Link>
-                    <Link to="/leaderboard">
-                      <Button className="w-full justify-start bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white border-0 shadow-lg transform hover:scale-[1.02] transition-all duration-300">
-                        <TrendingUp className="w-5 h-5 mr-3" />
-                        View Leaderboard 🏆
-                      </Button>
-                    </Link>
-                    <Link to="/doubt-solver">
-                      <Button className="w-full justify-start bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0 shadow-lg transform hover:scale-[1.02] transition-all duration-300">
-                        <Target className="w-5 h-5 mr-3" />
-                        AI Doubt Solver 🤖
-                      </Button>
-                    </Link>
-                    <Link to="/meeting/join">
-                      <Button className="w-full justify-start bg-gradient-to-r from-violet-500 to-fuchsia-600 hover:from-violet-600 hover:to-fuchsia-700 text-white border-0 shadow-lg transform hover:scale-[1.02] transition-all duration-300">
-                        <Video className="w-5 h-5 mr-3" />
-                        Join Video Meeting 🎥
-                      </Button>
-                    </Link>
-                  </div>
-                </Card>
+                {/* Learning Toolkit */}
+                <Link to="/quick-actions">
+                  <Card className="p-4 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 backdrop-blur-xl border border-yellow-200/50 dark:border-yellow-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.01] cursor-pointer group">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                          <Zap className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-semibold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent flex items-center gap-2">
+                            Learning Toolkit 🚀
+                          </h3>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                            Access all your learning tools
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                        <span className="text-xs font-semibold">View All</span>
+                        <ArrowLeft className="w-4 h-4 rotate-180 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
 
                 {/* Achievements */}
                 <Card className="p-6 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-2xl">
