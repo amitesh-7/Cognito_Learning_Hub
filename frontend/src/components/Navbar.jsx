@@ -23,6 +23,10 @@ import {
   Shield,
   UserCog,
   Radio,
+  Flame,
+  Crown,
+  Star,
+  Zap,
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useTheme } from "../hooks/useTheme";
@@ -40,19 +44,21 @@ const Navbar = () => {
   const shouldReduceMotion = useReducedMotion();
   const isMobile = useIsMobile();
 
-  // Navigation links
-  const navLinks = [
-    {
-      to: user?.role === "Teacher" ? "/teacher-dashboard" : "/dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-    },
-    { to: "/quizzes", label: "Quizzes", icon: BookOpen },
-    { to: "/doubt-solver", label: "AI Tutor", icon: Bot },
-    { to: "/achievements", label: "Achievements", icon: Trophy },
-    { to: "/social", label: "Social Hub", icon: Users },
-    { to: "/chat", label: "Chat", icon: MessageSquare },
-  ];
+  // Navigation links - Dashboard always goes to student dashboard for everyone
+  const navLinks = user
+    ? [
+        {
+          to: "/dashboard",
+          label: "Dashboard",
+          icon: LayoutDashboard,
+        },
+        { to: "/quizzes", label: "Quizzes", icon: BookOpen },
+        { to: "/doubt-solver", label: "AI Tutor", icon: Bot },
+        { to: "/achievements", label: "Achievements", icon: Trophy },
+        { to: "/social", label: "Social Hub", icon: Users },
+        { to: "/chat", label: "Chat", icon: MessageSquare },
+      ]
+    : [];
 
   // Track scroll position for navbar appearance changes (always visible)
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -243,39 +249,80 @@ const Navbar = () => {
             >
               {user ? (
                 <>
-                  {/* Welcome Message */}
-                  <motion.div
-                    variants={staggerItem}
-                    className="mr-4 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500/15 via-purple-500/15 to-indigo-500/15 dark:from-blue-500/20 dark:via-purple-500/20 dark:to-indigo-500/20 border border-white/50 dark:border-indigo-400/30 shadow-lg shadow-blue-500/10 dark:shadow-purple-500/20 backdrop-blur-xl"
-                  >
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                      Welcome,{" "}
-                      <span className="font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-300 bg-clip-text text-transparent drop-shadow-sm">
-                        {user.name}!
-                      </span>
-                    </span>
-                  </motion.div>
+                  {/* Gamification Badges */}
+                  <div className="flex items-center gap-2 mr-3">
+                    {/* Level Badge */}
+                    <motion.div
+                      variants={staggerItem}
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 rounded-xl shadow-lg hover:shadow-violet-500/50 transition-all duration-300 border border-white/30 relative overflow-hidden"
+                    >
+                      <motion.div
+                        animate={{ x: [-50, 150] }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          repeatDelay: 1,
+                        }}
+                        className="absolute inset-0 w-16 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                      />
+                      <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-xl flex items-center justify-center border border-white/40 relative z-10">
+                        <Crown className="w-4 h-4 text-yellow-300" />
+                      </div>
+                      <div className="relative z-10">
+                        <p className="text-[10px] font-black text-white/90 uppercase leading-none">
+                          Lvl
+                        </p>
+                        <p className="text-sm font-black text-white leading-none">
+                          12
+                        </p>
+                      </div>
+                    </motion.div>
+
+                    {/* Streak Badge */}
+                    <motion.div
+                      variants={staggerItem}
+                      whileHover={{ scale: 1.05, rotate: [0, -3, 3, 0] }}
+                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-orange-50 to-red-50 backdrop-blur-xl rounded-xl border border-orange-200/60 shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <motion.div
+                        animate={{ scale: [1, 1.15, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-md relative"
+                      >
+                        <Flame className="w-4 h-4 text-white" />
+                        <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
+                      </motion.div>
+                      <div>
+                        <p className="text-[10px] font-black text-orange-600 uppercase leading-none">
+                          Streak
+                        </p>
+                        <p className="text-sm font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent leading-none">
+                          7
+                        </p>
+                      </div>
+                    </motion.div>
+
+                    {/* XP Badge */}
+                    <motion.div
+                      variants={staggerItem}
+                      whileHover={{ scale: 1.05 }}
+                      className="flex items-center gap-2 px-3 py-2 bg-white/60 backdrop-blur-xl rounded-xl border border-white/80 shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <Star className="w-4 h-4 text-violet-600 fill-violet-600" />
+                      <div>
+                        <p className="text-[10px] font-black text-slate-600 uppercase leading-none">
+                          XP
+                        </p>
+                        <p className="text-sm font-black bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent leading-none">
+                          2340
+                        </p>
+                      </div>
+                    </motion.div>
+                  </div>
 
                   {/* Nav Links */}
-                  {[
-                    {
-                      to:
-                        user.role === "Teacher"
-                          ? "/teacher-dashboard"
-                          : "/dashboard",
-                      label: "Dashboard",
-                      icon: LayoutDashboard,
-                    },
-                    { to: "/quizzes", label: "Quizzes", icon: BookOpen },
-                    { to: "/doubt-solver", label: "AI Tutor", icon: Bot },
-                    {
-                      to: "/achievements",
-                      label: "Achievements",
-                      icon: Trophy,
-                    },
-                    { to: "/social", label: "Social Hub", icon: Users },
-                    { to: "/chat", label: "Chat", icon: MessageSquare },
-                  ].map((link) => (
+                  {navLinks.map((link) => (
                     <motion.div key={link.to} variants={staggerItem}>
                       <Link
                         to={link.to}
@@ -315,13 +362,16 @@ const Navbar = () => {
 
                   {/* Role-based links */}
                   {user.role === "Teacher" && (
-                    <motion.div variants={staggerItem}>
+                    <motion.div
+                      variants={staggerItem}
+                      className="relative group"
+                    >
                       <Link
                         to="/teacher-dashboard"
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 transition-all duration-300"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-300 border border-indigo-200/60 dark:border-indigo-400/30"
                       >
                         <GraduationCap className="w-4 h-4" />
-                        My Quizzes
+                        Teacher Tools
                       </Link>
                     </motion.div>
                   )}
@@ -581,10 +631,15 @@ const Navbar = () => {
 
                     {user.role === "Teacher" && (
                       <>
+                        <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                          <p className="px-4 py-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                            Teacher Tools
+                          </p>
+                        </div>
                         <Link
                           onClick={closeMenu}
                           to="/teacher-dashboard"
-                          className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
+                          className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all duration-200 text-base font-medium"
                         >
                           <GraduationCap className="w-5 h-5" />
                           <span>My Quizzes</span>
@@ -592,10 +647,18 @@ const Navbar = () => {
                         <Link
                           onClick={closeMenu}
                           to="/quiz-maker"
-                          className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
+                          className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all duration-200 text-base font-medium"
                         >
                           <BookOpen className="w-5 h-5" />
-                          <span>Quiz Maker</span>
+                          <span>Create Quiz</span>
+                        </Link>
+                        <Link
+                          onClick={closeMenu}
+                          to="/meeting/create"
+                          className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all duration-200 text-base font-medium"
+                        >
+                          <Radio className="w-5 h-5" />
+                          <span>Start Meeting</span>
                         </Link>
                       </>
                     )}

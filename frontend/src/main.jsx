@@ -8,10 +8,18 @@ import "./index.css";
 import "./enhanced-animations.css"; // Modern animations and effects
 import "./glassmorphism.css"; // Glassmorphism utilities
 import "./styles/mobile-optimizations.css"; // Mobile performance optimizations
-import { registerServiceWorker } from "./utils/serviceWorkerRegistration";
+import {
+  registerServiceWorker,
+  unregisterServiceWorker,
+} from "./utils/serviceWorkerRegistration";
 
-// Register service worker for offline support
-registerServiceWorker();
+// Register service worker only in production (prevents Vite HMR issues in dev)
+if (import.meta.env.PROD) {
+  registerServiceWorker();
+} else {
+  // Unregister any existing service worker in development
+  unregisterServiceWorker();
+}
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

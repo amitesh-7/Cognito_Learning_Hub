@@ -33,7 +33,9 @@ import {
   History,
   Book,
   Video,
+  Check,
 } from "lucide-react";
+import AnimatedCounter from "../components/AnimatedCounter";
 
 // Enhanced ConfirmationModal with modern styling
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
@@ -279,7 +281,7 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <ConfirmationModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
@@ -289,55 +291,123 @@ export default function TeacherDashboard() {
       />
 
       <div className="container mx-auto px-4 py-8 space-y-8 relative z-10">
-        {/* Header Section */}
-        <motion.div
-          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 p-6 bg-white dark:bg-gray-800 backdrop-blur-xl rounded-2xl border border-white dark:border-gray-700 shadow-xl"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
+        {/* Enhanced Hero Header Section */}
+        <motion.header
+          className="relative overflow-hidden rounded-3xl mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Teacher Dashboard
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
-              📊 Manage and analyze your quiz performance
-            </p>
-          </div>
+          {/* Animated gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-purple-600/20 to-indigo-600/20 blur-3xl" />
 
-          <div className="flex flex-wrap gap-3">
-            <Button
-              variant={viewMode === "overview" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("overview")}
-              className={
-                viewMode === "overview"
-                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0 shadow-lg"
-                  : "border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
-              }
-            >
-              📈 Overview
-            </Button>
-            <Button
-              variant={viewMode === "detailed" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("detailed")}
-              className={
-                viewMode === "detailed"
-                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0 shadow-lg"
-                  : "border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
-              }
-            >
-              📋 Detailed
-            </Button>
-            <Link to="/quiz-maker">
-              <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-0 shadow-lg">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Quiz
-              </Button>
-            </Link>
+          {/* Glassmorphism container */}
+          <div className="relative glass-strong backdrop-blur-3xl p-8 border border-white/20 dark:border-purple-500/20 shadow-[0_8px_32px_0_rgba(59,130,246,0.2)]">
+            {/* Floating orbs background */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-400/30 to-purple-600/30 rounded-full blur-3xl animate-pulse" />
+            <div
+              className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-indigo-400/30 to-pink-600/30 rounded-full blur-3xl animate-pulse"
+              style={{ animationDelay: "700ms" }}
+            />
+
+            {/* Content */}
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              {/* Left section with enhanced typography */}
+              <div className="space-y-3">
+                <motion.div
+                  className="flex items-center gap-3"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/50">
+                    <Award className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600">
+                      Teacher Hub
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-300 font-medium">
+                      Welcome back, {user?.name} 👋
+                    </p>
+                  </div>
+                </motion.div>
+
+                {/* Real-time stats ticker */}
+                <motion.div
+                  className="flex items-center gap-4 text-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-green-700 dark:text-green-300 font-semibold">
+                      Live Dashboard
+                    </span>
+                  </div>
+                  <div className="text-gray-500 dark:text-gray-400">
+                    Last updated:{" "}
+                    <span className="font-semibold">Just now</span>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Right section with action buttons */}
+              <motion.div
+                className="flex flex-wrap gap-3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                {/* View mode toggle with glassmorphism */}
+                <div className="flex gap-1 p-1 rounded-full glass-strong">
+                  <button
+                    onClick={() => setViewMode("overview")}
+                    className={`px-4 py-2 rounded-full transition-all duration-300 ${
+                      viewMode === "overview"
+                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50"
+                    }`}
+                  >
+                    📊 Overview
+                  </button>
+                  <button
+                    onClick={() => setViewMode("detailed")}
+                    className={`px-4 py-2 rounded-full transition-all duration-300 ${
+                      viewMode === "detailed"
+                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50"
+                    }`}
+                  >
+                    📋 Detailed
+                  </button>
+                </div>
+
+                {/* Primary CTA with animated gradient */}
+                <Link to="/quiz-maker">
+                  <motion.button
+                    className="relative px-6 py-3 rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white font-semibold shadow-lg shadow-green-500/50 overflow-hidden group"
+                    whileHover={{ scale: 1.05, rotate: 1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className="absolute inset-0 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <span className="relative flex items-center gap-2">
+                      <Plus className="w-5 h-5" />
+                      Create Quiz
+                    </span>
+                    <motion.div
+                      className="absolute inset-0 bg-white/20"
+                      initial={{ x: "-100%" }}
+                      whileHover={{ x: "100%" }}
+                      transition={{ duration: 0.6 }}
+                    />
+                  </motion.button>
+                </Link>
+              </motion.div>
+            </div>
           </div>
-        </motion.div>
+        </motion.header>
 
         <AnimatePresence mode="wait">
           {viewMode === "overview" ? (
@@ -354,69 +424,125 @@ export default function TeacherDashboard() {
                 className="xl:col-span-1 space-y-6"
                 variants={itemVariants}
               >
-                {/* Quick Stats */}
-                <Card className="bg-white dark:bg-gray-800 backdrop-blur-xl border-0 shadow-2xl">
-                  <div className="p-6">
+                {/* Enhanced Quick Stats */}
+                <Card className="relative overflow-hidden glass-premium backdrop-blur-xl border-0 shadow-2xl">
+                  {/* Animated gradient orb */}
+                  <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-full blur-3xl animate-pulse" />
+
+                  <div className="relative p-6">
                     <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6 flex items-center gap-2">
                       📊 Quick Overview
                     </h3>
                     <div className="space-y-6">
                       <motion.div
-                        className="group hover:bg-blue-50 dark:hover:bg-blue-900 p-4 rounded-xl transition-all duration-300"
+                        className="relative group hover:bg-blue-50 dark:hover:bg-blue-900/50 p-4 rounded-xl transition-all duration-300"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-                            <BookOpen className="w-7 h-7 text-white" />
+                          <div className="relative">
+                            <motion.div
+                              className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 blur-xl opacity-40"
+                              animate={{ scale: [1, 1.2, 1] }}
+                              transition={{ duration: 3, repeat: Infinity }}
+                            />
+                            <div className="relative w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                              <BookOpen className="w-7 h-7 text-white" />
+                            </div>
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Total Quizzes
                             </p>
-                            <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                              {stats.totalQuizzes}
-                            </p>
+                            <motion.p
+                              className="text-4xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+                              initial={{ scale: 0.5, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: "spring", delay: 0.2 }}
+                            >
+                              <AnimatedCounter
+                                end={stats.totalQuizzes}
+                                duration={2}
+                              />
+                            </motion.p>
                           </div>
                         </div>
                       </motion.div>
 
                       <motion.div
-                        className="group hover:bg-green-50 dark:hover:bg-green-900 p-4 rounded-xl transition-all duration-300"
+                        className="relative group hover:bg-green-50 dark:hover:bg-green-900/50 p-4 rounded-xl transition-all duration-300"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-                            <TrendingUp className="w-7 h-7 text-white" />
+                          <div className="relative">
+                            <motion.div
+                              className="absolute inset-0 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 blur-xl opacity-40"
+                              animate={{ scale: [1, 1.2, 1] }}
+                              transition={{
+                                duration: 3,
+                                repeat: Infinity,
+                                delay: 0.5,
+                              }}
+                            />
+                            <div className="relative w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                              <TrendingUp className="w-7 h-7 text-white" />
+                            </div>
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Total Takes
                             </p>
-                            <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                              {stats.totalTakes}
-                            </p>
+                            <motion.p
+                              className="text-4xl font-black bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent"
+                              initial={{ scale: 0.5, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: "spring", delay: 0.3 }}
+                            >
+                              <AnimatedCounter
+                                end={stats.totalTakes}
+                                duration={2}
+                              />
+                            </motion.p>
                           </div>
                         </div>
                       </motion.div>
 
                       <motion.div
-                        className="group hover:bg-purple-50 dark:hover:bg-purple-900 p-4 rounded-xl transition-all duration-300"
+                        className="relative group hover:bg-purple-50 dark:hover:bg-purple-900/50 p-4 rounded-xl transition-all duration-300"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-                            <Users className="w-7 h-7 text-white" />
+                          <div className="relative">
+                            <motion.div
+                              className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 blur-xl opacity-40"
+                              animate={{ scale: [1, 1.2, 1] }}
+                              transition={{
+                                duration: 3,
+                                repeat: Infinity,
+                                delay: 1,
+                              }}
+                            />
+                            <div className="relative w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
+                              <Users className="w-7 h-7 text-white" />
+                            </div>
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                               Unique Students
                             </p>
-                            <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                              {stats.uniqueStudents}
-                            </p>
+                            <motion.p
+                              className="text-4xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent"
+                              initial={{ scale: 0.5, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: "spring", delay: 0.4 }}
+                            >
+                              <AnimatedCounter
+                                end={stats.uniqueStudents}
+                                duration={2}
+                              />
+                            </motion.p>
                           </div>
                         </div>
                       </motion.div>
@@ -424,70 +550,144 @@ export default function TeacherDashboard() {
                   </div>
                 </Card>
 
-                {/* Quick Actions */}
-                <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl border-0 shadow-2xl">
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-6 flex items-center gap-2">
-                      ⚡ Quick Actions
-                    </h3>
-                    <div className="space-y-3">
-                      <Link to="/manual-quiz-creator">
-                        <Button
-                          className="w-full justify-start bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900 dark:hover:to-indigo-900 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 transition-all duration-300"
-                          variant="outline"
-                        >
-                          <Edit3 className="w-4 h-4 mr-3" />
-                          ✏️ Manual Creator
-                        </Button>
-                      </Link>
-                      <Link to="/file-quiz-generator">
-                        <Button
-                          className="w-full justify-start bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 hover:from-purple-100 hover:to-pink-100 dark:hover:from-purple-900 dark:hover:to-pink-900 border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 transition-all duration-300"
-                          variant="outline"
-                        >
-                          <BookOpen className="w-4 h-4 mr-3" />
-                          📁 File Generator
-                        </Button>
-                      </Link>
-                      <Link to="/topic-quiz-generator">
-                        <Button
-                          className="w-full justify-start bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900 dark:to-orange-900 hover:from-amber-100 hover:to-orange-100 dark:hover:from-amber-900 dark:hover:to-orange-900 border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-300 transition-all duration-300"
-                          variant="outline"
-                        >
-                          <Award className="w-4 h-4 mr-3" />
-                          🎯 Topic Generator
-                        </Button>
-                      </Link>
-                      <Link to="/pdf-quiz-generator">
-                        <Button
-                          className="w-full justify-start bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 hover:from-green-100 hover:to-emerald-100 dark:hover:from-green-900 dark:hover:to-emerald-900 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 transition-all duration-300"
-                          variant="outline"
-                        >
-                          <FileText className="w-4 h-4 mr-3" />
-                          🤖 AI PDF Generator
-                        </Button>
-                      </Link>
-                      <Link to="/live/history">
-                        <Button
-                          className="w-full justify-start bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900 dark:to-rose-900 hover:from-pink-100 hover:to-rose-100 dark:hover:from-pink-900 dark:hover:to-rose-900 border-pink-200 dark:border-pink-700 text-pink-700 dark:text-pink-300 transition-all duration-300"
-                          variant="outline"
-                        >
-                          <History className="w-4 h-4 mr-3" />
-                          📊 Live Session History
-                        </Button>
-                      </Link>
-                      <Link to="/meeting/create">
-                        <Button
-                          className="w-full justify-start bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900 dark:to-fuchsia-900 hover:from-violet-100 hover:to-fuchsia-100 dark:hover:from-violet-900 dark:hover:to-fuchsia-900 border-violet-200 dark:border-violet-700 text-violet-700 dark:text-violet-300 transition-all duration-300"
-                          variant="outline"
-                        >
-                          <Video className="w-4 h-4 mr-3" />
-                          🎥 Start Video Meeting
-                        </Button>
-                      </Link>
+                {/* Enhanced Quick Actions */}
+                <div className="relative overflow-hidden rounded-3xl glass-strong backdrop-blur-2xl border border-white/20 dark:border-purple-500/20 p-6 shadow-[0_20px_60px_-15px_rgba(99,102,241,0.3)]">
+                  {/* Animated gradient orb */}
+                  <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-green-500/20 to-emerald-600/20 rounded-full blur-3xl animate-pulse" />
+
+                  <div className="relative space-y-4">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
+                        <Award className="w-5 h-5 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                        Quick Actions
+                      </h3>
                     </div>
+
+                    {/* Action buttons with unique gradients */}
+                    {[
+                      {
+                        icon: Edit3,
+                        label: "Manual Creator",
+                        emoji: "✏️",
+                        gradient: "from-blue-500 to-indigo-600",
+                        link: "/manual-quiz-creator",
+                      },
+                      {
+                        icon: BookOpen,
+                        label: "File Generator",
+                        emoji: "📁",
+                        gradient: "from-purple-500 to-pink-600",
+                        link: "/file-quiz-generator",
+                      },
+                      {
+                        icon: Award,
+                        label: "Topic Generator",
+                        emoji: "🎯",
+                        gradient: "from-amber-500 to-orange-600",
+                        link: "/topic-quiz-generator",
+                      },
+                      {
+                        icon: FileText,
+                        label: "AI PDF Generator",
+                        emoji: "🤖",
+                        gradient: "from-green-500 to-emerald-600",
+                        link: "/pdf-quiz-generator",
+                      },
+                      {
+                        icon: History,
+                        label: "Session History",
+                        emoji: "📊",
+                        gradient: "from-pink-500 to-rose-600",
+                        link: "/live/history",
+                      },
+                      {
+                        icon: Video,
+                        label: "Video Meeting",
+                        emoji: "🎥",
+                        gradient: "from-violet-500 to-fuchsia-600",
+                        link: "/meeting/create",
+                      },
+                    ].map((action, index) => {
+                      const Icon = action.icon;
+                      return (
+                        <motion.div
+                          key={action.label}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3 + index * 0.05 }}
+                        >
+                          <Link to={action.link}>
+                            <motion.div
+                              className="relative group overflow-hidden rounded-2xl p-4 bg-opacity-10 border border-white/20 backdrop-blur-sm transition-all duration-500 cursor-pointer"
+                              whileHover={{
+                                scale: 1.03,
+                                boxShadow: "0 20px 40px -12px rgba(0,0,0,0.3)",
+                              }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              {/* Hover gradient overlay */}
+                              <div
+                                className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
+                              />
+
+                              <div className="relative flex items-center gap-3">
+                                {/* Icon with glow */}
+                                <div
+                                  className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-500`}
+                                >
+                                  <Icon className="w-5 h-5 text-white" />
+
+                                  {/* Pulse ring on hover */}
+                                  <motion.div
+                                    className="absolute inset-0 rounded-xl border-2 border-white/50"
+                                    initial={{ scale: 1, opacity: 0 }}
+                                    whileHover={{
+                                      scale: 1.3,
+                                      opacity: [0, 0.5, 0],
+                                    }}
+                                    transition={{
+                                      duration: 1,
+                                      repeat: Infinity,
+                                    }}
+                                  />
+                                </div>
+
+                                {/* Text */}
+                                <div className="flex-1">
+                                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-300">
+                                    {action.emoji} {action.label}
+                                  </p>
+                                </div>
+
+                                {/* Arrow */}
+                                <motion.div
+                                  className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"
+                                  animate={{ x: [0, 4, 0] }}
+                                  transition={{
+                                    duration: 1.5,
+                                    repeat: Infinity,
+                                  }}
+                                >
+                                  →
+                                </motion.div>
+                              </div>
+
+                              {/* Shine effect */}
+                              <motion.div
+                                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                                initial={{ x: "-100%", skewX: -20 }}
+                                whileHover={{ x: "100%" }}
+                                transition={{ duration: 0.6 }}
+                              />
+                            </motion.div>
+                          </Link>
+                        </motion.div>
+                      );
+                    })}
                   </div>
-                </Card>
+                </div>
               </motion.div>
 
               {/* Right Column: Charts & Performance */}
@@ -730,66 +930,182 @@ export default function TeacherDashboard() {
                         </Link>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {filteredQuizzes.slice(0, 5).map((quiz, index) => (
                           <motion.div
                             key={quiz._id}
-                            className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            className="group relative"
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
+                            transition={{ delay: index * 0.05 }}
+                            whileHover={{ x: 4 }}
                           >
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                                <BookOpen className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                            {/* Glassmorphic card */}
+                            <div className="relative overflow-hidden rounded-2xl glass-strong border border-white/20 dark:border-purple-500/20 transition-all duration-500 hover:shadow-[0_20px_60px_-15px_rgba(99,102,241,0.4)] hover:border-purple-500/40">
+                              {/* Animated gradient background on hover */}
+                              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-purple-500/5 to-indigo-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                              {/* Status indicator bar */}
+                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-indigo-500 scale-y-0 group-hover:scale-y-100 transition-transform duration-500 origin-top" />
+
+                              {/* Content */}
+                              <div className="relative p-5">
+                                <div className="flex items-start gap-4">
+                                  {/* Icon with animated ring */}
+                                  <div className="relative flex-shrink-0">
+                                    <motion.div
+                                      className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-purple-500/50 transition-all duration-500"
+                                      whileHover={{ rotate: 360, scale: 1.1 }}
+                                      transition={{ duration: 0.6 }}
+                                    >
+                                      <BookOpen className="w-6 h-6 text-white" />
+                                    </motion.div>
+
+                                    {/* Engagement indicator */}
+                                    <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 border-2 border-white dark:border-gray-900 flex items-center justify-center shadow-lg">
+                                      <span className="text-xs font-bold text-white">
+                                        {quiz.timesTaken}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Quiz info */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="flex-1">
+                                        <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
+                                          {quiz.title}
+                                        </h4>
+
+                                        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                          {/* Questions badge */}
+                                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+                                            <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                                            <span className="font-medium">
+                                              {quiz.questions?.length || 0}{" "}
+                                              questions
+                                            </span>
+                                          </div>
+
+                                          {/* Engagement badge */}
+                                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/20">
+                                            <Users className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                                            <span className="font-medium">
+                                              {quiz.timesTaken} attempts
+                                            </span>
+                                          </div>
+
+                                          {/* Engagement level */}
+                                          <div
+                                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${
+                                              quiz.timesTaken >= 10
+                                                ? "bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-300"
+                                                : quiz.timesTaken >= 5
+                                                ? "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300"
+                                                : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-300"
+                                            }`}
+                                          >
+                                            <div
+                                              className={`w-2 h-2 rounded-full ${
+                                                quiz.timesTaken >= 10
+                                                  ? "bg-green-500 animate-pulse"
+                                                  : quiz.timesTaken >= 5
+                                                  ? "bg-amber-500"
+                                                  : "bg-red-500"
+                                              }`}
+                                            />
+                                            <span className="font-semibold text-xs uppercase tracking-wide">
+                                              {quiz.timesTaken >= 10
+                                                ? "Hot"
+                                                : quiz.timesTaken >= 5
+                                                ? "Active"
+                                                : "New"}
+                                            </span>
+                                          </div>
+
+                                          {/* Date */}
+                                          <span className="text-xs">
+                                            {new Date(
+                                              quiz.createdAt
+                                            ).toLocaleDateString("en-US", {
+                                              month: "short",
+                                              day: "numeric",
+                                            })}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Action buttons */}
+                                    <div className="flex flex-wrap items-center gap-2 mt-4">
+                                      {/* Host Live - Primary CTA */}
+                                      <Link to={`/live/host/${quiz._id}`}>
+                                        <motion.button
+                                          className="relative px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold shadow-lg shadow-purple-500/30 overflow-hidden group/btn"
+                                          whileHover={{ scale: 1.05 }}
+                                          whileTap={{ scale: 0.95 }}
+                                        >
+                                          <span className="relative z-10 flex items-center gap-2">
+                                            <Radio className="w-4 h-4 animate-pulse" />
+                                            Host Live
+                                          </span>
+                                          <motion.div
+                                            className="absolute inset-0 bg-gradient-to-r from-purple-400 to-blue-400"
+                                            initial={{ x: "-100%" }}
+                                            whileHover={{ x: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                          />
+                                        </motion.button>
+                                      </Link>
+
+                                      {/* Secondary actions */}
+                                      <div className="flex items-center gap-2">
+                                        <motion.button
+                                          onClick={() => handleShare(quiz._id)}
+                                          className={`px-4 py-2 rounded-xl glass border border-white/20 hover:border-blue-500/40 text-gray-700 dark:text-gray-200 font-medium transition-all duration-300 ${
+                                            copied
+                                              ? "bg-green-50 dark:bg-green-900/20 border-green-500/40"
+                                              : ""
+                                          }`}
+                                          whileHover={{ scale: 1.05 }}
+                                          whileTap={{ scale: 0.95 }}
+                                        >
+                                          <ExternalLink className="w-4 h-4 inline mr-1.5" />
+                                          {copied ? "Copied!" : "Share"}
+                                        </motion.button>
+
+                                        <Link to={`/quiz/edit/${quiz._id}`}>
+                                          <motion.button
+                                            className="px-4 py-2 rounded-xl glass border border-white/20 hover:border-purple-500/40 text-gray-700 dark:text-gray-200 font-medium transition-all duration-300"
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                          >
+                                            <Edit3 className="w-4 h-4 inline mr-1.5" />
+                                            Edit
+                                          </motion.button>
+                                        </Link>
+
+                                        <motion.button
+                                          onClick={() => openDeleteModal(quiz)}
+                                          className="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-medium transition-all duration-300"
+                                          whileHover={{ scale: 1.05 }}
+                                          whileTap={{ scale: 0.95 }}
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </motion.button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900 dark:text-white">
-                                  {quiz.title}
-                                </h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  {quiz.questions?.length || 0} questions •{" "}
-                                  {quiz.timesTaken} takes
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Link to={`/live/host/${quiz._id}`}>
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white border-0"
-                                >
-                                  <Radio className="w-4 h-4 mr-1 animate-pulse" />
-                                  Host Live
-                                </Button>
-                              </Link>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleShare(quiz._id)}
-                                className={
-                                  copied
-                                    ? "bg-green-50 dark:bg-green-900 border-green-200 dark:border-green-800"
-                                    : ""
-                                }
-                              >
-                                <ExternalLink className="w-4 h-4 mr-1" />
-                                {copied ? "Copied!" : "Share"}
-                              </Button>
-                              <Link to={`/quiz/edit/${quiz._id}`}>
-                                <Button variant="outline" size="sm">
-                                  <Edit3 className="w-4 h-4 mr-1" />
-                                  Edit
-                                </Button>
-                              </Link>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => openDeleteModal(quiz)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+
+                              {/* Hover shine effect */}
+                              <motion.div
+                                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
+                                initial={{ x: "-100%", skewX: -20 }}
+                                whileHover={{ x: "100%" }}
+                                transition={{ duration: 0.8 }}
+                              />
                             </div>
                           </motion.div>
                         ))}

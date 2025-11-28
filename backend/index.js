@@ -3186,14 +3186,40 @@ app.get("/api/quizzes/:id/pdf/:format", auth, async (req, res) => {
 });
 
 // *** NEW DOUBT SOLVER ROUTE ***
-app.post("/api/doubt-solver", async (req, res) => {
+app.post("/api/doubt-solver", upload.array("files", 10), async (req, res) => {
   try {
     const { message } = req.body;
-    if (!message) {
-      return res.status(400).json({ message: "No message provided." });
+    const files = req.files || [];
+
+    if (!message && files.length === 0) {
+      return res.status(400).json({ message: "No message or files provided." });
     }
 
-    const prompt = `
+    // If files are provided, handle file analysis
+    if (files.length > 0) {
+      // For now, just acknowledge the files and use the message
+      const fileInfo = files
+        .map((f) => `${f.originalname} (${f.mimetype})`)
+        .join(", ");
+      const prompt = `
+        You are a friendly and encouraging AI tutor for students. 
+        Your name is Cognito Learning Hub AI Assistant.
+        A student has uploaded files: ${fileInfo}
+        They also said: "${message || "Please analyze these files"}"
+        Provide a clear, helpful, and concise response suitable for a high school student.
+        For mathematical formulas and equations, use LaTeX notation wrapped in $ for inline math or $$ for block math.
+        For example: The quadratic formula is $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$
+        Do not answer questions that are not academic or educational in nature.
+      `;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      res.json({ reply: text });
+    } else {
+      // Regular text-based doubt solving
+      const prompt = `
         You are a friendly and encouraging AI tutor for students. 
         Your name is Cognito Learning Hub AI Assistant.
         A student has asked the following question: "${message}".
@@ -3203,11 +3229,12 @@ app.post("/api/doubt-solver", async (req, res) => {
         Do not answer questions that are not academic or educational in nature.
       `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
 
-    res.json({ reply: text });
+      res.json({ reply: text });
+    }
   } catch (error) {
     console.error("Doubt solver error:", error);
     res

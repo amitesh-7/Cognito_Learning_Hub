@@ -270,7 +270,16 @@ export default function Dashboard() {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 relative overflow-hidden py-8">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-20 w-96 h-96 bg-violet-400/10 rounded-full blur-3xl animate-pulse" />
+        <div
+          className="absolute bottom-20 left-20 w-96 h-96 bg-fuchsia-400/10 rounded-full blur-3xl animate-pulse"
+          style={{ animationDelay: "1s" }}
+        />
+      </div>
+
       {/* Pull-to-refresh indicator */}
       <PullToRefreshIndicator
         pullDistance={pullDistance}
@@ -278,7 +287,7 @@ export default function Dashboard() {
         isRefreshing={isRefreshing}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
         {/* Header Section */}
         <motion.div
           className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
@@ -287,11 +296,15 @@ export default function Dashboard() {
           animate="visible"
         >
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-5xl md:text-6xl font-black bg-gradient-to-r from-slate-900 via-violet-700 to-fuchsia-600 bg-clip-text text-transparent drop-shadow-lg">
               Welcome back, {user?.name?.split(" ")[0] || "Student"}! 👋
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
-              Here's your learning progress overview
+            <p className="text-slate-700 font-bold mt-3 text-xl">
+              Here's your{" "}
+              <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+                learning progress
+              </span>{" "}
+              overview ✨
             </p>
           </div>
 

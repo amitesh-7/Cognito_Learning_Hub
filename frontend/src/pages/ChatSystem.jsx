@@ -397,82 +397,93 @@ const ChatSystem = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      <div className="flex min-h-screen sm:h-screen flex-col sm:flex-row">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-20 w-96 h-96 bg-violet-400/10 rounded-full blur-3xl opacity-60" />
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-fuchsia-400/10 rounded-full blur-3xl opacity-60" />
+      </div>
+
+      <div className="flex min-h-screen sm:h-screen flex-col sm:flex-row relative z-10">
         {/* Sidebar - Friends List */}
         <div
           className={`${
             selectedChat ? "hidden md:block" : "block"
-          } w-full md:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col`}
+          } w-full md:w-80 bg-white/40 backdrop-blur-2xl border-r-2 border-white/60 flex flex-col shadow-2xl`}
         >
           {/* Header */}
-          <div className="p-4 bg-blue-600 dark:bg-blue-700 text-white">
-            <h1 className="text-xl font-bold flex items-center gap-2">
-              <MessageCircle className="w-6 h-6" />
+          <div className="p-6 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-white shadow-lg">
+            <h1 className="text-2xl font-black flex items-center gap-3">
+              <MessageCircle className="w-7 h-7" />
               Messages
             </h1>
-            <p className="text-sm text-blue-100 mt-1">
-              {friends.length} friends available
+            <p className="text-sm text-violet-100 mt-2 font-semibold">
+              👥 {friends.length} friends available
             </p>
           </div>
 
           {/* Search */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="p-4 border-b-2 border-white/60">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-violet-600 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search friends..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full pl-12 pr-4 py-3 border-2 border-violet-200 bg-white/60 backdrop-blur-md rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-400 text-slate-900 font-semibold placeholder-slate-500 transition-all"
               />
             </div>
           </div>
 
           {/* Friends List */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto p-2">
             {filteredFriends.length === 0 ? (
-              <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                {searchQuery ? "No friends found" : "No friends available"}
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 rounded-2xl flex items-center justify-center mx-auto mb-3 border-2 border-violet-200/50">
+                  <Users className="w-8 h-8 text-violet-400" />
+                </div>
+                <p className="text-slate-600 font-semibold">
+                  {searchQuery ? "No friends found" : "No friends available"}
+                </p>
               </div>
             ) : (
               filteredFriends.map((friendship) => (
                 <div
                   key={friendship.friendshipId}
                   onClick={() => setSelectedChat(friendship)}
-                  className={`p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
+                  className={`group p-4 mb-2 rounded-xl cursor-pointer transition-all ${
                     selectedChat?.friendshipId === friendship.friendshipId
-                      ? "bg-blue-50 dark:bg-blue-900 border-blue-200 dark:border-blue-700"
-                      : ""
+                      ? "bg-white/80 backdrop-blur-md shadow-lg border-2 border-violet-300 scale-[1.02]"
+                      : "hover:bg-white/50 backdrop-blur-sm border-2 border-transparent hover:border-violet-200"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                      <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-fuchsia-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg">
                         {friendship.friend.name.charAt(0).toUpperCase()}
                       </div>
                       {getStatusIndicator(friendship.friend._id) && (
                         <div
                           className={`absolute -bottom-1 -right-1 w-4 h-4 ${getStatusIndicator(
                             friendship.friend._id
-                          )} border-2 border-white dark:border-gray-800 rounded-full`}
+                          )} border-2 border-white rounded-full shadow-md`}
                         ></div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="font-medium text-gray-900 dark:text-white truncate">
+                        <p className="font-bold text-slate-900 truncate">
                           {friendship.friend.name}
                         </p>
                         {friendsStatus.get(friendship.friend._id)?.isOnline && (
-                          <div className="text-xs text-green-500 dark:text-green-400 flex items-center">
-                            <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                          <div className="text-xs text-emerald-600 flex items-center font-bold">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full mr-1 animate-pulse"></div>
                             Online
                           </div>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      <p className="text-sm text-slate-600 truncate font-medium">
                         {getLastSeen(friendship.friend._id)}
                       </p>
                     </div>
@@ -529,15 +540,19 @@ const ChatSystem = () => {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 {loading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-violet-200 border-t-violet-600"></div>
                   </div>
                 ) : messages.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                    <p>No messages yet. Start the conversation!</p>
+                  <div className="text-center py-12">
+                    <div className="w-20 h-20 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border-2 border-violet-200/50">
+                      <MessageCircle className="w-10 h-10 text-violet-400" />
+                    </div>
+                    <p className="text-slate-700 font-semibold text-lg">
+                      No messages yet. Start the conversation! 👋
+                    </p>
                   </div>
                 ) : (
                   messages.map((message) => {
@@ -550,13 +565,15 @@ const ChatSystem = () => {
                         }`}
                       >
                         <div
-                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg relative ${
+                          className={`max-w-xs lg:max-w-md px-5 py-3 rounded-2xl relative shadow-md ${
                             isOwn
-                              ? "bg-blue-600 text-white"
-                              : "bg-white dark:bg-gray-800 text-gray-800 dark:text-white border border-gray-200 dark:border-gray-600"
+                              ? "bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white"
+                              : "bg-white/70 backdrop-blur-md text-slate-900 border-2 border-white/80"
                           } ${message.sending ? "opacity-70" : ""}`}
                         >
-                          <p className="text-sm">{message.content}</p>
+                          <p className="text-sm font-medium">
+                            {message.content}
+                          </p>
                           <p
                             className={`text-xs mt-1 ${
                               isOwn
@@ -578,9 +595,9 @@ const ChatSystem = () => {
 
               {
                 /* Message Input */
-                <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
-                  <div className="flex items-end gap-2">
-                    <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                <div className="bg-white/60 backdrop-blur-md border-t-2 border-white/60 p-5 shadow-lg">
+                  <div className="flex items-end gap-3">
+                    <button className="p-3 text-violet-600 hover:bg-violet-100 rounded-xl transition-all">
                       <ImageIcon className="w-5 h-5" />
                     </button>
                     <div className="flex-1 relative">
@@ -591,22 +608,22 @@ const ChatSystem = () => {
                         onKeyPress={handleKeyPress}
                         placeholder="Type a message..."
                         rows="1"
-                        className="w-full resize-none border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-32 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                        style={{ minHeight: "42px" }}
+                        className="w-full resize-none border-2 border-violet-200 bg-white/60 backdrop-blur-md rounded-xl px-5 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-400 max-h-32 text-slate-900 font-medium placeholder-slate-500 transition-all"
+                        style={{ minHeight: "48px" }}
                       />
-                      <button className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                        <Smile className="w-4 h-4" />
+                      <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-violet-600 hover:bg-violet-100 rounded-lg transition-all">
+                        <Smile className="w-5 h-5" />
                       </button>
                     </div>
                     <button
                       onClick={sendMessage}
                       disabled={!newMessage.trim() || sendingMessage}
-                      className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white p-3 rounded-xl hover:from-violet-700 hover:to-fuchsia-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl disabled:hover:shadow-lg"
                     >
                       {sendingMessage ? (
-                        <Loader className="w-5 h-5 animate-spin" />
+                        <Loader className="w-6 h-6 animate-spin" />
                       ) : (
-                        <Send className="w-5 h-5" />
+                        <Send className="w-6 h-6" />
                       )}
                     </button>
                   </div>
@@ -615,14 +632,16 @@ const ChatSystem = () => {
             </>
           ) : (
             // No chat selected
-            <div className="hidden md:flex flex-1 items-center justify-center bg-gray-50 dark:bg-gray-900">
+            <div className="hidden md:flex flex-1 items-center justify-center">
               <div className="text-center">
-                <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-                <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                <div className="w-24 h-24 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border-2 border-violet-200/50">
+                  <MessageCircle className="w-12 h-12 text-violet-400" />
+                </div>
+                <h2 className="text-3xl font-black bg-gradient-to-r from-slate-900 via-violet-700 to-fuchsia-600 bg-clip-text text-transparent mb-3">
                   Select a Friend to Chat
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Choose a friend from the list to start messaging
+                <p className="text-lg font-semibold text-slate-600">
+                  Choose a friend from the list to start messaging 💬
                 </p>
               </div>
             </div>
