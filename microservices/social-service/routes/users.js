@@ -5,6 +5,8 @@
 const express = require('express');
 const router = express.Router();
 const Follow = require('../models/Follow');
+const User = require('../models/User');
+const Friendship = require('../models/Friendship');
 const createLogger = require('../../shared/utils/logger');
 const { authenticateToken } = require('../../shared/middleware/auth');
 const axios = require('axios');
@@ -80,6 +82,82 @@ router.get('/search', authenticateToken, async (req, res) => {
   } catch (error) {
     logger.error('Error searching users:', error.message || 'Unknown error');
     res.status(500).json({ message: 'Failed to search users' });
+  }
+});
+
+// ============================================
+// UPDATE USER STATUS
+// ============================================
+router.put('/status', authenticateToken, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const userId = req.user.userId;
+
+    if (!['online', 'offline', 'away'].includes(status)) {
+      return res.status(400).json({ 
+        message: 'Invalid status. Must be online, offline, or away' 
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        status: status,
+        lastActivity: new Date(),
+        lastSeen: status === 'offline' ? new Date() : undefined,
+      },
+      { new: true, select: 'status lastSeen lastActivity' }
+    );
+
+    res.json({
+      message: 'Status updated successfully',
+      user: user,
+    });
+  } catch (error) {
+    logger.error('Error updating user status:', error);
+    res.status(500).json({ message: 'Failed to update status' });
+  }
+});
+
+// ============================================
+// GET FRIENDS STATUS
+// ============================================
+router.get('/friends-status', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Get user's friends
+    const friendships = await Friendship.find({
+      $or: [
+        { requester: userId, status: 'accepted' },
+        { recipient: userId, status: 'accepted' },
+      ],
+    }).populate('requester recipient', 'name status lastSeen lastActivity');
+
+    // Extract friend info with status
+    const friendsStatus = friendships.map((friendship) => {
+      const friend =
+        friendship.requester._id.toString() === userId
+          ? friendship.recipient
+          : friendship.requester;
+
+      return {
+        friendId: friend._id,
+        name: friend.name,
+        status: friend.status || 'offline',
+        lastSeen: friend.lastSeen,
+        lastActivity: friend.lastActivity,
+        isOnline:
+          friend.status === 'online' &&
+          friend.lastActivity &&
+          new Date() - new Date(friend.lastActivity) < 5 * 60 * 1000, // 5 minutes
+      };
+    });
+
+    res.json({ friends: friendsStatus });
+  } catch (error) {
+    logger.error('Error fetching friends status:', error);
+    res.status(500).json({ message: 'Failed to fetch friends status' });
   }
 });
 

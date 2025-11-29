@@ -28,6 +28,7 @@ const eventRoutes = require('./routes/events');
 const friendRoutes = require('./routes/friends');
 const challengeRoutes = require('./routes/challenges');
 const userRoutes = require('./routes/users');
+const chatRoutes = require('./routes/chat');
 
 const logger = createLogger('social-service');
 
@@ -94,6 +95,8 @@ app.use('/api/events', eventRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/user', userRoutes); // For /api/user/status and /api/user/friends-status
+app.use('/api/chat', chatRoutes);
 
 // Health check
 app.get('/health', async (req, res) => {
@@ -212,23 +215,24 @@ const startServer = async () => {
     await connectDB();
     logger.info('MongoDB connected');
 
-    // Connect to Redis
-    await feedManager.connect();
-    await notificationManager.connect();
-    logger.info('Redis connected');
+    // Try to connect to Redis (optional)
+    try {
+      await feedManager.connect();
+      await notificationManager.connect();
+      logger.info('Redis connected');
 
-    // Initialize Bull queues
-    queueManager.init();
-    logger.info('Bull queues initialized');
+      // Initialize Bull queues
+      queueManager.init();
+      logger.info('Bull queues initialized');
+    } catch (redisError) {
+      logger.warn('Redis connection failed - running without cache:', redisError.message);
+    }
 
     // Start server
     server.listen(PORT, () => {
       logger.info(`Social Service running on port ${PORT}`);
       logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`CORS Origins: ${process.env.CORS_ORIGINS || 'http://localhost:5173'}`);
-      logger.info(`Feed Cache TTL: ${process.env.FEED_CACHE_TTL || 300}s`);
-      logger.info(`Notification Cache TTL: ${process.env.NOTIFICATION_CACHE_TTL || 600}s`);
-      logger.info(`Redis Pub/Sub: Active`);
       logger.info(`Socket.IO: Active`);
     });
   } catch (error) {
