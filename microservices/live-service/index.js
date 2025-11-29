@@ -81,7 +81,7 @@ app.get("/health", async (req, res) => {
       checks: {
         database:
           mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-        redis: sessionManager.isConnected() ? "connected" : "disconnected",
+        redis: sessionManager.isHealthy() ? "connected" : "disconnected",
         socketio: io.engine.clientsCount,
       },
     };

@@ -75,7 +75,7 @@ app.get("/health", async (req, res) => {
       checks: {
         database:
           mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-        redis: cacheManager.isConnected() ? "connected" : "disconnected",
+        redis: cacheManager.isHealthy() ? "connected" : "disconnected",
       },
     };
 
