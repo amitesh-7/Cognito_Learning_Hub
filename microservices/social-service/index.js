@@ -105,20 +105,27 @@ app.use("/api/chat", chatRoutes);
 // Health check
 app.get("/health", async (req, res) => {
   try {
-    const queueStats = await queueManager.getStats();
+    let queueStats = null;
+
+    // Safely get queue stats if queues are initialized
+    if (queueManager.feedQueue && queueManager.notificationQueue) {
+      queueStats = await queueManager.getStats();
+    }
 
     res.json({
       success: true,
       service: "social-service",
       status: "healthy",
       redis: feedManager.isHealthy() ? "connected" : "disconnected",
-      queues: queueStats,
+      queues: queueStats || { status: "not initialized" },
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    res.status(500).json({
+    logger.error("Health check error:", error);
+    res.status(503).json({
       success: false,
-      error: "Health check failed",
+      status: "unhealthy",
+      error: error.message,
     });
   }
 });
@@ -225,14 +232,21 @@ const startServer = async () => {
       await feedManager.connect();
       await notificationManager.connect();
       logger.info("Redis connected");
-
-      // Initialize Bull queues
-      queueManager.init();
-      logger.info("Bull queues initialized");
     } catch (redisError) {
       logger.warn(
         "Redis connection failed - running without cache:",
         redisError.message
+      );
+    }
+
+    // Initialize Bull queues (requires Redis)
+    try {
+      queueManager.init();
+      logger.info("Bull queues initialized");
+    } catch (queueError) {
+      logger.warn(
+        "Queue initialization failed - async processing disabled:",
+        queueError.message
       );
     }
 
