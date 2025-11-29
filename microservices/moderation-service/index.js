@@ -47,10 +47,14 @@ mongoose.connect(mongoUri, {
 const reportRoutes = require('./routes/reports');
 const actionRoutes = require('./routes/actions');
 const appealRoutes = require('./routes/appeals');
+const moderatorRoutes = require('./routes/moderator');
+const adminRoutes = require('./routes/admin');
 
 app.use('/api/reports', reportRoutes);
 app.use('/api/actions', actionRoutes);
 app.use('/api/appeals', appealRoutes);
+app.use('/api/moderator', moderatorRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

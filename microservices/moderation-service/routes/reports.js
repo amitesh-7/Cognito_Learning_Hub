@@ -77,45 +77,72 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
-// Get all reports (moderators only) - with filtering and pagination
+// Get all reports (moderators only) - matching monolith format
 router.get('/', authMiddleware, moderatorMiddleware, async (req, res) => {
   try {
-    const { 
-      status, 
-      priority, 
-      contentType, 
-      reason,
-      page = 1, 
-      limit = 20,
-      sortBy = 'createdAt',
-      sortOrder = 'desc'
-    } = req.query;
+    const mongoose = require('mongoose');
+    const db = mongoose.connection.db;
 
-    const query = {};
-    if (status) query.status = status;
-    if (priority) query.priority = priority;
-    if (contentType) query.contentType = contentType;
-    if (reason) query.reason = reason;
+    // Get reports with quiz and user info populated
+    const reports = await db.collection('reports')
+      .aggregate([
+        { $sort: { createdAt: -1 } }, // Newest first
+        {
+          $lookup: {
+            from: 'quizzes',
+            localField: 'quiz',
+            foreignField: '_id',
+            as: 'quiz'
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'reportedBy',
+            foreignField: '_id',
+            as: 'reportedBy'
+          }
+        },
+        {
+          $unwind: {
+            path: '$quiz',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $unwind: {
+            path: '$reportedBy',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            quiz: {
+              _id: '$quiz._id',
+              title: '$quiz.title'
+            },
+            questionText: 1,
+            reason: 1,
+            description: 1,
+            reportedBy: {
+              _id: '$reportedBy._id',
+              name: '$reportedBy.name'
+            },
+            status: 1,
+            resolvedBy: 1,
+            resolvedAt: 1,
+            priority: 1,
+            category: 1,
+            createdAt: 1,
+            updatedAt: 1
+          }
+        }
+      ])
+      .toArray();
 
-    const skip = (page - 1) * limit;
-    const sortOptions = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
-
-    const reports = await Report.find(query)
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Report.countDocuments(query);
-
-    res.json({
-      reports,
-      pagination: {
-        total,
-        page: parseInt(page),
-        pages: Math.ceil(total / limit),
-        limit: parseInt(limit)
-      }
-    });
+    // Return reports directly as array (matching monolith format)
+    res.json(reports);
   } catch (error) {
     logger.error('Error fetching reports:', error);
     res.status(500).json({ error: 'Failed to fetch reports' });
@@ -283,6 +310,74 @@ router.get('/user/my-reports', authMiddleware, async (req, res) => {
   } catch (error) {
     logger.error('Error fetching user reports:', error);
     res.status(500).json({ error: 'Failed to fetch reports' });
+  }
+});
+
+// Resolve a report (matching monolith endpoint)
+router.put('/:id/resolve', authMiddleware, moderatorMiddleware, async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const db = mongoose.connection.db;
+    const reportId = new mongoose.Types.ObjectId(req.params.id);
+
+    const result = await db.collection('reports').findOneAndUpdate(
+      { _id: reportId },
+      { 
+        $set: { 
+          status: 'resolved', 
+          resolvedBy: new mongoose.Types.ObjectId(req.user.id),
+          resolvedAt: new Date() 
+        } 
+      },
+      { returnDocument: 'after' }
+    );
+
+    if (!result.value) {
+      return res.status(404).json({ message: 'Report not found' });
+    }
+
+    logger.info(`Report ${req.params.id} resolved by ${req.user.id}`);
+    res.json({ 
+      message: 'Report resolved successfully', 
+      report: result.value 
+    });
+  } catch (error) {
+    logger.error('Error resolving report:', error);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+// Dismiss a report (matching monolith endpoint)
+router.put('/:id/dismiss', authMiddleware, moderatorMiddleware, async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const db = mongoose.connection.db;
+    const reportId = new mongoose.Types.ObjectId(req.params.id);
+
+    const result = await db.collection('reports').findOneAndUpdate(
+      { _id: reportId },
+      { 
+        $set: { 
+          status: 'dismissed', 
+          resolvedBy: new mongoose.Types.ObjectId(req.user.id),
+          resolvedAt: new Date() 
+        } 
+      },
+      { returnDocument: 'after' }
+    );
+
+    if (!result.value) {
+      return res.status(404).json({ message: 'Report not found' });
+    }
+
+    logger.info(`Report ${req.params.id} dismissed by ${req.user.id}`);
+    res.json({ 
+      message: 'Report dismissed successfully', 
+      report: result.value 
+    });
+  } catch (error) {
+    logger.error('Error dismissing report:', error);
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 

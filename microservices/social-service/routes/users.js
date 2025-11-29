@@ -161,4 +161,75 @@ router.get('/friends-status', authenticateToken, async (req, res) => {
   }
 });
 
+// ============================================
+// GET USER STATS (for achievement dashboard)
+// ============================================
+router.get('/stats', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const mongoose = require('mongoose');
+    const db = mongoose.connection.db;
+
+    // Find or create user stats
+    let userStats = await db.collection('userstats').findOne({ 
+      user: new mongoose.Types.ObjectId(userId) 
+    });
+
+    if (!userStats) {
+      // Create initial stats for new user
+      const newStats = {
+        user: new mongoose.Types.ObjectId(userId),
+        totalQuizzesTaken: 0,
+        totalQuizzesCreated: 0,
+        totalPoints: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        averageScore: 0,
+        totalTimeSpent: 0,
+        level: 1,
+        experience: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      await db.collection('userstats').insertOne(newStats);
+      userStats = newStats;
+    }
+
+    // Get recent achievements
+    const recentAchievements = await db.collection('userachievements')
+      .aggregate([
+        { 
+          $match: { 
+            user: new mongoose.Types.ObjectId(userId) 
+          } 
+        },
+        { $sort: { unlockedAt: -1 } },
+        { $limit: 5 },
+        {
+          $lookup: {
+            from: 'achievements',
+            localField: 'achievement',
+            foreignField: '_id',
+            as: 'achievement'
+          }
+        },
+        {
+          $unwind: {
+            path: '$achievement',
+            preserveNullAndEmptyArrays: true
+          }
+        }
+      ])
+      .toArray();
+
+    res.json({
+      stats: userStats,
+      recentAchievements: recentAchievements
+    });
+  } catch (error) {
+    logger.error('Error fetching user stats:', error);
+    res.status(500).json({ message: 'Failed to fetch user statistics.' });
+  }
+});
+
 module.exports = router;

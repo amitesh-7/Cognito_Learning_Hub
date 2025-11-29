@@ -6,8 +6,9 @@ const moderatorMiddleware = (req, res, next) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    if (req.user.role !== 'moderator' && req.user.role !== 'admin') {
-      logger.warn(`Unauthorized moderator access attempt by user ${req.user.userId}`);
+    // Check for Moderator or Admin role (capitalized to match monolith)
+    if (!['Moderator', 'Admin'].includes(req.user.role)) {
+      logger.warn(`Unauthorized moderator access attempt by user ${req.user.id}`);
       return res.status(403).json({ error: 'Moderator or Admin access required' });
     }
 

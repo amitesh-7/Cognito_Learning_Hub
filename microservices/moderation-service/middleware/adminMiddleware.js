@@ -6,8 +6,9 @@ const adminMiddleware = (req, res, next) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    if (req.user.role !== 'admin') {
-      logger.warn(`Unauthorized admin access attempt by user ${req.user.userId}`);
+    // Check for Admin role (capitalized to match monolith)
+    if (req.user.role !== 'Admin') {
+      logger.warn(`Unauthorized admin access attempt by user ${req.user.id}`);
       return res.status(403).json({ error: 'Admin access required' });
     }
 
