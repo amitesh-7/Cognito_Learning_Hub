@@ -113,22 +113,26 @@ router.get('/recent', async (req, res) => {
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id)
-      .populate('createdBy', 'name email picture')
+      .populate('createdBy', 'name')
       .lean();
 
     if (!quiz) {
-      return ApiResponse.notFound(res, 'Quiz not found');
+      return res.status(404).json({ msg: 'Quiz not found' });
     }
 
     // Check if user has access to private quiz
     if (!quiz.isPublic && (!req.user || quiz.createdBy._id.toString() !== req.user.userId)) {
-      return ApiResponse.forbidden(res, 'Access denied to private quiz');
+      return res.status(403).json({ msg: 'Access denied to private quiz' });
     }
 
-    return ApiResponse.success(res, { quiz });
+    // Return quiz directly to match monolith format
+    res.json(quiz);
   } catch (error) {
     logger.error('Get quiz by ID error:', error);
-    return ApiResponse.error(res, 'Failed to fetch quiz', 500);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'Quiz not found' });
+    }
+    res.status(500).send('Server Error');
   }
 });
 

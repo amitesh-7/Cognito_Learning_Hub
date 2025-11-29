@@ -50,6 +50,9 @@ router.post(
     const startTime = new Date(startedAt);
     const endTime = new Date(completedAt);
     const totalTimeSpent = endTime - startTime;
+    
+    const percentage = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+    const averageTimePerQuestion = totalQuestions > 0 ? totalTimeSpent / totalQuestions : 0;
 
     // Create result
     const result = new Result({
@@ -59,12 +62,14 @@ router.post(
       isMultiplayer: !!sessionId,
       score,
       maxScore,
+      percentage,
       correctAnswers,
       incorrectAnswers,
       totalQuestions,
       startedAt: startTime,
       completedAt: endTime,
       totalTimeSpent,
+      averageTimePerQuestion,
       answers,
       quizMetadata: quizMetadata || {},
     });
@@ -126,6 +131,9 @@ router.post('/batch-submit', authenticateToken, async (req, res) => {
       const correctAnswers = r.answers.filter(ans => ans.isCorrect).length;
       const score = r.answers.reduce((sum, ans) => sum + (ans.points || 0), 0);
       const maxScore = r.answers.reduce((sum, ans) => sum + (ans.points || 10), 0);
+      const totalTimeSpent = new Date(r.completedAt) - new Date(r.startedAt);
+      const percentage = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+      const averageTimePerQuestion = totalQuestions > 0 ? totalTimeSpent / totalQuestions : 0;
       
       return {
         userId: r.userId,
@@ -134,12 +142,14 @@ router.post('/batch-submit', authenticateToken, async (req, res) => {
         isMultiplayer: true,
         score,
         maxScore,
+        percentage,
         correctAnswers,
         incorrectAnswers: totalQuestions - correctAnswers,
         totalQuestions,
         startedAt: r.startedAt,
         completedAt: r.completedAt,
-        totalTimeSpent: new Date(r.completedAt) - new Date(r.startedAt),
+        totalTimeSpent,
+        averageTimePerQuestion,
         answers: r.answers,
         quizMetadata: r.quizMetadata || {},
       };
@@ -185,6 +195,49 @@ router.post('/batch-submit', authenticateToken, async (req, res) => {
   } catch (error) {
     logger.error('Batch submit error:', error);
     return ApiResponse.error(res, 'Failed to batch submit results', 500);
+  }
+});
+
+/**
+ * @route   GET /api/results/my-results
+ * @desc    Get user's quiz results
+ * @access  Private
+ */
+router.get('/my-results', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const mongoose = require('mongoose');
+
+    // Query database directly using monolith field names 'user' and 'quiz'
+    const results = await mongoose.connection.db.collection('results')
+      .aggregate([
+        { $match: { user: new mongoose.Types.ObjectId(userId) } },
+        { $sort: { createdAt: -1 } },
+        {
+          $lookup: {
+            from: 'quizzes',
+            localField: 'quiz',
+            foreignField: '_id',
+            as: 'quiz'
+          }
+        },
+        { $unwind: { path: '$quiz', preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            quiz: { _id: 1, title: 1 },
+            score: 1,
+            totalQuestions: 1,
+            percentage: 1,
+            createdAt: 1,
+            updatedAt: 1
+          }
+        }
+      ]).toArray();
+
+    res.json(results);
+  } catch (error) {
+    logger.error('Fetch my-results error:', error);
+    return ApiResponse.error(res, 'Failed to fetch results', 500);
   }
 });
 
