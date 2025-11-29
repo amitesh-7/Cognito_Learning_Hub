@@ -14,6 +14,7 @@ const ApiResponse = require('../shared/utils/response');
 const { connectDB } = require('./models');
 const sessionManager = require('./services/sessionManager');
 const { initializeSocketHandlers, syncSessionToDatabase } = require('./socket/handlers');
+const { initializeDuelHandlers } = require('./socket/duelHandlers');
 
 const app = express();
 const httpServer = createServer(app);
@@ -99,6 +100,7 @@ app.use((err, req, res, next) => {
 
 // Initialize Socket.IO handlers
 initializeSocketHandlers(io);
+initializeDuelHandlers(io);
 
 // Periodic database sync (for active sessions)
 const dbSyncInterval = parseInt(process.env.DB_SYNC_INTERVAL) || 30000;

@@ -38,10 +38,14 @@ const DuelMode = () => {
         );
 
         if (!response.ok) throw new Error("Failed to fetch quizzes");
-        const data = await response.json();
+        const result = await response.json();
+        
+        // Handle wrapped response format
+        const quizzes = result.data?.quizzes || result.quizzes || result.data || result;
+        const quizArray = Array.isArray(quizzes) ? quizzes : [];
         
         // Filter quizzes that have questions
-        const validQuizzes = data.filter((q) => q.questions && q.questions.length > 0);
+        const validQuizzes = quizArray.filter((q) => q.questions && q.questions.length > 0);
         setQuizzes(validQuizzes);
       } catch (err) {
         console.error("Error fetching quizzes:", err);
