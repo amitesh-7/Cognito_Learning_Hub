@@ -123,6 +123,9 @@ MODERATION_SERVICE_URL=
 **After deploying services, update with actual URLs**:
 
 ```env
+# ⚠️ IMPORTANT: Use HTTPS and NO port numbers
+# Format: https://service-name.onrender.com (NOT http:// and NO :3001, :3002, etc.)
+
 AUTH_SERVICE_URL=https://cognito-auth-service.onrender.com
 QUIZ_SERVICE_URL=https://cognito-quiz-service.onrender.com
 RESULT_SERVICE_URL=https://cognito-result-service.onrender.com
@@ -132,6 +135,13 @@ SOCIAL_SERVICE_URL=https://cognito-social-service.onrender.com
 GAMIFICATION_SERVICE_URL=https://cognito-gamification-service.onrender.com
 MODERATION_SERVICE_URL=https://cognito-moderation-service.onrender.com
 ```
+
+**Common Mistakes to Avoid:**
+
+- ❌ `http://https://service.onrender.com:3001` (double protocol + port)
+- ❌ `http://service.onrender.com:3001` (http instead of https + port)
+- ❌ `https://service.onrender.com:3001` (unnecessary port number)
+- ✅ `https://service.onrender.com` (CORRECT)
 
 ---
 
@@ -429,6 +439,37 @@ SOCIAL_SERVICE_URL=https://cognito-social-service.onrender.com
 
 ## 🔄 Deployment Sequence
 
+### ⚠️ CRITICAL: Build Command for Render
+
+All microservices share utilities from the `microservices/shared` folder. You **MUST** install shared dependencies first in every service deployment.
+
+**Build Command Template:**
+
+```bash
+cd ../shared && npm install && cd ../SERVICE-NAME && npm install
+```
+
+**Example Build Commands:**
+
+- Auth Service: `cd ../shared && npm install && cd ../auth-service && npm install`
+- Quiz Service: `cd ../shared && npm install && cd ../quiz-service && npm install`
+- Gamification Service: `cd ../shared && npm install && cd ../gamification-service && npm install`
+- Result Service: `cd ../shared && npm install && cd ../result-service && npm install`
+- Live Service: `cd ../shared && npm install && cd ../live-service && npm install`
+- Meeting Service: `cd ../shared && npm install && cd ../meeting-service && npm install`
+- Social Service: `cd ../shared && npm install && cd ../social-service && npm install`
+- Moderation Service: `cd ../shared && npm install && cd ../moderation-service && npm install`
+- API Gateway: `cd ../shared && npm install && cd ../api-gateway && npm install`
+
+**Why this is required:**
+
+- The shared folder contains utilities like logger, auth middleware, validators
+- It has dependencies like `winston`, `jsonwebtoken`, `ioredis`, etc.
+- Services import from `../shared/*` and need these dependencies installed
+- Without this, you'll get "Cannot find module 'winston'" or "Cannot find module 'jsonwebtoken'" errors
+
+### Deployment Order
+
 Deploy in this order to avoid service URL dependency issues:
 
 1. ✅ **Auth Service** (no dependencies)
@@ -484,6 +525,42 @@ Check logs in Render dashboard for any missing environment variable errors.
 ---
 
 ## 🚨 Common Issues
+
+### Issue: "Cannot find module 'winston'" or "Cannot find module 'jsonwebtoken'"
+
+**Cause**: Shared folder dependencies not installed during build
+
+**Solution**: Update Build Command on Render:
+
+```bash
+cd ../shared && npm install && cd ../SERVICE-NAME && npm install
+```
+
+**Example**: For auth-service:
+
+```bash
+cd ../shared && npm install && cd ../auth-service && npm install
+```
+
+This is **REQUIRED** for all 9 microservices because they all use shared utilities.
+
+### Issue: Malformed service URLs (http://https://service.onrender.com:3001)
+
+**Cause**: Incorrect service URL format in environment variables
+
+**Solution**: Service URLs must be in this exact format:
+
+```env
+AUTH_SERVICE_URL=https://your-service-name.onrender.com
+```
+
+**What NOT to do:**
+
+- ❌ Don't add port numbers (`:3001`, `:3002`, etc.)
+- ❌ Don't use `http://` (Render uses HTTPS)
+- ❌ Don't mix protocols (`http://https://`)
+
+**Why**: In production, Render handles HTTPS and routing automatically. The code uses these URLs directly, so they must be complete and correct.
 
 ### Issue: Service can't connect to MongoDB
 

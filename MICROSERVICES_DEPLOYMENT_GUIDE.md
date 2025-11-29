@@ -371,6 +371,22 @@
 
 ### Step 2: Deploy Each Service on Render
 
+**⚠️ CRITICAL: Build Command for ALL Services**
+
+All microservices share utilities from the `shared` folder. You MUST install shared dependencies first.
+
+**Build Command Template** (adjust service name):
+
+```bash
+cd ../shared && npm install && cd ../SERVICE-NAME && npm install
+```
+
+**Examples:**
+
+- Auth Service: `cd ../shared && npm install && cd ../auth-service && npm install`
+- Quiz Service: `cd ../shared && npm install && cd ../quiz-service && npm install`
+- Gamification Service: `cd ../shared && npm install && cd ../gamification-service && npm install`
+
 **For each service (9 services total):**
 
 #### 2.1 API Gateway (Deploy First)
@@ -383,7 +399,7 @@
    - **Name**: `cognito-api-gateway`
    - **Root Directory**: `microservices/api-gateway`
    - **Environment**: `Node`
-   - **Build Command**: `npm install`
+   - **Build Command**: `cd ../shared && npm install && cd ../api-gateway && npm install`
    - **Start Command**: `npm start`
    - **Plan**: Free (or paid for production)
 
@@ -760,17 +776,26 @@ After deployment, test these features:
 
 ## 🐛 Troubleshooting
 
-### Issue: "Cannot find module 'winston'" error
+### Issue: "Cannot find module 'winston'" or "Cannot find module 'jsonwebtoken'" error
 
-**Solution**: All microservices use a shared logger that requires winston. Ensure `winston` is in dependencies:
+**Cause**: The shared folder dependencies are not installed
 
-```json
-"dependencies": {
-  "winston": "^3.11.0"
-}
+**Solution**: Update your Build Command on Render to install shared dependencies first:
+
+```bash
+cd ../shared && npm install && cd ../SERVICE-NAME && npm install
 ```
 
-**Fixed in**: auth-service, quiz-service, social-service, gamification-service (all services now have winston)
+Replace `SERVICE-NAME` with your actual service folder name (e.g., `auth-service`, `quiz-service`, etc.)
+
+**Why this happens:**
+
+- All services use shared utilities from `microservices/shared/`
+- The shared folder has its own `package.json` with dependencies like winston, jsonwebtoken
+- Services import from `../shared/*` which need these dependencies
+- Render only installs dependencies in the Root Directory by default
+
+**Fixed in**: All service deployment instructions now include the correct build command
 
 ### Issue: Services can't reach each other
 
