@@ -4,18 +4,18 @@
  * Replaces in-memory Map with Redis for horizontal scaling
  */
 
-const Redis = require('ioredis');
-const createLogger = require('../../shared/utils/logger');
+const Redis = require("ioredis");
+const createLogger = require("../../shared/utils/logger");
 
-const logger = createLogger('session-manager');
+const logger = createLogger("session-manager");
 
 class SessionManager {
   constructor() {
     this.redis = null;
     this.subscriber = null;
     this.connected = false;
-    
-    this.keyPrefix = process.env.REDIS_KEY_PREFIX || 'live:';
+
+    this.keyPrefix = process.env.REDIS_KEY_PREFIX || "live:";
     this.sessionTTL = parseInt(process.env.SESSION_TTL) || 7200; // 2 hours
   }
 
@@ -25,19 +25,19 @@ class SessionManager {
   async connect() {
     try {
       let redisConfig;
-      
+
       // Check if Upstash Redis is configured
       if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
-        logger.info('Connecting to Upstash Redis (cloud)...');
-        
+        logger.info("Connecting to Upstash Redis (cloud)...");
+
         const url = new URL(process.env.UPSTASH_REDIS_URL);
-        
+
         redisConfig = {
           host: url.hostname,
           port: parseInt(url.port) || 6379,
           password: process.env.UPSTASH_REDIS_TOKEN,
           tls: {
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
           },
           maxRetriesPerRequest: null,
           enableReadyCheck: false,
@@ -46,18 +46,18 @@ class SessionManager {
             return delay;
           },
         };
-        
+
         // Main Redis client
         this.redis = new Redis(redisConfig);
-        
+
         // Subscriber client (for pub/sub) - clone config
         this.subscriber = new Redis(redisConfig);
       } else {
         // Fallback to local Redis
-        logger.info('Connecting to local Redis...');
-        
-        const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-        
+        logger.info("Connecting to local Redis...");
+
+        const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
+
         // Main Redis client
         this.redis = new Redis(redisUrl, {
           maxRetriesPerRequest: null,
@@ -75,20 +75,20 @@ class SessionManager {
         });
       }
 
-      this.redis.on('connect', () => {
+      this.redis.on("connect", () => {
         this.connected = true;
-        logger.info('Redis connected');
+        logger.info("Redis connected");
       });
 
-      this.redis.on('error', (err) => {
-        logger.error('Redis error:', err);
+      this.redis.on("error", (err) => {
+        logger.error("Redis error:", err);
         this.connected = false;
       });
 
       await this.redis.ping();
       return true;
     } catch (error) {
-      logger.error('Failed to connect to Redis:', error);
+      logger.error("Failed to connect to Redis:", error);
       throw error;
     }
   }
@@ -104,11 +104,18 @@ class SessionManager {
       await this.subscriber.quit();
     }
     this.connected = false;
-    logger.info('Redis disconnected');
+    logger.info("Redis disconnected");
   }
 
   isConnected() {
     return this.connected;
+  }
+
+  /**
+   * Check if Redis is healthy (connected and ready)
+   */
+  isHealthy() {
+    return this.connected && this.redis && this.redis.status === "ready";
   }
 
   // ============================================
@@ -149,12 +156,12 @@ class SessionManager {
   async createSession(sessionData) {
     try {
       const key = this.getSessionKey(sessionData.sessionCode);
-      
+
       const session = {
         sessionCode: sessionData.sessionCode,
         quizId: sessionData.quizId,
         hostId: sessionData.hostId,
-        status: 'waiting',
+        status: "waiting",
         currentQuestionIndex: -1,
         maxParticipants: sessionData.maxParticipants || 50,
         settings: sessionData.settings || {},
@@ -166,10 +173,10 @@ class SessionManager {
 
       await this.redis.setex(key, this.sessionTTL, JSON.stringify(session));
       logger.info(`Created session: ${sessionData.sessionCode}`);
-      
+
       return session;
     } catch (error) {
-      logger.error('Error creating session:', error);
+      logger.error("Error creating session:", error);
       throw error;
     }
   }
@@ -181,14 +188,14 @@ class SessionManager {
     try {
       const key = this.getSessionKey(sessionCode);
       const data = await this.redis.get(key);
-      
+
       if (!data) {
         return null;
       }
-      
+
       return JSON.parse(data);
     } catch (error) {
-      logger.error('Error getting session:', error);
+      logger.error("Error getting session:", error);
       return null;
     }
   }
@@ -199,9 +206,9 @@ class SessionManager {
   async updateSession(sessionCode, updates) {
     try {
       const session = await this.getSession(sessionCode);
-      
+
       if (!session) {
-        throw new Error('Session not found');
+        throw new Error("Session not found");
       }
 
       const updatedSession = {
@@ -211,11 +218,15 @@ class SessionManager {
       };
 
       const key = this.getSessionKey(sessionCode);
-      await this.redis.setex(key, this.sessionTTL, JSON.stringify(updatedSession));
-      
+      await this.redis.setex(
+        key,
+        this.sessionTTL,
+        JSON.stringify(updatedSession)
+      );
+
       return updatedSession;
     } catch (error) {
-      logger.error('Error updating session:', error);
+      logger.error("Error updating session:", error);
       throw error;
     }
   }
@@ -226,20 +237,20 @@ class SessionManager {
   async deleteSession(sessionCode) {
     try {
       const pipeline = this.redis.pipeline();
-      
+
       pipeline.del(this.getSessionKey(sessionCode));
       pipeline.del(this.getLeaderboardKey(sessionCode));
       pipeline.del(this.getParticipantsKey(sessionCode));
       pipeline.del(this.getAnswersKey(sessionCode));
       pipeline.del(this.getQuizCacheKey(sessionCode));
       pipeline.del(this.getCurrentQuestionKey(sessionCode));
-      
+
       await pipeline.exec();
       logger.info(`Deleted session: ${sessionCode}`);
-      
+
       return true;
     } catch (error) {
-      logger.error('Error deleting session:', error);
+      logger.error("Error deleting session:", error);
       return false;
     }
   }
@@ -253,7 +264,7 @@ class SessionManager {
       await this.redis.expire(key, this.sessionTTL);
       return true;
     } catch (error) {
-      logger.error('Error extending session TTL:', error);
+      logger.error("Error extending session TTL:", error);
       return false;
     }
   }
@@ -269,29 +280,35 @@ class SessionManager {
   async addParticipant(sessionCode, participant) {
     try {
       const key = this.getParticipantsKey(sessionCode);
-      
+
       const participantData = {
         userId: participant.userId,
         userName: participant.userName,
-        userPicture: participant.userPicture || '',
+        userPicture: participant.userPicture || "",
         score: 0,
         correctAnswers: 0,
         incorrectAnswers: 0,
         joinedAt: new Date().toISOString(),
         isActive: true,
-        socketId: participant.socketId || '',
+        socketId: participant.socketId || "",
       };
 
-      await this.redis.hset(key, participant.userId, JSON.stringify(participantData));
+      await this.redis.hset(
+        key,
+        participant.userId,
+        JSON.stringify(participantData)
+      );
       await this.redis.expire(key, this.sessionTTL);
-      
+
       // Initialize in leaderboard (sorted set)
       await this.updateLeaderboard(sessionCode, participant.userId, 0);
-      
-      logger.debug(`Added participant ${participant.userId} to session ${sessionCode}`);
+
+      logger.debug(
+        `Added participant ${participant.userId} to session ${sessionCode}`
+      );
       return participantData;
     } catch (error) {
-      logger.error('Error adding participant:', error);
+      logger.error("Error adding participant:", error);
       throw error;
     }
   }
@@ -303,14 +320,14 @@ class SessionManager {
     try {
       const key = this.getParticipantsKey(sessionCode);
       const data = await this.redis.hget(key, userId);
-      
+
       if (!data) {
         return null;
       }
-      
+
       return JSON.parse(data);
     } catch (error) {
-      logger.error('Error getting participant:', error);
+      logger.error("Error getting participant:", error);
       return null;
     }
   }
@@ -322,15 +339,15 @@ class SessionManager {
     try {
       const key = this.getParticipantsKey(sessionCode);
       const data = await this.redis.hgetall(key);
-      
+
       const participants = [];
       for (const [userId, participantJson] of Object.entries(data)) {
         participants.push(JSON.parse(participantJson));
       }
-      
+
       return participants;
     } catch (error) {
-      logger.error('Error getting all participants:', error);
+      logger.error("Error getting all participants:", error);
       return [];
     }
   }
@@ -341,9 +358,9 @@ class SessionManager {
   async updateParticipant(sessionCode, userId, updates) {
     try {
       const participant = await this.getParticipant(sessionCode, userId);
-      
+
       if (!participant) {
-        throw new Error('Participant not found');
+        throw new Error("Participant not found");
       }
 
       const updatedParticipant = {
@@ -353,10 +370,10 @@ class SessionManager {
 
       const key = this.getParticipantsKey(sessionCode);
       await this.redis.hset(key, userId, JSON.stringify(updatedParticipant));
-      
+
       return updatedParticipant;
     } catch (error) {
-      logger.error('Error updating participant:', error);
+      logger.error("Error updating participant:", error);
       throw error;
     }
   }
@@ -368,15 +385,15 @@ class SessionManager {
     try {
       const key = this.getParticipantsKey(sessionCode);
       await this.redis.hdel(key, userId);
-      
+
       // Remove from leaderboard
       const leaderboardKey = this.getLeaderboardKey(sessionCode);
       await this.redis.zrem(leaderboardKey, userId);
-      
+
       logger.debug(`Removed participant ${userId} from session ${sessionCode}`);
       return true;
     } catch (error) {
-      logger.error('Error removing participant:', error);
+      logger.error("Error removing participant:", error);
       return false;
     }
   }
@@ -389,7 +406,7 @@ class SessionManager {
       const key = this.getParticipantsKey(sessionCode);
       return await this.redis.hlen(key);
     } catch (error) {
-      logger.error('Error getting participant count:', error);
+      logger.error("Error getting participant count:", error);
       return 0;
     }
   }
@@ -405,14 +422,14 @@ class SessionManager {
   async updateLeaderboard(sessionCode, userId, scoreIncrement) {
     try {
       const key = this.getLeaderboardKey(sessionCode);
-      
+
       // ZINCRBY is atomic - no race conditions
       const newScore = await this.redis.zincrby(key, scoreIncrement, userId);
       await this.redis.expire(key, this.sessionTTL);
-      
+
       return parseFloat(newScore);
     } catch (error) {
-      logger.error('Error updating leaderboard:', error);
+      logger.error("Error updating leaderboard:", error);
       throw error;
     }
   }
@@ -424,18 +441,23 @@ class SessionManager {
   async getLeaderboard(sessionCode, limit = 50) {
     try {
       const key = this.getLeaderboardKey(sessionCode);
-      
+
       // ZREVRANGE with WITHSCORES - returns top N users
-      const results = await this.redis.zrevrange(key, 0, limit - 1, 'WITHSCORES');
-      
+      const results = await this.redis.zrevrange(
+        key,
+        0,
+        limit - 1,
+        "WITHSCORES"
+      );
+
       // Get participant details
       const leaderboard = [];
       for (let i = 0; i < results.length; i += 2) {
         const userId = results[i];
         const score = parseFloat(results[i + 1]);
-        
+
         const participant = await this.getParticipant(sessionCode, userId);
-        
+
         if (participant) {
           leaderboard.push({
             rank: Math.floor(i / 2) + 1,
@@ -448,10 +470,10 @@ class SessionManager {
           });
         }
       }
-      
+
       return leaderboard;
     } catch (error) {
-      logger.error('Error getting leaderboard:', error);
+      logger.error("Error getting leaderboard:", error);
       return [];
     }
   }
@@ -463,14 +485,14 @@ class SessionManager {
     try {
       const key = this.getLeaderboardKey(sessionCode);
       const rank = await this.redis.zrevrank(key, userId);
-      
+
       if (rank === null) {
         return null;
       }
-      
+
       return rank + 1; // Redis rank is 0-indexed
     } catch (error) {
-      logger.error('Error getting user rank:', error);
+      logger.error("Error getting user rank:", error);
       return null;
     }
   }
@@ -486,7 +508,7 @@ class SessionManager {
   async recordAnswer(sessionCode, answerData) {
     try {
       const key = this.getAnswersKey(sessionCode);
-      
+
       const answer = {
         userId: answerData.userId,
         questionId: answerData.questionId,
@@ -499,10 +521,10 @@ class SessionManager {
 
       await this.redis.rpush(key, JSON.stringify(answer));
       await this.redis.expire(key, this.sessionTTL);
-      
+
       return answer;
     } catch (error) {
-      logger.error('Error recording answer:', error);
+      logger.error("Error recording answer:", error);
       throw error;
     }
   }
@@ -514,10 +536,10 @@ class SessionManager {
     try {
       const key = this.getAnswersKey(sessionCode);
       const answers = await this.redis.lrange(key, 0, -1);
-      
-      return answers.map(ans => JSON.parse(ans));
+
+      return answers.map((ans) => JSON.parse(ans));
     } catch (error) {
-      logger.error('Error getting all answers:', error);
+      logger.error("Error getting all answers:", error);
       return [];
     }
   }
@@ -530,7 +552,7 @@ class SessionManager {
       const key = this.getAnswersKey(sessionCode);
       return await this.redis.llen(key);
     } catch (error) {
-      logger.error('Error getting answer count:', error);
+      logger.error("Error getting answer count:", error);
       return 0;
     }
   }
@@ -549,7 +571,7 @@ class SessionManager {
       logger.debug(`Cached quiz for session ${sessionCode}`);
       return true;
     } catch (error) {
-      logger.error('Error caching quiz:', error);
+      logger.error("Error caching quiz:", error);
       return false;
     }
   }
@@ -561,14 +583,14 @@ class SessionManager {
     try {
       const key = this.getQuizCacheKey(sessionCode);
       const data = await this.redis.get(key);
-      
+
       if (!data) {
         return null;
       }
-      
+
       return JSON.parse(data);
     } catch (error) {
-      logger.error('Error getting cached quiz:', error);
+      logger.error("Error getting cached quiz:", error);
       return null;
     }
   }
@@ -584,11 +606,11 @@ class SessionManager {
     try {
       const channel = `${this.keyPrefix}channel:${sessionCode}`;
       const message = JSON.stringify({ event, data, timestamp: Date.now() });
-      
+
       await this.redis.publish(channel, message);
       return true;
     } catch (error) {
-      logger.error('Error publishing to session:', error);
+      logger.error("Error publishing to session:", error);
       return false;
     }
   }
@@ -599,25 +621,25 @@ class SessionManager {
   subscribeToSession(sessionCode, callback) {
     try {
       const channel = `${this.keyPrefix}channel:${sessionCode}`;
-      
+
       this.subscriber.subscribe(channel, (err) => {
         if (err) {
-          logger.error('Error subscribing to session:', err);
+          logger.error("Error subscribing to session:", err);
         } else {
           logger.debug(`Subscribed to session ${sessionCode}`);
         }
       });
 
-      this.subscriber.on('message', (ch, message) => {
+      this.subscriber.on("message", (ch, message) => {
         if (ch === channel) {
           const data = JSON.parse(message);
           callback(data);
         }
       });
-      
+
       return true;
     } catch (error) {
-      logger.error('Error subscribing to session:', error);
+      logger.error("Error subscribing to session:", error);
       return false;
     }
   }
@@ -634,7 +656,7 @@ class SessionManager {
       const participantCount = await this.getParticipantCount(sessionCode);
       const answerCount = await this.getAnswerCount(sessionCode);
       const session = await this.getSession(sessionCode);
-      
+
       return {
         sessionCode,
         participantCount,
@@ -643,7 +665,7 @@ class SessionManager {
         currentQuestion: session?.currentQuestionIndex,
       };
     } catch (error) {
-      logger.error('Error getting session stats:', error);
+      logger.error("Error getting session stats:", error);
       return null;
     }
   }
@@ -653,16 +675,16 @@ class SessionManager {
    */
   async getRedisStats() {
     try {
-      const info = await this.redis.info('stats');
-      const keyspace = await this.redis.info('keyspace');
-      
+      const info = await this.redis.info("stats");
+      const keyspace = await this.redis.info("keyspace");
+
       return {
         connected: this.connected,
         info,
         keyspace,
       };
     } catch (error) {
-      logger.error('Error getting Redis stats:', error);
+      logger.error("Error getting Redis stats:", error);
       return null;
     }
   }

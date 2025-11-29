@@ -3,18 +3,18 @@
  * Handles active meeting state, participant tracking, and signaling coordination
  */
 
-const Redis = require('ioredis');
-const createLogger = require('../../shared/utils/logger');
+const Redis = require("ioredis");
+const createLogger = require("../../shared/utils/logger");
 
-const logger = createLogger('meeting-manager');
+const logger = createLogger("meeting-manager");
 
 class MeetingManager {
   constructor() {
     this.redis = null;
     this.subscriber = null;
     this.connected = false;
-    
-    this.keyPrefix = process.env.REDIS_KEY_PREFIX || 'meeting:';
+
+    this.keyPrefix = process.env.REDIS_KEY_PREFIX || "meeting:";
     this.meetingTTL = parseInt(process.env.MEETING_TTL) || 14400; // 4 hours
   }
 
@@ -24,19 +24,19 @@ class MeetingManager {
   async connect() {
     try {
       let redisConfig;
-      
+
       // Check if Upstash Redis is configured
       if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
-        logger.info('Connecting to Upstash Redis (cloud)...');
-        
+        logger.info("Connecting to Upstash Redis (cloud)...");
+
         const url = new URL(process.env.UPSTASH_REDIS_URL);
-        
+
         redisConfig = {
           host: url.hostname,
           port: parseInt(url.port) || 6379,
           password: process.env.UPSTASH_REDIS_TOKEN,
           tls: {
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
           },
           maxRetriesPerRequest: null,
           enableReadyCheck: false,
@@ -45,15 +45,15 @@ class MeetingManager {
             return delay;
           },
         };
-        
+
         this.redis = new Redis(redisConfig);
         this.subscriber = new Redis(redisConfig);
       } else {
         // Fallback to local Redis
-        logger.info('Connecting to local Redis...');
-        
-        const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-        
+        logger.info("Connecting to local Redis...");
+
+        const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
+
         this.redis = new Redis(redisUrl, {
           maxRetriesPerRequest: null,
           enableReadyCheck: false,
@@ -69,20 +69,20 @@ class MeetingManager {
         });
       }
 
-      this.redis.on('connect', () => {
+      this.redis.on("connect", () => {
         this.connected = true;
-        logger.info('Redis connected');
+        logger.info("Redis connected");
       });
 
-      this.redis.on('error', (err) => {
-        logger.error('Redis error:', err);
+      this.redis.on("error", (err) => {
+        logger.error("Redis error:", err);
         this.connected = false;
       });
 
       await this.redis.ping();
       return true;
     } catch (error) {
-      logger.error('Failed to connect to Redis:', error);
+      logger.error("Failed to connect to Redis:", error);
       throw error;
     }
   }
@@ -94,11 +94,18 @@ class MeetingManager {
     if (this.redis) await this.redis.quit();
     if (this.subscriber) await this.subscriber.quit();
     this.connected = false;
-    logger.info('Redis disconnected');
+    logger.info("Redis disconnected");
   }
 
   isConnected() {
     return this.connected;
+  }
+
+  /**
+   * Check if Redis is healthy (connected and ready)
+   */
+  isHealthy() {
+    return this.connected && this.redis && this.redis.status === "ready";
   }
 
   // ============================================
@@ -135,12 +142,12 @@ class MeetingManager {
   async createMeeting(meetingData) {
     try {
       const key = this.getMeetingKey(meetingData.roomId);
-      
+
       const meeting = {
         roomId: meetingData.roomId,
         title: meetingData.title,
         hostId: meetingData.hostId,
-        status: 'waiting',
+        status: "waiting",
         maxParticipants: meetingData.maxParticipants || 50,
         settings: meetingData.settings || {},
         createdAt: new Date().toISOString(),
@@ -150,10 +157,10 @@ class MeetingManager {
 
       await this.redis.setex(key, this.meetingTTL, JSON.stringify(meeting));
       logger.info(`Created meeting: ${meetingData.roomId}`);
-      
+
       return meeting;
     } catch (error) {
-      logger.error('Error creating meeting:', error);
+      logger.error("Error creating meeting:", error);
       throw error;
     }
   }
@@ -165,12 +172,12 @@ class MeetingManager {
     try {
       const key = this.getMeetingKey(roomId);
       const data = await this.redis.get(key);
-      
+
       if (!data) return null;
-      
+
       return JSON.parse(data);
     } catch (error) {
-      logger.error('Error getting meeting:', error);
+      logger.error("Error getting meeting:", error);
       return null;
     }
   }
@@ -181,9 +188,9 @@ class MeetingManager {
   async updateMeeting(roomId, updates) {
     try {
       const meeting = await this.getMeeting(roomId);
-      
+
       if (!meeting) {
-        throw new Error('Meeting not found');
+        throw new Error("Meeting not found");
       }
 
       const updatedMeeting = {
@@ -193,11 +200,15 @@ class MeetingManager {
       };
 
       const key = this.getMeetingKey(roomId);
-      await this.redis.setex(key, this.meetingTTL, JSON.stringify(updatedMeeting));
-      
+      await this.redis.setex(
+        key,
+        this.meetingTTL,
+        JSON.stringify(updatedMeeting)
+      );
+
       return updatedMeeting;
     } catch (error) {
-      logger.error('Error updating meeting:', error);
+      logger.error("Error updating meeting:", error);
       throw error;
     }
   }
@@ -208,17 +219,17 @@ class MeetingManager {
   async deleteMeeting(roomId) {
     try {
       const pipeline = this.redis.pipeline();
-      
+
       pipeline.del(this.getMeetingKey(roomId));
       pipeline.del(this.getParticipantsKey(roomId));
       pipeline.del(this.getPeerConnectionsKey(roomId));
-      
+
       await pipeline.exec();
       logger.info(`Deleted meeting: ${roomId}`);
-      
+
       return true;
     } catch (error) {
-      logger.error('Error deleting meeting:', error);
+      logger.error("Error deleting meeting:", error);
       return false;
     }
   }
@@ -232,7 +243,7 @@ class MeetingManager {
       await this.redis.expire(key, this.meetingTTL);
       return true;
     } catch (error) {
-      logger.error('Error extending meeting TTL:', error);
+      logger.error("Error extending meeting TTL:", error);
       return false;
     }
   }
@@ -249,25 +260,29 @@ class MeetingManager {
   async addParticipant(roomId, participant) {
     try {
       const key = this.getParticipantsKey(roomId);
-      
+
       const participantData = {
         userId: participant.userId,
         userName: participant.userName,
-        userPicture: participant.userPicture || '',
-        peerId: participant.peerId || '',
-        socketId: participant.socketId || '',
+        userPicture: participant.userPicture || "",
+        peerId: participant.peerId || "",
+        socketId: participant.socketId || "",
         isConnected: true,
         isAudioEnabled: participant.isAudioEnabled !== false,
         isVideoEnabled: participant.isVideoEnabled !== false,
         isScreenSharing: false,
         joinedAt: new Date().toISOString(),
-        videoQuality: participant.videoQuality || '720p',
+        videoQuality: participant.videoQuality || "720p",
       };
 
       // Store in hash
-      await this.redis.hset(key, participant.userId, JSON.stringify(participantData));
+      await this.redis.hset(
+        key,
+        participant.userId,
+        JSON.stringify(participantData)
+      );
       await this.redis.expire(key, this.meetingTTL);
-      
+
       // Map socket to room (for disconnect cleanup)
       if (participant.socketId) {
         await this.redis.setex(
@@ -276,11 +291,13 @@ class MeetingManager {
           JSON.stringify({ roomId, userId: participant.userId })
         );
       }
-      
-      logger.debug(`Added participant ${participant.userId} to meeting ${roomId}`);
+
+      logger.debug(
+        `Added participant ${participant.userId} to meeting ${roomId}`
+      );
       return participantData;
     } catch (error) {
-      logger.error('Error adding participant:', error);
+      logger.error("Error adding participant:", error);
       throw error;
     }
   }
@@ -292,12 +309,12 @@ class MeetingManager {
     try {
       const key = this.getParticipantsKey(roomId);
       const data = await this.redis.hget(key, userId);
-      
+
       if (!data) return null;
-      
+
       return JSON.parse(data);
     } catch (error) {
-      logger.error('Error getting participant:', error);
+      logger.error("Error getting participant:", error);
       return null;
     }
   }
@@ -309,15 +326,15 @@ class MeetingManager {
     try {
       const key = this.getParticipantsKey(roomId);
       const data = await this.redis.hgetall(key);
-      
+
       const participants = [];
       for (const [userId, participantJson] of Object.entries(data)) {
         participants.push(JSON.parse(participantJson));
       }
-      
+
       return participants;
     } catch (error) {
-      logger.error('Error getting all participants:', error);
+      logger.error("Error getting all participants:", error);
       return [];
     }
   }
@@ -328,9 +345,9 @@ class MeetingManager {
   async updateParticipant(roomId, userId, updates) {
     try {
       const participant = await this.getParticipant(roomId, userId);
-      
+
       if (!participant) {
-        throw new Error('Participant not found');
+        throw new Error("Participant not found");
       }
 
       const updatedParticipant = {
@@ -340,10 +357,10 @@ class MeetingManager {
 
       const key = this.getParticipantsKey(roomId);
       await this.redis.hset(key, userId, JSON.stringify(updatedParticipant));
-      
+
       return updatedParticipant;
     } catch (error) {
-      logger.error('Error updating participant:', error);
+      logger.error("Error updating participant:", error);
       throw error;
     }
   }
@@ -355,11 +372,11 @@ class MeetingManager {
     try {
       const key = this.getParticipantsKey(roomId);
       await this.redis.hdel(key, userId);
-      
+
       logger.debug(`Removed participant ${userId} from meeting ${roomId}`);
       return true;
     } catch (error) {
-      logger.error('Error removing participant:', error);
+      logger.error("Error removing participant:", error);
       return false;
     }
   }
@@ -372,7 +389,7 @@ class MeetingManager {
       const key = this.getParticipantsKey(roomId);
       return await this.redis.hlen(key);
     } catch (error) {
-      logger.error('Error getting participant count:', error);
+      logger.error("Error getting participant count:", error);
       return 0;
     }
   }
@@ -384,12 +401,12 @@ class MeetingManager {
     try {
       const key = this.getSocketMappingKey(socketId);
       const data = await this.redis.get(key);
-      
+
       if (!data) return null;
-      
+
       return JSON.parse(data);
     } catch (error) {
-      logger.error('Error getting room from socket:', error);
+      logger.error("Error getting room from socket:", error);
       return null;
     }
   }
@@ -406,13 +423,13 @@ class MeetingManager {
     try {
       const key = this.getPeerConnectionsKey(roomId);
       const connectionKey = `${fromUserId}:${toUserId}`;
-      
+
       await this.redis.hset(key, connectionKey, new Date().toISOString());
       await this.redis.expire(key, this.meetingTTL);
-      
+
       return true;
     } catch (error) {
-      logger.error('Error tracking peer connection:', error);
+      logger.error("Error tracking peer connection:", error);
       return false;
     }
   }
@@ -424,11 +441,11 @@ class MeetingManager {
     try {
       const key = this.getPeerConnectionsKey(roomId);
       const connectionKey = `${fromUserId}:${toUserId}`;
-      
+
       await this.redis.hdel(key, connectionKey);
       return true;
     } catch (error) {
-      logger.error('Error removing peer connection:', error);
+      logger.error("Error removing peer connection:", error);
       return false;
     }
   }
@@ -440,18 +457,18 @@ class MeetingManager {
     try {
       const key = this.getPeerConnectionsKey(roomId);
       const allConnections = await this.redis.hgetall(key);
-      
+
       const userConnections = [];
       for (const [connectionKey] of Object.entries(allConnections)) {
-        const [from, to] = connectionKey.split(':');
+        const [from, to] = connectionKey.split(":");
         if (from === userId || to === userId) {
           userConnections.push({ from, to });
         }
       }
-      
+
       return userConnections;
     } catch (error) {
-      logger.error('Error getting user peer connections:', error);
+      logger.error("Error getting user peer connections:", error);
       return [];
     }
   }
@@ -468,11 +485,11 @@ class MeetingManager {
     try {
       const channel = this.getSignalingChannelKey(roomId);
       const message = JSON.stringify({ event, data, timestamp: Date.now() });
-      
+
       await this.redis.publish(channel, message);
       return true;
     } catch (error) {
-      logger.error('Error publishing signaling message:', error);
+      logger.error("Error publishing signaling message:", error);
       return false;
     }
   }
@@ -483,25 +500,25 @@ class MeetingManager {
   subscribeToSignaling(roomId, callback) {
     try {
       const channel = this.getSignalingChannelKey(roomId);
-      
+
       this.subscriber.subscribe(channel, (err) => {
         if (err) {
-          logger.error('Error subscribing to signaling:', err);
+          logger.error("Error subscribing to signaling:", err);
         } else {
           logger.debug(`Subscribed to signaling for meeting ${roomId}`);
         }
       });
 
-      this.subscriber.on('message', (ch, message) => {
+      this.subscriber.on("message", (ch, message) => {
         if (ch === channel) {
           const data = JSON.parse(message);
           callback(data);
         }
       });
-      
+
       return true;
     } catch (error) {
-      logger.error('Error subscribing to signaling:', error);
+      logger.error("Error subscribing to signaling:", error);
       return false;
     }
   }
@@ -518,12 +535,16 @@ class MeetingManager {
       const participantCount = await this.getParticipantCount(roomId);
       const meeting = await this.getMeeting(roomId);
       const participants = await this.getAllParticipants(roomId);
-      
-      const activeParticipants = participants.filter(p => p.isConnected).length;
-      const audioEnabled = participants.filter(p => p.isAudioEnabled).length;
-      const videoEnabled = participants.filter(p => p.isVideoEnabled).length;
-      const screenSharing = participants.filter(p => p.isScreenSharing).length;
-      
+
+      const activeParticipants = participants.filter(
+        (p) => p.isConnected
+      ).length;
+      const audioEnabled = participants.filter((p) => p.isAudioEnabled).length;
+      const videoEnabled = participants.filter((p) => p.isVideoEnabled).length;
+      const screenSharing = participants.filter(
+        (p) => p.isScreenSharing
+      ).length;
+
       return {
         roomId,
         participantCount,
@@ -534,7 +555,7 @@ class MeetingManager {
         status: meeting?.status,
       };
     } catch (error) {
-      logger.error('Error getting meeting stats:', error);
+      logger.error("Error getting meeting stats:", error);
       return null;
     }
   }
