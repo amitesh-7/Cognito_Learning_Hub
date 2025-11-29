@@ -4,26 +4,26 @@
  * Features: AI quiz generation, CRUD operations, caching, job queue
  */
 
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const createLogger = require('../shared/utils/logger');
-const ApiResponse = require('../shared/utils/response');
-const cacheManager = require('./services/cacheManager');
-const queueManager = require('./services/queueManager');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const mongoose = require("mongoose");
+const createLogger = require("../shared/utils/logger");
+const ApiResponse = require("../shared/utils/response");
+const cacheManager = require("./services/cacheManager");
+const queueManager = require("./services/queueManager");
 
 const app = express();
-const logger = createLogger('quiz-service');
+const logger = createLogger("quiz-service");
 const PORT = process.env.PORT || 3002;
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // Input Sanitization (XSS & Injection Protection)
-const { sanitizeAll } = require('../shared/middleware/inputValidation');
+const { sanitizeAll } = require("../shared/middleware/inputValidation");
 app.use(sanitizeAll);
 
 // Request logging
@@ -33,24 +33,25 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/api/generate', require('./routes/generation'));
-app.use('/api/quizzes', require('./routes/quizzes'));
-app.use('/api/doubt-solver', require('./routes/doubtSolver'));
+app.use("/api/generate", require("./routes/generation"));
+app.use("/api/quizzes", require("./routes/quizzes"));
+app.use("/api/doubt-solver", require("./routes/doubtSolver"));
 
 // Legacy routes (for backward compatibility with monolith)
-app.use('/api', require('./routes/legacy'));
+app.use("/api", require("./routes/legacy"));
 
 // Health check
-app.get('/health', async (req, res) => {
+app.get("/health", async (req, res) => {
   try {
     const health = {
-      status: 'healthy',
-      service: 'quiz-service',
+      status: "healthy",
+      service: "quiz-service",
       timestamp: new Date().toISOString(),
       checks: {
-        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-        redis: cacheManager.isConnected() ? 'connected' : 'disconnected',
-        queue: 'operational',
+        database:
+          mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+        redis: cacheManager.isConnected() ? "connected" : "disconnected",
+        queue: "operational",
       },
     };
 
@@ -59,9 +60,9 @@ app.get('/health', async (req, res) => {
 
     res.json(health);
   } catch (error) {
-    logger.error('Health check error:', error);
+    logger.error("Health check error:", error);
     res.status(503).json({
-      status: 'unhealthy',
+      status: "unhealthy",
       error: error.message,
     });
   }
@@ -69,15 +70,20 @@ app.get('/health', async (req, res) => {
 
 // 404 Handler
 app.use((req, res) => {
-  return ApiResponse.notFound(res, 'Route not found');
+  return ApiResponse.notFound(res, "Route not found");
 });
 
 // Error handler
 app.use((err, req, res, next) => {
-  logger.error('Unhandled error:', err);
-  res.status(err.status || 500).json(
-    ApiResponse.error(err.message || 'Internal server error', err.status || 500)
-  );
+  logger.error("Unhandled error:", err);
+  res
+    .status(err.status || 500)
+    .json(
+      ApiResponse.error(
+        err.message || "Internal server error",
+        err.status || 500
+      )
+    );
 });
 
 // Database connection
@@ -85,12 +91,12 @@ const connectDB = async () => {
   try {
     const mongoUri = process.env.MONGO_URI;
     if (!mongoUri) {
-      throw new Error('MONGO_URI environment variable is not defined');
+      throw new Error("MONGO_URI environment variable is not defined");
     }
     await mongoose.connect(mongoUri);
-    logger.info('MongoDB connected');
+    logger.info("MongoDB connected");
   } catch (error) {
-    logger.error('MongoDB connection error:', error);
+    logger.error("MongoDB connection error:", error);
     process.exit(1);
   }
 };
@@ -99,9 +105,9 @@ const connectDB = async () => {
 const connectRedis = async () => {
   try {
     await cacheManager.connect();
-    logger.info('Redis connected');
+    logger.info("Redis connected");
   } catch (error) {
-    logger.error('Redis connection error:', error);
+    logger.error("Redis connection error:", error);
     process.exit(1);
   }
 };
@@ -114,30 +120,30 @@ const shutdown = async (signal) => {
     // Close HTTP server
     if (server) {
       await new Promise((resolve) => server.close(resolve));
-      logger.info('HTTP server closed');
+      logger.info("HTTP server closed");
     }
 
     // Close database connection
     await mongoose.connection.close();
-    logger.info('MongoDB connection closed');
+    logger.info("MongoDB connection closed");
 
     // Close Redis connection
     await cacheManager.disconnect();
-    logger.info('Redis connection closed');
+    logger.info("Redis connection closed");
 
     // Close queue
     await queueManager.close();
-    logger.info('Job queue closed');
+    logger.info("Job queue closed");
 
     process.exit(0);
   } catch (error) {
-    logger.error('Error during shutdown:', error);
+    logger.error("Error during shutdown:", error);
     process.exit(1);
   }
 };
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 // Start server
 let server;
@@ -147,12 +153,17 @@ const startServer = async () => {
     await connectRedis();
 
     server = app.listen(PORT, () => {
+      const serviceUrl =
+        process.env.NODE_ENV === "production"
+          ? process.env.QUIZ_SERVICE_URL || `https://quiz-service.onrender.com`
+          : `http://localhost:${PORT}`;
+
       logger.info(`Quiz Service running on port ${PORT}`);
-      logger.info(`Health check: http://localhost:${PORT}/health`);
-      logger.info('Remember to start the worker: npm run worker');
+      logger.info(`Health check: ${serviceUrl}/health`);
+      logger.info("Remember to start the worker: npm run worker");
     });
   } catch (error) {
-    logger.error('Failed to start server:', error);
+    logger.error("Failed to start server:", error);
     process.exit(1);
   }
 };
