@@ -89,9 +89,9 @@ export default defineConfig(({ mode }) => ({
     },
     // Compression for dev server
     compress: true,
-    // Configure headers for CORS and COOP
+    // Configure headers for CORS and Google OAuth compatibility
     headers: {
-      "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+      "Cross-Origin-Opener-Policy": "unsafe-none",
       "Cross-Origin-Embedder-Policy": "unsafe-none",
       "Cross-Origin-Resource-Policy": "cross-origin",
     },
