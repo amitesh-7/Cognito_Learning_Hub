@@ -22,6 +22,33 @@ const DuelBattle = () => {
   const { user } = useAuth();
   const { socket, isConnected } = useSocket();
 
+  // DEBUG: Log user object on component mount
+  useEffect(() => {
+    console.log("🔍 DuelBattle mounted - User object:", user);
+    console.log("🔍 User properties:", {
+      hasUser: !!user,
+      id: user?.id,
+      _id: user?._id,
+      name: user?.name,
+      role: user?.role,
+      allKeys: user ? Object.keys(user) : []
+    });
+    
+    // Check localStorage token
+    const token = localStorage.getItem('quizwise-token');
+    if (token) {
+      console.log("🔍 Token exists in localStorage");
+      try {
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        console.log("🔍 Decoded token payload:", decoded);
+      } catch (e) {
+        console.error("❌ Failed to decode token:", e);
+      }
+    } else {
+      console.error("❌ No token in localStorage!");
+    }
+  }, []);
+
   const [matchState, setMatchState] = useState("searching"); // searching, waiting, ready, active, ended
   const [matchId, setMatchId] = useState(null);
   const [role, setRole] = useState(null); // player1 or player2
@@ -70,7 +97,7 @@ const DuelBattle = () => {
       console.log("🎮 Match found:", data);
       setQuiz(data.quiz);
 
-      const userId = user._id || user.id;
+      const userId = user?._id || user?.id || user?.userId;
       if (data.opponent.player1.userId === userId) {
         setOpponent(data.opponent.player2);
       } else {
@@ -81,7 +108,7 @@ const DuelBattle = () => {
     });
 
     socket.on("player-ready", (data) => {
-      const userId = user._id || user.id;
+      const userId = user?._id || user?.id || user?.userId;
       console.log("✅ Player ready event received:", {
         readyUserId: data.userId,
         myUserId: userId,
@@ -120,7 +147,7 @@ const DuelBattle = () => {
 
     socket.on("duel-score-update", (data) => {
       console.log("📊 Live score update:", data);
-      const userId = user._id || user.id;
+      const userId = user?._id || user?.id || user?.userId;
 
       // Update both players' scores - convert ObjectIds to strings for comparison
       const myData =
@@ -154,7 +181,7 @@ const DuelBattle = () => {
 
     socket.on("duel-ended", (data) => {
       console.log("🏁 Duel ended:", data);
-      const userId = user._id || user.id;
+      const userId = user?._id || user?.id || user?.userId;
       const myData =
         data.finalScores.player1.userId === userId
           ? data.finalScores.player1
@@ -203,7 +230,7 @@ const DuelBattle = () => {
       setWinner(data.winner);
       setMatchState("ended");
 
-      const userId = user._id || user.id;
+      const userId = user?._id || user?.id || user?.userId;
       if (data.winner === userId) {
         setShowConfetti(true);
       }
@@ -238,12 +265,21 @@ const DuelBattle = () => {
     }
 
     console.log("🔍 Searching for duel opponent...");
+    console.log("🔍 DEBUG - User object before find-match:", user);
+    
+    const userId = user?._id || user?.id || user?.userId;
+    if (!userId) {
+      console.error("❌ Cannot start duel - User ID not found!");
+      alert("Please log in to play duels");
+      navigate("/login");
+      return;
+    }
 
     socket.emit(
       "find-duel-match",
       {
         quizId,
-        userId: user._id || user.id,
+        userId,
         username: user.name,
         avatar: user.profilePicture,
       },
@@ -254,10 +290,11 @@ const DuelBattle = () => {
 
           if (response.waiting) {
             setMatchState("waiting");
-            console.log("⏳ Waiting for opponent...");
+            console.log("⏳ Waiting for opponent... (no opponent yet)");
           } else {
+            // Only set to matched if we got opponent info
             setMatchState("matched");
-            console.log("✅ Opponent found!");
+            console.log("✅ Opponent found! Moving to ready state");
           }
         } else {
           console.error("❌ Failed to find match:", response.error);
@@ -299,7 +336,18 @@ const DuelBattle = () => {
   }, [matchState, hasAnswered]);
 
   const handleReady = () => {
-    const userId = user._id || user.id;
+    console.log("🔍 DEBUG - Full user object:", user);
+    console.log("🔍 DEBUG - user._id:", user?._id);
+    console.log("🔍 DEBUG - user.id:", user?.id);
+    
+    const userId = user?._id || user?.id || user?.userId;
+    
+    if (!userId) {
+      console.error("❌ ERROR: userId is undefined! User object:", user);
+      alert("Error: User ID not found. Please log in again.");
+      return;
+    }
+    
     console.log("🎯 Sending duel-ready:", { matchId, userId });
 
     socket.emit(
@@ -323,6 +371,12 @@ const DuelBattle = () => {
   const handleSubmitAnswer = (answer) => {
     if (hasAnswered) return;
 
+    const userId = user?._id || user?.id || user?.userId;
+    if (!userId) {
+      console.error("❌ Cannot submit answer - User ID not found!");
+      return;
+    }
+
     const timeSpent = Math.floor(
       (Date.now() - questionStartTime.current) / 1000
     );
@@ -334,7 +388,7 @@ const DuelBattle = () => {
       "duel-answer",
       {
         matchId,
-        userId: user._id || user.id,
+        userId,
         questionIndex,
         answer,
         timeSpent,
@@ -587,7 +641,7 @@ const DuelBattle = () => {
 
   // Ended state
   if (matchState === "ended") {
-    const userId = user._id || user.id;
+    const userId = user?._id || user?.id || user?.userId;
     const isWinner = winner === userId;
     const isTie = !winner;
 

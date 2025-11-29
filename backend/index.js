@@ -2384,7 +2384,7 @@ app.post(
       // 3. If passwords match, create a JWT payload
       const payload = {
         user: {
-          id: user.id,
+          id: user._id.toString(),
           name: user.name,
           role: user.role,
         },
@@ -2463,7 +2463,7 @@ app.post("/api/auth/google", async (req, res) => {
     // Create JWT token
     const jwtPayload = {
       user: {
-        id: user.id,
+        id: user._id.toString(),
         name: user.name,
         role: user.role,
         email: user.email,
@@ -2487,7 +2487,7 @@ app.post("/api/auth/google", async (req, res) => {
           token,
           isNewUser,
           user: {
-            id: user.id,
+            id: user._id.toString(),
             name: user.name,
             email: user.email,
             role: user.role,

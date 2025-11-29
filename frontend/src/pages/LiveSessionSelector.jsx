@@ -37,10 +37,11 @@ const LiveSessionSelector = () => {
 
       if (!response.ok) throw new Error("Failed to fetch quizzes");
 
-      const data = await response.json();
-      console.log("📊 API Response:", data);
+      const result = await response.json();
+      console.log("📊 API Response:", result);
 
-      // The API returns { quizzes: [], stats: {} }, not just an array
+      // Handle wrapped API response: { success: true, data: { quizzes: [...], total, page } }
+      const data = result.data || result;
       const quizArray = data.quizzes || data;
       setQuizzes(Array.isArray(quizArray) ? quizArray : []);
       setLoading(false);

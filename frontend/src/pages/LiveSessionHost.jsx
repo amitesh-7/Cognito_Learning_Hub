@@ -108,7 +108,9 @@ const LiveSessionHost = () => {
         );
 
         if (!response.ok) throw new Error("Failed to fetch quiz");
-        const data = await response.json();
+        const result = await response.json();
+        // Handle wrapped API response
+        const data = result.data || result;
         setQuiz(data);
         setLoading(false);
       } catch (err) {
@@ -271,7 +273,8 @@ const LiveSessionHost = () => {
     }
 
     console.log("🚀 Starting quiz...");
-    socket.emit("start-quiz", { sessionCode }, (response) => {
+    const userId = user?._id || user?.id;
+    socket.emit("start-session", { sessionCode, userId }, (response) => {
       if (response.success) {
         setSessionStatus("active");
         setCurrentQuestionIndex(0);
@@ -289,7 +292,8 @@ const LiveSessionHost = () => {
     }
 
     console.log("➡️ Moving to next question...");
-    socket.emit("next-question", { sessionCode }, (response) => {
+    const userId = user?._id || user?.id;
+    socket.emit("next-question", { sessionCode, userId }, (response) => {
       if (response.success) {
         setCurrentQuestionIndex(response.questionIndex);
       }

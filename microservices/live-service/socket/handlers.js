@@ -3,11 +3,14 @@
  * Optimized with Redis session storage and batched leaderboard updates
  */
 
+const { nanoid } = require('nanoid');
+const mongoose = require('mongoose');
 const createLogger = require('../../shared/utils/logger');
 const sessionManager = require('../services/sessionManager');
 const LiveSession = require('../models/LiveSession');
 
 const logger = createLogger('socket-handlers');
+const QUIZ_SERVICE_URL = process.env.QUIZ_SERVICE_URL || 'http://localhost:3005';
 
 // Batched leaderboard updates
 const leaderboardUpdateQueue = new Map();
@@ -50,6 +53,93 @@ function initializeSocketHandlers(io) {
   
   io.on('connection', (socket) => {
     logger.info(`Socket connected: ${socket.id}`);
+
+    // ============================================
+    // CREATE SESSION
+    // ============================================
+    socket.on('create-session', async (data, callback) => {
+      try {
+        const { quizId, hostId, settings } = data;
+
+        if (!quizId || !hostId) {
+          return callback({ success: false, error: 'quizId and hostId required' });
+        }
+
+        // Fetch quiz details from quiz service
+        const quizResponse = await fetch(`${QUIZ_SERVICE_URL}/api/quizzes/${quizId}`);
+        if (!quizResponse.ok) {
+          return callback({ success: false, error: 'Quiz not found' });
+        }
+        
+        const quiz = await quizResponse.json();
+
+        // Generate unique session code
+        const codeLength = 6;
+        let sessionCode;
+        let isUnique = false;
+        
+        for (let i = 0; i < 5; i++) {
+          sessionCode = nanoid(codeLength).toUpperCase();
+          const existing = await sessionManager.getSession(sessionCode);
+          if (!existing) {
+            isUnique = true;
+            break;
+          }
+        }
+
+        if (!isUnique) {
+          return callback({ success: false, error: 'Failed to generate unique session code' });
+        }
+
+        // Create session in Redis
+        const session = await sessionManager.createSession({
+          sessionCode,
+          quizId: new mongoose.Types.ObjectId(quizId),
+          hostId: new mongoose.Types.ObjectId(hostId),
+          maxParticipants: settings?.maxParticipants || 50,
+          settings: settings || {
+            timePerQuestion: 30,
+            showLeaderboardAfterEach: true,
+            allowLateJoin: false
+          },
+          quizMetadata: {
+            title: quiz.title,
+            totalQuestions: quiz.questions?.length || 0,
+            difficulty: quiz.difficulty
+          }
+        });
+
+        // Cache quiz in Redis
+        await sessionManager.cacheQuiz(sessionCode, quiz);
+
+        // Create in MongoDB (for recovery)
+        const dbSession = new LiveSession({
+          sessionCode,
+          quizId: new mongoose.Types.ObjectId(quizId),
+          hostId: new mongoose.Types.ObjectId(hostId),
+          maxParticipants: session.maxParticipants,
+          settings: session.settings,
+          quizMetadata: session.quizMetadata
+        });
+        await dbSession.save();
+
+        // Join socket room
+        socket.join(sessionCode);
+        socket.sessionCode = sessionCode;
+
+        logger.info(`Session created: ${sessionCode} by host ${hostId}`);
+
+        callback({
+          success: true,
+          sessionCode,
+          sessionId: dbSession._id.toString(),
+          session
+        });
+      } catch (error) {
+        logger.error('Error creating session:', error);
+        callback({ success: false, error: error.message || 'Failed to create session' });
+      }
+    });
 
     // ============================================
     // JOIN SESSION

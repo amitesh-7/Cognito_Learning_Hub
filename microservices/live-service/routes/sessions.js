@@ -27,13 +27,13 @@ router.post('/create', authenticateToken, async (req, res) => {
     }
 
     // Fetch quiz details
-    const quizResponse = await fetch(`http://localhost:3002/api/quizzes/${quizId}`);
+    const QUIZ_SERVICE_URL = process.env.QUIZ_SERVICE_URL || 'http://localhost:3005';
+    const quizResponse = await fetch(`${QUIZ_SERVICE_URL}/api/quizzes/${quizId}`);
     if (!quizResponse.ok) {
       return ApiResponse.notFound(res, 'Quiz not found');
     }
     
-    const { data } = await quizResponse.json();
-    const quiz = data.quiz;
+    const quiz = await quizResponse.json();
 
     // Generate unique session code
     const codeLength = parseInt(process.env.SESSION_CODE_LENGTH) || 6;

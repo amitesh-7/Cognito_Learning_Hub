@@ -34,13 +34,13 @@ function generateTokens(userId, role) {
   }
 
   const accessToken = jwt.sign(
-    { user: { userId, role } },
+    { user: { id: userId, userId, role } }, // Add 'id' for frontend compatibility
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRY || '7d' }
   );
 
   const refreshToken = jwt.sign(
-    { user: { userId, role }, type: 'refresh' },
+    { user: { id: userId, userId, role }, type: 'refresh' }, // Add 'id' for frontend compatibility
     process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET, // Fallback to JWT_SECRET if refresh secret not set
     { expiresIn: process.env.JWT_REFRESH_EXPIRY || '30d' }
   );

@@ -8,11 +8,48 @@ const createLogger = require('../../shared/utils/logger');
 const DuelMatch = require('../models/DuelMatch');
 
 const logger = createLogger('duel-handlers');
+const QUIZ_SERVICE_URL = process.env.QUIZ_SERVICE_URL || 'http://localhost:3005';
+
+/**
+ * Fetch quiz from quiz service
+ */
+async function fetchQuiz(quizId) {
+  try {
+    const response = await fetch(`${QUIZ_SERVICE_URL}/api/quizzes/${quizId}`);
+    if (!response.ok) {
+      throw new Error('Quiz not found');
+    }
+    return await response.json();
+  } catch (error) {
+    logger.error('Error fetching quiz:', error);
+    throw error;
+  }
+}
+
+/**
+ * Clean up stale waiting matches on server start
+ */
+async function cleanupStaleMatches() {
+  try {
+    const result = await DuelMatch.deleteMany({ 
+      status: 'waiting',
+      createdAt: { $lt: new Date(Date.now() - 10 * 60 * 1000) } // Older than 10 minutes
+    });
+    if (result.deletedCount > 0) {
+      logger.info(`[Duel] Cleaned up ${result.deletedCount} stale waiting matches`);
+    }
+  } catch (error) {
+    logger.error('[Duel] Error cleaning up stale matches:', error);
+  }
+}
 
 /**
  * Initialize Duel Socket.IO handlers
  */
 function initializeDuelHandlers(io) {
+  
+  // Clean up old matches on initialization
+  cleanupStaleMatches();
   
   io.on('connection', (socket) => {
     
@@ -30,9 +67,24 @@ function initializeDuelHandlers(io) {
           quizId: new mongoose.Types.ObjectId(quizId),
           status: 'waiting',
           'player1.userId': { $ne: new mongoose.Types.ObjectId(userId) }
-        }).populate('quizId');
+        });
 
         if (match) {
+          // Validate that player1 is still connected
+          const player1Socket = io.sockets.sockets.get(match.player1.socketId);
+          
+          if (!player1Socket) {
+            // Player1 disconnected, delete stale match and create new one
+            logger.warn(`[Duel] Stale match found (player1 disconnected): ${match.matchId}`);
+            await DuelMatch.deleteOne({ matchId: match.matchId });
+            match = null; // Fall through to create new match
+          }
+        }
+
+        if (match) {
+          // Fetch quiz from quiz service
+          const quiz = await fetchQuiz(match.quizId.toString());
+
           // Join existing match as player 2
           match.player2 = {
             userId: new mongoose.Types.ObjectId(userId),
@@ -62,10 +114,10 @@ function initializeDuelHandlers(io) {
           io.to(match.matchId).emit('match-found', {
             matchId: match.matchId,
             quiz: {
-              id: match.quizId._id,
-              title: match.quizId.title,
-              description: match.quizId.description,
-              totalQuestions: match.quizId.questions.length
+              id: quiz._id,
+              title: quiz.title,
+              description: quiz.description,
+              totalQuestions: quiz.questions.length
             },
             opponent: {
               player1: {
@@ -126,15 +178,19 @@ function initializeDuelHandlers(io) {
 
         logger.info(`[Duel] Player ready: ${userId} in ${matchId}`);
 
-        const match = await DuelMatch.findOne({ matchId }).populate('quizId');
+        const match = await DuelMatch.findOne({ matchId });
         if (!match) {
           return callback({ success: false, error: 'Match not found' });
         }
 
-        // Mark player as ready
-        if (match.player1.userId.toString() === userId.toString()) {
+        // Mark player as ready (convert to strings for comparison)
+        const userIdStr = String(userId);
+        const player1IdStr = match.player1?.userId ? String(match.player1.userId) : null;
+        const player2IdStr = match.player2?.userId ? String(match.player2.userId) : null;
+
+        if (player1IdStr === userIdStr) {
           match.player1.isReady = true;
-        } else if (match.player2 && match.player2.userId.toString() === userId.toString()) {
+        } else if (player2IdStr && player2IdStr === userIdStr) {
           match.player2.isReady = true;
         } else {
           return callback({ success: false, error: 'User not in this match' });
@@ -142,11 +198,22 @@ function initializeDuelHandlers(io) {
 
         await match.save();
 
-        // Notify room
+        // Notify room that player is ready
         io.to(matchId).emit('player-ready', { userId });
+        
+        logger.info(`[Duel] Player ${userId} marked ready. Player2 exists: ${!!match.player2}, Player1 ready: ${match.player1.isReady}, Player2 ready: ${match.player2?.isReady}`);
+
+        // If still waiting for opponent (player2 is null), tell player to wait
+        if (!match.player2) {
+          callback({ success: true, status: 'waiting', message: 'Marked as ready - waiting for opponent' });
+          return;
+        }
+
+        // Acknowledge ready
+        callback({ success: true, status: 'ready', message: 'Ready! Waiting for other player...' });
 
         // Re-fetch to handle race condition
-        const latestMatch = await DuelMatch.findOne({ matchId }).populate('quizId');
+        const latestMatch = await DuelMatch.findOne({ matchId });
 
         // Start if both ready
         if (latestMatch.player1.isReady && latestMatch.player2 && latestMatch.player2.isReady) {
@@ -165,7 +232,19 @@ function initializeDuelHandlers(io) {
           if (player1Socket) player1Socket.join(matchId);
           if (player2Socket) player2Socket.join(matchId);
 
-          const currentQuestion = latestMatch.quizId.questions[0];
+          // Fetch quiz from service
+          if (!latestMatch.quizId) {
+            logger.error(`[Duel] No quizId in match ${matchId}`);
+            return callback({ success: false, error: 'Quiz not found in match' });
+          }
+          
+          const quiz = await fetchQuiz(String(latestMatch.quizId));
+          if (!quiz || !quiz.questions || quiz.questions.length === 0) {
+            logger.error(`[Duel] Quiz has no questions: ${latestMatch.quizId}`);
+            return callback({ success: false, error: 'Quiz has no questions' });
+          }
+          
+          const currentQuestion = quiz.questions[0];
 
           io.to(matchId).emit('duel-started', {
             currentQuestion: {
@@ -193,12 +272,22 @@ function initializeDuelHandlers(io) {
       try {
         const { matchId, userId, questionIndex, answer, timeSpent } = data;
 
-        const match = await DuelMatch.findOne({ matchId }).populate('quizId');
+        const match = await DuelMatch.findOne({ matchId });
         if (!match) {
           return callback({ success: false, error: 'Match not found' });
         }
 
-        const question = match.quizId.questions[questionIndex];
+        // Fetch quiz from service
+        if (!match.quizId) {
+          return callback({ success: false, error: 'Quiz not found in match' });
+        }
+
+        const quiz = await fetchQuiz(String(match.quizId));
+        if (!quiz || !quiz.questions || !quiz.questions[questionIndex]) {
+          return callback({ success: false, error: 'Question not found' });
+        }
+
+        const question = quiz.questions[questionIndex];
         const isCorrect = answer === question.correct_answer;
         const pointsEarned = isCorrect ? 100 : 0;
 
@@ -211,10 +300,15 @@ function initializeDuelHandlers(io) {
           timestamp: new Date()
         };
 
+        // Safe player identification
+        const userIdStr = String(userId);
+        const player1IdStr = match.player1?.userId ? String(match.player1.userId) : null;
+        const player2IdStr = match.player2?.userId ? String(match.player2.userId) : null;
+
         let player;
-        if (match.player1.userId.toString() === userId.toString()) {
+        if (player1IdStr === userIdStr) {
           player = match.player1;
-        } else if (match.player2.userId.toString() === userId.toString()) {
+        } else if (player2IdStr === userIdStr) {
           player = match.player2;
         }
 
@@ -253,8 +347,8 @@ function initializeDuelHandlers(io) {
           }
         });
 
-        // Check if player finished
-        const playerFinished = player.answers.length === match.quizId.questions.length;
+        // Check if player finished (use quiz data fetched earlier)
+        const playerFinished = player.answers.length === quiz.questions.length;
 
         if (playerFinished) {
           socket.emit('player-completed', {
@@ -268,8 +362,8 @@ function initializeDuelHandlers(io) {
 
         // Check if BOTH finished
         const bothFinished =
-          match.player1.answers.length === match.quizId.questions.length &&
-          match.player2.answers.length === match.quizId.questions.length;
+          match.player1.answers.length === quiz.questions.length &&
+          match.player2.answers.length === quiz.questions.length;
 
         if (bothFinished) {
           // Determine winner
@@ -311,8 +405,8 @@ function initializeDuelHandlers(io) {
         } else {
           // Move to next question for THIS player only
           const nextIndex = player.answers.length;
-          if (nextIndex < match.quizId.questions.length) {
-            const nextQuestion = match.quizId.questions[nextIndex];
+          if (nextIndex < quiz.questions.length) {
+            const nextQuestion = quiz.questions[nextIndex];
             
             socket.emit('next-question', {
               currentQuestion: {
