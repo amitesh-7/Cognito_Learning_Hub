@@ -17,6 +17,11 @@ const app = express();
 const logger = createLogger("result-service");
 const PORT = process.env.PORT || 3003;
 
+// Trust proxy for production (required for rate limiting behind Render load balancer)
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000, // 15 min

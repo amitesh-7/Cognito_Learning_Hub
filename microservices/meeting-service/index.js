@@ -24,6 +24,11 @@ const logger = createLogger("meeting-service");
 const app = express();
 const server = http.createServer(app);
 
+// Trust proxy for production (required for rate limiting behind Render load balancer)
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 // ============================================
 // SOCKET.IO SETUP
 // ============================================

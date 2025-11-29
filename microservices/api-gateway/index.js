@@ -4,95 +4,97 @@
  * Routes to appropriate microservices
  */
 
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-const createLogger = require('../shared/utils/logger');
-const { SERVICES } = require('../shared/config/services');
-const { generalLimiter } = require('../shared/middleware/rateLimiter');
-const errorHandler = require('../shared/middleware/errorHandler');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const { createProxyMiddleware } = require("http-proxy-middleware");
+const createLogger = require("../shared/utils/logger");
+const { SERVICES } = require("../shared/config/services");
+const { generalLimiter } = require("../shared/middleware/rateLimiter");
+const errorHandler = require("../shared/middleware/errorHandler");
 
 const app = express();
-const logger = createLogger('API-GATEWAY');
+const logger = createLogger("API-GATEWAY");
 const PORT = process.env.GATEWAY_PORT || 3000;
 
 // Trust proxy for rate limiting behind reverse proxy
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 
 // CORS Configuration
 const allowedOrigins = process.env.FRONTEND_URLS
-  ? process.env.FRONTEND_URLS.split(',').map((url) => url.trim())
-  : process.env.NODE_ENV === 'production'
+  ? process.env.FRONTEND_URLS.split(",").map((url) => url.trim())
+  : process.env.NODE_ENV === "production"
   ? [
-      'https://www.quizwise-ai.live',
-      'https://quizwise-ai.live',
-      'https://cognito-learning-hub-frontend.vercel.app',
+      "https://www.quizwise-ai.live",
+      "https://quizwise-ai.live",
+      "https://cognito-learning-hub-frontend.vercel.app",
     ]
   : [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'http://127.0.0.1:5173',
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://127.0.0.1:5173",
     ];
 
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    
+
     const isAllowed =
       allowedOrigins.includes(origin) ||
-      origin.endsWith('.vercel.app') ||
-      origin.endsWith('.onrender.com') ||
-      origin.includes('localhost');
+      origin.endsWith(".vercel.app") ||
+      origin.endsWith(".onrender.com") ||
+      origin.includes("localhost");
 
     if (isAllowed) {
       callback(null, true);
     } else {
       logger.warn(`CORS blocked origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"],
 };
 
 // Middleware
 app.use(cors(corsOptions));
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false,
-}));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Apply general rate limiting (skip status endpoints for polling)
-app.use('/api/', (req, res, next) => {
+app.use("/api/", (req, res, next) => {
   // Skip rate limiting for job status polling endpoints
-  if (req.path.includes('/status/') || req.path.endsWith('/status')) {
+  if (req.path.includes("/status/") || req.path.endsWith("/status")) {
     return next();
   }
   return generalLimiter(req, res, next);
 });
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get("/health", (req, res) => {
   res.json({
-    status: 'healthy',
-    service: 'API Gateway',
+    status: "healthy",
+    service: "API Gateway",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
   });
 });
 
 // Root endpoint
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.json({
-    message: 'Cognito Learning Hub API Gateway',
-    version: '1.0.0',
-    status: 'online',
+    message: "Cognito Learning Hub API Gateway",
+    version: "1.0.0",
+    status: "online",
     services: {
       auth: SERVICES.AUTH,
       quiz: SERVICES.QUIZ,
@@ -109,22 +111,22 @@ app.get('/', (req, res) => {
 // Proxy configuration options
 const proxyOptions = {
   changeOrigin: true,
-  logLevel: 'warn',
+  logLevel: "warn",
   timeout: 30000, // 30 second timeout
   proxyTimeout: 30000,
   onProxyReq: (proxyReq, req, res) => {
     // Fix content-length for body-parser
     if (req.body && Object.keys(req.body).length > 0) {
       const bodyData = JSON.stringify(req.body);
-      proxyReq.setHeader('Content-Type', 'application/json');
-      proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+      proxyReq.setHeader("Content-Type", "application/json");
+      proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
       proxyReq.write(bodyData);
     }
-    
+
     // Forward user info from JWT if available
     if (req.user) {
-      proxyReq.setHeader('X-User-Id', req.user.id);
-      proxyReq.setHeader('X-User-Role', req.user.role);
+      proxyReq.setHeader("X-User-Id", req.user.id);
+      proxyReq.setHeader("X-User-Role", req.user.role);
     }
     logger.info(`→ Proxying ${req.method} ${req.path}`);
   },
@@ -132,11 +134,11 @@ const proxyOptions = {
     logger.info(`← Response ${proxyRes.statusCode} from ${req.path}`);
   },
   onError: (err, req, res) => {
-    logger.error('Proxy error:', err);
+    logger.error("Proxy error:", err);
     if (!res.headersSent) {
       res.status(503).json({
         success: false,
-        message: 'Service temporarily unavailable',
+        message: "Service temporarily unavailable",
         error: err.message,
       });
     }
@@ -145,37 +147,37 @@ const proxyOptions = {
 
 // Route to Auth Service
 app.use(
-  '/api/auth',
+  "/api/auth",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.AUTH,
-    pathRewrite: { '^/api/auth': '/api/auth' },
+    pathRewrite: { "^/api/auth": "/api/auth" },
   })
 );
 
 // Route to Quiz Service
 app.use(
-  '/api/quizzes',
+  "/api/quizzes",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.QUIZ,
-    pathRewrite: { '^/api/quizzes': '/api/quizzes' },
+    pathRewrite: { "^/api/quizzes": "/api/quizzes" },
   })
 );
 
 // Route to Quiz Generation endpoints (new microservice routes)
 app.use(
-  '/api/generate',
+  "/api/generate",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.QUIZ,
-    pathRewrite: { '^/api/generate': '/api/generate' },
+    pathRewrite: { "^/api/generate": "/api/generate" },
   })
 );
 
 // Legacy routes (for backward compatibility)
 app.use(
-  '/api/generate-quiz-topic',
+  "/api/generate-quiz-topic",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.QUIZ,
@@ -183,7 +185,7 @@ app.use(
 );
 
 app.use(
-  '/api/generate-quiz-file',
+  "/api/generate-quiz-file",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.QUIZ,
@@ -191,7 +193,7 @@ app.use(
 );
 
 app.use(
-  '/api/generate-pdf-questions',
+  "/api/generate-pdf-questions",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.QUIZ,
@@ -199,7 +201,7 @@ app.use(
 );
 
 app.use(
-  '/api/save-manual-quiz',
+  "/api/save-manual-quiz",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.QUIZ,
@@ -207,7 +209,7 @@ app.use(
 );
 
 app.use(
-  '/api/adaptive-difficulty',
+  "/api/adaptive-difficulty",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.QUIZ,
@@ -216,158 +218,158 @@ app.use(
 
 // Route to Result Service
 app.use(
-  '/api/results',
+  "/api/results",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.RESULT,
-    pathRewrite: { '^/api/results': '/api/results' },
+    pathRewrite: { "^/api/results": "/api/results" },
   })
 );
 
 // Route to Leaderboards (Result Service)
 app.use(
-  '/api/leaderboards',
+  "/api/leaderboards",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.RESULT,
-    pathRewrite: { '^/api/leaderboards': '/api/leaderboards' },
+    pathRewrite: { "^/api/leaderboards": "/api/leaderboards" },
   })
 );
 
 // Route to Live Service (REST endpoints)
 app.use(
-  '/api/live-sessions',
+  "/api/live-sessions",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.LIVE,
-    pathRewrite: { '^/api/live-sessions': '/api/sessions' },
+    pathRewrite: { "^/api/live-sessions": "/api/sessions" },
   })
 );
 
 // Route to Meeting Service (REST endpoints)
 app.use(
-  '/api/meetings',
+  "/api/meetings",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.MEETING,
-    pathRewrite: { '^/api/meetings': '/api/meetings' },
+    pathRewrite: { "^/api/meetings": "/api/meetings" },
   })
 );
 
 // Route to Social Service
 app.use(
-  '/api/friends',
+  "/api/friends",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.SOCIAL,
-    pathRewrite: { '^/api/friends': '/api/friends' },
+    pathRewrite: { "^/api/friends": "/api/friends" },
   })
 );
 
 app.use(
-  '/api/challenges',
+  "/api/challenges",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.SOCIAL,
-    pathRewrite: { '^/api/challenges': '/api/challenges' },
+    pathRewrite: { "^/api/challenges": "/api/challenges" },
   })
 );
 
 app.use(
-  '/api/notifications',
+  "/api/notifications",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.SOCIAL,
-    pathRewrite: { '^/api/notifications': '/api/notifications' },
+    pathRewrite: { "^/api/notifications": "/api/notifications" },
   })
 );
 
 app.use(
-  '/api/chat',
+  "/api/chat",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.SOCIAL,
-    pathRewrite: { '^/api/chat': '/api/chat' },
+    pathRewrite: { "^/api/chat": "/api/chat" },
   })
 );
 
 app.use(
-  '/api/broadcasts',
+  "/api/broadcasts",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.SOCIAL,
-    pathRewrite: { '^/api/broadcasts': '/api/broadcasts' },
+    pathRewrite: { "^/api/broadcasts": "/api/broadcasts" },
   })
 );
 
 app.use(
-  '/api/user',
+  "/api/user",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.SOCIAL,
-    pathRewrite: { '^/api/user': '/api/user' },
+    pathRewrite: { "^/api/user": "/api/user" },
   })
 );
 
 app.use(
-  '/api/users',
+  "/api/users",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.SOCIAL,
-    pathRewrite: { '^/api/users': '/api/users' },
+    pathRewrite: { "^/api/users": "/api/users" },
   })
 );
 
 // Route to Gamification Service
 app.use(
-  '/api/achievements',
+  "/api/achievements",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.GAMIFICATION,
-    pathRewrite: { '^/api/achievements': '/api/achievements' },
+    pathRewrite: { "^/api/achievements": "/api/achievements" },
   })
 );
 
 app.use(
-  '/api/stats',
+  "/api/stats",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.GAMIFICATION,
-    pathRewrite: { '^/api/stats': '/api/stats' },
+    pathRewrite: { "^/api/stats": "/api/stats" },
   })
 );
 
 // Route to Moderation Service
 app.use(
-  '/api/reports',
+  "/api/reports",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.MODERATION,
-    pathRewrite: { '^/api/reports': '/api/reports' },
+    pathRewrite: { "^/api/reports": "/api/reports" },
   })
 );
 
 app.use(
-  '/api/admin',
+  "/api/admin",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.MODERATION,
-    pathRewrite: { '^/api/admin': '/api/admin' },
+    pathRewrite: { "^/api/admin": "/api/admin" },
   })
 );
 
 app.use(
-  '/api/moderator',
+  "/api/moderator",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.MODERATION,
-    pathRewrite: { '^/api/moderator': '/api/moderator' },
+    pathRewrite: { "^/api/moderator": "/api/moderator" },
   })
 );
 
 // Route to AI Doubt Solver (Quiz Service)
 app.use(
-  '/api/doubt-solver',
+  "/api/doubt-solver",
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.QUIZ,
@@ -376,12 +378,30 @@ app.use(
 
 // WebSocket proxy for Live Service
 app.use(
-  '/socket.io',
+  "/socket.io",
   createProxyMiddleware({
     target: SERVICES.LIVE,
     ws: true,
     changeOrigin: true,
-    logLevel: 'debug',
+    logLevel: "warn",
+    timeout: 60000,
+    proxyTimeout: 60000,
+    onError: (err, req, res) => {
+      logger.error("WebSocket proxy error:", err.message);
+      if (!res.headersSent) {
+        res.status(503).json({
+          success: false,
+          message: "Live service unavailable",
+          error: err.message,
+        });
+      }
+    },
+    onProxyReqWs: (proxyReq, req, socket) => {
+      logger.info("WebSocket upgrade request to Live Service");
+      socket.on("error", (err) => {
+        logger.error("WebSocket socket error:", err.message);
+      });
+    },
   })
 );
 
@@ -389,19 +409,19 @@ app.use(
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Route not found',
+    message: "Route not found",
     path: req.path,
   });
 });
 
 // Error handler
-app.use(errorHandler('API-GATEWAY'));
+app.use(errorHandler("API-GATEWAY"));
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, "0.0.0.0", () => {
   logger.info(`🚀 API Gateway running on http://0.0.0.0:${PORT}`);
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info('Service mappings:');
+  logger.info(`Environment: ${process.env.NODE_ENV || "development"}`);
+  logger.info("Service mappings:");
   Object.entries(SERVICES).forEach(([name, url]) => {
     logger.info(`  ${name}: ${url}`);
   });

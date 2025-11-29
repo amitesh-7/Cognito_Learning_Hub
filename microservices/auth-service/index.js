@@ -24,6 +24,12 @@ const app = express();
 const logger = createLogger("auth-service");
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy - Required for Render/production deployment
+// Allows express-rate-limit to correctly identify client IPs
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1); // Trust first proxy
+}
+
 // CORS Configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",")
@@ -152,24 +158,67 @@ process.on("SIGINT", async () => {
 // Start Server
 async function startServer() {
   try {
-    // Initialize database
-    await database.initialize();
-    logger.info("Database connected successfully");
+    // Validate critical environment variables
+    const requiredEnvVars = ["MONGO_URI", "JWT_SECRET"];
+    const missingVars = requiredEnvVars.filter(
+      (varName) => !process.env[varName]
+    );
 
-    // Start listening
+    if (missingVars.length > 0) {
+      logger.error(
+        `Missing required environment variables: ${missingVars.join(", ")}`
+      );
+      logger.error("Service will start but authentication will not work!");
+    }
+
+    // Initialize database with retry logic
+    let dbConnected = false;
+    let retries = 3;
+
+    while (retries > 0 && !dbConnected) {
+      try {
+        await database.initialize();
+        logger.info("Database connected successfully");
+        dbConnected = true;
+      } catch (dbError) {
+        retries--;
+        logger.error(
+          `Database connection failed. Retries left: ${retries}`,
+          dbError.message
+        );
+        if (retries > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5 seconds before retry
+        }
+      }
+    }
+
+    if (!dbConnected) {
+      logger.error("Failed to connect to database after all retries");
+      logger.warn(
+        "Starting service anyway - health checks will show database as disconnected"
+      );
+    }
+
+    // Start listening regardless of database connection
     app.listen(PORT, () => {
       const serviceUrl =
         process.env.NODE_ENV === "production"
           ? process.env.AUTH_SERVICE_URL || `https://auth-service.onrender.com`
           : `http://localhost:${PORT}`;
 
-      logger.info(`Auth Service running on port ${PORT}`);
+      logger.info(`🚀 Auth Service running on port ${PORT}`);
       logger.info(`Environment: ${process.env.NODE_ENV || "development"}`);
       logger.info(`Health check: ${serviceUrl}/health`);
+      logger.info(
+        `Database: ${dbConnected ? "✅ Connected" : "❌ Disconnected"}`
+      );
     });
   } catch (error) {
-    logger.error("Failed to start auth service:", error);
-    process.exit(1);
+    logger.error("Critical error starting auth service:", error);
+    // Don't exit - try to keep service running for health checks
+    app.listen(PORT, () => {
+      logger.warn(`⚠️ Auth Service started with errors on port ${PORT}`);
+    });
   }
 }
 
