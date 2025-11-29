@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const leaderboardManager = require('../services/leaderboardManager');
+const { authenticateToken, adminMiddleware } = require('../../../shared/middleware/auth');
 
 /**
  * GET /api/leaderboards/global
  * Get global leaderboard
  */
-router.get('/global', async (req, res, next) => {
+router.get('/global', authenticateToken, async (req, res, next) => {
   try {
     const { start = 0, limit = 100 } = req.query;
 
@@ -32,7 +33,7 @@ router.get('/global', async (req, res, next) => {
  * GET /api/leaderboards/category/:category
  * Get category-specific leaderboard
  */
-router.get('/category/:category', async (req, res, next) => {
+router.get('/category/:category', authenticateToken, async (req, res, next) => {
   try {
     const { category } = req.params;
     const { start = 0, limit = 100 } = req.query;
@@ -61,7 +62,7 @@ router.get('/category/:category', async (req, res, next) => {
  * GET /api/leaderboards/weekly
  * Get weekly leaderboard
  */
-router.get('/weekly', async (req, res, next) => {
+router.get('/weekly', authenticateToken, async (req, res, next) => {
   try {
     const { start = 0, limit = 100 } = req.query;
 
@@ -87,7 +88,7 @@ router.get('/weekly', async (req, res, next) => {
  * GET /api/leaderboards/monthly
  * Get monthly leaderboard
  */
-router.get('/monthly', async (req, res, next) => {
+router.get('/monthly', authenticateToken, async (req, res, next) => {
   try {
     const { start = 0, limit = 100 } = req.query;
 
@@ -113,7 +114,7 @@ router.get('/monthly', async (req, res, next) => {
  * GET /api/leaderboards/rank/:userId
  * Get user's rank in global leaderboard
  */
-router.get('/rank/:userId', async (req, res, next) => {
+router.get('/rank/:userId', authenticateToken, async (req, res, next) => {
   try {
     const { userId } = req.params;
 
@@ -134,7 +135,7 @@ router.get('/rank/:userId', async (req, res, next) => {
  * GET /api/leaderboards/rank/:userId/category/:category
  * Get user's rank in category leaderboard
  */
-router.get('/rank/:userId/category/:category', async (req, res, next) => {
+router.get('/rank/:userId/category/:category', authenticateToken, async (req, res, next) => {
   try {
     const { userId, category } = req.params;
 
@@ -156,7 +157,7 @@ router.get('/rank/:userId/category/:category', async (req, res, next) => {
  * GET /api/leaderboards/surrounding/:userId
  * Get surrounding users in leaderboard
  */
-router.get('/surrounding/:userId', async (req, res, next) => {
+router.get('/surrounding/:userId', authenticateToken, async (req, res, next) => {
   try {
     const { userId } = req.params;
     const { range = 5 } = req.query;
@@ -182,7 +183,7 @@ router.get('/surrounding/:userId', async (req, res, next) => {
  * POST /api/leaderboards/rebuild (Admin)
  * Rebuild leaderboards from database
  */
-router.post('/rebuild', async (req, res, next) => {
+router.post('/rebuild', authenticateToken, adminMiddleware, async (req, res, next) => {
   try {
     await leaderboardManager.rebuildGlobalLeaderboard(0, 1000);
 

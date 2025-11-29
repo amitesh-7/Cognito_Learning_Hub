@@ -22,11 +22,22 @@ class DatabaseConnection {
       const defaultOptions = {
         autoIndex: process.env.NODE_ENV !== 'production',
         maxPoolSize: 10,
-        serverSelectionTimeoutMS: 5000,
+        minPoolSize: 5,
+        serverSelectionTimeoutMS: 30000,
         socketTimeoutMS: 45000,
+        connectTimeoutMS: 30000,
+        heartbeatFrequencyMS: 10000,
+        retryWrites: true,
+        retryReads: true,
       };
 
       await mongoose.connect(mongoUri, { ...defaultOptions, ...options });
+      
+      // Ping database to ensure connection is ready
+      await mongoose.connection.db.admin().ping();
+      
+      // Wait a bit for mongoose to fully initialize
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       this.isConnected = true;
       this.logger.info('✓ MongoDB connected successfully');

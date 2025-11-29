@@ -4,21 +4,33 @@
  * Run this as a separate process: node workers/quizGenerationWorker.js
  */
 
-require('dotenv').config();
+const path = require('path');
+const envPath = path.join(__dirname, '..', '.env');
+const result = require('dotenv').config({ path: envPath });
+const mongoose = require('mongoose');
+
 const createLogger = require('../../shared/utils/logger');
 const { quizGenerationQueue } = require('../services/queueManager');
 const aiService = require('../services/aiService');
 const cacheManager = require('../services/cacheManager');
-const database = require('../models');
 const Quiz = require('../models/Quiz');
 
 const logger = createLogger('quiz-worker');
 
-// Initialize database connection
+// Initialize database connection (using direct mongoose like main service)
 async function initialize() {
   try {
-    await database.initialize();
-    logger.info('Worker database connected');
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+    if (!mongoUri) {
+      throw new Error('MONGODB_URI or MONGO_URI environment variable is not defined');
+    }
+    
+    await mongoose.connect(mongoUri);
+    
+    // Ping to verify connection is ready
+    await mongoose.connection.db.admin().ping();
+    
+    logger.info('Worker MongoDB connected');
   } catch (error) {
     logger.error('Worker failed to connect to database:', error);
     process.exit(1);

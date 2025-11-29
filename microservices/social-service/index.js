@@ -25,6 +25,9 @@ const commentRoutes = require('./routes/comments');
 const followRoutes = require('./routes/follows');
 const notificationRoutes = require('./routes/notifications');
 const eventRoutes = require('./routes/events');
+const friendRoutes = require('./routes/friends');
+const challengeRoutes = require('./routes/challenges');
+const userRoutes = require('./routes/users');
 
 const logger = createLogger('social-service');
 
@@ -57,6 +60,11 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Input Sanitization (XSS & Injection Protection)
+const { sanitizeAll } = require('../shared/middleware/inputValidation');
+app.use(sanitizeAll);
+
 app.use(morgan('combined', {
   stream: {
     write: (message) => logger.info(message.trim()),
@@ -83,6 +91,9 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/follows', followRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/friends', friendRoutes);
+app.use('/api/challenges', challengeRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/health', async (req, res) => {

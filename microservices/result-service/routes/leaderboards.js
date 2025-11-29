@@ -50,7 +50,7 @@ router.get('/quiz/:quizId', optionalAuth, async (req, res) => {
     );
   } catch (error) {
     logger.error('Get quiz leaderboard error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch leaderboard', 500));
+    return ApiResponse.error(res, 'Failed to fetch leaderboard', 500);
   }
 });
 
@@ -90,7 +90,7 @@ router.get('/global', optionalAuth, async (req, res) => {
     );
   } catch (error) {
     logger.error('Get global leaderboard error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch global leaderboard', 500));
+    return ApiResponse.error(res, 'Failed to fetch global leaderboard', 500);
   }
 });
 
@@ -105,7 +105,7 @@ router.get('/user/:userId/rank', optionalAuth, async (req, res) => {
     const { quizId } = req.query;
 
     if (!quizId) {
-      return res.status(400).json(ApiResponse.badRequest('quizId query parameter required'));
+      return ApiResponse.badRequest(res, 'quizId query parameter required');
     }
 
     // Find user's best attempt for this quiz
@@ -144,8 +144,8 @@ router.get('/user/:userId/rank', optionalAuth, async (req, res) => {
       })
     );
   } catch (error) {
-    logger.error('Get user rank error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch rank', 500));
+    logger.error('Get rank error:', error);
+    return ApiResponse.error(res, 'Failed to fetch rank', 500);
   }
 });
 

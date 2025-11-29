@@ -59,4 +59,30 @@ const optionalAuth = (req, res, next) => {
   next();
 };
 
-module.exports = { authenticateToken, optionalAuth };
+// Admin middleware - requires Admin role
+const adminMiddleware = (req, res, next) => {
+  if (!req.user) {
+    return ApiResponse.unauthorized(res, 'Authentication required');
+  }
+  
+  if (req.user.role !== 'Admin') {
+    return ApiResponse.forbidden(res, 'Admin access required');
+  }
+  
+  next();
+};
+
+// Moderator middleware - requires Moderator or Admin role
+const moderatorMiddleware = (req, res, next) => {
+  if (!req.user) {
+    return ApiResponse.unauthorized(res, 'Authentication required');
+  }
+  
+  if (!['Moderator', 'Admin'].includes(req.user.role)) {
+    return ApiResponse.forbidden(res, 'Moderator access required');
+  }
+  
+  next();
+};
+
+module.exports = { authenticateToken, optionalAuth, adminMiddleware, moderatorMiddleware };

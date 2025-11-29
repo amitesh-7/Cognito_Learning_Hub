@@ -9,6 +9,8 @@ const { nanoid } = require('nanoid');
 const Meeting = require('../models/Meeting');
 const meetingManager = require('../services/meetingManager');
 const createLogger = require('../../shared/utils/logger');
+const { authenticateToken } = require('../../shared/middleware/auth');
+const { validateFields } = require('../../shared/middleware/inputValidation');
 
 const logger = createLogger('meeting-routes');
 
@@ -16,24 +18,26 @@ const logger = createLogger('meeting-routes');
 // CREATE MEETING
 // ============================================
 
-router.post('/create', async (req, res) => {
-  try {
-    const {
-      title,
-      description,
-      hostId,
-      hostName,
-      scheduledAt,
-      settings,
-    } = req.body;
-
-    // Validate required fields
-    if (!title || !hostId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Title and hostId are required',
-      });
-    }
+router.post(
+  '/create',
+  authenticateToken,
+  validateFields({
+    title: { required: true, type: 'string', minLength: 3, maxLength: 200 },
+    description: { type: 'string', maxLength: 1000 },
+    hostId: { required: true, type: 'objectId' },
+    hostName: { type: 'string', maxLength: 100 },
+    scheduledAt: { type: 'string' },
+  }),
+  async (req, res) => {
+    try {
+      const {
+        title,
+        description,
+        hostId,
+        hostName,
+        scheduledAt,
+        settings,
+      } = req.body;
 
     // Generate unique room ID
     const roomId = nanoid(10);
@@ -87,7 +91,7 @@ router.post('/create', async (req, res) => {
 // GET MEETING
 // ============================================
 
-router.get('/:roomId', async (req, res) => {
+router.get('/:roomId', authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -141,7 +145,7 @@ router.get('/:roomId', async (req, res) => {
 // GET PARTICIPANTS
 // ============================================
 
-router.get('/:roomId/participants', async (req, res) => {
+router.get('/:roomId/participants', authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -175,7 +179,7 @@ router.get('/:roomId/participants', async (req, res) => {
 // UPDATE MEETING
 // ============================================
 
-router.put('/:roomId', async (req, res) => {
+router.put('/:roomId', authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
     const { title, description, settings } = req.body;
@@ -229,10 +233,9 @@ router.put('/:roomId', async (req, res) => {
 // END MEETING
 // ============================================
 
-router.post('/:roomId/end', async (req, res) => {
+router.post('/:roomId/end', authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
-    const { hostId } = req.body;
 
     // Get meeting
     const meeting = await Meeting.findOne({ roomId });
@@ -244,8 +247,8 @@ router.post('/:roomId/end', async (req, res) => {
       });
     }
 
-    // Verify host
-    if (meeting.hostId !== hostId) {
+    // Verify host - use authenticated user ID
+    if (meeting.hostId !== req.user.userId) {
       return res.status(403).json({
         success: false,
         error: 'Only host can end meeting',
@@ -274,7 +277,7 @@ router.post('/:roomId/end', async (req, res) => {
     // Delete from Redis
     await meetingManager.deleteMeeting(roomId);
 
-    logger.info(`Meeting ${roomId} ended by host ${hostId}`);
+    logger.info(`Meeting ${roomId} ended by host ${req.user.userId}`);
 
     res.json({
       success: true,
@@ -294,7 +297,7 @@ router.post('/:roomId/end', async (req, res) => {
 // GET MEETING STATS
 // ============================================
 
-router.get('/:roomId/stats', async (req, res) => {
+router.get('/:roomId/stats', authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -324,9 +327,17 @@ router.get('/:roomId/stats', async (req, res) => {
 // GET USER MEETINGS
 // ============================================
 
-router.get('/user/:userId', async (req, res) => {
+router.get('/user/:userId', authenticateToken, async (req, res) => {
   try {
     const { userId } = req.params;
+
+    // Authorization: Users can only view their own meetings unless admin
+    if (userId !== req.user.userId && req.user.role !== 'Admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized to view other users meetings',
+      });
+    }
     const { status, limit = 20, skip = 0 } = req.query;
 
     const query = {
@@ -368,10 +379,9 @@ router.get('/user/:userId', async (req, res) => {
 // DELETE MEETING
 // ============================================
 
-router.delete('/:roomId', async (req, res) => {
+router.delete('/:roomId', authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
-    const { hostId } = req.body;
 
     const meeting = await Meeting.findOne({ roomId });
 
@@ -382,8 +392,8 @@ router.delete('/:roomId', async (req, res) => {
       });
     }
 
-    // Verify host
-    if (meeting.hostId !== hostId) {
+    // Verify host - use authenticated user ID
+    if (meeting.hostId !== req.user.userId) {
       return res.status(403).json({
         success: false,
         error: 'Only host can delete meeting',
@@ -401,7 +411,7 @@ router.delete('/:roomId', async (req, res) => {
     await Meeting.deleteOne({ roomId });
     await meetingManager.deleteMeeting(roomId);
 
-    logger.info(`Meeting ${roomId} deleted by host ${hostId}`);
+    logger.info(`Meeting ${roomId} deleted by host ${req.user.userId}`);
 
     res.json({
       success: true,

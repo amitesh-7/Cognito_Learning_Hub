@@ -124,7 +124,10 @@ async function getJobStatus(jobId) {
     
     let result = null;
     if (state === 'completed') {
-      result = job.returnvalue;
+      // Bull stores return value in job.returnvalue (lowercase 'v')
+      // Access it directly from the Redis data
+      result = await job.finished();
+      logger.info(`Job ${jobId} completed - result:`, result ? 'Found' : 'NULL');
     }
     
     let error = null;

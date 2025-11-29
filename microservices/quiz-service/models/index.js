@@ -9,10 +9,7 @@ const logger = createLogger('quiz-service');
 
 class QuizDatabase extends DatabaseConnection {
   constructor() {
-    super(process.env.MONGODB_URI, {
-      serviceName: 'quiz-service',
-      logger: logger,
-    });
+    super('quiz-service');
   }
 
   /**
@@ -20,7 +17,12 @@ class QuizDatabase extends DatabaseConnection {
    */
   async initialize() {
     try {
-      await this.connect();
+      const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+      if (!mongoUri) {
+        throw new Error('MONGODB_URI or MONGO_URI environment variable is not defined');
+      }
+      
+      await this.connect(mongoUri);
       
       // Load Quiz model
       require('./Quiz');

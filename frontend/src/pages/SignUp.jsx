@@ -220,7 +220,8 @@ export default function SignUp() {
       const data = await response.json();
 
       if (response.ok) {
-        login(data.token);
+        const token = data.token || data.data?.accessToken;
+        login(token);
         setMessage("Account created successfully!");
 
         // Redirect based on user role

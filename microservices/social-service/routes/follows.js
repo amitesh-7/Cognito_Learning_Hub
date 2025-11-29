@@ -10,6 +10,8 @@ const feedManager = require('../services/feedManager');
 const notificationManager = require('../services/notificationManager');
 const queueManager = require('../workers/queueManager');
 const createLogger = require('../../shared/utils/logger');
+const { authenticateToken } = require('../../shared/middleware/auth');
+const { validateFields } = require('../../shared/middleware/inputValidation');
 
 const logger = createLogger('follow-routes');
 
@@ -17,26 +19,35 @@ const logger = createLogger('follow-routes');
 // FOLLOW USER
 // ============================================
 
-router.post('/follow', async (req, res) => {
-  try {
-    const { followerId, followerName, followingId, followingName } = req.body;
+router.post(
+  '/follow',
+  authenticateToken,
+  validateFields({
+    followingId: { required: true, type: 'string' },
+  }),
+  async (req, res) => {
+    try {
+      const { followerId, followerName, followingId, followingName } = req.body;
 
-    if (!followerId || !followingId) {
-      return res.status(400).json({
-        success: false,
-        error: 'followerId and followingId are required',
-      });
-    }
+      // Authorization: User can only follow as themselves
+      if (followerId && followerId !== req.user.userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Cannot follow as another user',
+        });
+      }
 
-    if (followerId === followingId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Cannot follow yourself',
-      });
-    }
+      const actualFollowerId = followerId || req.user.userId;
+
+      if (actualFollowerId === followingId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Cannot follow yourself',
+        });
+      }
 
     // Check if already following
-    const existing = await Follow.findOne({ followerId, followingId });
+    const existing = await Follow.findOne({ followerId: actualFollowerId, followingId });
 
     if (existing) {
       return res.status(400).json({
@@ -47,7 +58,7 @@ router.post('/follow', async (req, res) => {
 
     // Create follow relationship
     const follow = new Follow({
-      followerId,
+      followerId: actualFollowerId,
       followerName,
       followingId,
       followingName,
@@ -56,20 +67,20 @@ router.post('/follow', async (req, res) => {
     await follow.save();
 
     // Update Redis
-    await feedManager.addFollower(followingId, followerId);
+    await feedManager.addFollower(followingId, actualFollowerId);
 
     // Queue follow notification
     await queueManager.addNotification({
       userId: followingId,
       type: 'follow',
-      actorId: followerId,
+      actorId: actualFollowerId,
       actorName: followerName,
       message: `${followerName} started following you`,
-      actionUrl: `/profile/${followerId}`,
+      actionUrl: `/profile/${actualFollowerId}`,
       priority: 'high',
     });
 
-    logger.info(`User ${followerId} followed ${followingId}`);
+    logger.info(`User ${actualFollowerId} followed ${followingId}`);
 
     res.json({
       success: true,
@@ -88,19 +99,28 @@ router.post('/follow', async (req, res) => {
 // UNFOLLOW USER
 // ============================================
 
-router.delete('/follow', async (req, res) => {
-  try {
-    const { followerId, followingId } = req.body;
+router.delete(
+  '/follow',
+  authenticateToken,
+  validateFields({
+    followingId: { required: true, type: 'string' },
+  }),
+  async (req, res) => {
+    try {
+      const { followerId, followingId } = req.body;
 
-    if (!followerId || !followingId) {
-      return res.status(400).json({
-        success: false,
-        error: 'followerId and followingId are required',
-      });
-    }
+      // Authorization: User can only unfollow as themselves
+      if (followerId && followerId !== req.user.userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Cannot unfollow as another user',
+        });
+      }
 
-    // Remove follow relationship
-    const result = await Follow.deleteOne({ followerId, followingId });
+      const actualFollowerId = followerId || req.user.userId;
+
+      // Remove follow relationship
+      const result = await Follow.deleteOne({ followerId: actualFollowerId, followingId });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({
@@ -110,9 +130,9 @@ router.delete('/follow', async (req, res) => {
     }
 
     // Update Redis
-    await feedManager.removeFollower(followingId, followerId);
+    await feedManager.removeFollower(followingId, actualFollowerId);
 
-    logger.info(`User ${followerId} unfollowed ${followingId}`);
+    logger.info(`User ${actualFollowerId} unfollowed ${followingId}`);
 
     res.json({
       success: true,

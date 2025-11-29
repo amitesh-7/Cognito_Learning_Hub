@@ -68,8 +68,14 @@ app.use(helmet({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Apply general rate limiting
-app.use('/api/', generalLimiter);
+// Apply general rate limiting (skip status endpoints for polling)
+app.use('/api/', (req, res, next) => {
+  // Skip rate limiting for job status polling endpoints
+  if (req.path.includes('/status/') || req.path.endsWith('/status')) {
+    return next();
+  }
+  return generalLimiter(req, res, next);
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -103,22 +109,37 @@ app.get('/', (req, res) => {
 // Proxy configuration options
 const proxyOptions = {
   changeOrigin: true,
-  logLevel: 'debug',
+  logLevel: 'warn',
+  timeout: 30000, // 30 second timeout
+  proxyTimeout: 30000,
   onProxyReq: (proxyReq, req, res) => {
+    // Fix content-length for body-parser
+    if (req.body && Object.keys(req.body).length > 0) {
+      const bodyData = JSON.stringify(req.body);
+      proxyReq.setHeader('Content-Type', 'application/json');
+      proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+      proxyReq.write(bodyData);
+    }
+    
     // Forward user info from JWT if available
     if (req.user) {
       proxyReq.setHeader('X-User-Id', req.user.id);
       proxyReq.setHeader('X-User-Role', req.user.role);
     }
-    logger.debug(`Proxying ${req.method} ${req.path} to ${proxyReq.path}`);
+    logger.info(`→ Proxying ${req.method} ${req.path}`);
+  },
+  onProxyRes: (proxyRes, req, res) => {
+    logger.info(`← Response ${proxyRes.statusCode} from ${req.path}`);
   },
   onError: (err, req, res) => {
     logger.error('Proxy error:', err);
-    res.status(503).json({
-      success: false,
-      message: 'Service temporarily unavailable',
-      error: err.message,
-    });
+    if (!res.headersSent) {
+      res.status(503).json({
+        success: false,
+        message: 'Service temporarily unavailable',
+        error: err.message,
+      });
+    }
   },
 };
 
@@ -142,6 +163,17 @@ app.use(
   })
 );
 
+// Route to Quiz Generation endpoints (new microservice routes)
+app.use(
+  '/api/generate',
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.QUIZ,
+    pathRewrite: { '^/api/generate': '/api/generate' },
+  })
+);
+
+// Legacy routes (for backward compatibility)
 app.use(
   '/api/generate-quiz-topic',
   createProxyMiddleware({

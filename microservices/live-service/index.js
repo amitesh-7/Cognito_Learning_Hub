@@ -37,6 +37,10 @@ app.use(cors());
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Input Sanitization (XSS & Injection Protection)
+const { sanitizeAll } = require('../shared/middleware/inputValidation');
+app.use(sanitizeAll);
+
 // Request logging
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.path}`);
@@ -82,7 +86,7 @@ app.get('/api/socket/status', (req, res) => {
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json(ApiResponse.notFound('Route not found'));
+  ApiResponse.notFound(res, 'Route not found');
 });
 
 // Error handler

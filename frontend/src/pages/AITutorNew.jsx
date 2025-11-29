@@ -251,7 +251,7 @@ const AITutor = () => {
         const aiMsg = {
           id: Date.now() + 1,
           role: "assistant",
-          content: data.reply || "Sorry, I couldn't help with that.",
+          content: data.data?.reply || data.reply || "Sorry, I couldn't help with that.",
           time: new Date().toISOString(),
         };
 

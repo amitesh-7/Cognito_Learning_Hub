@@ -9,10 +9,14 @@ const authMiddleware = require('./middleware/authMiddleware');
 
 const app = express();
 
+// Input validation and sanitization
+const { sanitizeAll } = require('../shared/middleware/inputValidation');
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(sanitizeAll);
 
 // Rate limiting
 const limiter = rateLimit({

@@ -28,6 +28,8 @@ const notificationSchema = new mongoose.Schema({
       'like',
       'comment',
       'follow',
+      'friend-request',
+      'friend-accepted',
       'mention',
       'share',
       'achievement',
@@ -64,6 +66,12 @@ const notificationSchema = new mongoose.Schema({
   
   // Link/action
   actionUrl: String,
+  
+  // Additional metadata
+  metadata: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {},
+  },
   
   // Status
   isRead: {

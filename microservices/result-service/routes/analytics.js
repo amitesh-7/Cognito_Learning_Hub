@@ -24,7 +24,7 @@ router.get('/user/:userId/stats', authenticateToken, async (req, res) => {
 
     // Verify user can only access their own stats (unless admin)
     if (userId !== req.user.userId && req.user.role !== 'Admin') {
-      return res.status(403).json(ApiResponse.forbidden('Access denied'));
+      return ApiResponse.forbidden(res, 'Access denied');
     }
 
     // Check cache first
@@ -46,8 +46,8 @@ router.get('/user/:userId/stats', authenticateToken, async (req, res) => {
       })
     );
   } catch (error) {
-    logger.error('Get user stats error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch user statistics', 500));
+    logger.error('Get user statistics error:', error);
+    return ApiResponse.error(res, 'Failed to fetch user statistics', 500);
   }
 });
 
@@ -65,7 +65,7 @@ router.get('/user/:userId/history', authenticateToken, async (req, res) => {
 
     // Verify access
     if (userId !== req.user.userId && req.user.role !== 'Admin') {
-      return res.status(403).json(ApiResponse.forbidden('Access denied'));
+      return ApiResponse.forbidden(res, 'Access denied');
     }
 
     // Query with pagination
@@ -91,7 +91,7 @@ router.get('/user/:userId/history', authenticateToken, async (req, res) => {
     );
   } catch (error) {
     logger.error('Get user history error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch history', 500));
+    return ApiResponse.error(res, 'Failed to fetch history', 500);
   }
 });
 
@@ -136,7 +136,7 @@ router.get('/quiz/:quizId', authenticateToken, async (req, res) => {
     );
   } catch (error) {
     logger.error('Get quiz analytics error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch quiz analytics', 500));
+    return ApiResponse.error(res, 'Failed to fetch quiz analytics', 500);
   }
 });
 
@@ -154,12 +154,12 @@ router.get('/result/:resultId', authenticateToken, async (req, res) => {
       .populate('userId', 'name email picture');
 
     if (!result) {
-      return res.status(404).json(ApiResponse.notFound('Result not found'));
+      return ApiResponse.notFound(res, 'Result not found');
     }
 
     // Verify access
     if (result.userId._id.toString() !== req.user.userId && req.user.role !== 'Admin') {
-      return res.status(403).json(ApiResponse.forbidden('Access denied'));
+      return ApiResponse.forbidden(res, 'Access denied');
     }
 
     const analysis = result.getDetailedAnalysis();
@@ -173,8 +173,8 @@ router.get('/result/:resultId', authenticateToken, async (req, res) => {
       })
     );
   } catch (error) {
-    logger.error('Get result analysis error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch result', 500));
+    logger.error('Get result detail error:', error);
+    return ApiResponse.error(res, 'Failed to fetch result', 500);
   }
 });
 
@@ -195,7 +195,7 @@ router.get('/comparison', authenticateToken, async (req, res) => {
 
     // Verify access
     if (userId !== req.user.userId && req.user.role !== 'Admin') {
-      return res.status(403).json(ApiResponse.forbidden('Access denied'));
+      return ApiResponse.forbidden(res, 'Access denied');
     }
 
     const quizIdArray = quizIds.split(',');
@@ -242,7 +242,7 @@ router.get('/comparison', authenticateToken, async (req, res) => {
     res.json(ApiResponse.success({ comparison }));
   } catch (error) {
     logger.error('Get comparison error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch comparison', 500));
+    return ApiResponse.error(res, 'Failed to fetch comparison', 500);
   }
 });
 

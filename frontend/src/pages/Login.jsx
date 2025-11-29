@@ -169,7 +169,8 @@ export default function Login() {
           setShowRoleSelection(true);
         } else {
           // Existing user or user with specific role - proceed with login
-          login(data.token);
+          const token = data.token || data.data?.accessToken;
+          login(token);
           console.log("Login successful, redirecting...");
 
           // Redirect based on user role
@@ -220,7 +221,8 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        login(data.token);
+        const token = data.token || data.data?.accessToken;
+        login(token);
         setShowRoleSelection(false);
         setPendingGoogleUser(null);
 
@@ -292,8 +294,13 @@ export default function Login() {
         throw new Error(data.message || "Login failed.");
       }
 
-      // Login the user first
-      login(data.token);
+      // Login the user first - handle both old and new response format
+      const token = data.token || data.data?.accessToken || data.message?.accessToken;
+      if (!token) {
+        console.error("Full response data:", data);
+        throw new Error("No authentication token received");
+      }
+      login(token);
 
       // Small delay to ensure auth state is updated
       setTimeout(() => {

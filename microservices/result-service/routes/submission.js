@@ -7,6 +7,7 @@ const express = require('express');
 const ApiResponse = require('../../shared/utils/response');
 const createLogger = require('../../shared/utils/logger');
 const { authenticateToken } = require('../../shared/middleware/auth');
+const { validateFields } = require('../../shared/middleware/inputValidation');
 const Result = require('../models/Result');
 const cacheManager = require('../services/cacheManager');
 
@@ -18,23 +19,26 @@ const logger = createLogger('submission-routes');
  * @desc    Submit quiz result
  * @access  Private
  */
-router.post('/submit', authenticateToken, async (req, res) => {
-  try {
-    const {
-      quizId,
-      sessionId,
-      answers,
-      startedAt,
-      completedAt,
-      quizMetadata,
-    } = req.body;
-
-    // Validation
-    if (!quizId || !answers || !startedAt || !completedAt) {
-      return res.status(400).json(
-        ApiResponse.badRequest('Missing required fields: quizId, answers, startedAt, completedAt')
-      );
-    }
+router.post(
+  '/submit',
+  authenticateToken,
+  validateFields({
+    quizId: { required: true, type: 'objectId' },
+    answers: { required: true, type: 'array', minLength: 1 },
+    startedAt: { required: true, type: 'string' },
+    completedAt: { required: true, type: 'string' },
+    sessionId: { type: 'objectId' },
+  }),
+  async (req, res) => {
+    try {
+      const {
+        quizId,
+        sessionId,
+        answers,
+        startedAt,
+        completedAt,
+        quizMetadata,
+      } = req.body;
 
     // Calculate metrics
     const totalQuestions = answers.length;
@@ -99,7 +103,7 @@ router.post('/submit', authenticateToken, async (req, res) => {
     );
   } catch (error) {
     logger.error('Submit result error:', error);
-    res.status(500).json(ApiResponse.error('Failed to submit result', 500));
+    return ApiResponse.error(res, 'Failed to submit result', 500);
   }
 });
 
@@ -113,7 +117,7 @@ router.post('/batch-submit', authenticateToken, async (req, res) => {
     const { results } = req.body;
 
     if (!results || !Array.isArray(results) || results.length === 0) {
-      return res.status(400).json(ApiResponse.badRequest('Results array required'));
+      return ApiResponse.badRequest(res, 'Results array required');
     }
 
     // Validate and prepare results
@@ -180,7 +184,7 @@ router.post('/batch-submit', authenticateToken, async (req, res) => {
     );
   } catch (error) {
     logger.error('Batch submit error:', error);
-    res.status(500).json(ApiResponse.error('Failed to batch submit results', 500));
+    return ApiResponse.error(res, 'Failed to batch submit results', 500);
   }
 });
 

@@ -26,6 +26,14 @@ router.post('/', authMiddleware, moderatorMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    // Prevent self-moderation
+    if (targetUserId === req.user.userId) {
+      return res.status(403).json({ 
+        error: 'Cannot moderate yourself',
+        message: 'Moderators are not allowed to take actions against their own accounts'
+      });
+    }
+
     // Calculate expiration date if duration provided
     let expiresAt = null;
     if (duration && duration.unit !== 'permanent') {

@@ -19,6 +19,52 @@ const logger = createLogger('auth-service');
 const User = require('../models/User');
 
 /**
+ * @route   GET /api/users/search
+ * @desc    Search users by name or email
+ * @access  Private
+ */
+router.get('/search', authenticateToken, async (req, res) => {
+  try {
+    const { query } = req.query;
+    const currentUserId = req.user.userId;
+
+    if (!query || query.trim().length < 2) {
+      return ApiResponse.badRequest(res, 'Search query must be at least 2 characters');
+    }
+
+    // Search by name or email (case-insensitive), exclude current user
+    const users = await User.find({
+      _id: { $ne: currentUserId }, // Exclude current user
+      $or: [
+        { name: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } },
+      ],
+    })
+      .select('name email picture role createdAt')
+      .limit(20); // Limit results
+
+    logger.info(`Search found ${users.length} users for query: ${query}`);
+
+    return ApiResponse.success(
+      res,
+      {
+        users: users.map(user => ({
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          picture: user.picture,
+          role: user.role,
+        })),
+      },
+      'Users found successfully'
+    );
+  } catch (error) {
+    logger.error('Search users error:', error);
+    return ApiResponse.error(res, 'Failed to search users', 500);
+  }
+});
+
+/**
  * @route   GET /api/users/:id
  * @desc    Get user by ID
  * @access  Private
@@ -28,7 +74,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     const user = await User.findById(req.params.id);
     
     if (!user) {
-      return res.status(404).json(ApiResponse.notFound('User not found'));
+      return ApiResponse.notFound(res, 'User not found');
     }
 
     res.json(
@@ -47,7 +93,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     );
   } catch (error) {
     logger.error('Get user error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch user', 500));
+    return ApiResponse.error(res, 'Failed to fetch user', 500);
   }
 });
 
@@ -68,7 +114,7 @@ router.put(
 
       const user = await User.findById(userId);
       if (!user) {
-        return res.status(404).json(ApiResponse.notFound('User not found'));
+        return ApiResponse.notFound(res, 'User not found');
       }
 
       // Update fields
@@ -93,7 +139,7 @@ router.put(
       );
     } catch (error) {
       logger.error('Update profile error:', error);
-      res.status(500).json(ApiResponse.error('Failed to update profile', 500));
+      return ApiResponse.error(res, 'Failed to update profile', 500);
     }
   }
 );
@@ -115,7 +161,7 @@ router.put(
 
       const user = await User.findById(userId).select('+password');
       if (!user) {
-        return res.status(404).json(ApiResponse.notFound('User not found'));
+        return ApiResponse.notFound(res, 'User not found');
       }
 
       // Check if user has a password (not Google-only user)
@@ -151,7 +197,7 @@ router.put(
       );
     } catch (error) {
       logger.error('Change password error:', error);
-      res.status(500).json(ApiResponse.error('Failed to change password', 500));
+      return ApiResponse.error(res, 'Failed to change password', 500);
     }
   }
 );
@@ -209,7 +255,7 @@ router.post(
       );
     } catch (error) {
       logger.error('Forgot password error:', error);
-      res.status(500).json(ApiResponse.error('Failed to process request', 500));
+      return ApiResponse.error(res, 'Failed to process request', 500);
     }
   }
 );
@@ -265,7 +311,7 @@ router.post(
       );
     } catch (error) {
       logger.error('Reset password error:', error);
-      res.status(500).json(ApiResponse.error('Failed to reset password', 500));
+      return ApiResponse.error(res, 'Failed to reset password', 500);
     }
   }
 );
@@ -288,7 +334,7 @@ router.put('/status', authenticateToken, async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json(ApiResponse.notFound('User not found'));
+      return ApiResponse.notFound(res, 'User not found');
     }
 
     user.status = status;
@@ -305,7 +351,7 @@ router.put('/status', authenticateToken, async (req, res) => {
     );
   } catch (error) {
     logger.error('Update status error:', error);
-    res.status(500).json(ApiResponse.error('Failed to update status', 500));
+    return ApiResponse.error(res, 'Failed to update status', 500);
   }
 });
 
@@ -352,7 +398,7 @@ router.get('/', authenticateToken, requireModerator, async (req, res) => {
     );
   } catch (error) {
     logger.error('Get users error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch users', 500));
+    return ApiResponse.error(res, 'Failed to fetch users', 500);
   }
 });
 
@@ -373,7 +419,7 @@ router.put('/:id/role', authenticateToken, requireAdmin, async (req, res) => {
 
     const user = await User.findById(req.params.id);
     if (!user) {
-      return res.status(404).json(ApiResponse.notFound('User not found'));
+      return ApiResponse.notFound(res, 'User not found');
     }
 
     user.role = role;
@@ -394,7 +440,7 @@ router.put('/:id/role', authenticateToken, requireAdmin, async (req, res) => {
     );
   } catch (error) {
     logger.error('Update role error:', error);
-    res.status(500).json(ApiResponse.error('Failed to update role', 500));
+    return ApiResponse.error(res, 'Failed to update role', 500);
   }
 });
 
@@ -408,7 +454,7 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
     const user = await User.findByIdAndDelete(req.params.id);
     
     if (!user) {
-      return res.status(404).json(ApiResponse.notFound('User not found'));
+      return ApiResponse.notFound(res, 'User not found');
     }
 
     logger.info(`User deleted: ${user.email}`);
@@ -420,7 +466,7 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
     );
   } catch (error) {
     logger.error('Delete user error:', error);
-    res.status(500).json(ApiResponse.error('Failed to delete user', 500));
+    return ApiResponse.error(res, 'Failed to delete user', 500);
   }
 });
 

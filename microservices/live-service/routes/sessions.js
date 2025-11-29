@@ -23,13 +23,13 @@ router.post('/create', authenticateToken, async (req, res) => {
     const { quizId, maxParticipants, settings } = req.body;
 
     if (!quizId) {
-      return res.status(400).json(ApiResponse.badRequest('quizId required'));
+      return ApiResponse.badRequest(res, 'quizId required');
     }
 
     // Fetch quiz details
     const quizResponse = await fetch(`http://localhost:3002/api/quizzes/${quizId}`);
     if (!quizResponse.ok) {
-      return res.status(404).json(ApiResponse.notFound('Quiz not found'));
+      return ApiResponse.notFound(res, 'Quiz not found');
     }
     
     const { data } = await quizResponse.json();
@@ -51,7 +51,7 @@ router.post('/create', authenticateToken, async (req, res) => {
     }
 
     if (!isUnique) {
-      return res.status(500).json(ApiResponse.error('Failed to generate unique session code'));
+      return ApiResponse.error(res, 'Failed to generate unique session code');
     }
 
     // Create session in Redis
@@ -94,7 +94,7 @@ router.post('/create', authenticateToken, async (req, res) => {
     );
   } catch (error) {
     logger.error('Error creating session:', error);
-    res.status(500).json(ApiResponse.error('Failed to create session', 500));
+    return ApiResponse.error(res, 'Failed to create session', 500);
   }
 });
 
@@ -114,7 +114,7 @@ router.get('/:sessionCode', async (req, res) => {
       // Fallback to MongoDB
       const dbSession = await LiveSession.findByCode(sessionCode);
       if (!dbSession) {
-        return res.status(404).json(ApiResponse.notFound('Session not found'));
+        return ApiResponse.notFound(res, 'Session not found');
       }
       session = dbSession.toObject();
     }
@@ -132,7 +132,7 @@ router.get('/:sessionCode', async (req, res) => {
     );
   } catch (error) {
     logger.error('Error getting session:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch session', 500));
+    return ApiResponse.error(res, 'Failed to fetch session', 500);
   }
 });
 
@@ -148,7 +148,7 @@ router.get('/:sessionCode/leaderboard', async (req, res) => {
 
     const session = await sessionManager.getSession(sessionCode);
     if (!session) {
-      return res.status(404).json(ApiResponse.notFound('Session not found'));
+      return ApiResponse.notFound(res, 'Session not found');
     }
 
     const leaderboard = await sessionManager.getLeaderboard(sessionCode, limit);
@@ -162,7 +162,7 @@ router.get('/:sessionCode/leaderboard', async (req, res) => {
     );
   } catch (error) {
     logger.error('Error getting leaderboard:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch leaderboard', 500));
+    return ApiResponse.error(res, 'Failed to fetch leaderboard', 500);
   }
 });
 
@@ -177,7 +177,7 @@ router.get('/:sessionCode/participants', async (req, res) => {
 
     const session = await sessionManager.getSession(sessionCode);
     if (!session) {
-      return res.status(404).json(ApiResponse.notFound('Session not found'));
+      return ApiResponse.notFound(res, 'Session not found');
     }
 
     const participants = await sessionManager.getAllParticipants(sessionCode);
@@ -190,7 +190,7 @@ router.get('/:sessionCode/participants', async (req, res) => {
     );
   } catch (error) {
     logger.error('Error getting participants:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch participants', 500));
+    return ApiResponse.error(res, 'Failed to fetch participants', 500);
   }
 });
 
@@ -205,12 +205,12 @@ router.delete('/:sessionCode', authenticateToken, async (req, res) => {
 
     const session = await sessionManager.getSession(sessionCode);
     if (!session) {
-      return res.status(404).json(ApiResponse.notFound('Session not found'));
+      return ApiResponse.notFound(res, 'Session not found');
     }
 
     // Verify host
     if (session.hostId !== req.user.userId && req.user.role !== 'Admin') {
-      return res.status(403).json(ApiResponse.forbidden('Only host can delete session'));
+      return ApiResponse.forbidden(res, 'Only host can delete session');
     }
 
     // Delete from Redis
@@ -227,7 +227,7 @@ router.delete('/:sessionCode', authenticateToken, async (req, res) => {
     res.json(ApiResponse.success({ message: 'Session deleted successfully' }));
   } catch (error) {
     logger.error('Error deleting session:', error);
-    res.status(500).json(ApiResponse.error('Failed to delete session', 500));
+    return ApiResponse.error(res, 'Failed to delete session', 500);
   }
 });
 
@@ -248,7 +248,7 @@ router.get('/', async (req, res) => {
     );
   } catch (error) {
     logger.error('Error getting active sessions:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch sessions', 500));
+    return ApiResponse.error(res, 'Failed to fetch sessions', 500);
   }
 });
 
@@ -264,13 +264,13 @@ router.get('/:sessionCode/stats', async (req, res) => {
     const stats = await sessionManager.getSessionStats(sessionCode);
     
     if (!stats) {
-      return res.status(404).json(ApiResponse.notFound('Session not found'));
+      return ApiResponse.notFound(res, 'Session not found');
     }
 
     res.json(ApiResponse.success({ stats }));
   } catch (error) {
     logger.error('Error getting session stats:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch stats', 500));
+    return ApiResponse.error(res, 'Failed to fetch stats', 500);
   }
 });
 

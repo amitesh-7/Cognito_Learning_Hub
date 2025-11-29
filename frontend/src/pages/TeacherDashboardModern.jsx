@@ -367,7 +367,9 @@ export default function TeacherDashboardModern() {
         const data = await response.json();
 
         // Map real data to include icons based on subject
-        const quizzesWithIcons = (data.quizzes || []).map((quiz) => ({
+        // Handle new API format: { success: true, data: { quizzes: [...], pagination: {...} } }
+        const quizArray = data.data?.quizzes || data.quizzes || [];
+        const quizzesWithIcons = quizArray.map((quiz) => ({
           ...quiz,
           id: quiz._id,
           icon: getIconForSubject(quiz.subject || quiz.title),

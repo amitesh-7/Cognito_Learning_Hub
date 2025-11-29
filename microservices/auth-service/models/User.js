@@ -19,6 +19,7 @@ const UserSchema = new mongoose.Schema(
         // Password is required only if googleId is not present
         return !this.googleId;
       },
+      select: false,
     },
     googleId: {
       type: String,

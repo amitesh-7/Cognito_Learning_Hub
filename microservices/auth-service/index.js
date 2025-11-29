@@ -44,6 +44,11 @@ app.use(cors({
 app.use(helmet());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Input Sanitization (XSS & Injection Protection)
+const { sanitizeAll } = require('../shared/middleware/inputValidation');
+app.use(sanitizeAll);
+
 app.use(generalLimiter);
 
 // Request Logging
@@ -86,23 +91,23 @@ app.use('/api/users', userRoutes);
 
 // 404 Handler - catch all unmatched routes
 app.use((req, res, next) => {
-  res.status(404).json(
-    ApiResponse.error(`Route ${req.originalUrl} not found`, 404)
-  );
+  return ApiResponse.notFound(res, `Route ${req.originalUrl} not found`);
 });
 
 // Error Handler
 app.use((err, req, res, next) => {
+  // Check if response already sent or connection closed
+  if (res.headersSent || !res.writable) {
+    logger.warn('Response already sent or connection closed');
+    return next(err);
+  }
+  
   logger.error('Unhandled error:', err);
   
   const statusCode = err.statusCode || 500;
-  res.status(statusCode).json(
-    ApiResponse.error(
-      err.message || 'Internal server error',
-      statusCode,
-      process.env.NODE_ENV === 'development' ? { stack: err.stack } : undefined
-    )
-  );
+  const errors = process.env.NODE_ENV === 'development' ? { stack: err.stack } : null;
+  
+  return ApiResponse.error(res, err.message || 'Internal server error', statusCode, errors);
 });
 
 // Graceful Shutdown

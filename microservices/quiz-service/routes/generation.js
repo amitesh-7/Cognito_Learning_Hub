@@ -16,6 +16,7 @@ const createLogger = require('../../shared/utils/logger');
 const { authenticateToken } = require('../../shared/middleware/auth');
 const { requireTeacher } = require('../../shared/middleware/roles');
 const { heavyLimiter } = require('../../shared/middleware/rateLimiter');
+const { validateFields } = require('../../shared/middleware/inputValidation');
 
 // Service imports
 const { addQuizGenerationJob, getJobStatus } = require('../services/queueManager');
@@ -58,27 +59,27 @@ const upload = multer({
 });
 
 /**
- * @route   POST /api/quizzes/generate/topic
+ * @route   POST /api/generate/topic
  * @desc    Generate quiz from topic (async with job queue)
  * @access  Private (Teacher)
  */
 router.post(
-  '/generate/topic',
+  '/topic',
   authenticateToken,
   requireTeacher,
   heavyLimiter,
+  validateFields({
+    topic: { required: true, type: 'string', minLength: 3, maxLength: 200 },
+    numQuestions: { type: 'number', min: 1, max: 50 },
+    difficulty: { type: 'string', enum: ['Easy', 'Medium', 'Hard', 'Expert'] },
+    useAdaptive: { type: 'boolean' },
+    isPublic: { type: 'boolean' },
+  }),
   async (req, res) => {
     try {
       const { topic, numQuestions = 5, difficulty = 'Medium', useAdaptive = false, isPublic = true } = req.body;
       const userId = req.user.userId;
       const userRole = req.user.role;
-
-      // Validate input
-      if (!topic || topic.trim().length < 3) {
-        return res.status(400).json(
-          ApiResponse.badRequest('Topic must be at least 3 characters long')
-        );
-      }
 
       // Check user's daily generation limit
       const limitCheck = await cacheManager.checkUserLimit(userId, userRole);
@@ -124,29 +125,27 @@ router.post(
 
       logger.info(`Quiz generation job created: ${job.id} for topic: ${topic}`);
 
-      res.status(202).json(
-        ApiResponse.success({
-          message: 'Quiz generation started',
-          jobId: job.id,
-          status: 'queued',
-          limitInfo: limitCheck,
-          checkStatusUrl: `/api/quizzes/generate/status/${job.id}`,
-        })
-      );
+      return ApiResponse.success(res, {
+        message: 'Quiz generation started',
+        jobId: job.id,
+        status: 'queued',
+        limitInfo: limitCheck,
+        checkStatusUrl: `/api/generate/status/${job.id}`,
+      }, 'Quiz generation started', 202);
     } catch (error) {
       logger.error('Topic generation error:', error);
-      res.status(500).json(ApiResponse.error('Failed to start quiz generation', 500));
+      return ApiResponse.error(res, 'Failed to start quiz generation', 500);
     }
   }
 );
 
 /**
- * @route   POST /api/quizzes/generate/file
+ * @route   POST /api/generate/file
  * @desc    Generate quiz from uploaded file (async with job queue)
  * @access  Private (Teacher)
  */
 router.post(
-  '/generate/file',
+  '/file',
   authenticateToken,
   requireTeacher,
   heavyLimiter,
@@ -230,16 +229,14 @@ router.post(
 
       logger.info(`File quiz generation job created: ${job.id}`);
 
-      res.status(202).json(
-        ApiResponse.success({
-          message: 'Quiz generation started from file',
-          jobId: job.id,
-          status: 'queued',
-          fileName: req.file.originalname,
-          limitInfo: limitCheck,
-          checkStatusUrl: `/api/quizzes/generate/status/${job.id}`,
-        })
-      );
+      return ApiResponse.success(res, {
+        message: 'Quiz generation started from file',
+        jobId: job.id,
+        status: 'queued',
+        fileName: req.file.originalname,
+        limitInfo: limitCheck,
+        checkStatusUrl: `/api/generate/status/${job.id}`,
+      }, 'Quiz generation started from file', 202);
     } catch (error) {
       logger.error('File generation error:', error);
       
@@ -248,18 +245,18 @@ router.post(
         fs.unlinkSync(filePath);
       }
 
-      res.status(500).json(ApiResponse.error('Failed to start quiz generation from file', 500));
+      return ApiResponse.error(res, 'Failed to start quiz generation from file', 500);
     }
   }
 );
 
 /**
- * @route   GET /api/quizzes/generate/status/:jobId
+ * @route   GET /api/generate/status/:jobId
  * @desc    Check status of quiz generation job
  * @access  Private
  */
 router.get(
-  '/generate/status/:jobId',
+  '/status/:jobId',
   authenticateToken,
   async (req, res) => {
     try {
@@ -273,35 +270,33 @@ router.get(
         );
       }
 
-      res.json(
-        ApiResponse.success({
-          jobId,
-          status: status.status,
-          progress: status.progress,
-          result: status.result,
-          error: status.error,
-          attempts: status.attempts,
-          timestamps: {
-            created: status.timestamp,
-            processed: status.processedOn,
-            finished: status.finishedOn,
-          },
-        })
-      );
+      return ApiResponse.success(res, {
+        jobId,
+        status: status.status,
+        progress: status.progress,
+        result: status.result,
+        error: status.error,
+        attempts: status.attempts,
+        timestamps: {
+          created: status.timestamp,
+          processed: status.processedOn,
+          finished: status.finishedOn,
+        },
+      });
     } catch (error) {
       logger.error('Job status check error:', error);
-      res.status(500).json(ApiResponse.error('Failed to check job status', 500));
+      return ApiResponse.error(res, 'Failed to check job status', 500);
     }
   }
 );
 
 /**
- * @route   GET /api/quizzes/generate/limits
+ * @route   GET /api/generate/limits
  * @desc    Get user's generation limits and usage
  * @access  Private
  */
 router.get(
-  '/generate/limits',
+  '/limits',
   authenticateToken,
   async (req, res) => {
     try {
@@ -310,18 +305,16 @@ router.get(
 
       const limitInfo = await cacheManager.checkUserLimit(userId, userRole);
 
-      res.json(
-        ApiResponse.success({
-          usage: limitInfo.count,
-          limit: limitInfo.limit,
-          remaining: limitInfo.remaining,
-          hasExceeded: limitInfo.hasExceeded,
-          role: userRole,
-        })
-      );
+      return ApiResponse.success(res, {
+        usage: limitInfo.count,
+        limit: limitInfo.limit,
+        remaining: limitInfo.remaining,
+        hasExceeded: limitInfo.hasExceeded,
+        role: userRole,
+      });
     } catch (error) {
       logger.error('Limit check error:', error);
-      res.status(500).json(ApiResponse.error('Failed to check generation limits', 500));
+      return ApiResponse.error(res, 'Failed to check generation limits', 500);
     }
   }
 );

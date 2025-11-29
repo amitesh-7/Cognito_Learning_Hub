@@ -22,6 +22,10 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Input Sanitization (XSS & Injection Protection)
+const { sanitizeAll } = require('../shared/middleware/inputValidation');
+app.use(sanitizeAll);
+
 // Request logging
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.path}`);
@@ -31,6 +35,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/generate', require('./routes/generation'));
 app.use('/api/quizzes', require('./routes/quizzes'));
+app.use('/api/doubt-solver', require('./routes/doubtSolver'));
 
 // Health check
 app.get('/health', async (req, res) => {
@@ -59,9 +64,9 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// 404 handler
+// 404 Handler
 app.use((req, res) => {
-  res.status(404).json(ApiResponse.notFound('Route not found'));
+  return ApiResponse.notFound(res, 'Route not found');
 });
 
 // Error handler

@@ -229,7 +229,8 @@ export default function QuizList() {
           throw new Error("Failed to fetch quizzes.");
         }
         const data = await response.json();
-        setQuizzes(data);
+        // Handle new API response format: { success: true, data: { quizzes: [...], pagination: {...} } }
+        setQuizzes(data.data?.quizzes || data.quizzes || data);
       } catch (err) {
         setError(err.message);
       } finally {

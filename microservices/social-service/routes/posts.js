@@ -12,6 +12,8 @@ const Follow = require('../models/Follow');
 const feedManager = require('../services/feedManager');
 const queueManager = require('../workers/queueManager');
 const createLogger = require('../../shared/utils/logger');
+const { authenticateToken } = require('../../shared/middleware/auth');
+const { validateFields } = require('../../shared/middleware/inputValidation');
 
 const logger = createLogger('post-routes');
 
@@ -19,34 +21,46 @@ const logger = createLogger('post-routes');
 // CREATE POST
 // ============================================
 
-router.post('/create', async (req, res) => {
-  try {
-    const {
-      authorId,
-      authorName,
-      authorPicture,
-      content,
-      images,
-      type,
-      visibility,
-      relatedQuiz,
-      relatedAchievement,
-      hashtags,
-      mentions,
-    } = req.body;
+router.post(
+  '/create',
+  authenticateToken,
+  validateFields({
+    content: { required: true, type: 'string', minLength: 1, maxLength: 5000 },
+    type: { type: 'string', enum: ['text', 'image', 'quiz', 'achievement'] },
+    visibility: { type: 'string', enum: ['public', 'followers', 'private'] },
+  }),
+  async (req, res) => {
+    try {
+      const {
+        authorId,
+        authorName,
+        authorPicture,
+        content,
+        images,
+        type,
+        visibility,
+        relatedQuiz,
+        relatedAchievement,
+        hashtags,
+        mentions,
+      } = req.body;
 
-    if (!authorId || !content) {
-      return res.status(400).json({
-        success: false,
-        error: 'authorId and content are required',
-      });
-    }
+      // Authorization: Ensure user can only create posts as themselves
+      if (authorId && authorId !== req.user.userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Cannot create posts for other users',
+        });
+      }
+
+      // Use authenticated user ID if not provided
+      const actualAuthorId = authorId || req.user.userId;
 
     const postId = nanoid(12);
 
     const postData = {
       postId,
-      authorId,
+      authorId: actualAuthorId,
       authorName,
       authorPicture,
       content,
@@ -65,7 +79,7 @@ router.post('/create', async (req, res) => {
     };
 
     // Get followers
-    const followers = await feedManager.getFollowers(authorId);
+    const followers = await feedManager.getFollowers(actualAuthorId);
     
     // Queue async operations:
     // 1. Fanout to followers' feeds
@@ -78,15 +92,15 @@ router.post('/create', async (req, res) => {
     await feedManager.cachePost(postId, postData);
     
     // 4. Add to author's own feed
-    await feedManager.addToFeed(authorId, postData);
+    await feedManager.addToFeed(actualAuthorId, postData);
 
-    logger.info(`Post ${postId} created by ${authorId} (${followers.length} followers)`);
+    logger.info(`Post ${postId} created by ${actualAuthorId} (${followers.length} followers)`);
 
     res.status(201).json({
       success: true,
       post: {
         postId,
-        authorId,
+        authorId: actualAuthorId,
         content,
         type,
         visibility,
@@ -227,17 +241,10 @@ router.get('/trending/posts', async (req, res) => {
 // LIKE POST
 // ============================================
 
-router.post('/:postId/like', async (req, res) => {
+router.post('/:postId/like', authenticateToken, async (req, res) => {
   try {
     const { postId } = req.params;
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required',
-      });
-    }
+    const userId = req.user.userId; // Use authenticated user
 
     // Check if already liked
     const existing = await Like.findOne({ userId, targetType: 'post', targetId: postId });
@@ -296,17 +303,10 @@ router.post('/:postId/like', async (req, res) => {
 // UNLIKE POST
 // ============================================
 
-router.delete('/:postId/like', async (req, res) => {
+router.delete('/:postId/like', authenticateToken, async (req, res) => {
   try {
     const { postId } = req.params;
-    const { userId } = req.query;
-
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required',
-      });
-    }
+    const userId = req.user.userId; // Use authenticated user
 
     // Remove like
     const result = await Like.deleteOne({ userId, targetType: 'post', targetId: postId });
@@ -348,10 +348,9 @@ router.delete('/:postId/like', async (req, res) => {
 // DELETE POST
 // ============================================
 
-router.delete('/:postId', async (req, res) => {
+router.delete('/:postId', authenticateToken, async (req, res) => {
   try {
     const { postId } = req.params;
-    const { userId } = req.body;
 
     const post = await Post.findOne({ postId });
 
@@ -362,8 +361,9 @@ router.delete('/:postId', async (req, res) => {
       });
     }
 
-    // Verify ownership
-    if (post.authorId.toString() !== userId) {
+    // Authorization: Only post owner or Admin/Moderator can delete
+    if (post.authorId.toString() !== req.user.userId && 
+        !['Admin', 'Moderator'].includes(req.user.role)) {
       return res.status(403).json({
         success: false,
         error: 'Unauthorized',

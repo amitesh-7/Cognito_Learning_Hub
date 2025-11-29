@@ -27,15 +27,21 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
  * Generate JWT tokens
  */
 function generateTokens(userId, role) {
+  // Debug: Check if JWT_SECRET is loaded
+  if (!process.env.JWT_SECRET) {
+    logger.error('JWT_SECRET is not defined in environment variables!');
+    throw new Error('JWT_SECRET is not configured');
+  }
+
   const accessToken = jwt.sign(
-    { userId, role },
+    { user: { userId, role } },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRY || '7d' }
   );
 
   const refreshToken = jwt.sign(
-    { userId, type: 'refresh' },
-    process.env.JWT_REFRESH_SECRET,
+    { user: { userId, role }, type: 'refresh' },
+    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET, // Fallback to JWT_SECRET if refresh secret not set
     { expiresIn: process.env.JWT_REFRESH_EXPIRY || '30d' }
   );
 
@@ -59,9 +65,7 @@ router.post(
       // Check if user exists
       const existingUser = await User.findOne({ email });
       if (existingUser) {
-        return res.status(400).json(
-          ApiResponse.badRequest('User with this email already exists')
-        );
+        return ApiResponse.badRequest(res, 'User with this email already exists');
       }
 
       // Hash password
@@ -90,9 +94,10 @@ router.post(
       // Generate tokens
       const { accessToken, refreshToken } = generateTokens(user._id, user.role);
 
-      // Store refresh token
+      // Store hashed refresh token
+      const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
       user.refreshTokens.push({
-        token: refreshToken,
+        token: hashedRefreshToken,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       });
       await user.save();
@@ -103,9 +108,7 @@ router.post(
       // For now, we'll just log it
       logger.info(`Verification token: ${verificationToken}`);
 
-      res.status(201).json(
-        ApiResponse.created({
-          message: 'User registered successfully',
+      return ApiResponse.created(res, {
           user: {
             id: user._id,
             name: user.name,
@@ -115,11 +118,10 @@ router.post(
           },
           accessToken,
           refreshToken,
-        })
-      );
+        }, 'User registered successfully');
     } catch (error) {
       logger.error('Registration error:', error);
-      res.status(500).json(ApiResponse.error('Registration failed', 500));
+      return ApiResponse.error(res, 'Registration failed', 500);
     }
   }
 );
@@ -141,32 +143,27 @@ router.post(
       // Find user
       const user = await User.findOne({ email }).select('+password');
       if (!user) {
-        return res.status(401).json(
-          ApiResponse.unauthorized('Invalid email or password')
-        );
+        return ApiResponse.unauthorized(res, 'Invalid email or password');
       }
 
       // Check if user registered with Google
       if (user.googleId && !user.password) {
-        return res.status(400).json(
-          ApiResponse.badRequest('Please login with Google')
-        );
+        return ApiResponse.badRequest(res, 'Please login with Google');
       }
 
       // Verify password
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(401).json(
-          ApiResponse.unauthorized('Invalid email or password')
-        );
+        return ApiResponse.unauthorized(res, 'Invalid email or password');
       }
 
       // Generate tokens
       const { accessToken, refreshToken } = generateTokens(user._id, user.role);
 
-      // Store refresh token
+      // Store hashed refresh token
+      const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
       user.refreshTokens.push({
-        token: refreshToken,
+        token: hashedRefreshToken,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       });
 
@@ -177,9 +174,7 @@ router.post(
 
       logger.info(`User logged in: ${email}`);
 
-      res.json(
-        ApiResponse.success({
-          message: 'Login successful',
+      return ApiResponse.success(res, {
           user: {
             id: user._id,
             name: user.name,
@@ -190,11 +185,10 @@ router.post(
           },
           accessToken,
           refreshToken,
-        })
-      );
+        }, 'Login successful');
     } catch (error) {
       logger.error('Login error:', error);
-      res.status(500).json(ApiResponse.error('Login failed', 500));
+      return ApiResponse.error(res, 'Login failed', 500);
     }
   }
 );
@@ -209,9 +203,7 @@ router.post('/google', authLimiter, async (req, res) => {
     const { credential } = req.body;
 
     if (!credential) {
-      return res.status(400).json(
-        ApiResponse.badRequest('Google credential is required')
-      );
+      return ApiResponse.badRequest(res, 'Google credential is required');
     }
 
     // Verify Google token
@@ -250,9 +242,10 @@ router.post('/google', authLimiter, async (req, res) => {
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user._id, user.role);
 
-    // Store refresh token
+    // Store hashed refresh token
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
     user.refreshTokens.push({
-      token: refreshToken,
+      token: hashedRefreshToken,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
 
@@ -280,7 +273,7 @@ router.post('/google', authLimiter, async (req, res) => {
     );
   } catch (error) {
     logger.error('Google OAuth error:', error);
-    res.status(500).json(ApiResponse.error('Google authentication failed', 500));
+    return ApiResponse.error(res, 'Google authentication failed', 500);
   }
 });
 
@@ -294,36 +287,36 @@ router.post('/refresh', async (req, res) => {
     const { refreshToken } = req.body;
 
     if (!refreshToken) {
-      return res.status(400).json(
-        ApiResponse.badRequest('Refresh token is required')
-      );
+      return ApiResponse.badRequest(res, 'Refresh token is required');
     }
 
     // Verify refresh token
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
     if (decoded.type !== 'refresh') {
-      return res.status(401).json(
-        ApiResponse.unauthorized('Invalid refresh token')
-      );
+      return ApiResponse.unauthorized(res, 'Invalid refresh token');
     }
 
     // Find user and check if refresh token exists
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(decoded.user.userId);
     if (!user) {
-      return res.status(401).json(
-        ApiResponse.unauthorized('User not found')
-      );
+      return ApiResponse.unauthorized(res, 'User not found');
     }
 
-    const tokenExists = user.refreshTokens.some(
-      (t) => t.token === refreshToken && t.expiresAt > Date.now()
-    );
+    // Check if any hashed token matches
+    let tokenValid = false;
+    for (const storedToken of user.refreshTokens) {
+      if (storedToken.expiresAt > Date.now()) {
+        const isMatch = await bcrypt.compare(refreshToken, storedToken.token);
+        if (isMatch) {
+          tokenValid = true;
+          break;
+        }
+      }
+    }
 
-    if (!tokenExists) {
-      return res.status(401).json(
-        ApiResponse.unauthorized('Invalid or expired refresh token')
-      );
+    if (!tokenValid) {
+      return ApiResponse.unauthorized(res, 'Invalid or expired refresh token');
     }
 
     // Generate new access token
@@ -338,7 +331,7 @@ router.post('/refresh', async (req, res) => {
     );
   } catch (error) {
     logger.error('Token refresh error:', error);
-    res.status(401).json(ApiResponse.unauthorized('Invalid refresh token'));
+    return ApiResponse.unauthorized(res, 'Invalid refresh token');
   }
 });
 
@@ -354,7 +347,7 @@ router.post('/logout', authenticateToken, async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json(ApiResponse.notFound('User not found'));
+      return ApiResponse.notFound(res, 'User not found');
     }
 
     // Remove refresh token
@@ -381,7 +374,7 @@ router.post('/logout', authenticateToken, async (req, res) => {
     );
   } catch (error) {
     logger.error('Logout error:', error);
-    res.status(500).json(ApiResponse.error('Logout failed', 500));
+    return ApiResponse.error(res, 'Logout failed', 500);
   }
 });
 
@@ -394,7 +387,7 @@ router.get('/me', authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
     if (!user) {
-      return res.status(404).json(ApiResponse.notFound('User not found'));
+      return ApiResponse.notFound(res, 'User not found');
     }
 
     res.json(
@@ -414,7 +407,7 @@ router.get('/me', authenticateToken, async (req, res) => {
     );
   } catch (error) {
     logger.error('Get current user error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch user', 500));
+    return ApiResponse.error(res, 'Failed to fetch user', 500);
   }
 });
 
@@ -436,9 +429,7 @@ router.post('/verify-email/:token', async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json(
-        ApiResponse.badRequest('Invalid or expired verification token')
-      );
+      return ApiResponse.badRequest(res, 'Invalid or expired verification token');
     }
 
     user.isEmailVerified = true;
@@ -448,14 +439,10 @@ router.post('/verify-email/:token', async (req, res) => {
 
     logger.info(`Email verified for user: ${user.email}`);
 
-    res.json(
-      ApiResponse.success({
-        message: 'Email verified successfully',
-      })
-    );
+    return ApiResponse.success(res, 'Email verified successfully');
   } catch (error) {
     logger.error('Email verification error:', error);
-    res.status(500).json(ApiResponse.error('Email verification failed', 500));
+    return ApiResponse.error(res, 'Email verification failed', 500);
   }
 });
 

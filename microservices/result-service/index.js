@@ -30,6 +30,11 @@ const limiter = rateLimit({
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Input Sanitization (XSS & Injection Protection)
+const { sanitizeAll } = require('../shared/middleware/inputValidation');
+app.use(sanitizeAll);
+
 app.use('/api/', limiter);
 
 // Request logging
@@ -82,14 +87,14 @@ app.post('/api/admin/cache/clear', async (req, res) => {
     logger.info('Cache cleared by admin');
     res.json(ApiResponse.success({ message: 'Cache cleared successfully' }));
   } catch (error) {
-    logger.error('Cache clear error:', error);
-    res.status(500).json(ApiResponse.error('Failed to clear cache', 500));
+    logger.error('Clear cache error:', error);
+    return ApiResponse.error(res, 'Failed to clear cache', 500);
   }
 });
 
-// 404 handler
+// 404 Handler
 app.use((req, res) => {
-  res.status(404).json(ApiResponse.notFound('Route not found'));
+  return ApiResponse.notFound(res, 'Route not found');
 });
 
 // Error handler

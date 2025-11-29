@@ -11,8 +11,15 @@ const cacheManager = require('./cacheManager');
 
 const logger = createLogger('ai-service');
 
+// Validate API key on startup
+const apiKey = process.env.GOOGLE_API_KEY;
+if (!apiKey) {
+  logger.error('GOOGLE_API_KEY environment variable is not set!');
+  throw new Error('GOOGLE_API_KEY is required for quiz generation');
+}
+
 // Initialize Google Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ 
   model: process.env.GEMINI_MODEL || 'gemini-2.5-flash' 
 });
@@ -337,9 +344,23 @@ function getCircuitBreakerStats() {
   };
 }
 
+/**
+ * Generate content from prompt (for doubt solver)
+ */
+async function generateContent(prompt) {
+  try {
+    const result = await protectedAIGeneration.fire(prompt);
+    return result;
+  } catch (error) {
+    logger.error('Content generation error:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   generateQuizFromTopic,
   generateQuizFromFile,
+  generateContent,
   extractJson,
   generateFileHash,
   getCircuitBreakerStats,

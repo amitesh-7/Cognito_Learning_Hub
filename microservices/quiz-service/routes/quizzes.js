@@ -7,7 +7,9 @@ const ApiResponse = require('../../shared/utils/response');
 const createLogger = require('../../shared/utils/logger');
 const { authenticateToken, optionalAuth } = require('../../shared/middleware/auth');
 const { requireTeacher } = require('../../shared/middleware/roles');
+const { validateFields } = require('../../shared/middleware/inputValidation');
 const Quiz = require('../models/Quiz');
+const User = require('../models/User'); // Load User model for population
 
 const router = express.Router();
 const logger = createLogger('quiz-routes');
@@ -40,10 +42,10 @@ router.get('/', optionalAuth, async (req, res) => {
       sortOrder: sortOrder === 'asc' ? 1 : -1,
     });
 
-    res.json(ApiResponse.success(result));
+    return ApiResponse.success(res, result);
   } catch (error) {
     logger.error('Get quizzes error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch quizzes', 500));
+    return ApiResponse.error(res, 'Failed to fetch quizzes', 500);
   }
 });
 
@@ -64,10 +66,10 @@ router.get('/my-quizzes', authenticateToken, async (req, res) => {
       sortOrder: -1,
     });
 
-    res.json(ApiResponse.success(result));
+    return ApiResponse.success(res, result);
   } catch (error) {
     logger.error('Get my quizzes error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch your quizzes', 500));
+    return ApiResponse.error(res, 'Failed to fetch your quizzes', 500);
   }
 });
 
@@ -80,10 +82,10 @@ router.get('/popular', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     const quizzes = await Quiz.getPopularQuizzes(limit);
-    res.json(ApiResponse.success({ quizzes }));
+    return ApiResponse.success(res, { quizzes });
   } catch (error) {
     logger.error('Get popular quizzes error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch popular quizzes', 500));
+    return ApiResponse.error(res, 'Failed to fetch popular quizzes', 500);
   }
 });
 
@@ -96,10 +98,10 @@ router.get('/recent', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     const quizzes = await Quiz.getRecentQuizzes(limit);
-    res.json(ApiResponse.success({ quizzes }));
+    return ApiResponse.success(res, { quizzes });
   } catch (error) {
     logger.error('Get recent quizzes error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch recent quizzes', 500));
+    return ApiResponse.error(res, 'Failed to fetch recent quizzes', 500);
   }
 });
 
@@ -115,23 +117,23 @@ router.get('/:id', optionalAuth, async (req, res) => {
       .lean();
 
     if (!quiz) {
-      return res.status(404).json(ApiResponse.notFound('Quiz not found'));
+      return ApiResponse.notFound(res, 'Quiz not found');
     }
 
     // Check if user has access to private quiz
     if (!quiz.isPublic && (!req.user || quiz.createdBy._id.toString() !== req.user.userId)) {
-      return res.status(403).json(ApiResponse.forbidden('Access denied to private quiz'));
+      return ApiResponse.forbidden(res, 'Access denied to private quiz');
     }
 
-    res.json(ApiResponse.success({ quiz }));
+    return ApiResponse.success(res, { quiz });
   } catch (error) {
-    logger.error('Get quiz error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch quiz', 500));
+    logger.error('Get quiz by ID error:', error);
+    return ApiResponse.error(res, 'Failed to fetch quiz', 500);
   }
 });
 
 /**
- * @route   GET /api/quizzes/:id/student
+ * @route   GET /api/quizzes/:id/questions
  * @desc    Get quiz for taking (without answers)
  * @access  Private
  */
@@ -140,14 +142,14 @@ router.get('/:id/student', authenticateToken, async (req, res) => {
     const quiz = await Quiz.findById(req.params.id).populate('createdBy', 'name picture');
 
     if (!quiz) {
-      return res.status(404).json(ApiResponse.notFound('Quiz not found'));
+      return ApiResponse.notFound(res, 'Quiz not found');
     }
 
     const studentVersion = quiz.getStudentVersion();
-    res.json(ApiResponse.success({ quiz: studentVersion }));
+    return ApiResponse.success(res, { quiz: studentVersion });
   } catch (error) {
-    logger.error('Get student quiz error:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch quiz', 500));
+    logger.error('Get quiz questions error:', error);
+    return ApiResponse.error(res, 'Failed to fetch quiz', 500);
   }
 });
 
@@ -156,13 +158,20 @@ router.get('/:id/student', authenticateToken, async (req, res) => {
  * @desc    Create manual quiz
  * @access  Private (Teacher)
  */
-router.post('/', authenticateToken, requireTeacher, async (req, res) => {
-  try {
-    const { title, description, questions, difficulty, category, tags, isPublic, gameSettings } = req.body;
-
-    if (!title || !questions || questions.length === 0) {
-      return res.status(400).json(ApiResponse.badRequest('Title and questions are required'));
-    }
+router.post(
+  '/',
+  authenticateToken,
+  requireTeacher,
+  validateFields({
+    title: { required: true, type: 'string', minLength: 3, maxLength: 200 },
+    description: { type: 'string', maxLength: 1000 },
+    questions: { required: true, type: 'array', minLength: 1 },
+    difficulty: { type: 'string', enum: ['Easy', 'Medium', 'Hard', 'Expert'] },
+    category: { type: 'string', maxLength: 50 },
+  }),
+  async (req, res) => {
+    try {
+      const { title, description, questions, difficulty, category, tags, isPublic, gameSettings } = req.body;
 
     const quiz = new Quiz({
       title,
@@ -183,10 +192,10 @@ router.post('/', authenticateToken, requireTeacher, async (req, res) => {
     const savedQuiz = await quiz.save();
     logger.info(`Manual quiz created: ${savedQuiz._id} by user ${req.user.userId}`);
 
-    res.status(201).json(ApiResponse.created({ quiz: savedQuiz }));
+    return ApiResponse.created(res, { quiz: savedQuiz });
   } catch (error) {
     logger.error('Create quiz error:', error);
-    res.status(500).json(ApiResponse.error('Failed to create quiz', 500));
+    return ApiResponse.error(res, 'Failed to create quiz', 500);
   }
 });
 
@@ -200,11 +209,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
     const quiz = await Quiz.findById(req.params.id);
 
     if (!quiz) {
-      return res.status(404).json(ApiResponse.notFound('Quiz not found'));
+      return ApiResponse.notFound(res, 'Quiz not found');
     }
 
     if (quiz.createdBy.toString() !== req.user.userId && req.user.role !== 'Admin') {
-      return res.status(403).json(ApiResponse.forbidden('Not authorized to update this quiz'));
+      return ApiResponse.forbidden(res, 'Not authorized to update this quiz');
     }
 
     const { title, description, questions, difficulty, category, tags, isPublic, gameSettings } = req.body;
@@ -221,10 +230,10 @@ router.put('/:id', authenticateToken, async (req, res) => {
     const updatedQuiz = await quiz.save();
     logger.info(`Quiz updated: ${updatedQuiz._id}`);
 
-    res.json(ApiResponse.success({ quiz: updatedQuiz }));
+    return ApiResponse.success(res, { quiz: updatedQuiz });
   } catch (error) {
     logger.error('Update quiz error:', error);
-    res.status(500).json(ApiResponse.error('Failed to update quiz', 500));
+    return ApiResponse.error(res, 'Failed to update quiz', 500);
   }
 });
 
@@ -238,20 +247,20 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     const quiz = await Quiz.findById(req.params.id);
 
     if (!quiz) {
-      return res.status(404).json(ApiResponse.notFound('Quiz not found'));
+      return ApiResponse.notFound(res, 'Quiz not found');
     }
 
     if (quiz.createdBy.toString() !== req.user.userId && req.user.role !== 'Admin') {
-      return res.status(403).json(ApiResponse.forbidden('Not authorized to delete this quiz'));
+      return ApiResponse.forbidden(res, 'Not authorized to delete this quiz');
     }
 
     await quiz.deleteOne();
     logger.info(`Quiz deleted: ${req.params.id}`);
 
-    res.json(ApiResponse.success({ message: 'Quiz deleted successfully' }));
+    return ApiResponse.success(res, { message: 'Quiz deleted successfully' });
   } catch (error) {
     logger.error('Delete quiz error:', error);
-    res.status(500).json(ApiResponse.error('Failed to delete quiz', 500));
+    return ApiResponse.error(res, 'Failed to delete quiz', 500);
   }
 });
 

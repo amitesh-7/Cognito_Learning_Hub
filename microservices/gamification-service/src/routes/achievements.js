@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const achievementProcessor = require('../services/achievementProcessor');
 const { Achievement } = require('../models/Achievement');
+const { authenticateToken, adminMiddleware } = require('../../../shared/middleware/auth');
 
 /**
  * GET /api/achievements
  * Get all available achievements
  */
-router.get('/', async (req, res, next) => {
+router.get('/', authenticateToken, async (req, res, next) => {
   try {
     const { type, rarity, isActive = 'true' } = req.query;
 
@@ -34,9 +35,17 @@ router.get('/', async (req, res, next) => {
  * GET /api/achievements/:userId
  * Get user's achievements
  */
-router.get('/:userId', async (req, res, next) => {
+router.get('/:userId', authenticateToken, async (req, res, next) => {
   try {
     const { userId } = req.params;
+
+    // Authorization: Users can only view their own achievements unless admin
+    if (userId !== req.user.userId && req.user.role !== 'Admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized to view other users achievements',
+      });
+    }
     const { completedOnly } = req.query;
 
     const achievements = await achievementProcessor.getUserAchievements(userId, {
@@ -58,7 +67,7 @@ router.get('/:userId', async (req, res, next) => {
  * GET /api/achievements/:userId/:achievementId/progress
  * Get achievement progress for a user
  */
-router.get('/:userId/:achievementId/progress', async (req, res, next) => {
+router.get('/:userId/:achievementId/progress', authenticateToken, async (req, res, next) => {
   try {
     const { userId, achievementId } = req.params;
 
@@ -79,7 +88,7 @@ router.get('/:userId/:achievementId/progress', async (req, res, next) => {
  * POST /api/achievements (Admin)
  * Create a new achievement
  */
-router.post('/', async (req, res, next) => {
+router.post('/', authenticateToken, adminMiddleware, async (req, res, next) => {
   try {
     const achievement = await achievementProcessor.createAchievement(req.body);
 
@@ -96,7 +105,7 @@ router.post('/', async (req, res, next) => {
  * POST /api/achievements/seed (Admin)
  * Seed default achievements
  */
-router.post('/seed', async (req, res, next) => {
+router.post('/seed', authenticateToken, adminMiddleware, async (req, res, next) => {
   try {
     await achievementProcessor.seedDefaultAchievements();
 
@@ -113,7 +122,7 @@ router.post('/seed', async (req, res, next) => {
  * PUT /api/achievements/:achievementId
  * Update achievement
  */
-router.put('/:achievementId', async (req, res, next) => {
+router.put('/:achievementId', authenticateToken, adminMiddleware, async (req, res, next) => {
   try {
     const { achievementId } = req.params;
 
@@ -143,7 +152,7 @@ router.put('/:achievementId', async (req, res, next) => {
  * DELETE /api/achievements/:achievementId
  * Delete achievement
  */
-router.delete('/:achievementId', async (req, res, next) => {
+router.delete('/:achievementId', authenticateToken, adminMiddleware, async (req, res, next) => {
   try {
     const { achievementId } = req.params;
 

@@ -122,7 +122,7 @@ export default function TopicQuizGenerator() {
       if (!token) throw new Error("You must be logged in to generate a quiz.");
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/generate-quiz-topic`,
+        `${import.meta.env.VITE_API_URL}/api/generate/topic`,
         {
           method: "POST",
           headers: {
@@ -141,21 +141,95 @@ export default function TopicQuizGenerator() {
       const data = await response.json();
       if (!response.ok)
         throw new Error(
-          data.message || `HTTP error! status: ${response.status}`
+          data.message || data.data?.message || `HTTP error! status: ${response.status}`
         );
-      setGeneratedQuiz(data.quiz.questions);
 
-      // Show adaptive info if available
-      if (data.adaptiveInfo) {
-        setAdaptiveInfo(data.adaptiveInfo);
+      // Handle async job queue response
+      if (data.data?.jobId && data.data?.status === 'queued') {
+        // Poll for job status
+        const jobId = data.data.jobId;
+        await pollJobStatus(jobId, token);
+      } else if (data.quiz?.questions) {
+        // Direct response (legacy support)
+        setGeneratedQuiz(data.quiz.questions);
+        if (data.adaptiveInfo) {
+          setAdaptiveInfo(data.adaptiveInfo);
+        }
+        setIsLoading(false);
+      } else {
+        throw new Error("Unexpected response format");
       }
     } catch (err) {
       console.error("Failed to fetch quiz:", err);
       setError(err.message);
       setGeneratedQuiz([]);
-    } finally {
       setIsLoading(false);
     }
+  };
+
+  const pollJobStatus = async (jobId, token) => {
+    const maxAttempts = 60; // 2 minutes max (60 * 2 seconds)
+    let attempts = 0;
+
+    const poll = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/generate/status/${jobId}`,
+          {
+            headers: { "x-auth-token": token },
+          }
+        );
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to check job status");
+        }
+
+        const jobData = data.data || data;
+        
+        console.log('Job status response:', jobData);
+
+        if (jobData.status === 'completed' && jobData.result) {
+          // Job completed successfully
+          console.log('Job result:', jobData.result);
+          
+          // Extract questions from result (worker returns { quiz: { questions: [...] } })
+          let questions = null;
+          if (jobData.result.quiz && jobData.result.quiz.questions) {
+            questions = jobData.result.quiz.questions;
+          } else if (jobData.result.questions) {
+            // Legacy format
+            questions = jobData.result.questions;
+          }
+          
+          console.log('Extracted questions:', questions);
+          
+          if (questions && Array.isArray(questions) && questions.length > 0) {
+            setGeneratedQuiz(questions);
+            setIsLoading(false);
+            return;
+          } else {
+            console.error('No valid questions found in result:', jobData.result);
+            throw new Error("Quiz generated but no questions found. Please try again.");
+          }
+        } else if (jobData.status === 'failed') {
+          throw new Error(jobData.error || "Quiz generation failed");
+        } else if (attempts >= maxAttempts) {
+          throw new Error("Quiz generation timed out. Please try again.");
+        }
+
+        // Still processing, poll again
+        attempts++;
+        setTimeout(poll, 2000); // Poll every 2 seconds
+      } catch (err) {
+        console.error("Job polling error:", err);
+        setError(err.message);
+        setIsLoading(false);
+      }
+    };
+
+    poll();
   };
 
   const handleRetry = () => {

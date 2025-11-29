@@ -12,6 +12,8 @@ const Like = require('../models/Like');
 const feedManager = require('../services/feedManager');
 const queueManager = require('../workers/queueManager');
 const createLogger = require('../../shared/utils/logger');
+const { authenticateToken } = require('../../shared/middleware/auth');
+const { validateFields } = require('../../shared/middleware/inputValidation');
 
 const logger = createLogger('comment-routes');
 
@@ -19,23 +21,33 @@ const logger = createLogger('comment-routes');
 // CREATE COMMENT
 // ============================================
 
-router.post('/create', async (req, res) => {
-  try {
-    const {
-      postId,
-      authorId,
-      authorName,
-      authorPicture,
-      content,
-      parentCommentId,
-    } = req.body;
+router.post(
+  '/create',
+  authenticateToken,
+  validateFields({
+    postId: { required: true, type: 'string' },
+    content: { required: true, type: 'string', minLength: 1, maxLength: 2000 },
+  }),
+  async (req, res) => {
+    try {
+      const {
+        postId,
+        authorId,
+        authorName,
+        authorPicture,
+        content,
+        parentCommentId,
+      } = req.body;
 
-    if (!postId || !authorId || !content) {
-      return res.status(400).json({
-        success: false,
-        error: 'postId, authorId, and content are required',
-      });
-    }
+      // Authorization: Ensure user can only comment as themselves
+      if (authorId && authorId !== req.user.userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Cannot create comments for other users',
+        });
+      }
+
+      const actualAuthorId = authorId || req.user.userId;
 
     // Verify post exists
     const post = await Post.findOne({ postId, isDeleted: false });
@@ -53,7 +65,7 @@ router.post('/create', async (req, res) => {
     const comment = new Comment({
       commentId,
       postId,
-      authorId,
+      authorId: actualAuthorId,
       authorName,
       authorPicture,
       content,
@@ -77,11 +89,11 @@ router.post('/create', async (req, res) => {
     await feedManager.invalidatePostCache(postId);
 
     // Queue notification to post author
-    if (post.authorId.toString() !== authorId) {
+    if (post.authorId.toString() !== actualAuthorId) {
       await queueManager.addNotification({
         userId: post.authorId,
         type: 'comment',
-        actorId: authorId,
+        actorId: actualAuthorId,
         actorName: authorName,
         actorPicture: authorPicture,
         message: `${authorName} commented on your post`,
@@ -168,17 +180,10 @@ router.get('/:commentId/replies', async (req, res) => {
 // LIKE COMMENT
 // ============================================
 
-router.post('/:commentId/like', async (req, res) => {
+router.post('/:commentId/like', authenticateToken, async (req, res) => {
   try {
     const { commentId } = req.params;
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'userId is required',
-      });
-    }
+    const userId = req.user.userId; // Use authenticated user
 
     // Check if already liked
     const existing = await Like.findOne({ userId, targetType: 'comment', targetId: commentId });
@@ -229,10 +234,9 @@ router.post('/:commentId/like', async (req, res) => {
 // DELETE COMMENT
 // ============================================
 
-router.delete('/:commentId', async (req, res) => {
+router.delete('/:commentId', authenticateToken, async (req, res) => {
   try {
     const { commentId } = req.params;
-    const { userId } = req.body;
 
     const comment = await Comment.findOne({ commentId });
 
@@ -243,8 +247,9 @@ router.delete('/:commentId', async (req, res) => {
       });
     }
 
-    // Verify ownership
-    if (comment.authorId.toString() !== userId) {
+    // Authorization: Only comment owner or Admin/Moderator can delete
+    if (comment.authorId.toString() !== req.user.userId && 
+        !['Admin', 'Moderator'].includes(req.user.role)) {
       return res.status(403).json({
         success: false,
         error: 'Unauthorized',

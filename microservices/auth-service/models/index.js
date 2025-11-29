@@ -1,20 +1,15 @@
 /**
  * Database Configuration for Auth Service
- * Handles MongoDB connection with shared utilities
+ * Using direct mongoose connection like the monolith backend
  */
 
-const path = require('path');
-const DatabaseConnection = require('../../shared/utils/database');
+const mongoose = require('mongoose');
 
 // Get shared logger
 const createLogger = require('../../shared/utils/logger');
 const logger = createLogger('auth-service');
 
-class AuthDatabase extends DatabaseConnection {
-  constructor() {
-    super('auth-service');
-  }
-
+class AuthDatabase {
   /**
    * Initialize database and load models
    */
@@ -26,10 +21,24 @@ class AuthDatabase extends DatabaseConnection {
         throw new Error('MONGO_URI environment variable is not defined');
       }
       
-      await this.connect(mongoUri);
+      logger.info('Connecting to MongoDB...');
+      logger.info('MONGO_URI:', mongoUri.replace(/:[^:@]+@/, ':****@')); // Hide password
       
-      // Load User model
+      // Use the EXACT same connection as monolith backend
+      await mongoose.connect(mongoUri, {
+        autoIndex: true, // Build indexes
+      });
+      
+      logger.info('✓ MongoDB connected successfully');
+      logger.info(`Connection state: ${mongoose.connection.readyState} (1 = connected)`);
+      
+      // Load User model AFTER connection
       require('./User');
+      
+      // CRITICAL: Test the connection with an actual query
+      logger.info('Testing connection with a sample query...');
+      const testResult = await mongoose.connection.db.admin().ping();
+      logger.info('✓ Ping test successful:', testResult);
       
       logger.info('Auth service models loaded successfully');
       return true;
@@ -43,8 +52,20 @@ class AuthDatabase extends DatabaseConnection {
    * Get User model
    */
   getUserModel() {
-    const mongoose = require('mongoose');
     return mongoose.model('User');
+  }
+
+  /**
+   * Disconnect from database
+   */
+  async disconnect() {
+    try {
+      await mongoose.disconnect();
+      logger.info('Database disconnected');
+    } catch (error) {
+      logger.error('Error disconnecting from database:', error);
+      throw error;
+    }
   }
 }
 
