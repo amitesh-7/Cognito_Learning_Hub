@@ -85,7 +85,7 @@ const LiveSessionHistory = () => {
         const data = await response.json();
         console.log("✅ Sessions fetched successfully:", data);
 
-        const sessionsList = data.sessions || data || [];
+        const sessionsList = data.data?.sessions || data.sessions || data || [];
         console.log("📊 Total sessions:", sessionsList.length);
 
         setSessions(sessionsList);
@@ -157,7 +157,7 @@ const LiveSessionHistory = () => {
       }
 
       const data = await response.json();
-      return data.leaderboard || [];
+      return data.data?.leaderboard || data.leaderboard || [];
     } catch (err) {
       console.error("Error fetching leaderboard:", err);
       return [];

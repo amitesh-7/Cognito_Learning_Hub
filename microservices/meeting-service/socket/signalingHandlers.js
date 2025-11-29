@@ -14,8 +14,9 @@ const logger = createLogger('signaling-handlers');
 const getIceServers = () => {
   const iceServers = [];
   
-  // Add STUN servers
-  const stunServers = process.env.STUN_SERVERS.split(',');
+  // Add STUN servers (with fallback to Google's public STUN server)
+  const stunServersString = process.env.STUN_SERVERS || 'stun.l.google.com:19302';
+  const stunServers = stunServersString.split(',');
   stunServers.forEach(server => {
     iceServers.push({ urls: `stun:${server.trim()}` });
   });

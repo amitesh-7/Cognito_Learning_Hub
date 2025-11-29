@@ -240,7 +240,7 @@ app.use(
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.LIVE,
-    pathRewrite: { '^/api/live-sessions': '/api/live-sessions' },
+    pathRewrite: { '^/api/live-sessions': '/api/sessions' },
   })
 );
 

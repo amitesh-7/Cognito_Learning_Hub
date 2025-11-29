@@ -44,9 +44,10 @@ const MeetingRoom = () => {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   };
 
-  // Initialize socket connection to '/meeting' namespace
+  // Initialize socket connection to meeting service
   useEffect(() => {
-    const meetSocket = io(getSocketUrl() + "/meeting", {
+    const meetingUrl = import.meta.env.VITE_MEETING_WS_URL?.replace('ws://', 'http://').replace('wss://', 'https://') || 'http://localhost:3009';
+    const meetSocket = io(meetingUrl, {
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 5,
@@ -58,12 +59,14 @@ const MeetingRoom = () => {
       setMySocketId(meetSocket.id);
       // Join the meeting room
       meetSocket.emit(
-        "meeting:join",
+        "join-meeting",
         {
           roomId,
-          userId: user?.id || null,
-          name: user?.name || "Guest",
-          role: user?.role || "Student",
+          userId: user?.id || user?._id || null,
+          userName: user?.name || user?.username || "Guest",
+          userPicture: user?.picture || user?.profilePicture || null,
+          isVideoEnabled: true,
+          isAudioEnabled: true,
         },
         (response) => {
           if (response?.success) {
@@ -80,7 +83,7 @@ const MeetingRoom = () => {
 
     // Incoming media offer from peer
     meetSocket.on(
-      "media:offer",
+      "webrtc-offer",
       async ({ offer, from, socketId: fromSocket }) => {
         console.log("[Meeting] Received offer from", fromSocket, "from:", from);
         console.log(
@@ -106,10 +109,9 @@ const MeetingRoom = () => {
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           console.log("[Meeting] Sending answer to", fromSocket);
-          meetSocket.emit("media:answer", {
-            to: fromSocket,
+          meetSocket.emit("webrtc-answer", {
+            targetSocketId: fromSocket,
             answer,
-            from: user?.name,
           });
         } catch (err) {
           console.error("[Meeting] Error handling offer:", err);
@@ -119,7 +121,7 @@ const MeetingRoom = () => {
 
     // Incoming answer
     meetSocket.on(
-      "media:answer",
+      "webrtc-answer",
       async ({ answer, from, socketId: fromSocket }) => {
         console.log(
           "[Meeting] Received answer from",
@@ -150,7 +152,7 @@ const MeetingRoom = () => {
 
     // Incoming ICE candidate
     meetSocket.on(
-      "media:candidate",
+      "ice-candidate",
       async ({ candidate, from, socketId: fromSocket }) => {
         const pc = peerConnectionsRef.current.get(fromSocket);
         if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
@@ -159,7 +161,7 @@ const MeetingRoom = () => {
 
     // Participant list updates
     meetSocket.on(
-      "meeting:participants",
+      "existing-participants",
       ({ participants: newParticipants }) => {
         console.log("[Meeting] Participants updated", newParticipants);
         console.log("[Meeting] My socket ID:", meetSocket.id);
@@ -214,7 +216,7 @@ const MeetingRoom = () => {
     );
 
     // Chat messages
-    meetSocket.on("chat:message", (msg) => {
+    meetSocket.on("meeting-chat-message", (msg) => {
       setChatMessages((prev) => [...prev, msg]);
     });
 
@@ -322,10 +324,9 @@ const MeetingRoom = () => {
     // Handle ICE candidates
     pc.onicecandidate = (event) => {
       if (event.candidate && socket) {
-        socket.emit("media:candidate", {
-          to: remoteSocketId,
+        socket.emit("ice-candidate", {
+          targetSocketId: remoteSocketId,
           candidate: event.candidate,
-          from: user?.name,
         });
       }
     };
@@ -392,10 +393,9 @@ const MeetingRoom = () => {
         try {
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
-          socket.emit("media:offer", {
-            to: socketId,
+          socket.emit("webrtc-offer", {
+            targetSocketId: socketId,
             offer,
-            from: user?.name,
           });
           console.log(`[Meeting] Sent renegotiation offer to ${socketId}`);
         } catch (err) {
@@ -566,12 +566,12 @@ const MeetingRoom = () => {
   const sendMessage = () => {
     if (chatInput.trim() && socket) {
       socket.emit(
-        "chat:send",
+        "meeting-chat-message",
         {
           roomId,
           message: chatInput,
-          userId: user?.id || null,
-          name: user?.name || "Guest",
+          userId: user?.id || user?._id || null,
+          name: user?.name || user?.username || "Guest",
         },
         (response) => {
           if (response?.success) {

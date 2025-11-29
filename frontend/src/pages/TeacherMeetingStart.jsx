@@ -1,8 +1,6 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { io } from "socket.io-client";
-import { getSocketUrl } from "../lib/apiConfig";
 import { Button } from "../components/ui/Button";
 import { Video, Copy, Star, Sparkles, Users, Rocket } from "lucide-react";
 import { motion } from "framer-motion";
@@ -23,47 +21,44 @@ const TeacherMeetingStart = () => {
 
     setIsCreating(true);
 
-    // Connect to meeting namespace
-    const meetSocket = io(getSocketUrl() + "/meeting", {
-      transports: ["websocket", "polling"],
-    });
-
-    meetSocket.on("connect", () => {
-      console.log("[Teacher] Connected to meeting server");
-
-      // Create meeting
-      meetSocket.emit(
-        "meeting:create",
-        {
-          roomId: roomId.trim() || undefined,
-          hostUserId: user.id,
-          title: title || "My Meeting",
+    try {
+      const token = localStorage.getItem("quizwise-token") || localStorage.getItem("token");
+      const meetingUrl = import.meta.env.VITE_MEETING_WS_URL?.replace('ws://', 'http://').replace('wss://', 'https://') || 'http://localhost:3009';
+      
+      const response = await fetch(`${meetingUrl}/api/meetings/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
-        (response) => {
-          setIsCreating(false);
-          meetSocket.disconnect();
+        body: JSON.stringify({
+          title: title || "My Meeting",
+          description: "",
+          hostId: user?.id || user?._id,
+          hostName: user?.name || user?.username || "Teacher",
+        }),
+      });
 
-          if (response?.success) {
-            const generatedRoomId = response.roomId;
-            setCreatedRoomId(generatedRoomId);
-            console.log("[Teacher] Meeting created:", generatedRoomId);
+      const data = await response.json();
+      
+      if (data.success && data.meeting) {
+        const generatedRoomId = data.meeting.roomId;
+        setCreatedRoomId(generatedRoomId);
+        console.log("[Teacher] Meeting created:", generatedRoomId);
 
-            // Navigate to meeting room
-            setTimeout(() => {
-              navigate(`/meeting/${generatedRoomId}`);
-            }, 1000);
-          } else {
-            alert(response?.error || "Failed to create meeting");
-          }
-        }
-      );
-    });
-
-    meetSocket.on("connect_error", (err) => {
-      console.error("[Teacher] Connection error:", err);
+        // Navigate to meeting room
+        setTimeout(() => {
+          navigate(`/meeting/${generatedRoomId}`);
+        }, 1000);
+      } else {
+        alert(data.error || "Failed to create meeting");
+      }
+    } catch (err) {
+      console.error("[Teacher] Error creating meeting:", err);
+      alert("Failed to create meeting. Please try again.");
+    } finally {
       setIsCreating(false);
-      alert("Failed to connect to meeting server");
-    });
+    }
   };
 
   const copyRoomId = () => {

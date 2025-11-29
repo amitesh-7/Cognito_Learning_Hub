@@ -50,7 +50,7 @@ router.post(
       hostId,
       hostName,
       scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-      status: scheduledAt ? 'scheduled' : 'waiting',
+      status: scheduledAt ? 'scheduled' : 'active',
       settings: {
         maxParticipants: settings?.maxParticipants || 50,
         isRecordingEnabled: settings?.isRecordingEnabled || false,

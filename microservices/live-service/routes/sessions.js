@@ -153,13 +153,11 @@ router.get('/:sessionCode/leaderboard', async (req, res) => {
 
     const leaderboard = await sessionManager.getLeaderboard(sessionCode, limit);
 
-    res.json(
-      ApiResponse.success({
-        leaderboard,
-        sessionCode,
-        status: session.status,
-      })
-    );
+    return ApiResponse.success(res, {
+      leaderboard,
+      sessionCode,
+      status: session.status,
+    }, 'Leaderboard fetched successfully');
   } catch (error) {
     logger.error('Error getting leaderboard:', error);
     return ApiResponse.error(res, 'Failed to fetch leaderboard', 500);
@@ -224,10 +222,45 @@ router.delete('/:sessionCode', authenticateToken, async (req, res) => {
 
     logger.info(`Session deleted: ${sessionCode}`);
 
-    res.json(ApiResponse.success({ message: 'Session deleted successfully' }));
+    return ApiResponse.success(res, { message: 'Session deleted successfully' }, 'Session deleted successfully');
   } catch (error) {
     logger.error('Error deleting session:', error);
     return ApiResponse.error(res, 'Failed to delete session', 500);
+  }
+});
+
+/**
+ * @route   GET /api/live-sessions/teacher/history
+ * @desc    Get teacher's session history
+ * @access  Private (Teacher)
+ */
+router.get('/teacher/history', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId || req.user?.id;
+    
+    if (!userId) {
+      return ApiResponse.unauthorized(res, 'User not authenticated');
+    }
+
+    const sessions = await LiveSession.find({ hostId: userId })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+
+    // Transform sessions to include quiz title, participant count and duration
+    const transformedSessions = sessions.map(session => ({
+      ...session,
+      quizTitle: session.quizMetadata?.title || 'Untitled Quiz',
+      participantCount: session.participants?.length || 0,
+      duration: session.endedAt 
+        ? Math.floor((new Date(session.endedAt) - new Date(session.startedAt || session.createdAt)) / 1000)
+        : 0
+    }));
+
+    return ApiResponse.success(res, { sessions: transformedSessions, count: transformedSessions.length }, 'Sessions fetched successfully');
+  } catch (error) {
+    logger.error('Error getting teacher history:', error);
+    return ApiResponse.error(res, 'Failed to fetch session history', 500);
   }
 });
 
@@ -267,7 +300,7 @@ router.get('/:sessionCode/stats', async (req, res) => {
       return ApiResponse.notFound(res, 'Session not found');
     }
 
-    res.json(ApiResponse.success({ stats }));
+    return ApiResponse.success(res, { stats }, 'Stats fetched successfully');
   } catch (error) {
     logger.error('Error getting session stats:', error);
     return ApiResponse.error(res, 'Failed to fetch stats', 500);
