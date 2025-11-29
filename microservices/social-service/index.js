@@ -105,11 +105,16 @@ app.use("/api/chat", chatRoutes);
 // Health check
 app.get("/health", async (req, res) => {
   try {
-    let queueStats = null;
+    let queueStats = { status: "not initialized" };
 
     // Safely get queue stats if queues are initialized
     if (queueManager.feedQueue && queueManager.notificationQueue) {
-      queueStats = await queueManager.getStats();
+      try {
+        queueStats = await queueManager.getStats();
+      } catch (queueError) {
+        logger.warn("Queue stats error:", queueError.message);
+        queueStats = { status: "error", message: queueError.message };
+      }
     }
 
     res.json({
@@ -117,7 +122,7 @@ app.get("/health", async (req, res) => {
       service: "social-service",
       status: "healthy",
       redis: feedManager.isHealthy() ? "connected" : "disconnected",
-      queues: queueStats || { status: "not initialized" },
+      queues: queueStats,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
