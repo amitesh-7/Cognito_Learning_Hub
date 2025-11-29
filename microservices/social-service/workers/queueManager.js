@@ -3,10 +3,10 @@
  * Handles async processing for feed fanout and notifications
  */
 
-const Queue = require('bull');
-const createLogger = require('../../shared/utils/logger');
+const Queue = require("bull");
+const createLogger = require("../../shared/utils/logger");
 
-const logger = createLogger('queue-manager');
+const logger = createLogger("queue-manager");
 
 class QueueManager {
   constructor() {
@@ -18,14 +18,17 @@ class QueueManager {
    * Initialize queues
    */
   init() {
-    const redisUrl = process.env.QUEUE_REDIS_URL || process.env.REDIS_URL || 'redis://localhost:6379';
-    
+    const redisUrl =
+      process.env.QUEUE_REDIS_URL ||
+      process.env.REDIS_URL ||
+      "redis://localhost:6379";
+
     // Feed fanout queue
-    this.feedQueue = new Queue('feed-fanout', redisUrl, {
+    this.feedQueue = new Queue("feed-fanout", redisUrl, {
       defaultJobOptions: {
         attempts: 3,
         backoff: {
-          type: 'exponential',
+          type: "exponential",
           delay: 2000,
         },
         removeOnComplete: true,
@@ -34,11 +37,11 @@ class QueueManager {
     });
 
     // Notification queue
-    this.notificationQueue = new Queue('notifications', redisUrl, {
+    this.notificationQueue = new Queue("notifications", redisUrl, {
       defaultJobOptions: {
         attempts: 3,
         backoff: {
-          type: 'exponential',
+          type: "exponential",
           delay: 2000,
         },
         removeOnComplete: true,
@@ -46,7 +49,7 @@ class QueueManager {
       },
     });
 
-    logger.info('Bull queues initialized');
+    logger.info("Bull queues initialized");
   }
 
   /**
@@ -54,17 +57,21 @@ class QueueManager {
    */
   async addFeedFanout(postData, followerIds) {
     try {
-      await this.feedQueue.add('fanout', {
-        postData,
-        followerIds,
-      }, {
-        priority: 1,
-      });
-      
+      await this.feedQueue.add(
+        "fanout",
+        {
+          postData,
+          followerIds,
+        },
+        {
+          priority: 1,
+        }
+      );
+
       logger.debug(`Added feed fanout job for post ${postData.postId}`);
       return true;
     } catch (error) {
-      logger.error('Error adding feed fanout job:', error);
+      logger.error("Error adding feed fanout job:", error);
       return false;
     }
   }
@@ -74,13 +81,13 @@ class QueueManager {
    */
   async addNotification(notificationData) {
     try {
-      await this.notificationQueue.add('single', notificationData, {
-        priority: notificationData.priority === 'high' ? 1 : 2,
+      await this.notificationQueue.add("single", notificationData, {
+        priority: notificationData.priority === "high" ? 1 : 2,
       });
-      
+
       return true;
     } catch (error) {
-      logger.error('Error adding notification job:', error);
+      logger.error("Error adding notification job:", error);
       return false;
     }
   }
@@ -90,16 +97,22 @@ class QueueManager {
    */
   async addBatchNotifications(notifications) {
     try {
-      await this.notificationQueue.add('batch', {
-        notifications,
-      }, {
-        priority: 2,
-      });
-      
-      logger.debug(`Added batch notification job for ${notifications.length} notifications`);
+      await this.notificationQueue.add(
+        "batch",
+        {
+          notifications,
+        },
+        {
+          priority: 2,
+        }
+      );
+
+      logger.debug(
+        `Added batch notification job for ${notifications.length} notifications`
+      );
       return true;
     } catch (error) {
-      logger.error('Error adding batch notification job:', error);
+      logger.error("Error adding batch notification job:", error);
       return false;
     }
   }
@@ -109,13 +122,13 @@ class QueueManager {
    */
   async addPostPersistence(postData) {
     try {
-      await this.feedQueue.add('persist-post', postData, {
+      await this.feedQueue.add("persist-post", postData, {
         priority: 3,
       });
-      
+
       return true;
     } catch (error) {
-      logger.error('Error adding post persistence job:', error);
+      logger.error("Error adding post persistence job:", error);
       return false;
     }
   }
@@ -125,16 +138,24 @@ class QueueManager {
    */
   async getStats() {
     try {
+      if (!this.feedQueue || !this.notificationQueue) {
+        return { status: "not initialized" };
+      }
+
       const feedStats = await this.feedQueue.getJobCounts();
       const notificationStats = await this.notificationQueue.getJobCounts();
-      
+
       return {
         feed: feedStats,
         notifications: notificationStats,
       };
     } catch (error) {
-      logger.error('Error getting queue stats:', error);
-      return null;
+      logger.error("Error getting queue stats:", error.message);
+      // Return safe error object without circular references
+      return {
+        status: "error",
+        message: error.message || "Failed to get queue stats",
+      };
     }
   }
 
@@ -144,7 +165,7 @@ class QueueManager {
   async close() {
     if (this.feedQueue) await this.feedQueue.close();
     if (this.notificationQueue) await this.notificationQueue.close();
-    logger.info('Bull queues closed');
+    logger.info("Bull queues closed");
   }
 }
 
