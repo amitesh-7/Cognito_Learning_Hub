@@ -67,24 +67,42 @@ app.get("/health", async (req, res) => {
   try {
     const dbHealth = await database.healthCheck();
 
-    res.json(
-      ApiResponse.success({
+    return ApiResponse.success(
+      res,
+      {
         service: "auth-service",
         status: "healthy",
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         database: dbHealth ? "connected" : "disconnected",
         memory: process.memoryUsage(),
-      })
+      },
+      "Auth service is healthy"
     );
   } catch (error) {
     logger.error("Health check failed:", error);
-    res.status(503).json(
-      ApiResponse.error("Service unhealthy", 503, {
-        database: "disconnected",
-      })
-    );
+    return ApiResponse.error(res, "Service unhealthy", 503, {
+      database: "disconnected",
+    });
   }
+});
+
+// Root endpoint
+app.get("/", (req, res) => {
+  return ApiResponse.success(
+    res,
+    {
+      service: "auth-service",
+      version: "1.0.0",
+      status: "online",
+      endpoints: {
+        health: "/health",
+        auth: "/api/auth/*",
+        users: "/api/users/*",
+      },
+    },
+    "Auth Service API"
+  );
 });
 
 // API Routes

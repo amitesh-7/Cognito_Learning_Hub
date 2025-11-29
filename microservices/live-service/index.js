@@ -55,6 +55,20 @@ app.use((req, res, next) => {
 // Routes
 app.use("/api/sessions", require("./routes/sessions"));
 
+// Root endpoint
+app.get("/", (req, res) => {
+  res.json({
+    service: "live-service",
+    version: "1.0.0",
+    status: "online",
+    endpoints: {
+      health: "/health",
+      sessions: "/api/sessions/*",
+      socketStatus: "/api/socket/status",
+    },
+  });
+});
+
 // Health check
 app.get("/health", async (req, res) => {
   try {
@@ -92,20 +106,17 @@ app.get("/api/socket/status", (req, res) => {
 
 // 404 handler
 app.use((req, res) => {
-  ApiResponse.notFound(res, "Route not found");
+  return ApiResponse.notFound(res, "Route not found");
 });
 
 // Error handler
 app.use((err, req, res, next) => {
   logger.error("Unhandled error:", err);
-  res
-    .status(err.status || 500)
-    .json(
-      ApiResponse.error(
-        err.message || "Internal server error",
-        err.status || 500
-      )
-    );
+  return ApiResponse.error(
+    res,
+    err.message || "Internal server error",
+    err.status || 500
+  );
 });
 
 // Initialize Socket.IO handlers

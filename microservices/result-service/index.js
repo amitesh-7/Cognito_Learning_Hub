@@ -48,6 +48,21 @@ app.use("/api/results", require("./routes/submission"));
 app.use("/api/leaderboards", require("./routes/leaderboards"));
 app.use("/api/analytics", require("./routes/analytics"));
 
+// Root endpoint
+app.get("/", (req, res) => {
+  res.json({
+    service: "result-service",
+    version: "1.0.0",
+    status: "online",
+    endpoints: {
+      health: "/health",
+      results: "/api/results/*",
+      leaderboards: "/api/leaderboards/*",
+      analytics: "/api/analytics/*",
+    },
+  });
+});
+
 // Health check
 app.get("/health", async (req, res) => {
   try {
@@ -86,7 +101,11 @@ app.post("/api/admin/cache/clear", async (req, res) => {
     // TODO: Add admin authentication
     await cacheManager.redis.flushdb();
     logger.info("Cache cleared by admin");
-    res.json(ApiResponse.success({ message: "Cache cleared successfully" }));
+    return ApiResponse.success(
+      res,
+      { cleared: true },
+      "Cache cleared successfully"
+    );
   } catch (error) {
     logger.error("Clear cache error:", error);
     return ApiResponse.error(res, "Failed to clear cache", 500);
@@ -101,14 +120,11 @@ app.use((req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
   logger.error("Unhandled error:", err);
-  res
-    .status(err.status || 500)
-    .json(
-      ApiResponse.error(
-        err.message || "Internal server error",
-        err.status || 500
-      )
-    );
+  return ApiResponse.error(
+    res,
+    err.message || "Internal server error",
+    err.status || 500
+  );
 });
 
 // Graceful shutdown

@@ -40,6 +40,21 @@ app.use("/api/doubt-solver", require("./routes/doubtSolver"));
 // Legacy routes (for backward compatibility with monolith)
 app.use("/api", require("./routes/legacy"));
 
+// Root endpoint
+app.get("/", (req, res) => {
+  res.json({
+    service: "quiz-service",
+    version: "1.0.0",
+    status: "online",
+    endpoints: {
+      health: "/health",
+      generate: "/api/generate/*",
+      quizzes: "/api/quizzes/*",
+      doubtSolver: "/api/doubt-solver/*",
+    },
+  });
+});
+
 // Health check
 app.get("/health", async (req, res) => {
   try {
@@ -76,14 +91,11 @@ app.use((req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
   logger.error("Unhandled error:", err);
-  res
-    .status(err.status || 500)
-    .json(
-      ApiResponse.error(
-        err.message || "Internal server error",
-        err.status || 500
-      )
-    );
+  return ApiResponse.error(
+    res,
+    err.message || "Internal server error",
+    err.status || 500
+  );
 });
 
 // Database connection
