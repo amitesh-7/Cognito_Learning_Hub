@@ -3,16 +3,16 @@
  * Handles Redis caching for leaderboards, stats, and analytics
  */
 
-const Redis = require('ioredis');
-const createLogger = require('../../shared/utils/logger');
+const Redis = require("ioredis");
+const createLogger = require("../../shared/utils/logger");
 
-const logger = createLogger('cache-manager');
+const logger = createLogger("cache-manager");
 
 class CacheManager {
   constructor() {
     this.redis = null;
     this.connected = false;
-    
+
     // TTL values from env (seconds)
     this.ttls = {
       leaderboard: parseInt(process.env.CACHE_TTL_LEADERBOARD) || 300, // 5 min
@@ -28,19 +28,19 @@ class CacheManager {
   async connect() {
     try {
       let redisConfig;
-      
+
       // Check if Upstash Redis is configured
       if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
-        logger.info('Connecting to Upstash Redis (cloud)...');
-        
+        logger.info("Connecting to Upstash Redis (cloud)...");
+
         const url = new URL(process.env.UPSTASH_REDIS_URL);
-        
+
         redisConfig = {
           host: url.hostname,
           port: parseInt(url.port) || 6379,
           password: process.env.UPSTASH_REDIS_TOKEN,
           tls: {
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
           },
           maxRetriesPerRequest: null,
           enableReadyCheck: false,
@@ -49,41 +49,44 @@ class CacheManager {
             return delay;
           },
         };
-        
+
         this.redis = new Redis(redisConfig);
       } else {
         // Fallback to local Redis
-        logger.info('Connecting to local Redis...');
-        
-        this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-          maxRetriesPerRequest: null,
-          enableReadyCheck: false,
-          retryStrategy(times) {
-            const delay = Math.min(times * 50, 2000);
-            return delay;
-          },
-        });
+        logger.info("Connecting to local Redis...");
+
+        this.redis = new Redis(
+          process.env.REDIS_URL || "redis://localhost:6379",
+          {
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false,
+            retryStrategy(times) {
+              const delay = Math.min(times * 50, 2000);
+              return delay;
+            },
+          }
+        );
       }
 
-      this.redis.on('connect', () => {
+      this.redis.on("connect", () => {
         this.connected = true;
-        logger.info('Redis connected');
+        logger.info("Redis connected");
       });
 
-      this.redis.on('error', (err) => {
-        logger.error('Redis error:', err);
+      this.redis.on("error", (err) => {
+        logger.error("Redis error:", err);
         this.connected = false;
       });
 
-      this.redis.on('close', () => {
+      this.redis.on("close", () => {
         this.connected = false;
-        logger.warn('Redis connection closed');
+        logger.warn("Redis connection closed");
       });
 
       await this.redis.ping();
       return true;
     } catch (error) {
-      logger.error('Failed to connect to Redis:', error);
+      logger.error("Failed to connect to Redis:", error);
       throw error;
     }
   }
@@ -95,7 +98,7 @@ class CacheManager {
     if (this.redis) {
       await this.redis.quit();
       this.connected = false;
-      logger.info('Redis disconnected');
+      logger.info("Redis disconnected");
     }
   }
 
@@ -104,6 +107,13 @@ class CacheManager {
    */
   isConnected() {
     return this.connected;
+  }
+
+  /**
+   * Check if Redis is healthy (connected and ready)
+   */
+  isHealthy() {
+    return this.connected && this.redis && this.redis.status === "ready";
   }
 
   // ============================================
@@ -143,11 +153,15 @@ class CacheManager {
   async cacheQuizLeaderboard(quizId, leaderboard, limit = 10) {
     try {
       const key = this.getQuizLeaderboardKey(quizId, limit);
-      await this.redis.setex(key, this.ttls.leaderboard, JSON.stringify(leaderboard));
+      await this.redis.setex(
+        key,
+        this.ttls.leaderboard,
+        JSON.stringify(leaderboard)
+      );
       logger.debug(`Cached quiz leaderboard: ${key}`);
       return true;
     } catch (error) {
-      logger.error('Error caching quiz leaderboard:', error);
+      logger.error("Error caching quiz leaderboard:", error);
       return false;
     }
   }
@@ -159,16 +173,16 @@ class CacheManager {
     try {
       const key = this.getQuizLeaderboardKey(quizId, limit);
       const cached = await this.redis.get(key);
-      
+
       if (cached) {
         logger.debug(`Cache hit: ${key}`);
         return JSON.parse(cached);
       }
-      
+
       logger.debug(`Cache miss: ${key}`);
       return null;
     } catch (error) {
-      logger.error('Error getting cached quiz leaderboard:', error);
+      logger.error("Error getting cached quiz leaderboard:", error);
       return null;
     }
   }
@@ -179,11 +193,15 @@ class CacheManager {
   async cacheGlobalLeaderboard(leaderboard, limit = 100) {
     try {
       const key = this.getGlobalLeaderboardKey(limit);
-      await this.redis.setex(key, this.ttls.globalStats, JSON.stringify(leaderboard));
+      await this.redis.setex(
+        key,
+        this.ttls.globalStats,
+        JSON.stringify(leaderboard)
+      );
       logger.debug(`Cached global leaderboard: ${key}`);
       return true;
     } catch (error) {
-      logger.error('Error caching global leaderboard:', error);
+      logger.error("Error caching global leaderboard:", error);
       return false;
     }
   }
@@ -195,15 +213,15 @@ class CacheManager {
     try {
       const key = this.getGlobalLeaderboardKey(limit);
       const cached = await this.redis.get(key);
-      
+
       if (cached) {
         logger.debug(`Cache hit: ${key}`);
         return JSON.parse(cached);
       }
-      
+
       return null;
     } catch (error) {
-      logger.error('Error getting cached global leaderboard:', error);
+      logger.error("Error getting cached global leaderboard:", error);
       return null;
     }
   }
@@ -215,15 +233,17 @@ class CacheManager {
     try {
       const pattern = `leaderboard:quiz:${quizId}:*`;
       const keys = await this.redis.keys(pattern);
-      
+
       if (keys.length > 0) {
         await this.redis.del(...keys);
-        logger.debug(`Invalidated ${keys.length} leaderboard cache keys for quiz ${quizId}`);
+        logger.debug(
+          `Invalidated ${keys.length} leaderboard cache keys for quiz ${quizId}`
+        );
       }
-      
+
       return true;
     } catch (error) {
-      logger.error('Error invalidating quiz leaderboard:', error);
+      logger.error("Error invalidating quiz leaderboard:", error);
       return false;
     }
   }
@@ -233,17 +253,19 @@ class CacheManager {
    */
   async invalidateGlobalLeaderboard() {
     try {
-      const pattern = 'leaderboard:global:*';
+      const pattern = "leaderboard:global:*";
       const keys = await this.redis.keys(pattern);
-      
+
       if (keys.length > 0) {
         await this.redis.del(...keys);
-        logger.debug(`Invalidated ${keys.length} global leaderboard cache keys`);
+        logger.debug(
+          `Invalidated ${keys.length} global leaderboard cache keys`
+        );
       }
-      
+
       return true;
     } catch (error) {
-      logger.error('Error invalidating global leaderboard:', error);
+      logger.error("Error invalidating global leaderboard:", error);
       return false;
     }
   }
@@ -262,7 +284,7 @@ class CacheManager {
       logger.debug(`Cached user stats: ${key}`);
       return true;
     } catch (error) {
-      logger.error('Error caching user stats:', error);
+      logger.error("Error caching user stats:", error);
       return false;
     }
   }
@@ -274,15 +296,15 @@ class CacheManager {
     try {
       const key = this.getUserStatsKey(userId);
       const cached = await this.redis.get(key);
-      
+
       if (cached) {
         logger.debug(`Cache hit: ${key}`);
         return JSON.parse(cached);
       }
-      
+
       return null;
     } catch (error) {
-      logger.error('Error getting cached user stats:', error);
+      logger.error("Error getting cached user stats:", error);
       return null;
     }
   }
@@ -297,7 +319,7 @@ class CacheManager {
       logger.debug(`Invalidated user stats: ${key}`);
       return true;
     } catch (error) {
-      logger.error('Error invalidating user stats:', error);
+      logger.error("Error invalidating user stats:", error);
       return false;
     }
   }
@@ -312,11 +334,15 @@ class CacheManager {
   async cacheQuizAnalytics(quizId, analytics) {
     try {
       const key = this.getQuizAnalyticsKey(quizId);
-      await this.redis.setex(key, this.ttls.quizAnalytics, JSON.stringify(analytics));
+      await this.redis.setex(
+        key,
+        this.ttls.quizAnalytics,
+        JSON.stringify(analytics)
+      );
       logger.debug(`Cached quiz analytics: ${key}`);
       return true;
     } catch (error) {
-      logger.error('Error caching quiz analytics:', error);
+      logger.error("Error caching quiz analytics:", error);
       return false;
     }
   }
@@ -328,15 +354,15 @@ class CacheManager {
     try {
       const key = this.getQuizAnalyticsKey(quizId);
       const cached = await this.redis.get(key);
-      
+
       if (cached) {
         logger.debug(`Cache hit: ${key}`);
         return JSON.parse(cached);
       }
-      
+
       return null;
     } catch (error) {
-      logger.error('Error getting cached quiz analytics:', error);
+      logger.error("Error getting cached quiz analytics:", error);
       return null;
     }
   }
@@ -351,7 +377,7 @@ class CacheManager {
       logger.debug(`Invalidated quiz analytics: ${key}`);
       return true;
     } catch (error) {
-      logger.error('Error invalidating quiz analytics:', error);
+      logger.error("Error invalidating quiz analytics:", error);
       return false;
     }
   }
@@ -371,11 +397,11 @@ class CacheManager {
         this.invalidateUserStats(userId),
         this.invalidateQuizAnalytics(quizId),
       ]);
-      
+
       logger.info(`Invalidated all caches for user ${userId}, quiz ${quizId}`);
       return true;
     } catch (error) {
-      logger.error('Error invalidating result caches:', error);
+      logger.error("Error invalidating result caches:", error);
       return false;
     }
   }
@@ -385,9 +411,9 @@ class CacheManager {
    */
   async getCacheStats() {
     try {
-      const info = await this.redis.info('stats');
-      const keyspaceInfo = await this.redis.info('keyspace');
-      
+      const info = await this.redis.info("stats");
+      const keyspaceInfo = await this.redis.info("keyspace");
+
       // Parse Redis INFO output
       const stats = {
         connected: this.connected,
@@ -395,25 +421,26 @@ class CacheManager {
         hits: 0,
         misses: 0,
       };
-      
+
       // Extract stats from INFO output
-      const lines = info.split('\r\n');
+      const lines = info.split("\r\n");
       for (const line of lines) {
-        if (line.startsWith('keyspace_hits:')) {
-          stats.hits = parseInt(line.split(':')[1]);
+        if (line.startsWith("keyspace_hits:")) {
+          stats.hits = parseInt(line.split(":")[1]);
         }
-        if (line.startsWith('keyspace_misses:')) {
-          stats.misses = parseInt(line.split(':')[1]);
+        if (line.startsWith("keyspace_misses:")) {
+          stats.misses = parseInt(line.split(":")[1]);
         }
       }
-      
-      stats.hitRate = stats.hits + stats.misses > 0
-        ? ((stats.hits / (stats.hits + stats.misses)) * 100).toFixed(2) + '%'
-        : '0%';
-      
+
+      stats.hitRate =
+        stats.hits + stats.misses > 0
+          ? ((stats.hits / (stats.hits + stats.misses)) * 100).toFixed(2) + "%"
+          : "0%";
+
       return stats;
     } catch (error) {
-      logger.error('Error getting cache stats:', error);
+      logger.error("Error getting cache stats:", error);
       return null;
     }
   }
