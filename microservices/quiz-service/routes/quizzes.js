@@ -268,4 +268,60 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * @route   GET /api/quizzes/:quizId/leaderboard
+ * @desc    Get quiz leaderboard (top 10 players)
+ * @access  Public
+ */
+router.get('/:quizId/leaderboard', async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const mongoose = require('mongoose');
+
+    // Query database directly using monolith schema
+    const leaderboard = await mongoose.connection.db.collection('results').aggregate([
+      // 1. Match all results for the specific quiz
+      { $match: { quiz: new mongoose.Types.ObjectId(quizId) } },
+      // 2. Sort by score (highest first) and then by time (quickest first)
+      { $sort: { score: -1, createdAt: 1 } },
+      // 3. Group by user, taking only their first (and best) score
+      {
+        $group: {
+          _id: "$user",
+          highestScore: { $first: "$score" },
+          totalQuestions: { $first: "$totalQuestions" },
+          date: { $first: "$createdAt" },
+        },
+      },
+      // 4. Sort the unique user scores again
+      { $sort: { highestScore: -1, date: 1 } },
+      // 5. Limit to the top 10 players
+      { $limit: 10 },
+      // 6. Join with the Users collection to get the user's name
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "userDetails",
+        },
+      },
+      // 7. Reshape the output
+      {
+        $project: {
+          _id: 0,
+          score: "$highestScore",
+          totalQuestions: "$totalQuestions",
+          userName: { $arrayElemAt: ["$userDetails.name", 0] },
+        },
+      },
+    ]).toArray();
+
+    res.json(leaderboard);
+  } catch (error) {
+    logger.error('Fetch leaderboard error:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;
