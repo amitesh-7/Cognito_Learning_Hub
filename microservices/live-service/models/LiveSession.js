@@ -14,6 +14,7 @@ const participantSchema = new mongoose.Schema({
   userName: {
     type: String,
     required: true,
+    default: 'Anonymous',
   },
   userPicture: String,
   score: {

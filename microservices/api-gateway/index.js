@@ -224,6 +224,16 @@ app.use(
   })
 );
 
+// Route to Leaderboards (Result Service)
+app.use(
+  '/api/leaderboards',
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.RESULT,
+    pathRewrite: { '^/api/leaderboards': '/api/leaderboards' },
+  })
+);
+
 // Route to Live Service (REST endpoints)
 app.use(
   '/api/live-sessions',

@@ -235,7 +235,7 @@ const LiveSessionJoin = () => {
     }
 
     // Handle both user.id and user._id formats
-    const userId = user?._id || user?.id;
+    const userId = user?._id || user?.id || user?.userId;
 
     if (!userId) {
       setJoinError("User not authenticated. Please log in.");
@@ -252,8 +252,8 @@ const LiveSessionJoin = () => {
       {
         sessionCode: sessionCode.toUpperCase(),
         userId: userId,
-        username: user.name,
-        avatar: user.profilePicture || null,
+        userName: user.name || user.username || user.email || "Anonymous",
+        userPicture: user.profilePicture || user.picture || null,
       },
       (response) => {
         console.log("📡 Join session response:", response);
@@ -333,7 +333,7 @@ const LiveSessionJoin = () => {
         setQuizEnded(true);
 
         // Show confetti if user is in top 3
-        const userId = user?._id || user?.id;
+        const userId = user?._id || user?.id || user?.userId;
         const myRank =
           finalLeaderboard.findIndex((entry) => entry.userId === userId) + 1;
         if (myRank > 0 && myRank <= 3) {
@@ -385,7 +385,7 @@ const LiveSessionJoin = () => {
       if (hasAnswered || !currentQuestion) return;
 
       const timeTaken = 30 - timeLeft;
-      const userId = user?._id || user?.id;
+      const userId = user?._id || user?.id || user?.userId;
 
       console.log("📝 Submitting answer:", answer);
       console.log("👤 User ID for submission:", userId);
@@ -706,7 +706,7 @@ const LiveSessionJoin = () => {
 
   // Quiz Ended
   if (quizEnded) {
-    const userId = user?._id || user?.id;
+    const userId = user?._id || user?.id || user?.userId;
     const myRank =
       leaderboard.findIndex((entry) => entry.userId === userId) + 1;
     const myScore =

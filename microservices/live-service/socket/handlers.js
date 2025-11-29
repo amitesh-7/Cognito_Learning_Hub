@@ -144,11 +144,12 @@ function initializeSocketHandlers(io) {
     // ============================================
     // JOIN SESSION
     // ============================================
-    socket.on('join-session', async ({ sessionCode, userId, userName, userPicture }) => {
+    socket.on('join-session', async ({ sessionCode, userId, userName, userPicture }, callback) => {
       try {
         const session = await sessionManager.getSession(sessionCode);
         
         if (!session) {
+          if (callback) callback({ success: false, error: 'Session not found' });
           socket.emit('error', { message: 'Session not found' });
           return;
         }
@@ -156,23 +157,27 @@ function initializeSocketHandlers(io) {
         // Check if session is full
         const participantCount = await sessionManager.getParticipantCount(sessionCode);
         if (participantCount >= session.maxParticipants) {
+          if (callback) callback({ success: false, error: 'Session is full' });
           socket.emit('error', { message: 'Session is full' });
           return;
         }
 
         // Check if late join is allowed
         if (session.status === 'active' && !session.settings.allowLateJoin) {
+          if (callback) callback({ success: false, error: 'Session already started, late join not allowed' });
           socket.emit('error', { message: 'Session already started, late join not allowed' });
           return;
         }
 
         // Add participant to Redis
+        logger.info(`[Join] Adding participant - userId: ${userId}, userName: ${userName}, userPicture: ${userPicture}`);
         const participant = await sessionManager.addParticipant(sessionCode, {
           userId,
           userName,
           userPicture,
           socketId: socket.id,
         });
+        logger.info(`[Join] Participant added:`, participant);
 
         // Join Socket.IO room
         socket.join(sessionCode);
@@ -183,6 +188,7 @@ function initializeSocketHandlers(io) {
         const currentParticipants = await sessionManager.getAllParticipants(sessionCode);
         const leaderboard = await sessionManager.getLeaderboard(sessionCode);
         
+        logger.info(`[Join] Emitting session-joined to ${socket.id}`);
         socket.emit('session-joined', {
           session,
           participant,
@@ -191,14 +197,28 @@ function initializeSocketHandlers(io) {
         });
 
         // Notify others
+        logger.info(`[Join] Broadcasting participant-joined to room ${sessionCode}:`, {
+          participant,
+          participantCount: currentParticipants.length,
+        });
         io.to(sessionCode).emit('participant-joined', {
           participant,
           participantCount: currentParticipants.length,
         });
 
+        // Send success callback
+        if (callback) {
+          callback({
+            success: true,
+            session,
+            participant,
+          });
+        }
+
         logger.info(`User ${userId} joined session ${sessionCode}`);
       } catch (error) {
         logger.error('Error joining session:', error);
+        if (callback) callback({ success: false, error: error.message || 'Failed to join session' });
         socket.emit('error', { message: 'Failed to join session' });
       }
     });

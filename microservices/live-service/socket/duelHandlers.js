@@ -183,6 +183,15 @@ function initializeDuelHandlers(io) {
           return callback({ success: false, error: 'Match not found' });
         }
 
+        logger.info(`[Duel] DEBUG - Match state BEFORE marking ready:`, {
+          matchId,
+          hasPlayer1: !!match.player1,
+          hasPlayer2: !!match.player2,
+          player1Ready: match.player1?.isReady,
+          player2Ready: match.player2?.isReady,
+          status: match.status
+        });
+
         // Mark player as ready (convert to strings for comparison)
         const userIdStr = String(userId);
         const player1IdStr = match.player1?.userId ? String(match.player1.userId) : null;

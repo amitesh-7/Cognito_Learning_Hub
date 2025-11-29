@@ -26,7 +26,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 /**
  * Generate JWT tokens
  */
-function generateTokens(userId, role) {
+function generateTokens(userId, role, name = null, picture = null) {
   // Debug: Check if JWT_SECRET is loaded
   if (!process.env.JWT_SECRET) {
     logger.error('JWT_SECRET is not defined in environment variables!');
@@ -34,13 +34,13 @@ function generateTokens(userId, role) {
   }
 
   const accessToken = jwt.sign(
-    { user: { id: userId, userId, role } }, // Add 'id' for frontend compatibility
+    { user: { id: userId, userId, role, name, picture } }, // Add name and picture for frontend
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRY || '7d' }
   );
 
   const refreshToken = jwt.sign(
-    { user: { id: userId, userId, role }, type: 'refresh' }, // Add 'id' for frontend compatibility
+    { user: { id: userId, userId, role, name, picture }, type: 'refresh' }, // Add name and picture for frontend
     process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET, // Fallback to JWT_SECRET if refresh secret not set
     { expiresIn: process.env.JWT_REFRESH_EXPIRY || '30d' }
   );
@@ -92,7 +92,7 @@ router.post(
       await user.save();
 
       // Generate tokens
-      const { accessToken, refreshToken } = generateTokens(user._id, user.role);
+      const { accessToken, refreshToken } = generateTokens(newUser._id, newUser.role, newUser.name, newUser.picture);
 
       // Store hashed refresh token
       const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
@@ -158,7 +158,7 @@ router.post(
       }
 
       // Generate tokens
-      const { accessToken, refreshToken } = generateTokens(user._id, user.role);
+      const { accessToken, refreshToken } = generateTokens(user._id, user.role, user.name, user.picture);
 
       // Store hashed refresh token
       const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
@@ -240,7 +240,7 @@ router.post('/google', authLimiter, async (req, res) => {
     }
 
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(user._id, user.role);
+    const { accessToken, refreshToken } = generateTokens(user._id, user.role, user.name, user.picture);
 
     // Store hashed refresh token
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
@@ -320,7 +320,7 @@ router.post('/refresh', async (req, res) => {
     }
 
     // Generate new access token
-    const { accessToken } = generateTokens(user._id, user.role);
+    const { accessToken } = generateTokens(user._id, user.role, user.name, user.picture);
 
     logger.info(`Token refreshed for user: ${user.email}`);
 

@@ -143,30 +143,37 @@ const LiveSessionHost = () => {
     };
 
     // Participant joined
-    const handleParticipantJoined = ({
-      userId,
-      username,
-      avatar,
-      participantCount,
-    }) => {
+    const handleParticipantJoined = ({ participant, participantCount }) => {
       console.log("🎉🎉🎉 PARTICIPANT JOINED EVENT RECEIVED! 🎉🎉🎉");
-      console.log("👤 User:", username, "ID:", userId);
+      console.log("👤 Participant data:", participant);
       console.log("📊 Participant count:", participantCount);
       console.log("📋 Current participants before update:", participants);
 
+      if (!participant || !participant.userId) {
+        console.error("❌ Invalid participant data received:", participant);
+        return;
+      }
+
       // Also log to alert to make it very visible
-      console.warn("PARTICIPANT JOINED:", username);
+      console.warn("PARTICIPANT JOINED:", participant.userName || participant.username);
 
       setParticipants((prev) => {
         // Check if participant already exists
-        const alreadyExists = prev.some((p) => p.userId === userId);
+        const alreadyExists = prev.some((p) => p.userId === participant.userId);
 
         if (alreadyExists) {
           console.log("⚠️ Participant already in list, skipping duplicate");
           return prev;
         }
 
-        const updated = [...prev, { userId, username, avatar }];
+        const updated = [
+          ...prev,
+          {
+            userId: participant.userId,
+            userName: participant.userName || participant.username,
+            userPicture: participant.userPicture || participant.avatar,
+          },
+        ];
         console.log("📋 Updated participants:", updated);
         console.log("✅ Participants state should update now!");
         return updated;
@@ -188,9 +195,30 @@ const LiveSessionHost = () => {
       setLeaderboard(newLeaderboard);
     };
 
+    // Session started
+    const handleSessionStarted = () => {
+      console.log("✅ Session started - updating UI");
+      setSessionStatus("active");
+      setCurrentQuestionIndex(0);
+    };
+
+    // Question started
+    const handleQuestionStarted = ({ questionIndex, question }) => {
+      console.log(`❓ Question ${questionIndex + 1} started:`, question?.text);
+      setCurrentQuestionIndex(questionIndex);
+    };
+
+    // Question ended
+    const handleQuestionEnded = ({ questionIndex, correctAnswer }) => {
+      console.log(`✅ Question ${questionIndex + 1} ended. Correct: ${correctAnswer}`);
+    };
+
     socket.on("participant-joined", handleParticipantJoined);
     socket.on("participant-left", handleParticipantLeft);
     socket.on("leaderboard-updated", handleLeaderboardUpdate);
+    socket.on("session-started", handleSessionStarted);
+    socket.on("question-started", handleQuestionStarted);
+    socket.on("question-ended", handleQuestionEnded);
 
     console.log("✅ Socket event listeners registered");
 
@@ -199,13 +227,16 @@ const LiveSessionHost = () => {
       socket.off("participant-joined", handleParticipantJoined);
       socket.off("participant-left", handleParticipantLeft);
       socket.off("leaderboard-updated", handleLeaderboardUpdate);
+      socket.off("session-started", handleSessionStarted);
+      socket.off("question-started", handleQuestionStarted);
+      socket.off("question-ended", handleQuestionEnded);
     };
   }, [socket]);
 
   // Create session when connected
   useEffect(() => {
     // Handle both user.id and user._id formats
-    const userId = user?._id || user?.id;
+    const userId = user?._id || user?.id || user?.userId;
 
     console.log("📊 Session creation check:", {
       hasSocket: !!socket,
@@ -273,7 +304,7 @@ const LiveSessionHost = () => {
     }
 
     console.log("🚀 Starting quiz...");
-    const userId = user?._id || user?.id;
+    const userId = user?._id || user?.id || user?.userId;
     socket.emit("start-session", { sessionCode, userId }, (response) => {
       if (response.success) {
         setSessionStatus("active");
@@ -292,7 +323,7 @@ const LiveSessionHost = () => {
     }
 
     console.log("➡️ Moving to next question...");
-    const userId = user?._id || user?.id;
+    const userId = user?._id || user?.id || user?.userId;
     socket.emit("next-question", { sessionCode, userId }, (response) => {
       if (response.success) {
         setCurrentQuestionIndex(response.questionIndex);
@@ -682,11 +713,11 @@ const LiveSessionHost = () => {
                       className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                     >
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white font-bold">
-                        {participant.username.charAt(0).toUpperCase()}
+                        {(participant.userName || participant.username || "?").charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <p className="font-medium text-gray-800 dark:text-white">
-                          {participant.username}
+                          {participant.userName || participant.username || "Anonymous"}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           Online
