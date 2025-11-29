@@ -37,6 +37,9 @@ app.use('/api/generate', require('./routes/generation'));
 app.use('/api/quizzes', require('./routes/quizzes'));
 app.use('/api/doubt-solver', require('./routes/doubtSolver'));
 
+// Legacy routes (for backward compatibility with monolith)
+app.use('/api', require('./routes/legacy'));
+
 // Health check
 app.get('/health', async (req, res) => {
   try {

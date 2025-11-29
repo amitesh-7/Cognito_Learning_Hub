@@ -190,7 +190,7 @@ export default function FileQuizGenerator() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/generate/file`,
+        `${import.meta.env.VITE_API_URL}/api/generate-quiz-file`,
         {
           method: "POST",
           headers: { "x-auth-token": token },
@@ -200,18 +200,12 @@ export default function FileQuizGenerator() {
       const data = await response.json();
       if (!response.ok) {
         throw new Error(
-          data.message || data.data?.message || `Server responded with ${response.status}`
+          data.message || data.error || `Server responded with ${response.status}`
         );
       }
 
-      // Handle async job queue response
-      if (data.data?.jobId && data.data?.status === 'queued') {
-        // Poll for job status
-        const jobId = data.data.jobId;
-        await pollJobStatus(jobId, token);
-        setFile(null); // Clear file after successful submission
-      } else if (data.quiz?.questions) {
-        // Direct response (legacy support)
+      // Direct synchronous response
+      if (data.quiz?.questions) {
         setGeneratedQuiz(data.quiz.questions);
         if (data.adaptiveInfo) {
           setAdaptiveInfo(data.adaptiveInfo);

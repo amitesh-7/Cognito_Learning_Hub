@@ -357,10 +357,26 @@ async function generateContent(prompt) {
   }
 }
 
+/**
+ * Generate questions from prompt (for legacy routes)
+ * Returns parsed questions array
+ */
+async function generateQuestions(prompt) {
+  try {
+    const result = await protectedAIGeneration.fire(prompt);
+    const questions = extractJson(result.text);
+    return questions;
+  } catch (error) {
+    logger.error('Question generation error:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   generateQuizFromTopic,
   generateQuizFromFile,
   generateContent,
+  generateQuestions,
   extractJson,
   generateFileHash,
   getCircuitBreakerStats,
