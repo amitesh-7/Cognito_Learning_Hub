@@ -1,13 +1,17 @@
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from "@react-oauth/google";
 
-const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google" }) => {
+const GoogleAuthButton = ({
+  onSuccess,
+  onError,
+  text = "Continue with Google",
+}) => {
   const handleSuccess = (credentialResponse) => {
-    console.log('Google OAuth successful');
+    console.log("Google OAuth successful");
     onSuccess(credentialResponse);
   };
 
   const handleError = () => {
-    console.error('Google OAuth failed');
+    console.error("Google OAuth failed");
     onError();
   };
 
@@ -20,6 +24,9 @@ const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google" })
         theme="outline"
         size="large"
         className="w-full"
+        use_fedcm_for_prompt={true}
+        ux_mode="popup"
+        context="use"
       />
     </div>
   );
