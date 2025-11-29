@@ -300,9 +300,9 @@ router.post("/google", authLimiter, async (req, res) => {
 
     logger.info(`Google login successful: ${email}`);
 
-    res.json(
-      ApiResponse.success({
-        message: "Google login successful",
+    return ApiResponse.success(
+      res,
+      {
         user: {
           id: user._id,
           name: user.name,
@@ -313,7 +313,8 @@ router.post("/google", authLimiter, async (req, res) => {
         },
         accessToken,
         refreshToken,
-      })
+      },
+      "Google login successful"
     );
   } catch (error) {
     logger.error("Google OAuth error:", error);
