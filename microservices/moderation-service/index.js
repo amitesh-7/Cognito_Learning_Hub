@@ -66,6 +66,15 @@ app.get('/health', (req, res) => {
   });
 });
 
+app.get('/', (req, res) => {
+  res.json({
+    status: 'i am alive',
+    service: 'moderation-service',
+    timestamp: new Date().toISOString(),
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
 // Service info
 app.get('/info', (req, res) => {
   res.json({
