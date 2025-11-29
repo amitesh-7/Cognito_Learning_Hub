@@ -114,7 +114,9 @@ const GoogleAuthButton = ({
   return (
     <div className={`relative ${className}`}>
       {/* Custom styled button wrapper */}
-      <motion.div
+      <motion.button
+        onClick={() => !disabled && !isLoading && loginWithGoogle()}
+        disabled={disabled || isLoading}
         className={`rounded-xl px-6 py-3 font-semibold text-center cursor-pointer flex items-center justify-center gap-3 ${getButtonStyle()} ${
           disabled || isLoading ? "opacity-50 cursor-not-allowed" : ""
         }`}
@@ -165,54 +167,51 @@ const GoogleAuthButton = ({
             transition={{ duration: 0.3 }}
           />
         )}
-      </motion.div>
-
-      {/* Hidden Google Login component */}
-      <div className="absolute inset-0 opacity-0 pointer-events-none">
-        <GoogleLogin
-          onSuccess={handleSuccess}
-          onError={handleError}
-          useOneTap={false}
-          auto_select={false}
-          theme={variant === "primary" ? "filled_blue" : "outline"}
-          size="large"
-          text="continue_with"
-          disabled={disabled || isLoading}
-          use_fedcm_for_prompt={true}
-          ux_mode="popup"
-          context="use"
-        />
-      </div>
+      </motion.button>
     </div>
   );
 };
 
-// Alternative component for direct Google Login button (uses Google's default styling)
+// Alternative component for direct Google Login button (uses custom flow to avoid COOP)
 export const GoogleLoginButton = ({ onSuccess, onError, className = "" }) => {
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        // Get user info from Google
+        const userInfoResponse = await fetch(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+          }
+        );
+        const userInfo = await userInfoResponse.json();
+
+        onSuccess({ credential: tokenResponse.access_token, userInfo });
+      } catch (error) {
+        console.error("Google OAuth error:", error);
+        onError(error);
+      }
+    },
+    onError: () => {
+      console.error("Google OAuth failed");
+      onError();
+    },
+    flow: "implicit",
+  });
+
   return (
-    <motion.div
-      className={`inline-block ${className}`}
+    <motion.button
+      onClick={() => loginWithGoogle()}
+      className={`inline-flex items-center gap-3 px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition ${className}`}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
     >
-      <GoogleLogin
-        onSuccess={onSuccess}
-        onError={onError}
-        useOneTap={true}
-        auto_select={false}
-        theme="outline"
-        size="large"
-        text="continue_with"
-        shape="rectangular"
-        logo_alignment="left"
-        use_fedcm_for_prompt={true}
-        ux_mode="popup"
-        context="use"
-      />
-    </motion.div>
+      <Chrome className="w-5 h-5" />
+      <span className="font-medium">Continue with Google</span>
+    </motion.button>
   );
 };
 

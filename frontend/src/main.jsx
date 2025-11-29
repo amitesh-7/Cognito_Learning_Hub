@@ -31,6 +31,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       onScriptLoadSuccess={() =>
         console.log("Google OAuth script loaded successfully")
       }
+      auto_select={false}
+      cancel_on_tap_outside={false}
+      use_fedcm_for_prompt={false}
     >
       <BrowserRouter>
         <AuthProvider>
