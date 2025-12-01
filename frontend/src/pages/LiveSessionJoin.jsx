@@ -319,6 +319,42 @@ const LiveSessionJoin = () => {
       }
     );
 
+    // Answer submitted feedback
+    socket.on("answer-submitted", ({ isCorrect, points, correctAnswer }) => {
+      console.log("✅ Answer feedback received:", {
+        isCorrect,
+        points,
+        correctAnswer,
+      });
+
+      setAnswerResult({
+        isCorrect,
+        pointsEarned: points,
+        correctAnswer,
+      });
+
+      // Store answer for analysis
+      setMyAnswers((prev) => [
+        ...prev,
+        {
+          questionIndex: currentQuestionIndex,
+          question: currentQuestion.question,
+          yourAnswer: selectedAnswer,
+          correctAnswer: correctAnswer,
+          isCorrect: isCorrect,
+          pointsEarned: points,
+          timeSpent: 30 - timeLeft,
+        },
+      ]);
+
+      // Play sound effect based on correctness
+      if (isCorrect) {
+        play("correct");
+      } else {
+        play("incorrect");
+      }
+    });
+
     // Session ended
     socket.on(
       "session-ended",
@@ -355,10 +391,21 @@ const LiveSessionJoin = () => {
       socket.off("quiz-started");
       socket.off("question-started");
       socket.off("leaderboard-updated");
+      socket.off("answer-submitted");
       socket.off("session-ended");
       socket.off("host-disconnected");
     };
-  }, [socket, hasJoined, navigate]);
+  }, [
+    socket,
+    hasJoined,
+    navigate,
+    user,
+    currentQuestionIndex,
+    currentQuestion,
+    selectedAnswer,
+    timeLeft,
+    play,
+  ]);
 
   // Timer countdown
   useEffect(() => {
@@ -389,55 +436,29 @@ const LiveSessionJoin = () => {
 
       console.log("📝 Submitting answer:", answer);
       console.log("👤 User ID for submission:", userId);
+      console.log("❓ Question ID:", currentQuestion._id);
 
       if (!userId) {
         console.error("❌ No user ID available");
         return;
       }
 
-      socket.emit(
-        "submit-answer",
-        {
-          sessionCode: sessionCode.toUpperCase(),
-          userId: userId,
-          questionIndex: currentQuestionIndex,
-          answer: answer,
-          timeSpent: timeTaken,
-        },
-        (response) => {
-          console.log("✅ Answer submitted:", response);
+      if (!currentQuestion._id) {
+        console.error("❌ No question ID available");
+        return;
+      }
 
-          if (!response.success) {
-            console.error("❌ Answer submission failed:", response.error);
-            return;
-          }
+      socket.emit("submit-answer", {
+        sessionCode: sessionCode.toUpperCase(),
+        userId: userId,
+        questionId: currentQuestion._id,
+        selectedAnswer: answer,
+        timeSpent: timeTaken,
+      });
 
-          setHasAnswered(true);
-          setAnswerResult(response);
-
-          // Store answer for analysis
-          setMyAnswers((prev) => [
-            ...prev,
-            {
-              questionIndex: currentQuestionIndex,
-              question: currentQuestion.question,
-              yourAnswer: answer,
-              correctAnswer: response.correctAnswer,
-              isCorrect: response.isCorrect,
-              pointsEarned: response.pointsEarned,
-              timeSpent: timeTaken,
-              explanation: response.explanation,
-            },
-          ]);
-
-          // Play sound effect based on correctness
-          if (response.isCorrect) {
-            play("correct");
-          } else {
-            play("incorrect");
-          }
-        }
-      );
+      // Mark as answered immediately to prevent double submission
+      setHasAnswered(true);
+      setSelectedAnswer(answer);
     },
     [
       socket,
@@ -447,7 +468,6 @@ const LiveSessionJoin = () => {
       hasAnswered,
       currentQuestion,
       timeLeft,
-      play,
     ]
   );
 

@@ -3,24 +3,27 @@
  * Optimized with Redis session storage and batched leaderboard updates
  */
 
-const { nanoid } = require('nanoid');
-const mongoose = require('mongoose');
-const createLogger = require('../../shared/utils/logger');
-const sessionManager = require('../services/sessionManager');
-const LiveSession = require('../models/LiveSession');
+const { nanoid } = require("nanoid");
+const mongoose = require("mongoose");
+const createLogger = require("../../shared/utils/logger");
+const sessionManager = require("../services/sessionManager");
+const LiveSession = require("../models/LiveSession");
 
-const logger = createLogger('socket-handlers');
-const QUIZ_SERVICE_URL = process.env.QUIZ_SERVICE_URL || 'http://localhost:3005';
+const logger = createLogger("socket-handlers");
+const QUIZ_SERVICE_URL =
+  process.env.QUIZ_SERVICE_URL || "http://localhost:3005";
 
 // Batched leaderboard updates
 const leaderboardUpdateQueue = new Map();
-const updateInterval = parseInt(process.env.LEADERBOARD_UPDATE_INTERVAL) || 2000;
+const updateInterval =
+  parseInt(process.env.LEADERBOARD_UPDATE_INTERVAL) || 2000;
+let ioInstance = null; // Store io instance globally
 
 // Periodic leaderboard broadcast
 setInterval(() => {
   for (const [sessionCode, needsUpdate] of leaderboardUpdateQueue.entries()) {
-    if (needsUpdate) {
-      broadcastLeaderboard(sessionCode);
+    if (needsUpdate && ioInstance) {
+      broadcastLeaderboard(sessionCode, ioInstance);
       leaderboardUpdateQueue.set(sessionCode, false);
     }
   }
@@ -32,17 +35,21 @@ setInterval(() => {
 async function broadcastLeaderboard(sessionCode, io) {
   try {
     const leaderboard = await sessionManager.getLeaderboard(sessionCode);
-    
+
     if (io) {
-      io.to(sessionCode).emit('leaderboard-updated', { leaderboard });
+      io.to(sessionCode).emit("leaderboard-updated", { leaderboard });
     } else {
       // Use pub/sub if no io instance
-      await sessionManager.publishToSession(sessionCode, 'leaderboard-updated', { leaderboard });
+      await sessionManager.publishToSession(
+        sessionCode,
+        "leaderboard-updated",
+        { leaderboard }
+      );
     }
-    
+
     logger.debug(`Broadcasted leaderboard for session ${sessionCode}`);
   } catch (error) {
-    logger.error('Error broadcasting leaderboard:', error);
+    logger.error("Error broadcasting leaderboard:", error);
   }
 }
 
@@ -50,34 +57,38 @@ async function broadcastLeaderboard(sessionCode, io) {
  * Initialize Socket.IO handlers
  */
 function initializeSocketHandlers(io) {
-  
-  io.on('connection', (socket) => {
+  io.on("connection", (socket) => {
     logger.info(`Socket connected: ${socket.id}`);
 
     // ============================================
     // CREATE SESSION
     // ============================================
-    socket.on('create-session', async (data, callback) => {
+    socket.on("create-session", async (data, callback) => {
       try {
         const { quizId, hostId, settings } = data;
 
         if (!quizId || !hostId) {
-          return callback({ success: false, error: 'quizId and hostId required' });
+          return callback({
+            success: false,
+            error: "quizId and hostId required",
+          });
         }
 
         // Fetch quiz details from quiz service
-        const quizResponse = await fetch(`${QUIZ_SERVICE_URL}/api/quizzes/${quizId}`);
+        const quizResponse = await fetch(
+          `${QUIZ_SERVICE_URL}/api/quizzes/${quizId}`
+        );
         if (!quizResponse.ok) {
-          return callback({ success: false, error: 'Quiz not found' });
+          return callback({ success: false, error: "Quiz not found" });
         }
-        
+
         const quiz = await quizResponse.json();
 
         // Generate unique session code
         const codeLength = 6;
         let sessionCode;
         let isUnique = false;
-        
+
         for (let i = 0; i < 5; i++) {
           sessionCode = nanoid(codeLength).toUpperCase();
           const existing = await sessionManager.getSession(sessionCode);
@@ -88,7 +99,10 @@ function initializeSocketHandlers(io) {
         }
 
         if (!isUnique) {
-          return callback({ success: false, error: 'Failed to generate unique session code' });
+          return callback({
+            success: false,
+            error: "Failed to generate unique session code",
+          });
         }
 
         // Create session in Redis
@@ -100,13 +114,13 @@ function initializeSocketHandlers(io) {
           settings: settings || {
             timePerQuestion: 30,
             showLeaderboardAfterEach: true,
-            allowLateJoin: false
+            allowLateJoin: false,
           },
           quizMetadata: {
             title: quiz.title,
             totalQuestions: quiz.questions?.length || 0,
-            difficulty: quiz.difficulty
-          }
+            difficulty: quiz.difficulty,
+          },
         });
 
         // Cache quiz in Redis
@@ -119,7 +133,7 @@ function initializeSocketHandlers(io) {
           hostId: new mongoose.Types.ObjectId(hostId),
           maxParticipants: session.maxParticipants,
           settings: session.settings,
-          quizMetadata: session.quizMetadata
+          quizMetadata: session.quizMetadata,
         });
         await dbSession.save();
 
@@ -133,123 +147,150 @@ function initializeSocketHandlers(io) {
           success: true,
           sessionCode,
           sessionId: dbSession._id.toString(),
-          session
+          session,
         });
       } catch (error) {
-        logger.error('Error creating session:', error);
-        callback({ success: false, error: error.message || 'Failed to create session' });
+        logger.error("Error creating session:", error);
+        callback({
+          success: false,
+          error: error.message || "Failed to create session",
+        });
       }
     });
 
     // ============================================
     // JOIN SESSION
     // ============================================
-    socket.on('join-session', async ({ sessionCode, userId, userName, userPicture }, callback) => {
-      try {
-        const session = await sessionManager.getSession(sessionCode);
-        
-        if (!session) {
-          if (callback) callback({ success: false, error: 'Session not found' });
-          socket.emit('error', { message: 'Session not found' });
-          return;
-        }
+    socket.on(
+      "join-session",
+      async ({ sessionCode, userId, userName, userPicture }, callback) => {
+        try {
+          const session = await sessionManager.getSession(sessionCode);
 
-        // Check if session is full
-        const participantCount = await sessionManager.getParticipantCount(sessionCode);
-        if (participantCount >= session.maxParticipants) {
-          if (callback) callback({ success: false, error: 'Session is full' });
-          socket.emit('error', { message: 'Session is full' });
-          return;
-        }
+          if (!session) {
+            if (callback)
+              callback({ success: false, error: "Session not found" });
+            socket.emit("error", { message: "Session not found" });
+            return;
+          }
 
-        // Check if late join is allowed
-        if (session.status === 'active' && !session.settings.allowLateJoin) {
-          if (callback) callback({ success: false, error: 'Session already started, late join not allowed' });
-          socket.emit('error', { message: 'Session already started, late join not allowed' });
-          return;
-        }
+          // Check if session is full
+          const participantCount = await sessionManager.getParticipantCount(
+            sessionCode
+          );
+          if (participantCount >= session.maxParticipants) {
+            if (callback)
+              callback({ success: false, error: "Session is full" });
+            socket.emit("error", { message: "Session is full" });
+            return;
+          }
 
-        // Add participant to Redis
-        logger.info(`[Join] Adding participant - userId: ${userId}, userName: ${userName}, userPicture: ${userPicture}`);
-        const participant = await sessionManager.addParticipant(sessionCode, {
-          userId,
-          userName,
-          userPicture,
-          socketId: socket.id,
-        });
-        logger.info(`[Join] Participant added:`, participant);
+          // Check if late join is allowed
+          if (session.status === "active" && !session.settings.allowLateJoin) {
+            if (callback)
+              callback({
+                success: false,
+                error: "Session already started, late join not allowed",
+              });
+            socket.emit("error", {
+              message: "Session already started, late join not allowed",
+            });
+            return;
+          }
 
-        // Join Socket.IO room
-        socket.join(sessionCode);
-        socket.sessionCode = sessionCode;
-        socket.userId = userId;
+          // Add participant to Redis
+          logger.info(
+            `[Join] Adding participant - userId: ${userId}, userName: ${userName}, userPicture: ${userPicture}`
+          );
+          const participant = await sessionManager.addParticipant(sessionCode, {
+            userId,
+            userName,
+            userPicture,
+            socketId: socket.id,
+          });
+          logger.info(`[Join] Participant added:`, participant);
 
-        // Send current session state
-        const currentParticipants = await sessionManager.getAllParticipants(sessionCode);
-        const leaderboard = await sessionManager.getLeaderboard(sessionCode);
-        
-        logger.info(`[Join] Emitting session-joined to ${socket.id}`);
-        socket.emit('session-joined', {
-          session,
-          participant,
-          participants: currentParticipants,
-          leaderboard,
-        });
+          // Join Socket.IO room
+          socket.join(sessionCode);
+          socket.sessionCode = sessionCode;
+          socket.userId = userId;
 
-        // Notify others
-        logger.info(`[Join] Broadcasting participant-joined to room ${sessionCode}:`, {
-          participant,
-          participantCount: currentParticipants.length,
-        });
-        io.to(sessionCode).emit('participant-joined', {
-          participant,
-          participantCount: currentParticipants.length,
-        });
+          // Send current session state
+          const currentParticipants = await sessionManager.getAllParticipants(
+            sessionCode
+          );
+          const leaderboard = await sessionManager.getLeaderboard(sessionCode);
 
-        // Send success callback
-        if (callback) {
-          callback({
-            success: true,
+          logger.info(`[Join] Emitting session-joined to ${socket.id}`);
+          socket.emit("session-joined", {
             session,
             participant,
+            participants: currentParticipants,
+            leaderboard,
           });
-        }
 
-        logger.info(`User ${userId} joined session ${sessionCode}`);
-      } catch (error) {
-        logger.error('Error joining session:', error);
-        if (callback) callback({ success: false, error: error.message || 'Failed to join session' });
-        socket.emit('error', { message: 'Failed to join session' });
+          // Notify others
+          logger.info(
+            `[Join] Broadcasting participant-joined to room ${sessionCode}:`,
+            {
+              participant,
+              participantCount: currentParticipants.length,
+            }
+          );
+          io.to(sessionCode).emit("participant-joined", {
+            participant,
+            participantCount: currentParticipants.length,
+          });
+
+          // Send success callback
+          if (callback) {
+            callback({
+              success: true,
+              session,
+              participant,
+            });
+          }
+
+          logger.info(`User ${userId} joined session ${sessionCode}`);
+        } catch (error) {
+          logger.error("Error joining session:", error);
+          if (callback)
+            callback({
+              success: false,
+              error: error.message || "Failed to join session",
+            });
+          socket.emit("error", { message: "Failed to join session" });
+        }
       }
-    });
+    );
 
     // ============================================
     // START SESSION (Host only)
     // ============================================
-    socket.on('start-session', async ({ sessionCode, userId }) => {
+    socket.on("start-session", async ({ sessionCode, userId }) => {
       try {
         const session = await sessionManager.getSession(sessionCode);
-        
+
         if (!session) {
-          socket.emit('error', { message: 'Session not found' });
+          socket.emit("error", { message: "Session not found" });
           return;
         }
 
         if (session.hostId !== userId) {
-          socket.emit('error', { message: 'Only host can start session' });
+          socket.emit("error", { message: "Only host can start session" });
           return;
         }
 
         // Update session status
         await sessionManager.updateSession(sessionCode, {
-          status: 'active',
+          status: "active",
           startedAt: new Date().toISOString(),
           currentQuestionIndex: 0,
         });
 
         // Broadcast to all participants
-        io.to(sessionCode).emit('session-started', {
-          message: 'Session started!',
+        io.to(sessionCode).emit("session-started", {
+          message: "Session started!",
           startedAt: new Date().toISOString(),
         });
 
@@ -260,87 +301,104 @@ function initializeSocketHandlers(io) {
 
         logger.info(`Session ${sessionCode} started by host ${userId}`);
       } catch (error) {
-        logger.error('Error starting session:', error);
-        socket.emit('error', { message: 'Failed to start session' });
+        logger.error("Error starting session:", error);
+        socket.emit("error", { message: "Failed to start session" });
       }
     });
 
     // ============================================
     // SUBMIT ANSWER
     // ============================================
-    socket.on('submit-answer', async ({ sessionCode, userId, questionId, selectedAnswer, timeSpent }) => {
-      try {
-        const session = await sessionManager.getSession(sessionCode);
-        
-        if (!session || session.status !== 'active') {
-          socket.emit('error', { message: 'Session not active' });
-          return;
+    socket.on(
+      "submit-answer",
+      async ({
+        sessionCode,
+        userId,
+        questionId,
+        selectedAnswer,
+        timeSpent,
+      }) => {
+        try {
+          const session = await sessionManager.getSession(sessionCode);
+
+          if (!session || session.status !== "active") {
+            socket.emit("error", { message: "Session not active" });
+            return;
+          }
+
+          // Get quiz from cache
+          const quiz = await sessionManager.getCachedQuiz(sessionCode);
+          if (!quiz) {
+            socket.emit("error", { message: "Quiz not found" });
+            return;
+          }
+
+          const question = quiz.questions.find(
+            (q) => q._id.toString() === questionId
+          );
+          if (!question) {
+            socket.emit("error", { message: "Question not found" });
+            return;
+          }
+
+          // Check answer correctness
+          const isCorrect = question.correctAnswer === selectedAnswer;
+          const points = isCorrect ? question.points || 10 : 0;
+
+          // Record answer in Redis
+          await sessionManager.recordAnswer(sessionCode, {
+            userId,
+            questionId,
+            selectedAnswer,
+            isCorrect,
+            points,
+            timeSpent,
+          });
+
+          // Update participant stats
+          const participant = await sessionManager.getParticipant(
+            sessionCode,
+            userId
+          );
+          await sessionManager.updateParticipant(sessionCode, userId, {
+            score: participant.score + points,
+            correctAnswers: participant.correctAnswers + (isCorrect ? 1 : 0),
+            incorrectAnswers:
+              participant.incorrectAnswers + (isCorrect ? 0 : 1),
+          });
+
+          // Update leaderboard (atomic operation - O(log N))
+          await sessionManager.updateLeaderboard(sessionCode, userId, points);
+
+          // Mark leaderboard for batched update
+          leaderboardUpdateQueue.set(sessionCode, true);
+
+          // Send feedback to user
+          socket.emit("answer-submitted", {
+            isCorrect,
+            points,
+            correctAnswer: question.correctAnswer,
+          });
+
+          logger.debug(
+            `Answer submitted by ${userId} in session ${sessionCode}`
+          );
+        } catch (error) {
+          logger.error("Error submitting answer:", error);
+          socket.emit("error", { message: "Failed to submit answer" });
         }
-
-        // Get quiz from cache
-        const quiz = await sessionManager.getCachedQuiz(sessionCode);
-        if (!quiz) {
-          socket.emit('error', { message: 'Quiz not found' });
-          return;
-        }
-
-        const question = quiz.questions.find(q => q._id.toString() === questionId);
-        if (!question) {
-          socket.emit('error', { message: 'Question not found' });
-          return;
-        }
-
-        // Check answer correctness
-        const isCorrect = question.correctAnswer === selectedAnswer;
-        const points = isCorrect ? (question.points || 10) : 0;
-
-        // Record answer in Redis
-        await sessionManager.recordAnswer(sessionCode, {
-          userId,
-          questionId,
-          selectedAnswer,
-          isCorrect,
-          points,
-          timeSpent,
-        });
-
-        // Update participant stats
-        const participant = await sessionManager.getParticipant(sessionCode, userId);
-        await sessionManager.updateParticipant(sessionCode, userId, {
-          score: participant.score + points,
-          correctAnswers: participant.correctAnswers + (isCorrect ? 1 : 0),
-          incorrectAnswers: participant.incorrectAnswers + (isCorrect ? 0 : 1),
-        });
-
-        // Update leaderboard (atomic operation - O(log N))
-        await sessionManager.updateLeaderboard(sessionCode, userId, points);
-
-        // Mark leaderboard for batched update
-        leaderboardUpdateQueue.set(sessionCode, true);
-
-        // Send feedback to user
-        socket.emit('answer-submitted', {
-          isCorrect,
-          points,
-          correctAnswer: question.correctAnswer,
-        });
-
-        logger.debug(`Answer submitted by ${userId} in session ${sessionCode}`);
-      } catch (error) {
-        logger.error('Error submitting answer:', error);
-        socket.emit('error', { message: 'Failed to submit answer' });
       }
-    });
+    );
 
     // ============================================
     // NEXT QUESTION (Host only)
     // ============================================
-    socket.on('next-question', async ({ sessionCode, userId }) => {
+    socket.on("next-question", async ({ sessionCode, userId }) => {
       try {
         const session = await sessionManager.getSession(sessionCode);
-        
+
         if (!session || session.hostId !== userId) {
-          socket.emit('error', { message: 'Only host can advance questions' });
+          socket.emit("error", { message: "Only host can advance questions" });
           return;
         }
 
@@ -360,40 +418,46 @@ function initializeSocketHandlers(io) {
 
         // Start next question
         startQuestion(sessionCode, nextIndex, io);
-        
-        logger.info(`Session ${sessionCode} advanced to question ${nextIndex + 1}`);
+
+        logger.info(
+          `Session ${sessionCode} advanced to question ${nextIndex + 1}`
+        );
       } catch (error) {
-        logger.error('Error advancing question:', error);
-        socket.emit('error', { message: 'Failed to advance question' });
+        logger.error("Error advancing question:", error);
+        socket.emit("error", { message: "Failed to advance question" });
       }
     });
 
     // ============================================
     // LEAVE SESSION
     // ============================================
-    socket.on('leave-session', async ({ sessionCode, userId }) => {
+    socket.on("leave-session", async ({ sessionCode, userId }) => {
       try {
         await handleLeaveSession(socket, sessionCode, userId, io);
       } catch (error) {
-        logger.error('Error leaving session:', error);
+        logger.error("Error leaving session:", error);
       }
     });
 
     // ============================================
     // DISCONNECT
     // ============================================
-    socket.on('disconnect', async () => {
+    socket.on("disconnect", async () => {
       try {
         if (socket.sessionCode && socket.userId) {
-          await handleLeaveSession(socket, socket.sessionCode, socket.userId, io);
+          await handleLeaveSession(
+            socket,
+            socket.sessionCode,
+            socket.userId,
+            io
+          );
         }
-        
+
         logger.info(`Socket disconnected: ${socket.id}`);
       } catch (error) {
-        logger.error('Error handling disconnect:', error);
+        logger.error("Error handling disconnect:", error);
       }
     });
-
   });
 
   return io;
@@ -410,7 +474,7 @@ async function startQuestion(sessionCode, questionIndex, io) {
   try {
     const quiz = await sessionManager.getCachedQuiz(sessionCode);
     const session = await sessionManager.getSession(sessionCode);
-    
+
     if (!quiz || !session) {
       return;
     }
@@ -419,7 +483,7 @@ async function startQuestion(sessionCode, questionIndex, io) {
     const timeLimit = session.settings.timePerQuestion || 30;
 
     // Send question to all participants (without correct answer)
-    io.to(sessionCode).emit('question-started', {
+    io.to(sessionCode).emit("question-started", {
       questionIndex,
       question: {
         _id: question._id,
@@ -434,22 +498,27 @@ async function startQuestion(sessionCode, questionIndex, io) {
     // Auto-advance after time limit
     setTimeout(async () => {
       const currentSession = await sessionManager.getSession(sessionCode);
-      
+
       // Only auto-advance if still on this question
-      if (currentSession && currentSession.currentQuestionIndex === questionIndex) {
+      if (
+        currentSession &&
+        currentSession.currentQuestionIndex === questionIndex
+      ) {
         // Broadcast leaderboard before next question
         await broadcastLeaderboard(sessionCode, io);
-        
-        io.to(sessionCode).emit('question-ended', {
+
+        io.to(sessionCode).emit("question-ended", {
           questionIndex,
           correctAnswer: question.correctAnswer,
         });
       }
     }, timeLimit * 1000);
 
-    logger.debug(`Started question ${questionIndex + 1} in session ${sessionCode}`);
+    logger.debug(
+      `Started question ${questionIndex + 1} in session ${sessionCode}`
+    );
   } catch (error) {
-    logger.error('Error starting question:', error);
+    logger.error("Error starting question:", error);
   }
 }
 
@@ -460,7 +529,7 @@ async function endSession(sessionCode, io) {
   try {
     // Update session status
     await sessionManager.updateSession(sessionCode, {
-      status: 'completed',
+      status: "completed",
       endedAt: new Date().toISOString(),
     });
 
@@ -468,8 +537,8 @@ async function endSession(sessionCode, io) {
     const leaderboard = await sessionManager.getLeaderboard(sessionCode);
 
     // Broadcast session end
-    io.to(sessionCode).emit('session-ended', {
-      message: 'Session completed!',
+    io.to(sessionCode).emit("session-ended", {
+      message: "Session completed!",
       leaderboard,
     });
 
@@ -477,33 +546,37 @@ async function endSession(sessionCode, io) {
     await syncSessionToDatabase(sessionCode);
 
     // Notify gamification service (non-blocking)
-    const axios = require('axios');
-    const GAMIFICATION_URL = process.env.GAMIFICATION_SERVICE_URL || 'http://localhost:3007';
+    const axios = require("axios");
+    const GAMIFICATION_URL =
+      process.env.GAMIFICATION_SERVICE_URL || "http://localhost:3007";
     const session = await sessionManager.getSession(sessionCode);
     const participants = await sessionManager.getAllParticipants(sessionCode);
-    
+
     const participantData = Object.values(participants).map((p, index) => ({
       userId: p.userId,
       points: p.score || 0,
       bonusPoints: 0,
       rank: index + 1,
-      accuracy: p.correctAnswers && (p.correctAnswers + p.incorrectAnswers) > 0 
-        ? (p.correctAnswers / (p.correctAnswers + p.incorrectAnswers)) * 100 
-        : 0,
+      accuracy:
+        p.correctAnswers && p.correctAnswers + p.incorrectAnswers > 0
+          ? (p.correctAnswers / (p.correctAnswers + p.incorrectAnswers)) * 100
+          : 0,
       totalTime: session.quizMetadata?.totalTime || 0,
-      experience: Math.round((p.score || 0) / 5)
+      experience: Math.round((p.score || 0) / 5),
     }));
 
-    axios.post(`${GAMIFICATION_URL}/api/events/live-session-ended`, {
-      sessionId: sessionCode,
-      participants: participantData
-    }).catch(err => {
-      logger.error('Gamification notification failed:', err.message);
-    });
+    axios
+      .post(`${GAMIFICATION_URL}/api/events/live-session-ended`, {
+        sessionId: sessionCode,
+        participants: participantData,
+      })
+      .catch((err) => {
+        logger.error("Gamification notification failed:", err.message);
+      });
 
     logger.info(`Session ${sessionCode} ended`);
   } catch (error) {
-    logger.error('Error ending session:', error);
+    logger.error("Error ending session:", error);
   }
 }
 
@@ -522,15 +595,17 @@ async function handleLeaveSession(socket, sessionCode, userId, io) {
     socket.leave(sessionCode);
 
     // Notify others
-    const participantCount = await sessionManager.getParticipantCount(sessionCode);
-    io.to(sessionCode).emit('participant-left', {
+    const participantCount = await sessionManager.getParticipantCount(
+      sessionCode
+    );
+    io.to(sessionCode).emit("participant-left", {
       userId,
       participantCount,
     });
 
     logger.info(`User ${userId} left session ${sessionCode}`);
   } catch (error) {
-    logger.error('Error handling leave:', error);
+    logger.error("Error handling leave:", error);
   }
 }
 
@@ -545,7 +620,7 @@ async function syncSessionToDatabase(sessionCode) {
 
     // Find or create MongoDB document
     let dbSession = await LiveSession.findByCode(sessionCode);
-    
+
     if (!dbSession) {
       dbSession = new LiveSession({
         sessionCode: session.sessionCode,
@@ -560,17 +635,19 @@ async function syncSessionToDatabase(sessionCode) {
     // Update with Redis data
     dbSession.status = session.status;
     dbSession.currentQuestionIndex = session.currentQuestionIndex;
-    dbSession.startedAt = session.startedAt ? new Date(session.startedAt) : null;
+    dbSession.startedAt = session.startedAt
+      ? new Date(session.startedAt)
+      : null;
     dbSession.endedAt = session.endedAt ? new Date(session.endedAt) : null;
     dbSession.participants = participants;
     dbSession.answers = answers;
 
     await dbSession.save();
     logger.info(`Synced session ${sessionCode} to database`);
-    
+
     return dbSession;
   } catch (error) {
-    logger.error('Error syncing to database:', error);
+    logger.error("Error syncing to database:", error);
     return null;
   }
 }

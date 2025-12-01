@@ -159,6 +159,8 @@ const QuizSchema = new mongoose.Schema(
       virtuals: true,
       transform: function (doc, ret) {
         ret.id = ret._id;
+        // Add timesTaken at root level for backwards compatibility
+        ret.timesTaken = doc.stats?.timesTaken || 0;
         return ret;
       },
     },
@@ -202,6 +204,10 @@ QuizSchema.virtual("averageQuestionPoints").get(function () {
   if (!this.questions.length) return 0;
   const total = this.questions.reduce((sum, q) => sum + (q.points || 1), 0);
   return (total / this.questions.length).toFixed(1);
+});
+
+QuizSchema.virtual("timesTaken").get(function () {
+  return this.stats?.timesTaken || 0;
 });
 
 // ==========================================
