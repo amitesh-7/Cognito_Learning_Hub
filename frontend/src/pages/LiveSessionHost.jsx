@@ -155,7 +155,10 @@ const LiveSessionHost = () => {
       }
 
       // Also log to alert to make it very visible
-      console.warn("PARTICIPANT JOINED:", participant.userName || participant.username);
+      console.warn(
+        "PARTICIPANT JOINED:",
+        participant.userName || participant.username
+      );
 
       setParticipants((prev) => {
         // Check if participant already exists
@@ -210,7 +213,18 @@ const LiveSessionHost = () => {
 
     // Question ended
     const handleQuestionEnded = ({ questionIndex, correctAnswer }) => {
-      console.log(`✅ Question ${questionIndex + 1} ended. Correct: ${correctAnswer}`);
+      console.log(
+        `✅ Question ${questionIndex + 1} ended. Correct: ${correctAnswer}`
+      );
+    };
+
+    // Session ended
+    const handleSessionEnded = ({ leaderboard: finalLeaderboard }) => {
+      console.log("🏁 Session ended!");
+      if (finalLeaderboard) {
+        setLeaderboard(finalLeaderboard);
+      }
+      setSessionStatus("ended");
     };
 
     socket.on("participant-joined", handleParticipantJoined);
@@ -219,6 +233,7 @@ const LiveSessionHost = () => {
     socket.on("session-started", handleSessionStarted);
     socket.on("question-started", handleQuestionStarted);
     socket.on("question-ended", handleQuestionEnded);
+    socket.on("session-ended", handleSessionEnded);
 
     console.log("✅ Socket event listeners registered");
 
@@ -230,6 +245,7 @@ const LiveSessionHost = () => {
       socket.off("session-started", handleSessionStarted);
       socket.off("question-started", handleQuestionStarted);
       socket.off("question-ended", handleQuestionEnded);
+      socket.off("session-ended", handleSessionEnded);
     };
   }, [socket]);
 
@@ -336,12 +352,16 @@ const LiveSessionHost = () => {
     if (!confirm("Are you sure you want to end this session?")) return;
 
     console.log("🛑 Ending session...");
-    socket.emit("end-session", { sessionCode }, (response) => {
+    const userId = user?._id || user?.id || user?.userId;
+    socket.emit("end-session", { sessionCode, userId }, (response) => {
       if (response.success) {
         setSessionStatus("ended");
+      } else {
+        console.error("❌ Failed to end session:", response.error);
+        alert(response.error || "Failed to end session");
       }
     });
-  }, [socket, sessionCode]);
+  }, [socket, sessionCode, user]);
 
   // Copy session code
   const copySessionCode = () => {
@@ -713,11 +733,15 @@ const LiveSessionHost = () => {
                       className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                     >
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white font-bold">
-                        {(participant.userName || participant.username || "?").charAt(0).toUpperCase()}
+                        {(participant.userName || participant.username || "?")
+                          .charAt(0)
+                          .toUpperCase()}
                       </div>
                       <div>
                         <p className="font-medium text-gray-800 dark:text-white">
-                          {participant.userName || participant.username || "Anonymous"}
+                          {participant.userName ||
+                            participant.username ||
+                            "Anonymous"}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           Online

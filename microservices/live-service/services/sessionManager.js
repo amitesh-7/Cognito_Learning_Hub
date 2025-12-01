@@ -463,10 +463,19 @@ class SessionManager {
             rank: Math.floor(i / 2) + 1,
             userId,
             userName: participant.userName,
+            username: participant.userName, // Alias for frontend compatibility
             userPicture: participant.userPicture,
+            avatar: participant.userPicture, // Alias for frontend compatibility
             score,
             correctAnswers: participant.correctAnswers,
             incorrectAnswers: participant.incorrectAnswers,
+            accuracy:
+              participant.correctAnswers + participant.incorrectAnswers > 0
+                ? (participant.correctAnswers /
+                    (participant.correctAnswers +
+                      participant.incorrectAnswers)) *
+                  100
+                : 0,
           });
         }
       }

@@ -479,6 +479,39 @@ function initializeSocketHandlers(io) {
     });
 
     // ============================================
+    // END SESSION (Host only)
+    // ============================================
+    socket.on("end-session", async ({ sessionCode, userId }, callback) => {
+      try {
+        const session = await sessionManager.getSession(sessionCode);
+
+        if (!session) {
+          if (callback)
+            callback({ success: false, error: "Session not found" });
+          return;
+        }
+
+        // Check if user is the host
+        if (session.hostId !== userId) {
+          if (callback)
+            callback({ success: false, error: "Only host can end session" });
+          socket.emit("error", { message: "Only host can end session" });
+          return;
+        }
+
+        // End the session
+        await endSession(sessionCode, io);
+
+        if (callback) callback({ success: true });
+        logger.info(`Session ${sessionCode} ended by host ${userId}`);
+      } catch (error) {
+        logger.error("Error ending session:", error);
+        if (callback) callback({ success: false, error: error.message });
+        socket.emit("error", { message: "Failed to end session" });
+      }
+    });
+
+    // ============================================
     // LEAVE SESSION
     // ============================================
     socket.on("leave-session", async ({ sessionCode, userId }) => {
