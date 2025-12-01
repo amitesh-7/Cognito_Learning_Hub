@@ -86,6 +86,14 @@ function initializeSocketHandlers(io) {
         }
 
         const quiz = await quizResponse.json();
+        
+        // Log quiz data structure for debugging
+        logger.debug(`Quiz fetched - Title: ${quiz.title}, Questions: ${quiz.questions?.length}`);
+        if (quiz.questions && quiz.questions.length > 0) {
+          const firstQ = quiz.questions[0];
+          logger.debug(`First question fields: ${Object.keys(firstQ).join(', ')}`);
+          logger.debug(`First question has correctAnswer: ${!!firstQ.correctAnswer}, has correct_answer: ${!!firstQ.correct_answer}`);
+        }
 
         // Generate unique session code
         const codeLength = 6;
@@ -349,8 +357,17 @@ function initializeSocketHandlers(io) {
             return;
           }
 
+          // Log the raw question object to debug field names
+          logger.debug(`Raw question object keys: ${Object.keys(question).join(', ')}`);
+          logger.debug(`Question data: correctAnswer="${question.correctAnswer}", correct_answer="${question.correct_answer}"`);
+
           // Check answer correctness (case-insensitive, trimmed comparison)
-          const correctAnswer = (question.correctAnswer || "")
+          // Support both correctAnswer and correct_answer field names for backward compatibility
+          const correctAnswer = (
+            question.correctAnswer ||
+            question.correct_answer ||
+            ""
+          )
             .toString()
             .trim();
           const userAnswer = (selectedAnswer || "").toString().trim();
@@ -362,7 +379,7 @@ function initializeSocketHandlers(io) {
             `Answer check - Question: ${question.question.substring(
               0,
               50
-            )}..., Correct: ${correctAnswer}, User: ${userAnswer}, Match: ${isCorrect}`
+            )}..., Correct: "${correctAnswer}", User: "${userAnswer}", Match: ${isCorrect}`
           );
 
           // Record answer in Redis
@@ -394,7 +411,7 @@ function initializeSocketHandlers(io) {
           socket.emit("answer-submitted", {
             isCorrect,
             points,
-            correctAnswer: question.correctAnswer,
+            correctAnswer: question.correctAnswer || question.correct_answer,
           });
 
           // Immediately broadcast updated leaderboard to all participants
@@ -532,7 +549,7 @@ async function startQuestion(sessionCode, questionIndex, io) {
 
         io.to(sessionCode).emit("question-ended", {
           questionIndex,
-          correctAnswer: question.correctAnswer,
+          correctAnswer: question.correctAnswer || question.correct_answer,
         });
       }
     }, timeLimit * 1000);

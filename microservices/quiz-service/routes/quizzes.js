@@ -113,8 +113,7 @@ router.get('/recent', async (req, res) => {
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id)
-      .populate('createdBy', 'name')
-      .lean();
+      .populate('createdBy', 'name');
 
     if (!quiz) {
       return res.status(404).json({ msg: 'Quiz not found' });
@@ -125,8 +124,11 @@ router.get('/:id', optionalAuth, async (req, res) => {
       return res.status(403).json({ msg: 'Access denied to private quiz' });
     }
 
+    // Convert to JSON to apply transforms (correct_answer -> correctAnswer)
+    const quizJSON = quiz.toJSON();
+    
     // Return quiz directly to match monolith format
-    res.json(quiz);
+    res.json(quizJSON);
   } catch (error) {
     logger.error('Get quiz by ID error:', error);
     if (error.kind === 'ObjectId') {
