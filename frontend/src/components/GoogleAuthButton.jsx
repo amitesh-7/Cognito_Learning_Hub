@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
 import { motion } from "framer-motion";
 import { Chrome, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
@@ -113,61 +113,18 @@ const GoogleAuthButton = ({
 
   return (
     <div className={`relative ${className}`}>
-      {/* Custom styled button wrapper */}
-      <motion.button
-        onClick={() => !disabled && !isLoading && loginWithGoogle()}
-        disabled={disabled || isLoading}
-        className={`rounded-xl px-6 py-3 font-semibold text-center cursor-pointer flex items-center justify-center gap-3 ${getButtonStyle()} ${
-          disabled || isLoading ? "opacity-50 cursor-not-allowed" : ""
-        }`}
-        whileHover={!disabled && !isLoading ? { scale: 1.02 } : {}}
-        whileTap={!disabled && !isLoading ? { scale: 0.98 } : {}}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        {/* Animated background for primary variant */}
-        {variant === "primary" && (
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 opacity-0 group-hover:opacity-100"
-            animate={{
-              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          />
-        )}
-
-        {/* Content */}
-        <motion.div
-          className="relative z-10 flex items-center gap-3"
-          animate={{
-            scale: status === "success" ? [1, 1.1, 1] : 1,
-          }}
-          transition={{ duration: 0.3 }}
-        >
-          {getStatusIcon()}
-          <span className="font-medium">{getStatusText()}</span>
-        </motion.div>
-
-        {/* Success/Error overlay animation */}
-        {status && (
-          <motion.div
-            className={`absolute inset-0 rounded-xl ${
-              status === "success"
-                ? "bg-green-500/20 border-2 border-green-500"
-                : "bg-red-500/20 border-2 border-red-500"
-            }`}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          />
-        )}
-      </motion.button>
+      {/* Use GoogleLogin component from @react-oauth/google */}
+      <GoogleLogin
+        onSuccess={handleSuccess}
+        onError={handleError}
+        useOneTap={false}
+        type="standard"
+        theme={variant === "outline" ? "outline" : "filled_blue"}
+        size="large"
+        text={text === "Continue with Google" ? "continue_with" : "signin_with"}
+        shape="rectangular"
+        logo_alignment="left"
+      />
     </div>
   );
 };

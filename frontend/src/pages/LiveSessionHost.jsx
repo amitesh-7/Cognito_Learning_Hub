@@ -331,23 +331,7 @@ const LiveSessionHost = () => {
     });
   }, [socket, sessionCode, participants]);
 
-  // Next question
-  const handleNextQuestion = useCallback(() => {
-    if (currentQuestionIndex >= quiz.questions.length - 1) {
-      handleEndSession();
-      return;
-    }
-
-    console.log("➡️ Moving to next question...");
-    const userId = user?._id || user?.id || user?.userId;
-    socket.emit("next-question", { sessionCode, userId }, (response) => {
-      if (response && response.success) {
-        setCurrentQuestionIndex(response.questionIndex);
-      }
-    });
-  }, [socket, sessionCode, currentQuestionIndex, quiz, user, handleEndSession]);
-
-  // End session
+  // End session - Defined BEFORE handleNextQuestion to avoid hoisting issues
   const handleEndSession = useCallback(() => {
     if (!confirm("Are you sure you want to end this session?")) return;
 
@@ -367,6 +351,22 @@ const LiveSessionHost = () => {
       }
     });
   }, [socket, sessionCode, user]);
+
+  // Next question
+  const handleNextQuestion = useCallback(() => {
+    if (currentQuestionIndex >= quiz.questions.length - 1) {
+      handleEndSession();
+      return;
+    }
+
+    console.log("➡️ Moving to next question...");
+    const userId = user?._id || user?.id || user?.userId;
+    socket.emit("next-question", { sessionCode, userId }, (response) => {
+      if (response && response.success) {
+        setCurrentQuestionIndex(response.questionIndex);
+      }
+    });
+  }, [socket, sessionCode, currentQuestionIndex, quiz, user, handleEndSession]);
 
   // Copy session code
   const copySessionCode = () => {

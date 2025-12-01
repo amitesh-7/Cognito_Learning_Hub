@@ -407,30 +407,7 @@ const LiveSessionJoin = () => {
     play,
   ]);
 
-  // Timer countdown
-  useEffect(() => {
-    if (!currentQuestion || hasAnswered || quizEnded) return;
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          // Auto-submit empty answer when time runs out
-          if (!hasAnswered) {
-            setHasAnswered(true);
-            setSelectedAnswer("");
-            handleSubmitAnswer("");
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [currentQuestion, hasAnswered, quizEnded, handleSubmitAnswer]);
-
-  // Submit answer
+  // Submit answer - Defined BEFORE timer to avoid hoisting issues
   const handleSubmitAnswer = useCallback(
     (answer) => {
       if (!currentQuestion) return;
@@ -462,6 +439,29 @@ const LiveSessionJoin = () => {
     },
     [socket, sessionCode, user, currentQuestionIndex, currentQuestion, timeLeft]
   );
+
+  // Timer countdown
+  useEffect(() => {
+    if (!currentQuestion || hasAnswered || quizEnded) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          // Auto-submit empty answer when time runs out
+          if (!hasAnswered) {
+            setHasAnswered(true);
+            setSelectedAnswer("");
+            handleSubmitAnswer("");
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [currentQuestion, hasAnswered, quizEnded, handleSubmitAnswer]);
 
   // Handle answer selection
   const handleAnswerClick = (option) => {

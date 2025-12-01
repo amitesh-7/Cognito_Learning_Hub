@@ -5,6 +5,7 @@
 const express = require("express");
 const ApiResponse = require("../../shared/utils/response");
 const createLogger = require("../../shared/utils/logger");
+const HttpClient = require("../../shared/utils/httpClient");
 const {
   authenticateToken,
   optionalAuth,
@@ -16,6 +17,11 @@ const User = require("../models/User"); // Load User model for population
 
 const router = express.Router();
 const logger = createLogger("quiz-routes");
+
+// HTTP client for Result service
+const resultServiceUrl =
+  process.env.RESULT_SERVICE_URL || "http://localhost:3003";
+const resultClient = new HttpClient("quiz-service", resultServiceUrl);
 
 /**
  * @route   GET /api/quizzes
@@ -54,7 +60,7 @@ router.get("/", optionalAuth, async (req, res) => {
 
 /**
  * @route   GET /api/quizzes/my-quizzes
- * @desc    Get current user's quizzes
+ * @desc    Get current user's quizzes with accurate stats from Result service
  * @access  Private
  */
 router.get("/my-quizzes", authenticateToken, async (req, res) => {
@@ -69,7 +75,39 @@ router.get("/my-quizzes", authenticateToken, async (req, res) => {
       sortOrder: -1,
     });
 
-    return ApiResponse.success(res, result);
+    // Fetch accurate stats from Result service
+    let teacherStats = { totalAttempts: 0, uniqueStudents: 0 };
+
+    try {
+      const statsResponse = await resultClient.get(
+        "/api/analytics/teacher/stats",
+        {
+          headers: {
+            "x-auth-token": req.headers["x-auth-token"],
+          },
+        }
+      );
+
+      if (statsResponse.data) {
+        teacherStats = statsResponse.data.stats || teacherStats;
+      }
+    } catch (error) {
+      logger.warn(
+        "Failed to fetch teacher stats from Result service:",
+        error.message
+      );
+    }
+
+    const stats = {
+      totalQuizzes: result.pagination.total,
+      totalTakes: teacherStats.totalAttempts,
+      uniqueStudents: teacherStats.uniqueStudents,
+    };
+
+    return ApiResponse.success(res, {
+      ...result,
+      stats,
+    });
   } catch (error) {
     logger.error("Get my quizzes error:", error);
     return ApiResponse.error(res, "Failed to fetch your quizzes", 500);

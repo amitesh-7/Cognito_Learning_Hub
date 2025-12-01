@@ -212,6 +212,7 @@ const activityVariants = {
 
 export default function QuizList() {
   const [quizzes, setQuizzes] = useState([]);
+  const [totalQuizzes, setTotalQuizzes] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -229,8 +230,17 @@ export default function QuizList() {
           throw new Error("Failed to fetch quizzes.");
         }
         const data = await response.json();
+        console.log("📚 QuizList API Response:", data);
+
         // Handle new API response format: { success: true, data: { quizzes: [...], pagination: {...} } }
-        setQuizzes(data.data?.quizzes || data.quizzes || data);
+        const quizArray = data.data?.quizzes || data.quizzes || data;
+        const total =
+          data.data?.pagination?.total ||
+          data.pagination?.total ||
+          quizArray.length;
+
+        setQuizzes(quizArray);
+        setTotalQuizzes(total);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -353,7 +363,7 @@ export default function QuizList() {
                 className="absolute inset-0 w-20 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
               />
               <div className="text-3xl font-black text-white relative z-10">
-                {quizzes.length}
+                {totalQuizzes || quizzes.length}
               </div>
               <div className="text-xs font-black text-white/90 uppercase tracking-wide relative z-10">
                 Total Quizzes

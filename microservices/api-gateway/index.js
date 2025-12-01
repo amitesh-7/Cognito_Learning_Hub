@@ -228,6 +228,16 @@ app.use(
   })
 );
 
+// Route to Analytics (Result Service)
+app.use(
+  "/api/analytics",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.RESULT,
+    pathRewrite: { "^/api/analytics": "/api/analytics" },
+  })
+);
+
 // Route to Leaderboards (Result Service)
 app.use(
   "/api/leaderboards",
@@ -390,12 +400,27 @@ app.use(
     proxyTimeout: 60000,
     onError: (err, req, res) => {
       logger.error("WebSocket proxy error:", err.message);
-      if (!res.headersSent) {
+      // For WebSocket upgrades, res might be a socket, not an HTTP response
+      if (res && typeof res.status === "function" && !res.headersSent) {
         res.status(503).json({
           success: false,
           message: "Live service unavailable",
           error: err.message,
         });
+      } else if (res && typeof res.writeHead === "function") {
+        // WebSocket handshake - send proper HTTP error
+        try {
+          res.writeHead(503, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              success: false,
+              message: "Live service unavailable",
+              error: err.message,
+            })
+          );
+        } catch (e) {
+          logger.error("Failed to send WebSocket error response:", e.message);
+        }
       }
     },
     onProxyReqWs: (proxyReq, req, socket) => {

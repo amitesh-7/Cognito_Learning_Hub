@@ -26,6 +26,9 @@ export const SocketProvider = ({ children }) => {
     const SOCKET_URL = getSocketUrl();
 
     console.log("🔌 Initializing Socket.IO connection to:", SOCKET_URL);
+    console.log("📍 Environment:", import.meta.env.MODE);
+    console.log("🌐 VITE_API_URL:", import.meta.env.VITE_API_URL);
+    console.log("🔌 VITE_SOCKET_URL:", import.meta.env.VITE_SOCKET_URL);
 
     // Create socket connection with optimized settings
     const socketInstance = io(SOCKET_URL, {

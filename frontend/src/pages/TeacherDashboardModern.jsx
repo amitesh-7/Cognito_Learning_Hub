@@ -366,6 +366,10 @@ export default function TeacherDashboardModern() {
         if (!response.ok) throw new Error("Failed to fetch quizzes");
         const data = await response.json();
 
+        console.log("📊 Teacher Dashboard API Response:", data);
+        console.log("📦 Stats from API:", data.stats, data.data?.stats);
+        console.log("📄 Pagination:", data.pagination, data.data?.pagination);
+
         // Map real data to include icons based on subject
         // Handle new API format: { success: true, data: { quizzes: [...], pagination: {...} } }
         const quizArray = data.data?.quizzes || data.quizzes || [];
@@ -381,10 +385,20 @@ export default function TeacherDashboardModern() {
         }));
 
         setQuizzes(quizzesWithIcons);
+
+        // Use pagination total for accurate quiz count
+        const totalQuizCount =
+          data.data?.pagination?.total ||
+          data.pagination?.total ||
+          data.stats?.totalQuizzes ||
+          quizzesWithIcons.length;
+
         setStats({
-          totalQuizzes: data.stats?.totalQuizzes || quizzesWithIcons.length,
-          totalTakes: data.stats?.totalTakes || 0,
-          uniqueStudents: data.stats?.uniqueStudents || 0,
+          totalQuizzes: totalQuizCount,
+          totalTakes:
+            data.stats?.totalTakes || data.data?.stats?.totalTakes || 0,
+          uniqueStudents:
+            data.stats?.uniqueStudents || data.data?.stats?.uniqueStudents || 0,
         });
       } catch (error) {
         console.error("Error fetching data:", error);

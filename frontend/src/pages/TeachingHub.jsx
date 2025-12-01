@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -17,6 +17,46 @@ import {
 } from "lucide-react";
 
 const TeachingHub = () => {
+  const [stats, setStats] = useState({
+    totalQuizzes: 0,
+    activeStudents: 0,
+    liveSessions: 0,
+    avgPerformance: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("quizwise-token");
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/quizzes/my-quizzes?limit=1`,
+          {
+            headers: { "x-auth-token": token },
+          }
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch stats");
+        const data = await response.json();
+
+        const apiStats = data.stats || data.data?.stats || {};
+        setStats({
+          totalQuizzes: apiStats.totalQuizzes || 0,
+          activeStudents: apiStats.uniqueStudents || 0,
+          liveSessions: 0, // TODO: Add live sessions endpoint
+          avgPerformance: 0, // TODO: Add performance calculation
+        });
+      } catch (error) {
+        console.error("Error fetching teaching hub stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const features = [
     {
       title: "My Dashboard",
@@ -69,11 +109,31 @@ const TeachingHub = () => {
     },
   ];
 
-  const stats = [
-    { label: "Total Quizzes", value: "45", icon: BookOpen },
-    { label: "Active Students", value: "328", icon: Users },
-    { label: "Live Sessions", value: "12", icon: Radio },
-    { label: "Avg Performance", value: "78%", icon: TrendingUp },
+  const statsDisplay = [
+    {
+      label: "Total Quizzes",
+      value: loading ? "..." : stats.totalQuizzes.toString(),
+      icon: BookOpen,
+    },
+    {
+      label: "Active Students",
+      value: loading ? "..." : stats.activeStudents.toString(),
+      icon: Users,
+    },
+    {
+      label: "Live Sessions",
+      value: loading ? "..." : stats.liveSessions.toString(),
+      icon: Radio,
+    },
+    {
+      label: "Avg Performance",
+      value: loading
+        ? "..."
+        : stats.avgPerformance
+        ? `${stats.avgPerformance}%`
+        : "N/A",
+      icon: TrendingUp,
+    },
   ];
 
   const container = {
@@ -121,7 +181,7 @@ const TeachingHub = () => {
           animate="show"
           className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"
         >
-          {stats.map((stat, index) => (
+          {statsDisplay.map((stat, index) => (
             <motion.div
               key={index}
               variants={item}
