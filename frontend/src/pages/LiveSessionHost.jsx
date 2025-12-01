@@ -341,11 +341,11 @@ const LiveSessionHost = () => {
     console.log("➡️ Moving to next question...");
     const userId = user?._id || user?.id || user?.userId;
     socket.emit("next-question", { sessionCode, userId }, (response) => {
-      if (response.success) {
+      if (response && response.success) {
         setCurrentQuestionIndex(response.questionIndex);
       }
     });
-  }, [socket, sessionCode, currentQuestionIndex, quiz]);
+  }, [socket, sessionCode, currentQuestionIndex, quiz, user, handleEndSession]);
 
   // End session
   const handleEndSession = useCallback(() => {
@@ -353,12 +353,17 @@ const LiveSessionHost = () => {
 
     console.log("🛑 Ending session...");
     const userId = user?._id || user?.id || user?.userId;
+    console.log("User data:", { user, userId, sessionCode });
+
     socket.emit("end-session", { sessionCode, userId }, (response) => {
-      if (response.success) {
+      console.log("📨 Received end-session response:", response);
+
+      if (response && response.success) {
+        console.log("✅ Session ended successfully");
         setSessionStatus("ended");
       } else {
-        console.error("❌ Failed to end session:", response.error);
-        alert(response.error || "Failed to end session");
+        console.error("❌ Failed to end session:", response);
+        alert(response?.error || "Failed to end session");
       }
     });
   }, [socket, sessionCode, user]);

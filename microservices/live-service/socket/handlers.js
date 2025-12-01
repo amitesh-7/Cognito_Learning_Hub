@@ -483,16 +483,25 @@ function initializeSocketHandlers(io) {
     // ============================================
     socket.on("end-session", async ({ sessionCode, userId }, callback) => {
       try {
+        console.log("🛑 End session requested:", { sessionCode, userId });
+
         const session = await sessionManager.getSession(sessionCode);
 
         if (!session) {
+          console.log("❌ Session not found:", sessionCode);
           if (callback)
             callback({ success: false, error: "Session not found" });
           return;
         }
 
+        console.log("✅ Session found:", {
+          hostId: session.hostId,
+          requestingUserId: userId,
+        });
+
         // Check if user is the host
         if (session.hostId !== userId) {
+          console.log("❌ Authorization failed: User is not the host");
           if (callback)
             callback({ success: false, error: "Only host can end session" });
           socket.emit("error", { message: "Only host can end session" });
@@ -500,11 +509,14 @@ function initializeSocketHandlers(io) {
         }
 
         // End the session
+        console.log("✅ Ending session:", sessionCode);
         await endSession(sessionCode, io);
 
         if (callback) callback({ success: true });
+        console.log(`✅ Session ${sessionCode} ended by host ${userId}`);
         logger.info(`Session ${sessionCode} ended by host ${userId}`);
       } catch (error) {
+        console.error("❌ Error ending session:", error);
         logger.error("Error ending session:", error);
         if (callback) callback({ success: false, error: error.message });
         socket.emit("error", { message: "Failed to end session" });

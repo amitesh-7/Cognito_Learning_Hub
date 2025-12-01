@@ -416,7 +416,11 @@ const LiveSessionJoin = () => {
         if (prev <= 1) {
           clearInterval(timer);
           // Auto-submit empty answer when time runs out
-          handleSubmitAnswer("");
+          if (!hasAnswered) {
+            setHasAnswered(true);
+            setSelectedAnswer("");
+            handleSubmitAnswer("");
+          }
           return 0;
         }
         return prev - 1;
@@ -424,12 +428,12 @@ const LiveSessionJoin = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [currentQuestion, hasAnswered, quizEnded]);
+  }, [currentQuestion, hasAnswered, quizEnded, handleSubmitAnswer]);
 
   // Submit answer
   const handleSubmitAnswer = useCallback(
     (answer) => {
-      if (hasAnswered || !currentQuestion) return;
+      if (!currentQuestion) return;
 
       const timeTaken = 30 - timeLeft;
       const userId = user?._id || user?.id || user?.userId;
@@ -455,26 +459,19 @@ const LiveSessionJoin = () => {
         selectedAnswer: answer,
         timeSpent: timeTaken,
       });
-
-      // Mark as answered immediately to prevent double submission
-      setHasAnswered(true);
-      setSelectedAnswer(answer);
     },
-    [
-      socket,
-      sessionCode,
-      user,
-      currentQuestionIndex,
-      hasAnswered,
-      currentQuestion,
-      timeLeft,
-    ]
+    [socket, sessionCode, user, currentQuestionIndex, currentQuestion, timeLeft]
   );
 
   // Handle answer selection
   const handleAnswerClick = (option) => {
     if (hasAnswered) return;
+
+    // Immediately mark as answered and set selection for instant visual feedback
     setSelectedAnswer(option);
+    setHasAnswered(true);
+
+    // Submit to server
     handleSubmitAnswer(option);
   };
 
@@ -965,7 +962,8 @@ const LiveSessionJoin = () => {
             {currentQuestion?.options.map((option, index) => {
               const isSelected = selectedAnswer === option;
               const isCorrect = answerResult?.correctAnswer === option;
-              const showResult = hasAnswered;
+              // Only show result after we get server response
+              const showResult = hasAnswered && answerResult;
 
               let buttonClass =
                 "p-6 rounded-xl border-2 transition-all transform hover:scale-105 cursor-pointer ";
