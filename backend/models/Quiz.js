@@ -1,23 +1,46 @@
 const mongoose = require("mongoose");
 
-const QuestionSchema = new mongoose.Schema({
-  question: { type: String, required: true },
-  type: {
-    type: String,
-    enum: ["multiple-choice", "true-false", "descriptive", "fill-in-blank"],
-    default: "multiple-choice",
+const QuestionSchema = new mongoose.Schema(
+  {
+    question: { type: String, required: true },
+    type: {
+      type: String,
+      enum: ["multiple-choice", "true-false", "descriptive", "fill-in-blank"],
+      default: "multiple-choice",
+    },
+    options: [{ type: String }], // Optional for non-multiple choice questions
+    correct_answer: { type: String, required: true },
+    explanation: { type: String }, // Optional explanation for answers
+    points: { type: Number, default: 1 }, // Points for gamification
+    timeLimit: { type: Number, default: 30 }, // Time limit in seconds
+    difficulty: {
+      type: String,
+      enum: ["Easy", "Medium", "Hard", "Expert"],
+      default: "Medium",
+    },
   },
-  options: [{ type: String }], // Optional for non-multiple choice questions
-  correct_answer: { type: String, required: true },
-  explanation: { type: String }, // Optional explanation for answers
-  points: { type: Number, default: 1 }, // Points for gamification
-  timeLimit: { type: Number, default: 30 }, // Time limit in seconds
-  difficulty: {
-    type: String,
-    enum: ["Easy", "Medium", "Hard", "Expert"],
-    default: "Medium",
-  },
-});
+  {
+    // Transform to camelCase for API responses
+    toJSON: {
+      transform: function (doc, ret) {
+        if (ret.correct_answer !== undefined) {
+          ret.correctAnswer = ret.correct_answer;
+          delete ret.correct_answer;
+        }
+        return ret;
+      },
+    },
+    toObject: {
+      transform: function (doc, ret) {
+        if (ret.correct_answer !== undefined) {
+          ret.correctAnswer = ret.correct_answer;
+          delete ret.correct_answer;
+        }
+        return ret;
+      },
+    },
+  }
+);
 
 const QuizSchema = new mongoose.Schema(
   {

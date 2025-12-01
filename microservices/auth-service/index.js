@@ -38,9 +38,26 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      // In production, allow API Gateway and other microservices
+      if (process.env.NODE_ENV === "production") {
+        const isAllowedMicroservice =
+          origin.includes(".onrender.com") ||
+          origin.includes(".vercel.app") ||
+          allowedOrigins.includes(origin);
+
+        if (isAllowedMicroservice) {
+          return callback(null, true);
+        }
+      }
+
+      // Development mode - check allowed origins
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        logger.warn(`CORS blocked origin: ${origin}`);
         callback(new Error("Not allowed by CORS"));
       }
     },
@@ -207,7 +224,7 @@ async function startServer() {
     }
 
     // Start listening regardless of database connection
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       const serviceUrl =
         process.env.NODE_ENV === "production"
           ? process.env.AUTH_SERVICE_URL || `https://auth-service.onrender.com`
@@ -223,7 +240,7 @@ async function startServer() {
   } catch (error) {
     logger.error("Critical error starting auth service:", error);
     // Don't exit - try to keep service running for health checks
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       logger.warn(`⚠️ Auth Service started with errors on port ${PORT}`);
     });
   }

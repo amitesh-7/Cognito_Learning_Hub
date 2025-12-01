@@ -57,6 +57,9 @@ async function broadcastLeaderboard(sessionCode, io) {
  * Initialize Socket.IO handlers
  */
 function initializeSocketHandlers(io) {
+  // Store io instance globally for leaderboard broadcasting
+  ioInstance = io;
+
   io.on("connection", (socket) => {
     logger.info(`Socket connected: ${socket.id}`);
 
@@ -334,16 +337,33 @@ function initializeSocketHandlers(io) {
           }
 
           const question = quiz.questions.find(
-            (q) => q._id.toString() === questionId
+            (q) => q._id.toString() === questionId.toString()
           );
           if (!question) {
+            logger.error(
+              `Question not found. QuestionId: ${questionId}, Available IDs: ${quiz.questions
+                .map((q) => q._id)
+                .join(", ")}`
+            );
             socket.emit("error", { message: "Question not found" });
             return;
           }
 
-          // Check answer correctness
-          const isCorrect = question.correctAnswer === selectedAnswer;
+          // Check answer correctness (case-insensitive, trimmed comparison)
+          const correctAnswer = (question.correctAnswer || "")
+            .toString()
+            .trim();
+          const userAnswer = (selectedAnswer || "").toString().trim();
+          const isCorrect =
+            correctAnswer.toLowerCase() === userAnswer.toLowerCase();
           const points = isCorrect ? question.points || 10 : 0;
+
+          logger.info(
+            `Answer check - Question: ${question.question.substring(
+              0,
+              50
+            )}..., Correct: ${correctAnswer}, User: ${userAnswer}, Match: ${isCorrect}`
+          );
 
           // Record answer in Redis
           await sessionManager.recordAnswer(sessionCode, {
@@ -370,15 +390,18 @@ function initializeSocketHandlers(io) {
           // Update leaderboard (atomic operation - O(log N))
           await sessionManager.updateLeaderboard(sessionCode, userId, points);
 
-          // Mark leaderboard for batched update
-          leaderboardUpdateQueue.set(sessionCode, true);
-
-          // Send feedback to user
+          // Send feedback to user FIRST
           socket.emit("answer-submitted", {
             isCorrect,
             points,
             correctAnswer: question.correctAnswer,
           });
+
+          // Immediately broadcast updated leaderboard to all participants
+          await broadcastLeaderboard(sessionCode, io);
+
+          // Also mark for batched update as backup
+          leaderboardUpdateQueue.set(sessionCode, true);
 
           logger.debug(
             `Answer submitted by ${userId} in session ${sessionCode}`

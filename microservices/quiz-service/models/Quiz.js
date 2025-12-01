@@ -5,51 +5,78 @@
 
 const mongoose = require("mongoose");
 
-const QuestionSchema = new mongoose.Schema({
-  question: {
-    type: String,
-    required: true,
-  },
-  type: {
-    type: String,
-    enum: ["multiple-choice", "true-false", "descriptive", "fill-in-blank"],
-    default: "multiple-choice",
-  },
-  options: {
-    type: [String],
-    validate: {
-      validator: function (arr) {
-        // Options required for multiple-choice, optional for others
-        return this.type !== "multiple-choice" || (arr && arr.length >= 2);
-      },
-      message: "Multiple choice questions must have at least 2 options",
+const QuestionSchema = new mongoose.Schema(
+  {
+    question: {
+      type: String,
+      required: true,
     },
+    type: {
+      type: String,
+      enum: ["multiple-choice", "true-false", "descriptive", "fill-in-blank"],
+      default: "multiple-choice",
+    },
+    options: {
+      type: [String],
+      validate: {
+        validator: function (arr) {
+          // Options required for multiple-choice, optional for others
+          return this.type !== "multiple-choice" || (arr && arr.length >= 2);
+        },
+        message: "Multiple choice questions must have at least 2 options",
+      },
+    },
+    correct_answer: {
+      type: String,
+      required: true,
+    },
+    explanation: {
+      type: String,
+    },
+    points: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
+    timeLimit: {
+      type: Number,
+      default: 30,
+      min: 5,
+    },
+    difficulty: {
+      type: String,
+      enum: ["Easy", "Medium", "Hard", "Expert"],
+      default: "Medium",
+    },
+    tags: [String],
+    imageUrl: String,
   },
-  correct_answer: {
-    type: String,
-    required: true,
-  },
-  explanation: {
-    type: String,
-  },
-  points: {
-    type: Number,
-    default: 1,
-    min: 1,
-  },
-  timeLimit: {
-    type: Number,
-    default: 30,
-    min: 5,
-  },
-  difficulty: {
-    type: String,
-    enum: ["Easy", "Medium", "Hard", "Expert"],
-    default: "Medium",
-  },
-  tags: [String],
-  imageUrl: String,
-});
+  {
+    // Transform to camelCase for API responses
+    toJSON: {
+      virtuals: true,
+      transform: function (doc, ret) {
+        // Convert correct_answer to correctAnswer for consistency
+        if (ret.correct_answer !== undefined) {
+          ret.correctAnswer = ret.correct_answer;
+          delete ret.correct_answer;
+        }
+        return ret;
+      },
+    },
+    toObject: {
+      virtuals: true,
+      transform: function (doc, ret) {
+        // Convert correct_answer to correctAnswer for consistency
+        if (ret.correct_answer !== undefined) {
+          ret.correctAnswer = ret.correct_answer;
+          delete ret.correct_answer;
+        }
+        return ret;
+      },
+    },
+  }
+);
 
 const QuizSchema = new mongoose.Schema(
   {
