@@ -25,7 +25,7 @@ import Button from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import Badge from "../components/ui/Badge";
 import { LoadingSpinner } from "../components/ui/Loading";
-import GoogleAuthButton from "../components/ui/GoogleAuthButton";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 import RoleSelectionModal from "../components/ui/RoleSelectionModal";
 import { staggerContainer, staggerItem, fadeInUp } from "../lib/utils";
 
@@ -153,31 +153,45 @@ export default function Login() {
       });
 
       const data = await response.json();
+      console.log("Backend response:", data);
 
       if (response.ok) {
+        // Extract user and token from response
+        const user = data.data?.user || data.user;
+        const token = data.data?.accessToken || data.accessToken;
+
+        if (!token) {
+          console.error("No token in response:", data);
+          setError("Authentication failed - no token received");
+          return;
+        }
+
+        console.log("User data:", user);
+        console.log("Token received:", token ? "Yes" : "No");
+
         // Check if this is a new user with default role
-        if (data.user.role === "Student" && data.isNewUser) {
+        if (user.role === "Student" && data.isNewUser) {
           // Show role selection for new users
           setPendingGoogleUser({
-            ...data,
+            token,
+            user,
             userInfo: {
-              name: data.user.name,
-              email: data.user.email,
-              picture: data.user.picture,
+              name: user.name,
+              email: user.email,
+              picture: user.picture,
             },
           });
           setShowRoleSelection(true);
         } else {
           // Existing user or user with specific role - proceed with login
-          const token = data.token || data.data?.accessToken;
           login(token);
-          console.log("Login successful, redirecting...");
+          console.log("Login successful, redirecting to:", user.role);
 
           // Redirect based on user role
           setTimeout(() => {
-            if (data.user.role === "admin") {
+            if (user.role === "admin") {
               navigate("/admin");
-            } else if (data.user.role === "Teacher") {
+            } else if (user.role === "Teacher") {
               navigate("/teacher-dashboard");
             } else {
               navigate("/dashboard"); // Student dashboard
@@ -295,7 +309,8 @@ export default function Login() {
       }
 
       // Login the user first - handle both old and new response format
-      const token = data.token || data.data?.accessToken || data.message?.accessToken;
+      const token =
+        data.token || data.data?.accessToken || data.message?.accessToken;
       if (!token) {
         console.error("Full response data:", data);
         throw new Error("No authentication token received");

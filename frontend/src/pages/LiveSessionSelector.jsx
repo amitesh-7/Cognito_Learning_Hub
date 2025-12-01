@@ -28,17 +28,25 @@ const LiveSessionSelector = () => {
         localStorage.getItem("quizwise-token") || localStorage.getItem("token");
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-      const response = await fetch(`${apiUrl}/api/quizzes/my-quizzes`, {
-        headers: {
-          "x-auth-token": token,
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Fetch ALL quizzes without pagination limit
+      const response = await fetch(
+        `${apiUrl}/api/quizzes/my-quizzes?limit=1000`,
+        {
+          headers: {
+            "x-auth-token": token,
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) throw new Error("Failed to fetch quizzes");
 
       const result = await response.json();
-      console.log("📊 API Response:", result);
+      console.log("📊 Live Session - API Response:", result);
+      console.log(
+        "📦 Total quizzes available:",
+        result.data?.pagination?.total || result.pagination?.total
+      );
 
       // Handle wrapped API response: { success: true, data: { quizzes: [...], total, page } }
       const data = result.data || result;

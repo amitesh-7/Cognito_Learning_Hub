@@ -71,12 +71,36 @@ class MeetingManager {
 
       this.redis.on("connect", () => {
         this.connected = true;
-        logger.info("Redis connected");
+        logger.info("Redis client connected");
+      });
+
+      this.redis.on("ready", () => {
+        this.connected = true;
+        logger.info("Redis client ready");
       });
 
       this.redis.on("error", (err) => {
-        logger.error("Redis error:", err);
+        // Don't log ECONNRESET errors as they're normal with cloud Redis
+        if (err.code !== "ECONNRESET") {
+          logger.error("Redis error:", err);
+        }
+        // Keep connected flag true as reconnection is automatic
+      });
+
+      this.redis.on("close", () => {
+        logger.info("Redis connection closed");
         this.connected = false;
+      });
+
+      this.redis.on("reconnecting", () => {
+        logger.info("Redis reconnecting...");
+      });
+
+      // Subscriber events
+      this.subscriber.on("error", (err) => {
+        if (err.code !== "ECONNRESET") {
+          logger.error("Redis subscriber error:", err);
+        }
       });
 
       await this.redis.ping();

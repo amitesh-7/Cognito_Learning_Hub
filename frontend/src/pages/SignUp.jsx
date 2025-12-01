@@ -5,7 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Badge } from "../components/ui/Badge";
-import GoogleAuthButton from "../components/ui/GoogleAuthButton";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 import { apiUrl, getApiUrl } from "../lib/apiConfig";
 import {
   Sparkles,

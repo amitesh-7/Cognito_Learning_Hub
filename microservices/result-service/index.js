@@ -22,13 +22,21 @@ if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
 
-// Rate limiting
+// Rate limiting - Only count failed requests (4xx, 5xx)
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000, // 15 min
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 300, // Increased from 100
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true, // Only count failed requests (4xx, 5xx)
+  skip: (req) => {
+    // Skip rate limiting in development
+    if (process.env.NODE_ENV !== "production") {
+      return true;
+    }
+    return false;
+  },
 });
 
 // Middleware

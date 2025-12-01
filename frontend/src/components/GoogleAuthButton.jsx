@@ -11,108 +11,23 @@ const GoogleAuthButton = ({
   className = "",
   disabled = false,
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [status, setStatus] = useState(null); // 'success', 'error', or null
-
-  const handleSuccess = async (credentialResponse) => {
-    setIsLoading(true);
-    setStatus(null);
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/auth/google`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            credential: credentialResponse.credential,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setStatus("success");
-        setTimeout(() => {
-          onSuccess(data);
-        }, 500);
-      } else {
-        throw new Error(data.message || "Google authentication failed");
-      }
-    } catch (error) {
-      console.error("Google OAuth error:", error);
-      setStatus("error");
-      setTimeout(() => {
-        setStatus(null);
-        onError(error.message || "Google authentication failed");
-      }, 2000);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSuccess = (credentialResponse) => {
+    console.log("Google OAuth successful");
+    // Just pass the credential to parent component
+    onSuccess(credentialResponse);
   };
 
   const handleError = () => {
     console.error(
       "Google OAuth error: User cancelled or authentication failed"
     );
-    setStatus("error");
-    setTimeout(() => {
-      setStatus(null);
-      onError("Google authentication was cancelled or failed");
-    }, 2000);
-  };
-
-  // Custom button styles based on variant
-  const getButtonStyle = () => {
-    const baseStyle =
-      "relative overflow-hidden transition-all duration-300 transform hover:scale-105 focus:scale-105 active:scale-95";
-
-    switch (variant) {
-      case "outline":
-        return `${baseStyle} border-2 border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700`;
-      case "minimal":
-        return `${baseStyle} bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300`;
-      case "primary":
-        return `${baseStyle} bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl`;
-      default:
-        return `${baseStyle} bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 shadow-md hover:shadow-lg`;
+    if (onError) {
+      onError();
     }
-  };
-
-  const getIconColor = () => {
-    switch (variant) {
-      case "primary":
-        return "text-white";
-      default:
-        return "text-gray-600 dark:text-gray-400";
-    }
-  };
-
-  const getStatusIcon = () => {
-    if (isLoading) {
-      return <Loader2 className="w-5 h-5 animate-spin" />;
-    }
-    if (status === "success") {
-      return <CheckCircle className="w-5 h-5 text-green-500" />;
-    }
-    if (status === "error") {
-      return <AlertCircle className="w-5 h-5 text-red-500" />;
-    }
-    return <Chrome className={`w-5 h-5 ${getIconColor()}`} />;
-  };
-
-  const getStatusText = () => {
-    if (isLoading) return "Authenticating...";
-    if (status === "success") return "Success!";
-    if (status === "error") return "Failed";
-    return text;
   };
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`w-full ${className}`}>
       {/* Use GoogleLogin component from @react-oauth/google */}
       <GoogleLogin
         onSuccess={handleSuccess}
@@ -124,6 +39,7 @@ const GoogleAuthButton = ({
         text={text === "Continue with Google" ? "continue_with" : "signin_with"}
         shape="rectangular"
         logo_alignment="left"
+        width="100%"
       />
     </div>
   );

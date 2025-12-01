@@ -31,15 +31,15 @@ const DuelBattle = () => {
       _id: user?._id,
       name: user?.name,
       role: user?.role,
-      allKeys: user ? Object.keys(user) : []
+      allKeys: user ? Object.keys(user) : [],
     });
-    
+
     // Check localStorage token
-    const token = localStorage.getItem('quizwise-token');
+    const token = localStorage.getItem("quizwise-token");
     if (token) {
       console.log("🔍 Token exists in localStorage");
       try {
-        const decoded = JSON.parse(atob(token.split('.')[1]));
+        const decoded = JSON.parse(atob(token.split(".")[1]));
         console.log("🔍 Decoded token payload:", decoded);
       } catch (e) {
         console.error("❌ Failed to decode token:", e);
@@ -91,20 +91,44 @@ const DuelBattle = () => {
     };
     socket.on("disconnect", handleDisconnect);
 
-    socket.on("disconnect", handleDisconnect);
-
     socket.on("match-found", (data) => {
-      console.log("🎮 Match found:", data);
+      console.log("🎮 Match found event received:", {
+        matchId: data.matchId,
+        hasQuiz: !!data.quiz,
+        hasOpponent: !!data.opponent,
+        currentMatchId: matchId,
+        currentState: matchState,
+      });
+
+      // CRITICAL: Update matchId from the event data
+      setMatchId(data.matchId);
       setQuiz(data.quiz);
 
       const userId = user?._id || user?.id || user?.userId;
-      if (data.opponent.player1.userId === userId) {
+
+      // Determine role and opponent based on userId
+      if (
+        data.opponent.player1.userId === userId ||
+        data.opponent.player1.userId.toString() === userId.toString()
+      ) {
+        setRole("player1");
         setOpponent(data.opponent.player2);
+        console.log("✅ I am Player 1, opponent is Player 2");
       } else {
+        setRole("player2");
         setOpponent(data.opponent.player1);
+        console.log("✅ I am Player 2, opponent is Player 1");
       }
 
       setMatchState("ready");
+      console.log("✅ Match synchronized - Ready to battle!", {
+        matchId: data.matchId,
+        myRole: data.opponent.player1.userId === userId ? "player1" : "player2",
+        opponentName:
+          data.opponent.player1.userId === userId
+            ? data.opponent.player2.username
+            : data.opponent.player1.username,
+      });
     });
 
     socket.on("player-ready", (data) => {
@@ -251,14 +275,17 @@ const DuelBattle = () => {
   }, [socket, user, navigate]);
 
   // Find match - EMIT AFTER listeners are set up (ONLY ONCE)
+  // Use ref to track if we've already requested a match
+  const matchRequestedRef = useRef(false);
+
   useEffect(() => {
     if (!socket || !isConnected || !user || !quizId) return;
 
-    // Prevent duplicate match requests if already searching/matched
-    if (matchId) {
+    // Prevent duplicate match requests (React Strict Mode causes double mount)
+    if (matchRequestedRef.current || matchId) {
       console.log(
-        "⚠️ Already in match:",
-        matchId,
+        "⚠️ Match already requested or in progress:",
+        matchId || "(pending)",
         "- skipping duplicate request"
       );
       return;
@@ -266,7 +293,7 @@ const DuelBattle = () => {
 
     console.log("🔍 Searching for duel opponent...");
     console.log("🔍 DEBUG - User object before find-match:", user);
-    
+
     const userId = user?._id || user?.id || user?.userId;
     if (!userId) {
       console.error("❌ Cannot start duel - User ID not found!");
@@ -274,6 +301,9 @@ const DuelBattle = () => {
       navigate("/login");
       return;
     }
+
+    // Mark as requested to prevent duplicates
+    matchRequestedRef.current = true;
 
     socket.emit(
       "find-duel-match",
@@ -299,6 +329,7 @@ const DuelBattle = () => {
         } else {
           console.error("❌ Failed to find match:", response.error);
           alert("Failed to find match: " + response.error);
+          matchRequestedRef.current = false; // Reset on error
           navigate("/duel");
         }
       }
@@ -306,15 +337,36 @@ const DuelBattle = () => {
   }, [socket, isConnected, user, quizId, navigate, matchId]);
 
   // Cleanup on unmount - cancel pending matches
+  // Use ref to capture current values to avoid stale closures
+  const matchStateRef = useRef(matchState);
+  const matchIdRef = useRef(matchId);
+
+  useEffect(() => {
+    matchStateRef.current = matchState;
+    matchIdRef.current = matchId;
+  }, [matchState, matchId]);
+
   useEffect(() => {
     return () => {
-      // If we're in waiting or searching state, cancel the match
-      if (matchId && (matchState === "waiting" || matchState === "searching")) {
-        console.log("🧹 Component unmounting - canceling match:", matchId);
-        socket?.emit("cancel-duel", { matchId });
-      }
+      // Only cancel if we're truly unmounting (not React Strict Mode remount)
+      // Check after a small delay to distinguish unmount from remount
+      setTimeout(() => {
+        const currentMatchId = matchIdRef.current;
+        const currentState = matchStateRef.current;
+
+        if (
+          currentMatchId &&
+          (currentState === "waiting" || currentState === "searching")
+        ) {
+          console.log(
+            "🧹 Component unmounting - canceling match:",
+            currentMatchId
+          );
+          socket?.emit("cancel-duel", { matchId: currentMatchId });
+        }
+      }, 100);
     };
-  }, [matchId, matchState, socket]);
+  }, [socket]);
 
   // Timer
   useEffect(() => {
@@ -339,15 +391,15 @@ const DuelBattle = () => {
     console.log("🔍 DEBUG - Full user object:", user);
     console.log("🔍 DEBUG - user._id:", user?._id);
     console.log("🔍 DEBUG - user.id:", user?.id);
-    
+
     const userId = user?._id || user?.id || user?.userId;
-    
+
     if (!userId) {
       console.error("❌ ERROR: userId is undefined! User object:", user);
       alert("Error: User ID not found. Please log in again.");
       return;
     }
-    
+
     console.log("🎯 Sending duel-ready:", { matchId, userId });
 
     socket.emit(

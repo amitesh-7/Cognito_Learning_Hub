@@ -14,6 +14,8 @@ import {
   MessageSquare,
   PhoneOff,
   Settings,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 
@@ -36,6 +38,7 @@ const MeetingRoom = () => {
   const [showChat, setShowChat] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const [copiedRoomId, setCopiedRoomId] = useState(false);
 
   const localVideoRef = useRef(null);
   const localStreamRef = useRef(null); // Ref to always access current localStream
@@ -46,7 +49,11 @@ const MeetingRoom = () => {
 
   // Initialize socket connection to meeting service
   useEffect(() => {
-    const meetingUrl = import.meta.env.VITE_MEETING_WS_URL?.replace('ws://', 'http://').replace('wss://', 'https://') || 'http://localhost:3009';
+    const meetingUrl =
+      import.meta.env.VITE_MEETING_WS_URL?.replace("ws://", "http://").replace(
+        "wss://",
+        "https://"
+      ) || "http://localhost:3009";
     const meetSocket = io(meetingUrl, {
       transports: ["websocket", "polling"],
       reconnection: true,
@@ -426,8 +433,8 @@ const MeetingRoom = () => {
         });
       }
 
-      socket?.emit("media:offer", {
-        to: remoteSocketId,
+      socket?.emit("webrtc-offer", {
+        targetSocketId: remoteSocketId,
         offer,
         from: user?.name,
       });
@@ -458,8 +465,7 @@ const MeetingRoom = () => {
       );
       console.log("[Meeting] My socket ID:", mySocketId);
 
-      // Initiate calls only if my socket ID is lexicographically smaller (polite peer pattern)
-      // This prevents both peers from sending offers simultaneously
+      // Call all participants (both peers can send offers - backend handles negotiation)
       participants.forEach((p) => {
         // Skip self and already called peers
         if (
@@ -467,22 +473,12 @@ const MeetingRoom = () => {
           p.socketId !== mySocketId &&
           !calledPeersRef.current.has(p.socketId)
         ) {
-          const shouldInitiate = mySocketId < p.socketId;
-          console.log(
-            `[Meeting] Peer ${p.socketId} (${p.name}): mySocketId=${mySocketId}, shouldInitiate=${shouldInitiate}`
-          );
-          if (shouldInitiate) {
-            console.log("[Meeting] ✅ Calling peer", p.socketId, p.name);
-            calledPeersRef.current.add(p.socketId);
+          console.log("[Meeting] ✅ Calling peer", p.socketId, p.name);
+          calledPeersRef.current.add(p.socketId);
+          // Add small delay to avoid simultaneous calls
+          setTimeout(() => {
             callPeer(p.socketId, p.name);
-          } else {
-            console.log(
-              "[Meeting] ⏳ Waiting for peer",
-              p.socketId,
-              p.name,
-              "to call us"
-            );
-          }
+          }, 100);
         } else if (p.socketId === mySocketId) {
           console.log(`[Meeting] ⊗ Skipping self: ${p.socketId}`);
         } else if (calledPeersRef.current.has(p.socketId)) {
@@ -501,6 +497,14 @@ const MeetingRoom = () => {
       });
       setMicOn(!micOn);
     }
+  };
+
+  // Copy room ID to clipboard
+  const copyRoomId = () => {
+    navigator.clipboard.writeText(roomId).then(() => {
+      setCopiedRoomId(true);
+      setTimeout(() => setCopiedRoomId(false), 2000);
+    });
   };
 
   // Toggle camera
@@ -592,10 +596,28 @@ const MeetingRoom = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex flex-col">
       {/* Top bar */}
       <div className="bg-black/40 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-white text-lg font-semibold flex items-center gap-2">
-          <Video className="w-5 h-5" />
-          Meeting Room: {roomId}
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-white text-lg font-semibold flex items-center gap-2">
+            <Video className="w-5 h-5" />
+            Meeting Room: {roomId}
+          </h1>
+          <button
+            onClick={copyRoomId}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors group relative"
+            title="Copy Room ID"
+          >
+            {copiedRoomId ? (
+              <Check className="w-4 h-4 text-green-400" />
+            ) : (
+              <Copy className="w-4 h-4 text-white group-hover:text-blue-400" />
+            )}
+            {copiedRoomId && (
+              <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                Copied!
+              </span>
+            )}
+          </button>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"

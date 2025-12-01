@@ -3,20 +3,28 @@
  * Prevents abuse and DDoS attacks
  */
 
-const rateLimit = require('express-rate-limit');
-const ApiResponse = require('../utils/response');
+const rateLimit = require("express-rate-limit");
+const ApiResponse = require("../utils/response");
 
-// General API rate limiter
+// General API rate limiter - Only count failed requests
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
-  message: 'Too many requests from this IP, please try again later.',
+  max: 300, // Increased from 100 to 300 requests per window
+  message: "Too many requests from this IP, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true, // Only count failed requests (4xx, 5xx)
+  skip: (req) => {
+    // Skip rate limiting in development
+    if (process.env.NODE_ENV !== "production") {
+      return true;
+    }
+    return false;
+  },
   handler: (req, res) => {
     ApiResponse.tooManyRequests(
       res,
-      'Too many requests from this IP, please try again later.'
+      "Too many requests from this IP, please try again later."
     );
   },
 });
@@ -25,12 +33,13 @@ const generalLimiter = rateLimit({
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5, // 5 attempts per window
-  message: 'Too many authentication attempts, please try again after 15 minutes.',
+  message:
+    "Too many authentication attempts, please try again after 15 minutes.",
   skipSuccessfulRequests: true,
   handler: (req, res) => {
     ApiResponse.tooManyRequests(
       res,
-      'Too many authentication attempts, please try again after 15 minutes.'
+      "Too many authentication attempts, please try again after 15 minutes."
     );
   },
 });
@@ -39,11 +48,11 @@ const authLimiter = rateLimit({
 const heavyLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
-  message: 'Rate limit reached for this operation.',
+  message: "Rate limit reached for this operation.",
   handler: (req, res) => {
     ApiResponse.tooManyRequests(
       res,
-      'Rate limit reached. Please try again later.'
+      "Rate limit reached. Please try again later."
     );
   },
 });

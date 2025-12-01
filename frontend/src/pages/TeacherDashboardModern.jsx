@@ -356,23 +356,40 @@ export default function TeacherDashboardModern() {
       try {
         const token = localStorage.getItem("quizwise-token");
 
-        const response = await fetch(
+        // Fetch quizzes
+        const quizzesResponse = await fetch(
           `${import.meta.env.VITE_API_URL}/api/quizzes/my-quizzes`,
           {
             headers: { "x-auth-token": token },
           }
         );
 
-        if (!response.ok) throw new Error("Failed to fetch quizzes");
-        const data = await response.json();
+        if (!quizzesResponse.ok) throw new Error("Failed to fetch quizzes");
+        const quizzesData = await quizzesResponse.json();
 
-        console.log("📊 Teacher Dashboard API Response:", data);
-        console.log("📦 Stats from API:", data.stats, data.data?.stats);
-        console.log("📄 Pagination:", data.pagination, data.data?.pagination);
+        console.log("📊 Teacher Dashboard Quizzes Response:", quizzesData);
+
+        // Fetch REAL stats from analytics service
+        const statsResponse = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/analytics/teacher/stats`,
+          {
+            headers: { "x-auth-token": token },
+          }
+        );
+
+        let realStats = { totalAttempts: 0, uniqueStudents: 0 };
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+          console.log("📈 Real Stats from Analytics:", statsData);
+          realStats = statsData.data?.stats || statsData.stats || realStats;
+        } else {
+          console.warn("Failed to fetch analytics stats, using defaults");
+        }
 
         // Map real data to include icons based on subject
         // Handle new API format: { success: true, data: { quizzes: [...], pagination: {...} } }
-        const quizArray = data.data?.quizzes || data.quizzes || [];
+        const quizArray =
+          quizzesData.data?.quizzes || quizzesData.quizzes || [];
         const quizzesWithIcons = quizArray.map((quiz) => ({
           ...quiz,
           id: quiz._id,
@@ -388,17 +405,20 @@ export default function TeacherDashboardModern() {
 
         // Use pagination total for accurate quiz count
         const totalQuizCount =
-          data.data?.pagination?.total ||
-          data.pagination?.total ||
-          data.stats?.totalQuizzes ||
+          quizzesData.data?.pagination?.total ||
+          quizzesData.pagination?.total ||
           quizzesWithIcons.length;
 
         setStats({
           totalQuizzes: totalQuizCount,
-          totalTakes:
-            data.stats?.totalTakes || data.data?.stats?.totalTakes || 0,
-          uniqueStudents:
-            data.stats?.uniqueStudents || data.data?.stats?.uniqueStudents || 0,
+          totalTakes: realStats.totalAttempts || 0,
+          uniqueStudents: realStats.uniqueStudents || 0,
+        });
+
+        console.log("✅ Final Stats Set:", {
+          totalQuizzes: totalQuizCount,
+          totalTakes: realStats.totalAttempts,
+          uniqueStudents: realStats.uniqueStudents,
         });
       } catch (error) {
         console.error("Error fetching data:", error);

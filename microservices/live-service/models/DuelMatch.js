@@ -64,6 +64,9 @@ const DuelMatchSchema = new mongoose.Schema(
 // Index for finding waiting matches
 DuelMatchSchema.index({ quizId: 1, status: 1, "player1.userId": 1 });
 
+// Compound index for efficient matchmaking (find waiting matches without player2)
+DuelMatchSchema.index({ quizId: 1, status: 1, player2: 1, createdAt: 1 });
+
 // Auto-expire waiting matches after 5 minutes
 DuelMatchSchema.index(
   { createdAt: 1 },

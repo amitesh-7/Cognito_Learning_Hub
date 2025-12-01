@@ -3,8 +3,8 @@
  * Centralized caching for sessions, leaderboards, and temporary data
  */
 
-const Redis = require('ioredis');
-const createLogger = require('./logger');
+const Redis = require("ioredis");
+const createLogger = require("./logger");
 
 class RedisClient {
   constructor(serviceName) {
@@ -13,39 +13,39 @@ class RedisClient {
     this.isConnected = false;
   }
 
-  connect(redisUrl = process.env.REDIS_URL || 'redis://localhost:6379') {
+  connect(redisUrl = process.env.REDIS_URL || "redis://localhost:6379") {
     try {
       // Check if Upstash Redis is configured
       let redisConfig;
-      
+
       if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
-        this.logger.info('Connecting to Upstash Redis (cloud)...');
-        
+        this.logger.info("Connecting to Upstash Redis (cloud)...");
+
         const url = new URL(process.env.UPSTASH_REDIS_URL);
-        
+
         redisConfig = {
           host: url.hostname,
           port: parseInt(url.port) || 6379,
           password: process.env.UPSTASH_REDIS_TOKEN,
           tls: {
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
           },
-          maxRetriesPerRequest: null,  // Required for Bull queue compatibility
-          enableReadyCheck: false,      // Required for Bull queue compatibility
+          maxRetriesPerRequest: null, // Required for Bull queue compatibility
+          enableReadyCheck: false, // Required for Bull queue compatibility
           retryStrategy: (times) => {
             const delay = Math.min(times * 50, 2000);
             return delay;
           },
         };
-        
+
         this.client = new Redis(redisConfig);
       } else {
         // Fallback to provided URL or localhost
-        this.logger.info('Connecting to local Redis...');
-        
+        this.logger.info("Connecting to local Redis...");
+
         this.client = new Redis(redisUrl, {
-          maxRetriesPerRequest: null,  // Required for Bull queue compatibility
-          enableReadyCheck: false,      // Required for Bull queue compatibility
+          maxRetriesPerRequest: null, // Required for Bull queue compatibility
+          enableReadyCheck: false, // Required for Bull queue compatibility
           retryStrategy: (times) => {
             const delay = Math.min(times * 50, 2000);
             return delay;
@@ -53,23 +53,37 @@ class RedisClient {
         });
       }
 
-      this.client.on('connect', () => {
+      this.client.on("connect", () => {
         this.isConnected = true;
-        this.logger.info('✓ Redis connected successfully');
+        this.logger.info("Redis client connected");
       });
 
-      this.client.on('error', (err) => {
-        this.logger.error('Redis connection error:', err);
+      this.client.on("ready", () => {
+        this.isConnected = true;
+        this.logger.info("Redis client ready");
+      });
+
+      this.client.on("error", (err) => {
+        // Don't log ECONNRESET errors as they're normal with cloud Redis (Upstash)
+        // These are automatically handled by the retry strategy
+        if (err.code !== "ECONNRESET") {
+          this.logger.error("Redis connection error:", err);
+        }
+        // Keep connected flag true as reconnection is automatic
+      });
+
+      this.client.on("close", () => {
+        this.logger.info("Redis connection closed");
         this.isConnected = false;
       });
 
-      this.client.on('ready', () => {
-        this.logger.info('Redis client ready');
+      this.client.on("reconnecting", (delay) => {
+        this.logger.info(`Redis reconnecting in ${delay}ms...`);
       });
 
       return this.client;
     } catch (error) {
-      this.logger.error('Failed to initialize Redis:', error);
+      this.logger.error("Failed to initialize Redis:", error);
       throw error;
     }
   }
@@ -155,12 +169,12 @@ class RedisClient {
     if (this.client) {
       await this.client.quit();
       this.isConnected = false;
-      this.logger.info('Redis disconnected gracefully');
+      this.logger.info("Redis disconnected gracefully");
     }
   }
 
   isHealthy() {
-    return this.isConnected && this.client.status === 'ready';
+    return this.isConnected && this.client.status === "ready";
   }
 }
 

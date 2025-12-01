@@ -30,20 +30,41 @@ const TeachingHub = () => {
     const fetchStats = async () => {
       try {
         const token = localStorage.getItem("quizwise-token");
-        const response = await fetch(
+
+        // Fetch quiz count
+        const quizzesResponse = await fetch(
           `${import.meta.env.VITE_API_URL}/api/quizzes/my-quizzes?limit=1`,
           {
             headers: { "x-auth-token": token },
           }
         );
 
-        if (!response.ok) throw new Error("Failed to fetch stats");
-        const data = await response.json();
+        if (!quizzesResponse.ok) throw new Error("Failed to fetch quizzes");
+        const quizzesData = await quizzesResponse.json();
 
-        const apiStats = data.stats || data.data?.stats || {};
+        // Fetch real analytics stats
+        const analyticsResponse = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/analytics/teacher/stats`,
+          {
+            headers: { "x-auth-token": token },
+          }
+        );
+
+        let realStats = { totalAttempts: 0, uniqueStudents: 0 };
+        if (analyticsResponse.ok) {
+          const analyticsData = await analyticsResponse.json();
+          realStats =
+            analyticsData.data?.stats || analyticsData.stats || realStats;
+        }
+
+        const totalQuizCount =
+          quizzesData.data?.pagination?.total ||
+          quizzesData.pagination?.total ||
+          0;
+
         setStats({
-          totalQuizzes: apiStats.totalQuizzes || 0,
-          activeStudents: apiStats.uniqueStudents || 0,
+          totalQuizzes: totalQuizCount,
+          activeStudents: realStats.uniqueStudents || 0,
           liveSessions: 0, // TODO: Add live sessions endpoint
           avgPerformance: 0, // TODO: Add performance calculation
         });
