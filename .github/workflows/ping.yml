@@ -1,0 +1,60 @@
+name: Keep Render Services Alive
+
+on:
+  schedule:
+    - cron: "*/14 * * * *" # Runs every 14 minutes (Render free tier sleeps after 15 min)
+  workflow_dispatch: # Allow manual trigger too
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API Gateway
+        run: |
+          echo "Pinging API Gateway..."
+          curl -s https://api-gateway-w9ln.onrender.com/health || true
+
+      - name: Ping Auth Service
+        run: |
+          echo "Pinging Auth Service..."
+          curl -s https://auth-service-3ijg.onrender.com/health || true
+
+      - name: Ping Quiz Service
+        run: |
+          echo "Pinging Quiz Service..."
+          curl -s https://quiz-service-xhw5.onrender.com/health || true
+
+      - name: Ping Result Service
+        run: |
+          echo "Pinging Result Service..."
+          curl -s https://result-service-tcnw.onrender.com/health || true
+
+      - name: Ping Live Service
+        run: |
+          echo "Pinging Live Service..."
+          curl -s https://live-service-qemg.onrender.com/health || true
+
+      - name: Ping Meeting Service
+        run: |
+          echo "Pinging Meeting Service..."
+          curl -s https://meeting-service-sbve.onrender.com/health || true
+
+      - name: Ping Social Service
+        run: |
+          echo "Pinging Social Service..."
+          curl -s https://social-service-yxub.onrender.com/health || true
+
+      - name: Ping Gamification Service
+        run: |
+          echo "Pinging Gamification Service..."
+          curl -s https://gamification-service.onrender.com/health || true
+
+      - name: Ping Moderation Service
+        run: |
+          echo "Pinging Moderation Service..."
+          curl -s https://moderation-service-2ovd.onrender.com/health || true
+
+      - name: Ping Complete
+        run: |
+          echo "All services pinged successfully!"
+          date
