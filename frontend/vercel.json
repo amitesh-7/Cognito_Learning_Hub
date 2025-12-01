@@ -4,11 +4,20 @@
   "installCommand": "npm install --legacy-peer-deps",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!assets|.*\\.).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
+    {
+      "source": "/.*\\.(js|jsx|ts|tsx|css|json|woff|woff2|ttf|otf|eot)$",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [
