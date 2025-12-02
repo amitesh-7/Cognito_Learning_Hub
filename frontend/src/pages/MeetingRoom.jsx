@@ -166,7 +166,59 @@ const MeetingRoom = () => {
       }
     );
 
-    // Participant list updates
+    // New participant joined - initiate call to them
+    meetSocket.on("participant-joined", (participant) => {
+      console.log("[Meeting] New participant joined:", participant);
+      const { socketId, userName, name, userId } = participant;
+
+      // Add to participants list
+      setParticipants((prev) => {
+        // Check if already exists
+        if (prev.some((p) => p.socketId === socketId)) return prev;
+        return [...prev, { ...participant, name: userName || name }];
+      });
+
+      // Store peer info
+      setPeers((prev) => {
+        const updated = new Map(prev);
+        updated.set(socketId, { name: userName || name, userId });
+        return updated;
+      });
+    });
+
+    // Participant left
+    meetSocket.on("participant-left", ({ userId, socketId: leftSocketId }) => {
+      console.log("[Meeting] Participant left:", userId, leftSocketId);
+
+      // Find and remove participant
+      setParticipants((prev) =>
+        prev.filter((p) => p.userId !== userId && p.socketId !== leftSocketId)
+      );
+
+      // Clean up peer connection
+      const socketToRemove =
+        leftSocketId ||
+        Array.from(peerConnectionsRef.current.keys()).find((sid) => {
+          const peer = peerConnectionsRef.current.get(sid);
+          return peer?.userId === userId;
+        });
+
+      if (socketToRemove) {
+        const pc = peerConnectionsRef.current.get(socketToRemove);
+        if (pc) {
+          pc.close();
+          peerConnectionsRef.current.delete(socketToRemove);
+        }
+        calledPeersRef.current.delete(socketToRemove);
+        setPeers((prev) => {
+          const updated = new Map(prev);
+          updated.delete(socketToRemove);
+          return updated;
+        });
+      }
+    });
+
+    // Participant list updates (on initial join)
     meetSocket.on(
       "existing-participants",
       ({ participants: newParticipants }) => {
