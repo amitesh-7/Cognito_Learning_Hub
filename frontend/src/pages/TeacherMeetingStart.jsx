@@ -23,14 +23,15 @@ const TeacherMeetingStart = () => {
     setIsCreating(true);
 
     try {
-      const token = localStorage.getItem("quizwise-token") || localStorage.getItem("token");
+      const token =
+        localStorage.getItem("quizwise-token") || localStorage.getItem("token");
       const apiUrl = getApiUrl(); // Use API Gateway for REST calls
-      
+
       const response = await fetch(`${apiUrl}/api/meetings/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           title: title || "My Meeting",
@@ -41,7 +42,7 @@ const TeacherMeetingStart = () => {
       });
 
       const data = await response.json();
-      
+
       if (data.success && data.meeting) {
         const generatedRoomId = data.meeting.roomId;
         setCreatedRoomId(generatedRoomId);

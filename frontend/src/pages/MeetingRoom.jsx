@@ -51,7 +51,9 @@ const MeetingRoom = () => {
   useEffect(() => {
     // Get meeting WebSocket URL from config (direct connection for WebRTC signaling)
     const meetingWsUrl = getMeetingWsUrl();
-    const meetingUrl = meetingWsUrl.replace("ws://", "http://").replace("wss://", "https://");
+    const meetingUrl = meetingWsUrl
+      .replace("ws://", "http://")
+      .replace("wss://", "https://");
     const meetSocket = io(meetingUrl, {
       transports: ["websocket", "polling"],
       reconnection: true,
