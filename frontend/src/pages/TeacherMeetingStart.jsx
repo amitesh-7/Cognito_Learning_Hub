@@ -23,15 +23,21 @@ const TeacherMeetingStart = () => {
     setIsCreating(true);
 
     try {
-      const token =
-        localStorage.getItem("quizwise-token") || localStorage.getItem("token");
+      const token = localStorage.getItem("quizwise-token");
+
+      if (!token) {
+        alert("Session expired. Please login again.");
+        setIsCreating(false);
+        return;
+      }
+
       const apiUrl = getApiUrl(); // Use API Gateway for REST calls
 
       const response = await fetch(`${apiUrl}/api/meetings/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "x-auth-token": token, // Use x-auth-token header (preferred by backend)
         },
         body: JSON.stringify({
           title: title || "My Meeting",
