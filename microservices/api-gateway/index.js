@@ -124,6 +124,14 @@ const proxyOptions = {
   // Don't forward host header to avoid CORS issues
   xfwd: true,
   onProxyReq: (proxyReq, req, res) => {
+    // Forward auth headers explicitly
+    if (req.headers["x-auth-token"]) {
+      proxyReq.setHeader("x-auth-token", req.headers["x-auth-token"]);
+    }
+    if (req.headers["authorization"]) {
+      proxyReq.setHeader("Authorization", req.headers["authorization"]);
+    }
+
     // Fix content-length for body-parser
     if (req.body && Object.keys(req.body).length > 0) {
       const bodyData = JSON.stringify(req.body);
