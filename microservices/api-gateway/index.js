@@ -57,10 +57,15 @@ const corsOptions = {
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"],
+  exposedHeaders: ["Content-Range", "X-Content-Range"],
+  maxAge: 86400, // 24 hours - cache preflight requests
 };
 
-// Middleware
+// Middleware - CORS must be first
 app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly for all /api routes
+app.options("/api/*", cors(corsOptions));
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -116,6 +121,8 @@ const proxyOptions = {
   logLevel: "warn",
   timeout: 30000, // 30 second timeout
   proxyTimeout: 30000,
+  // Don't forward host header to avoid CORS issues
+  xfwd: true,
   onProxyReq: (proxyReq, req, res) => {
     // Fix content-length for body-parser
     if (req.body && Object.keys(req.body).length > 0) {
@@ -133,11 +140,23 @@ const proxyOptions = {
     logger.info(`→ Proxying ${req.method} ${req.path}`);
   },
   onProxyRes: (proxyRes, req, res) => {
+    // Add CORS headers to proxied responses
+    const origin = req.headers.origin;
+    if (origin) {
+      proxyRes.headers["access-control-allow-origin"] = origin;
+      proxyRes.headers["access-control-allow-credentials"] = "true";
+    }
     logger.info(`← Response ${proxyRes.statusCode} from ${req.path}`);
   },
   onError: (err, req, res) => {
     logger.error("Proxy error:", err);
     if (!res.headersSent) {
+      // Add CORS headers even on error
+      const origin = req.headers.origin;
+      if (origin) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+      }
       res.status(503).json({
         success: false,
         message: "Service temporarily unavailable",
