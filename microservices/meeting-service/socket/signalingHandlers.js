@@ -44,7 +44,7 @@ module.exports = (io) => {
     // ============================================
     // JOIN MEETING
     // ============================================
-    socket.on("join-meeting", async (data) => {
+    socket.on("join-meeting", async (data, callback) => {
       try {
         const {
           roomId,
@@ -142,7 +142,9 @@ module.exports = (io) => {
             isAudioEnabled: p.isAudioEnabled,
             isVideoEnabled: p.isVideoEnabled,
             isScreenSharing: p.isScreenSharing,
+            isHost: p.userId === meeting.hostId?.toString(), // Mark if participant is host
           })),
+          hostId: meeting.hostId, // Send hostId separately for easy access
         });
 
         // Notify others about new participant
@@ -155,12 +157,14 @@ module.exports = (io) => {
           socketId: socket.id, // Include socketId for WebRTC
           isAudioEnabled: participant.isAudioEnabled,
           isVideoEnabled: participant.isVideoEnabled,
+          isHost: participant.userId === meeting.hostId?.toString(), // Mark if new participant is host
         });
 
-        // Confirm join to participant
+        // Confirm join to participant with meeting info
         socket.emit("joined-meeting", {
           roomId,
           userId,
+          userName,
           peerId: socket.id,
           meeting: {
             title: meeting.title,
@@ -168,6 +172,18 @@ module.exports = (io) => {
             settings: meeting.settings,
           },
         });
+
+        // Call acknowledgment callback if provided
+        if (typeof callback === "function") {
+          callback({
+            success: true,
+            meeting: {
+              roomId,
+              title: meeting.title,
+              participants: otherParticipants,
+            },
+          });
+        }
 
         // Extend meeting TTL
         await meetingManager.extendMeetingTTL(roomId);
@@ -178,6 +194,9 @@ module.exports = (io) => {
       } catch (error) {
         logger.error("Error joining meeting:", error);
         socket.emit("meeting-error", { error: "Failed to join meeting" });
+        if (typeof callback === "function") {
+          callback({ success: false, error: "Failed to join meeting" });
+        }
       }
     });
 
@@ -194,7 +213,9 @@ module.exports = (io) => {
       try {
         const { targetSocketId, offer, from } = data;
 
-        logger.debug(`WebRTC offer from ${socket.id} to ${targetSocketId}`);
+        logger.info(
+          `WebRTC offer from ${socket.id} (${from}) to ${targetSocketId}`
+        );
 
         // Relay offer to target peer using socket ID directly
         io.to(targetSocketId).emit("webrtc-offer", {
@@ -202,6 +223,7 @@ module.exports = (io) => {
           from: from || currentUserId,
           socketId: socket.id,
         });
+        logger.info(`WebRTC offer relayed to ${targetSocketId}`);
       } catch (error) {
         logger.error("Error handling WebRTC offer:", error);
         socket.emit("peer-connection-error", { error: "Failed to send offer" });
@@ -217,7 +239,9 @@ module.exports = (io) => {
       try {
         const { targetSocketId, answer, from } = data;
 
-        logger.debug(`WebRTC answer from ${socket.id} to ${targetSocketId}`);
+        logger.info(
+          `WebRTC answer from ${socket.id} (${from}) to ${targetSocketId}`
+        );
 
         // Relay answer to target peer using socket ID directly
         io.to(targetSocketId).emit("webrtc-answer", {
@@ -225,6 +249,7 @@ module.exports = (io) => {
           from: from || currentUserId,
           socketId: socket.id,
         });
+        logger.info(`WebRTC answer relayed to ${targetSocketId}`);
       } catch (error) {
         logger.error("Error handling WebRTC answer:", error);
         socket.emit("peer-connection-error", {
@@ -403,6 +428,7 @@ module.exports = (io) => {
         // Notify others
         socket.to(roomToLeave).emit("participant-left", {
           userId: userToRemove,
+          socketId: socket.id,
         });
 
         // Check if meeting is empty
@@ -453,7 +479,9 @@ module.exports = (io) => {
           await meetingManager.removeParticipant(roomId, userId);
 
           // Notify others
-          socket.to(roomId).emit("participant-left", { userId });
+          socket
+            .to(roomId)
+            .emit("participant-left", { userId, socketId: socket.id });
 
           // Check if meeting is empty
           const participantCount = await meetingManager.getParticipantCount(

@@ -27,9 +27,11 @@ const MeetingRoom = () => {
   const [socket, setSocket] = useState(null);
   const [localStream, setLocalStream] = useState(null);
   const [screenStream, setScreenStream] = useState(null);
-  const [peers, setPeers] = useState(new Map()); // socketId -> {stream, name, userId, role}
+  const [peers, setPeers] = useState(new Map()); // socketId -> {stream, name, userId, role, isHost}
   const [participants, setParticipants] = useState([]);
   const [mySocketId, setMySocketId] = useState(null);
+  const [hostId, setHostId] = useState(null); // Track the meeting host
+  const [myUserName, setMyUserName] = useState(""); // Store my display name
   const [chatMessages, setChatMessages] = useState([]);
   const calledPeersRef = useRef(new Set()); // Track peers we've already called
   const [micOn, setMicOn] = useState(true);
@@ -43,6 +45,11 @@ const MeetingRoom = () => {
   const localVideoRef = useRef(null);
   const localStreamRef = useRef(null); // Ref to always access current localStream
   const peerConnectionsRef = useRef(new Map()); // socketId -> RTCPeerConnection
+  const myUserNameRef = useRef(""); // Ref to store user name for closures
+  const callPeerRef = useRef(null); // Ref to store callPeer function for use in socket handlers
+  const socketRef = useRef(null); // Ref to store socket for use in functions
+  const createPeerConnectionRef = useRef(null); // Ref to store createPeerConnection
+  const pendingOffersRef = useRef([]); // Queue offers received before local stream is ready
   const configuration = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   };
@@ -64,13 +71,16 @@ const MeetingRoom = () => {
     meetSocket.on("connect", () => {
       console.log("[Meeting] Connected:", meetSocket.id);
       setMySocketId(meetSocket.id);
+      const displayName = user?.name || user?.username || "Guest";
+      setMyUserName(displayName);
+      myUserNameRef.current = displayName; // Store in ref for closures
       // Join the meeting room
       meetSocket.emit(
         "join-meeting",
         {
           roomId,
           userId: user?.id || user?._id || null,
-          userName: user?.name || user?.username || "Guest",
+          userName: displayName,
           userPicture: user?.picture || user?.profilePicture || null,
           isVideoEnabled: true,
           isAudioEnabled: true,
@@ -87,6 +97,35 @@ const MeetingRoom = () => {
         }
       );
     });
+
+    // Helper function to process an offer
+    const processOffer = async (offer, from, fromSocket, sock) => {
+      try {
+        const pc = createPeerConnectionRef.current
+          ? createPeerConnectionRef.current(fromSocket)
+          : null;
+        if (!pc) {
+          console.error("[Meeting] createPeerConnection not available");
+          return;
+        }
+        console.log(
+          "[Meeting] Peer connection created, setting remote description"
+        );
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        console.log("[Meeting] Remote description set, creating answer");
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        console.log("[Meeting] Sending answer to", fromSocket);
+        sock.emit("webrtc-answer", {
+          targetSocketId: fromSocket,
+          answer,
+          from:
+            myUserNameRef.current || user?.name || user?.username || "Guest",
+        });
+      } catch (err) {
+        console.error("[Meeting] Error handling offer:", err);
+      }
+    };
 
     // Incoming media offer from peer
     meetSocket.on(
@@ -106,23 +145,23 @@ const MeetingRoom = () => {
           return updated;
         });
 
-        try {
-          const pc = createPeerConnection(fromSocket);
+        // If local stream isn't ready yet, queue the offer
+        if (!localStreamRef.current) {
           console.log(
-            "[Meeting] Peer connection created, setting remote description"
+            "[Meeting] Queuing offer from",
+            fromSocket,
+            "- waiting for local stream"
           );
-          await pc.setRemoteDescription(new RTCSessionDescription(offer));
-          console.log("[Meeting] Remote description set, creating answer");
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          console.log("[Meeting] Sending answer to", fromSocket);
-          meetSocket.emit("webrtc-answer", {
-            targetSocketId: fromSocket,
-            answer,
+          pendingOffersRef.current.push({
+            offer,
+            from,
+            fromSocket,
+            socket: meetSocket,
           });
-        } catch (err) {
-          console.error("[Meeting] Error handling offer:", err);
+          return;
         }
+
+        await processOffer(offer, from, fromSocket, meetSocket);
       }
     );
 
@@ -166,24 +205,57 @@ const MeetingRoom = () => {
       }
     );
 
+    // Receive meeting info including hostId
+    meetSocket.on(
+      "joined-meeting",
+      ({ roomId: joinedRoom, userId: myId, peerId, meeting }) => {
+        console.log("[Meeting] Joined meeting:", meeting);
+        if (meeting?.hostId) {
+          setHostId(meeting.hostId);
+        }
+      }
+    );
+
     // New participant joined - initiate call to them
     meetSocket.on("participant-joined", (participant) => {
       console.log("[Meeting] New participant joined:", participant);
       const { socketId, userName, name, userId } = participant;
+      const displayName = userName || name || "Participant";
 
       // Add to participants list
       setParticipants((prev) => {
         // Check if already exists
         if (prev.some((p) => p.socketId === socketId)) return prev;
-        return [...prev, { ...participant, name: userName || name }];
+        return [...prev, { ...participant, name: displayName }];
       });
 
-      // Store peer info
+      // Store peer info with host flag
       setPeers((prev) => {
         const updated = new Map(prev);
-        updated.set(socketId, { name: userName || name, userId });
+        updated.set(socketId, {
+          name: displayName,
+          userId,
+          isHost: userId?.toString() === hostId?.toString(),
+        });
         return updated;
       });
+
+      // Immediately initiate call to the new participant if we have a local stream
+      // This ensures bidirectional connection establishment
+      if (localStreamRef.current && !calledPeersRef.current.has(socketId)) {
+        console.log(
+          "[Meeting] Initiating call to new participant:",
+          socketId,
+          displayName
+        );
+        calledPeersRef.current.add(socketId);
+        // Small delay to allow state updates to complete
+        setTimeout(() => {
+          if (callPeerRef.current) {
+            callPeerRef.current(socketId, displayName);
+          }
+        }, 200);
+      }
     });
 
     // Participant left
@@ -221,10 +293,16 @@ const MeetingRoom = () => {
     // Participant list updates (on initial join)
     meetSocket.on(
       "existing-participants",
-      ({ participants: newParticipants }) => {
+      ({ participants: newParticipants, hostId: meetingHostId }) => {
         console.log("[Meeting] Participants updated", newParticipants);
+        console.log("[Meeting] Host ID:", meetingHostId);
         console.log("[Meeting] My socket ID:", meetSocket.id);
         setParticipants(newParticipants);
+
+        // Set hostId if provided
+        if (meetingHostId) {
+          setHostId(meetingHostId);
+        }
 
         // Clean up peers that are no longer in the participants list
         setPeers((prev) => {
@@ -254,14 +332,16 @@ const MeetingRoom = () => {
           newParticipants.forEach((p) => {
             if (p.socketId && p.socketId !== meetSocket.id) {
               const existing = updated.get(p.socketId) || {};
+              const peerName = p.userName || p.name || "Participant";
               console.log(
-                `[Meeting] Syncing peer ${p.socketId} with name ${p.name}`
+                `[Meeting] Syncing peer ${p.socketId} with name ${peerName}`
               );
               updated.set(p.socketId, {
                 ...existing,
-                name: p.name,
+                name: peerName,
                 role: p.role,
                 userId: p.userId,
+                isHost: p.isHost || p.userId === meetingHostId,
               });
             }
           });
@@ -310,6 +390,7 @@ const MeetingRoom = () => {
     });
 
     setSocket(meetSocket);
+    socketRef.current = meetSocket; // Store socket in ref for use in callbacks
 
     return () => {
       meetSocket.disconnect();
@@ -331,6 +412,43 @@ const MeetingRoom = () => {
         localStreamRef.current = stream; // Keep ref in sync
         if (localVideoRef.current) localVideoRef.current.srcObject = stream;
         console.log("[Meeting] Local stream started");
+
+        // Process any pending offers that were queued before stream was ready
+        if (pendingOffersRef.current.length > 0) {
+          console.log(
+            "[Meeting] Processing",
+            pendingOffersRef.current.length,
+            "pending offers"
+          );
+          const pending = [...pendingOffersRef.current];
+          pendingOffersRef.current = [];
+
+          for (const { offer, from, fromSocket, socket: sock } of pending) {
+            console.log("[Meeting] Processing pending offer from", fromSocket);
+            try {
+              const pc = createPeerConnectionRef.current
+                ? createPeerConnectionRef.current(fromSocket)
+                : null;
+              if (!pc) {
+                console.error(
+                  "[Meeting] createPeerConnection not available for pending offer"
+                );
+                continue;
+              }
+              await pc.setRemoteDescription(new RTCSessionDescription(offer));
+              const answer = await pc.createAnswer();
+              await pc.setLocalDescription(answer);
+              sock.emit("webrtc-answer", {
+                targetSocketId: fromSocket,
+                answer,
+                from: myUserNameRef.current || "Guest",
+              });
+              console.log("[Meeting] Processed pending offer from", fromSocket);
+            } catch (err) {
+              console.error("[Meeting] Error processing pending offer:", err);
+            }
+          }
+        }
       } catch (err) {
         console.error("[Meeting] getUserMedia error", err);
         alert("Failed to access camera/microphone");
@@ -415,6 +533,12 @@ const MeetingRoom = () => {
     return pc;
   };
 
+  // Store createPeerConnection in ref so socket handlers can access it
+  useEffect(() => {
+    createPeerConnectionRef.current = createPeerConnection;
+    console.log("[Meeting] createPeerConnection ref updated");
+  }, [socket]);
+
   // Ensure all peer connections have local tracks once stream is ready
   useEffect(() => {
     if (!localStream || !socket) return;
@@ -470,7 +594,9 @@ const MeetingRoom = () => {
       console.log(
         `[Meeting] Creating offer for ${remoteSocketId} (${peerName})`
       );
-      const pc = createPeerConnection(remoteSocketId);
+      const pc = createPeerConnectionRef.current
+        ? createPeerConnectionRef.current(remoteSocketId)
+        : createPeerConnection(remoteSocketId);
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       console.log(`[Meeting] Offer created and set for ${remoteSocketId}`);
@@ -485,16 +611,24 @@ const MeetingRoom = () => {
         });
       }
 
-      socket?.emit("webrtc-offer", {
+      // Use socketRef to ensure we have the current socket
+      const currentSocket = socketRef.current || socket;
+      currentSocket?.emit("webrtc-offer", {
         targetSocketId: remoteSocketId,
         offer,
-        from: user?.name,
+        from: myUserNameRef.current || user?.name || user?.username || "Guest",
       });
       console.log(`[Meeting] Offer sent to ${remoteSocketId}`);
     } catch (err) {
       console.error(`[Meeting] Error calling peer ${remoteSocketId}:`, err);
     }
   };
+
+  // Store callPeer in ref so socket handlers can access it
+  useEffect(() => {
+    callPeerRef.current = callPeer;
+    console.log("[Meeting] callPeer ref updated");
+  }, [socket, user]);
 
   // Call all participants when local stream is ready
   useEffect(() => {
@@ -678,7 +812,7 @@ const MeetingRoom = () => {
             className="text-white hover:bg-white/10"
           >
             <Users className="w-5 h-5 mr-1" />
-            {participants.length}
+            {participants.length + 1} {/* +1 for self */}
           </Button>
           <Button
             variant="ghost"
@@ -703,8 +837,15 @@ const MeetingRoom = () => {
               playsInline
               className="w-full h-full object-cover"
             />
-            <div className="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
-              {user?.name || "You"} {!micOn && "🔇"} {!cameraOn && "📷"}
+            <div className="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+              {myUserName || user?.name || "You"}
+              {(user?.id?.toString() || user?._id?.toString()) ===
+                hostId?.toString() && (
+                <span className="bg-yellow-500 text-black px-1 rounded text-[10px] font-bold">
+                  HOST
+                </span>
+              )}
+              {!micOn && " 🔇"} {!cameraOn && " 📷"}
             </div>
           </div>
 
@@ -714,19 +855,28 @@ const MeetingRoom = () => {
             const participant = participants.find(
               (p) => p.socketId === socketId
             );
-            const displayName = peer.name || participant?.name || socketId;
+            const displayName =
+              peer.name ||
+              participant?.userName ||
+              participant?.name ||
+              "Participant";
+            const isHost =
+              peer.userId?.toString() === hostId?.toString() ||
+              participant?.userId?.toString() === hostId?.toString();
             console.log(
               `[Meeting Render] Peer ${socketId}:`,
               peer,
               `| Participant:`,
               participant,
-              `| Display: ${displayName}`
+              `| Display: ${displayName}`,
+              `| isHost: ${isHost}`
             );
             return (
               <RemoteVideo
                 key={socketId}
                 stream={peer.stream}
                 name={displayName}
+                isHost={isHost}
               />
             );
           })}
@@ -836,25 +986,39 @@ const MeetingRoom = () => {
   );
 };
 
-const RemoteVideo = ({ stream, name }) => {
+const RemoteVideo = ({ stream, name, isHost }) => {
   const videoRef = useRef(null);
 
   useEffect(() => {
     if (videoRef.current && stream) {
+      console.log("[RemoteVideo] Setting stream for", name, stream);
       videoRef.current.srcObject = stream;
     }
-  }, [stream]);
+  }, [stream, name]);
 
   return (
     <div className="bg-gray-800 rounded-xl relative aspect-video overflow-hidden">
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        className="w-full h-full object-cover"
-      />
-      <div className="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
+      {stream ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-800">
+          <div className="w-20 h-20 bg-gray-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+            {name?.charAt(0)?.toUpperCase() || "?"}
+          </div>
+        </div>
+      )}
+      <div className="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
         {name}
+        {isHost && (
+          <span className="bg-yellow-500 text-black px-1 rounded text-[10px] font-bold">
+            HOST
+          </span>
+        )}
       </div>
     </div>
   );
