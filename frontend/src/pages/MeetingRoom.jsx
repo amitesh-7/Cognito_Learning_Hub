@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import { AuthContext } from "../context/AuthContext";
-import { getSocketUrl } from "../lib/apiConfig";
+import { getSocketUrl, getMeetingWsUrl } from "../lib/apiConfig";
 import {
   Video,
   VideoOff,
@@ -49,11 +49,9 @@ const MeetingRoom = () => {
 
   // Initialize socket connection to meeting service
   useEffect(() => {
-    const meetingUrl =
-      import.meta.env.VITE_MEETING_WS_URL?.replace("ws://", "http://").replace(
-        "wss://",
-        "https://"
-      ) || "http://localhost:3009";
+    // Get meeting WebSocket URL from config (direct connection for WebRTC signaling)
+    const meetingWsUrl = getMeetingWsUrl();
+    const meetingUrl = meetingWsUrl.replace("ws://", "http://").replace("wss://", "https://");
     const meetSocket = io(meetingUrl, {
       transports: ["websocket", "polling"],
       reconnection: true,

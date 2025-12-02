@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import { Button } from "../components/ui/Button";
 import { Video, Copy, Star, Sparkles, Users, Rocket } from "lucide-react";
 import { motion } from "framer-motion";
+import { getApiUrl } from "../lib/apiConfig";
 
 const TeacherMeetingStart = () => {
   const { user } = useContext(AuthContext);
@@ -23,9 +24,9 @@ const TeacherMeetingStart = () => {
 
     try {
       const token = localStorage.getItem("quizwise-token") || localStorage.getItem("token");
-      const meetingUrl = import.meta.env.VITE_MEETING_WS_URL?.replace('ws://', 'http://').replace('wss://', 'https://') || 'http://localhost:3009';
+      const apiUrl = getApiUrl(); // Use API Gateway for REST calls
       
-      const response = await fetch(`${meetingUrl}/api/meetings/create`, {
+      const response = await fetch(`${apiUrl}/api/meetings/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
