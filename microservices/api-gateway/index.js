@@ -65,7 +65,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Handle preflight requests explicitly for all /api routes
-app.options("/api/*", cors(corsOptions));
+app.options(/^\/api\/.*/, cors(corsOptions));
 app.use(
   helmet({
     contentSecurityPolicy: false,
