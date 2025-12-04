@@ -246,12 +246,20 @@ router.post("/google", authLimiter, async (req, res) => {
     }
 
     // Verify Google token
+    logger.info('Verifying Google OAuth token', {
+      expectedAudience: process.env.GOOGLE_CLIENT_ID
+    });
+
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const payload = ticket.getPayload();
+    logger.info('Google OAuth token verified successfully', {
+      email: payload.email,
+      tokenAudience: payload.aud
+    });
     const { sub: googleId, email, name, picture } = payload;
 
     // Find or create user
