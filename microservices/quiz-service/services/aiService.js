@@ -3,25 +3,25 @@
  * Addresses: AI timeout, circuit breaker, and caching optimizations
  */
 
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const CircuitBreaker = require('opossum');
-const crypto = require('crypto');
-const createLogger = require('../../shared/utils/logger');
-const cacheManager = require('./cacheManager');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const CircuitBreaker = require("opossum");
+const crypto = require("crypto");
+const createLogger = require("../../shared/utils/logger");
+const cacheManager = require("./cacheManager");
 
-const logger = createLogger('ai-service');
+const logger = createLogger("ai-service");
 
 // Validate API key on startup
 const apiKey = process.env.GOOGLE_API_KEY;
 if (!apiKey) {
-  logger.error('GOOGLE_API_KEY environment variable is not set!');
-  throw new Error('GOOGLE_API_KEY is required for quiz generation');
+  logger.error("GOOGLE_API_KEY environment variable is not set!");
+  throw new Error("GOOGLE_API_KEY is required for quiz generation");
 }
 
 // Initialize Google Gemini AI
 const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ 
-  model: process.env.GEMINI_MODEL || 'gemini-2.5-flash' 
+const model = genAI.getGenerativeModel({
+  model: process.env.GEMINI_MODEL || "gemini-3-pro-preview",
 });
 
 /**
@@ -30,17 +30,17 @@ const model = genAI.getGenerativeModel({
 async function generateQuizWithAI(prompt) {
   try {
     const startTime = Date.now();
-    
+
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    
+
     const duration = Date.now() - startTime;
     logger.info(`AI generation completed in ${duration}ms`);
-    
+
     return { text, duration };
   } catch (error) {
-    logger.error('AI generation failed:', error);
+    logger.error("AI generation failed:", error);
     throw error;
   }
 }
@@ -54,36 +54,41 @@ const circuitBreakerOptions = {
   resetTimeout: parseInt(process.env.AI_CIRCUIT_BREAKER_TIMEOUT) || 60000, // 60 seconds
   rollingCountTimeout: 10000, // 10 second rolling window
   rollingCountBuckets: 10,
-  name: 'AI Generation Circuit Breaker',
+  name: "AI Generation Circuit Breaker",
 };
 
 // Wrap AI generation in circuit breaker
-const protectedAIGeneration = new CircuitBreaker(generateQuizWithAI, circuitBreakerOptions);
+const protectedAIGeneration = new CircuitBreaker(
+  generateQuizWithAI,
+  circuitBreakerOptions
+);
 
 // Circuit breaker event listeners
-protectedAIGeneration.on('open', () => {
-  logger.error('Circuit breaker OPENED - AI service unavailable');
+protectedAIGeneration.on("open", () => {
+  logger.error("Circuit breaker OPENED - AI service unavailable");
 });
 
-protectedAIGeneration.on('halfOpen', () => {
-  logger.warn('Circuit breaker HALF-OPEN - Testing AI service');
+protectedAIGeneration.on("halfOpen", () => {
+  logger.warn("Circuit breaker HALF-OPEN - Testing AI service");
 });
 
-protectedAIGeneration.on('close', () => {
-  logger.info('Circuit breaker CLOSED - AI service restored');
+protectedAIGeneration.on("close", () => {
+  logger.info("Circuit breaker CLOSED - AI service restored");
 });
 
-protectedAIGeneration.on('timeout', () => {
-  logger.warn('AI generation TIMEOUT');
+protectedAIGeneration.on("timeout", () => {
+  logger.warn("AI generation TIMEOUT");
 });
 
-protectedAIGeneration.on('failure', (error) => {
-  logger.error('AI generation FAILURE:', error.message);
+protectedAIGeneration.on("failure", (error) => {
+  logger.error("AI generation FAILURE:", error.message);
 });
 
 protectedAIGeneration.fallback((prompt) => {
-  logger.error('Circuit breaker FALLBACK triggered');
-  throw new Error('AI service is currently unavailable. Please try again later.');
+  logger.error("Circuit breaker FALLBACK triggered");
+  throw new Error(
+    "AI service is currently unavailable. Please try again later."
+  );
 });
 
 /**
@@ -99,14 +104,14 @@ function extractJson(text) {
     if (jsonMatch) {
       return JSON.parse(jsonMatch[1]);
     }
-    
+
     // Try to find array in text
     const arrayMatch = text.match(/\[[\s\S]*\]/);
     if (arrayMatch) {
       return JSON.parse(arrayMatch[0]);
     }
-    
-    throw new Error('Could not extract valid JSON from AI response');
+
+    throw new Error("Could not extract valid JSON from AI response");
   }
 }
 
@@ -114,13 +119,18 @@ function extractJson(text) {
  * Generate file hash for cache key
  */
 function generateFileHash(content) {
-  return crypto.createHash('md5').update(content).digest('hex');
+  return crypto.createHash("md5").update(content).digest("hex");
 }
 
 /**
  * Build AI prompt for topic-based quiz
  */
-function buildTopicPrompt(topic, numQuestions, difficulty, adaptiveContext = null) {
+function buildTopicPrompt(
+  topic,
+  numQuestions,
+  difficulty,
+  adaptiveContext = null
+) {
   let prompt = `You are an expert quiz maker.
 Create a quiz based on the following topic: "${topic}".
 The quiz should have ${numQuestions} questions.
@@ -131,11 +141,13 @@ The difficulty level should be ${difficulty}.`;
     prompt += `\n\nADAPTIVE MODE CONTEXT:
 - User's average score: ${adaptiveContext.avgScore?.toFixed(1)}%
 - Performance trend: ${adaptiveContext.trend}`;
-    
+
     if (adaptiveContext.weakAreas && adaptiveContext.weakAreas.length > 0) {
-      prompt += `\n- Weak areas to focus on: ${adaptiveContext.weakAreas.join(', ')}`;
+      prompt += `\n- Weak areas to focus on: ${adaptiveContext.weakAreas.join(
+        ", "
+      )}`;
     }
-    
+
     prompt += `\n\nPlease tailor the questions to help this user improve, maintaining ${difficulty} difficulty.`;
   }
 
@@ -160,7 +172,12 @@ The JSON should be an array of question objects with this exact structure:
 /**
  * Build AI prompt for file-based quiz
  */
-function buildFilePrompt(extractedText, numQuestions, difficulty, adaptiveContext = null) {
+function buildFilePrompt(
+  extractedText,
+  numQuestions,
+  difficulty,
+  adaptiveContext = null
+) {
   let prompt = `You are an expert quiz maker.
 Create ${numQuestions} questions at ${difficulty} difficulty level based on the following content:
 
@@ -173,11 +190,11 @@ ${extractedText.substring(0, 8000)}
     prompt += `\n\nIMPORTANT CONTEXT: This quiz is for a user with:
 - Average performance: ${adaptiveContext.avgScore?.toFixed(1)}%
 - Performance trend: ${adaptiveContext.trend}`;
-    
+
     if (adaptiveContext.weakAreas && adaptiveContext.weakAreas.length > 0) {
-      prompt += `\n- Weak areas: ${adaptiveContext.weakAreas.join(', ')}`;
+      prompt += `\n- Weak areas: ${adaptiveContext.weakAreas.join(", ")}`;
     }
-    
+
     prompt += `\n\nAdjust the difficulty and focus accordingly.`;
   }
 
@@ -204,16 +221,21 @@ ${extractedText.substring(0, 8000)}
 async function generateQuizFromTopic({
   topic,
   numQuestions = 5,
-  difficulty = 'Medium',
+  difficulty = "Medium",
   useAdaptive = false,
   userId = null,
   adaptiveContext = null,
 }) {
   try {
     // Check cache first
-    const cacheKey = cacheManager.getTopicQuizKey(topic, numQuestions, difficulty, useAdaptive);
+    const cacheKey = cacheManager.getTopicQuizKey(
+      topic,
+      numQuestions,
+      difficulty,
+      useAdaptive
+    );
     const cached = await cacheManager.getCachedQuiz(cacheKey);
-    
+
     if (cached) {
       logger.info(`Returning cached quiz for topic: ${topic}`);
       return {
@@ -223,37 +245,46 @@ async function generateQuizFromTopic({
         adaptiveInfo: cached.adaptiveInfo,
       };
     }
-    
+
     // Build prompt
-    const prompt = buildTopicPrompt(topic, numQuestions, difficulty, adaptiveContext);
-    
+    const prompt = buildTopicPrompt(
+      topic,
+      numQuestions,
+      difficulty,
+      adaptiveContext
+    );
+
     // Generate with circuit breaker protection
     const { text, duration } = await protectedAIGeneration.fire(prompt);
-    
+
     // Extract and parse questions
     const questions = extractJson(text);
-    
+
     if (!Array.isArray(questions) || questions.length === 0) {
-      throw new Error('AI did not return valid questions array');
+      throw new Error("AI did not return valid questions array");
     }
-    
+
     // Prepare result
     const result = {
       questions,
       fromCache: false,
       generationTime: duration,
-      adaptiveInfo: useAdaptive && adaptiveContext ? {
-        originalDifficulty: difficulty,
-        adaptedDifficulty: adaptiveContext.suggestedDifficulty || difficulty,
-        reason: adaptiveContext.reason,
-        avgScore: adaptiveContext.avgScore,
-        trend: adaptiveContext.trend,
-      } : null,
+      adaptiveInfo:
+        useAdaptive && adaptiveContext
+          ? {
+              originalDifficulty: difficulty,
+              adaptedDifficulty:
+                adaptiveContext.suggestedDifficulty || difficulty,
+              reason: adaptiveContext.reason,
+              avgScore: adaptiveContext.avgScore,
+              trend: adaptiveContext.trend,
+            }
+          : null,
     };
-    
+
     // Cache for future use
     await cacheManager.cacheQuiz(cacheKey, result, cacheManager.QUIZ_CACHE_TTL);
-    
+
     logger.info(`Generated and cached quiz for topic: ${topic}`);
     return result;
   } catch (error) {
@@ -268,20 +299,24 @@ async function generateQuizFromTopic({
 async function generateQuizFromFile({
   extractedText,
   numQuestions = 5,
-  difficulty = 'Medium',
+  difficulty = "Medium",
   useAdaptive = false,
   userId = null,
   adaptiveContext = null,
-  fileName = 'unknown',
+  fileName = "unknown",
 }) {
   try {
     // Generate file hash for cache key
     const fileHash = generateFileHash(extractedText);
-    const cacheKey = cacheManager.getFileQuizKey(fileHash, numQuestions, difficulty);
-    
+    const cacheKey = cacheManager.getFileQuizKey(
+      fileHash,
+      numQuestions,
+      difficulty
+    );
+
     // Check cache first
     const cached = await cacheManager.getCachedQuiz(cacheKey);
-    
+
     if (cached) {
       logger.info(`Returning cached quiz for file: ${fileName}`);
       return {
@@ -291,36 +326,49 @@ async function generateQuizFromFile({
         adaptiveInfo: cached.adaptiveInfo,
       };
     }
-    
+
     // Build prompt
-    const prompt = buildFilePrompt(extractedText, numQuestions, difficulty, adaptiveContext);
-    
+    const prompt = buildFilePrompt(
+      extractedText,
+      numQuestions,
+      difficulty,
+      adaptiveContext
+    );
+
     // Generate with circuit breaker protection
     const { text, duration } = await protectedAIGeneration.fire(prompt);
-    
+
     // Extract and parse questions
     const questions = extractJson(text);
-    
+
     if (!Array.isArray(questions) || questions.length === 0) {
-      throw new Error('AI did not return valid questions array');
+      throw new Error("AI did not return valid questions array");
     }
-    
+
     // Prepare result
     const result = {
       questions,
       fromCache: false,
       generationTime: duration,
-      adaptiveInfo: useAdaptive && adaptiveContext ? {
-        originalDifficulty: difficulty,
-        adaptedDifficulty: adaptiveContext.suggestedDifficulty || difficulty,
-        reason: adaptiveContext.reason,
-        avgScore: adaptiveContext.avgScore,
-      } : null,
+      adaptiveInfo:
+        useAdaptive && adaptiveContext
+          ? {
+              originalDifficulty: difficulty,
+              adaptedDifficulty:
+                adaptiveContext.suggestedDifficulty || difficulty,
+              reason: adaptiveContext.reason,
+              avgScore: adaptiveContext.avgScore,
+            }
+          : null,
     };
-    
+
     // Cache for longer (files are more stable content)
-    await cacheManager.cacheQuiz(cacheKey, result, cacheManager.FILE_QUIZ_CACHE_TTL);
-    
+    await cacheManager.cacheQuiz(
+      cacheKey,
+      result,
+      cacheManager.FILE_QUIZ_CACHE_TTL
+    );
+
     logger.info(`Generated and cached quiz for file: ${fileName}`);
     return result;
   } catch (error) {
@@ -334,7 +382,11 @@ async function generateQuizFromFile({
  */
 function getCircuitBreakerStats() {
   return {
-    state: protectedAIGeneration.opened ? 'OPEN' : protectedAIGeneration.halfOpen ? 'HALF-OPEN' : 'CLOSED',
+    state: protectedAIGeneration.opened
+      ? "OPEN"
+      : protectedAIGeneration.halfOpen
+      ? "HALF-OPEN"
+      : "CLOSED",
     stats: protectedAIGeneration.stats,
     options: {
       timeout: circuitBreakerOptions.timeout,
@@ -352,7 +404,7 @@ async function generateContent(prompt) {
     const result = await protectedAIGeneration.fire(prompt);
     return result;
   } catch (error) {
-    logger.error('Content generation error:', error);
+    logger.error("Content generation error:", error);
     throw error;
   }
 }
@@ -367,7 +419,7 @@ async function generateQuestions(prompt) {
     const questions = extractJson(result.text);
     return questions;
   } catch (error) {
-    logger.error('Question generation error:', error);
+    logger.error("Question generation error:", error);
     throw error;
   }
 }
