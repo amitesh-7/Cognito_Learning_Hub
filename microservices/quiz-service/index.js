@@ -17,6 +17,12 @@ const app = express();
 const logger = createLogger("quiz-service");
 const PORT = process.env.PORT || 3002;
 
+// Trust proxy - Required for Render/Heroku/AWS deployments behind load balancers
+// This fixes the 'X-Forwarded-For' header issue with express-rate-limit
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));

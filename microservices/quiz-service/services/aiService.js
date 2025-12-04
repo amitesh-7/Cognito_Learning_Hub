@@ -47,13 +47,17 @@ async function generateQuizWithAI(prompt) {
 
 /**
  * Circuit Breaker Configuration
+ * - Increased timeout for large PDF files (30s default)
+ * - Faster recovery (30s reset timeout)
+ * - More tolerant error threshold for temporary issues
  */
 const circuitBreakerOptions = {
-  timeout: parseInt(process.env.AI_TIMEOUT) || 15000, // 15 seconds
-  errorThresholdPercentage: 50, // Open circuit if 50% of requests fail
-  resetTimeout: parseInt(process.env.AI_CIRCUIT_BREAKER_TIMEOUT) || 60000, // 60 seconds
+  timeout: parseInt(process.env.AI_TIMEOUT) || 30000, // 30 seconds (increased for large files)
+  errorThresholdPercentage: 60, // Open circuit if 60% of requests fail (more tolerant)
+  resetTimeout: parseInt(process.env.AI_CIRCUIT_BREAKER_TIMEOUT) || 30000, // 30 seconds (faster recovery)
   rollingCountTimeout: 10000, // 10 second rolling window
   rollingCountBuckets: 10,
+  volumeThreshold: 3, // Need at least 3 requests before opening circuit
   name: "AI Generation Circuit Breaker",
 };
 
