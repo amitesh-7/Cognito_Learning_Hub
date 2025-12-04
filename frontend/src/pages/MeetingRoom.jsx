@@ -50,8 +50,21 @@ const MeetingRoom = () => {
   const socketRef = useRef(null); // Ref to store socket for use in functions
   const createPeerConnectionRef = useRef(null); // Ref to store createPeerConnection
   const pendingOffersRef = useRef([]); // Queue offers received before local stream is ready
+  const [iceServers, setIceServers] = useState([
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
+  ]);
+  const iceServersRef = useRef(iceServers); // Ref for use in callbacks
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    iceServersRef.current = iceServers;
+  }, [iceServers]);
+  
   const configuration = {
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    iceServers: iceServers,
+    iceCandidatePoolSize: 10,
   };
 
   // Initialize socket connection to meeting service
@@ -96,6 +109,14 @@ const MeetingRoom = () => {
           }
         }
       );
+    });
+
+    // Receive ICE servers from backend
+    meetSocket.on("ice-servers", ({ iceServers: serverIceServers }) => {
+      console.log("[Meeting] Received ICE servers from backend:", serverIceServers);
+      if (serverIceServers && serverIceServers.length > 0) {
+        setIceServers(serverIceServers);
+      }
     });
 
     // Helper function to process an offer
@@ -464,7 +485,15 @@ const MeetingRoom = () => {
     }
 
     console.log(`[Meeting] Creating new peer connection for ${remoteSocketId}`);
-    const pc = new RTCPeerConnection(configuration);
+    
+    // Use ref to get latest ICE servers
+    const config = {
+      iceServers: iceServersRef.current || iceServers,
+      iceCandidatePoolSize: 10,
+    };
+    console.log(`[Meeting] Using ICE servers:`, config.iceServers);
+    
+    const pc = new RTCPeerConnection(config);
 
     // Add local tracks to peer connection - Use ref to get current stream
     const currentStream = localStreamRef.current;
@@ -486,16 +515,47 @@ const MeetingRoom = () => {
       console.log(
         "[Meeting] Remote track received from",
         remoteSocketId,
-        event.track.kind
+        event.track.kind,
+        "readyState:",
+        event.track.readyState
       );
       const remoteStream = event.streams[0];
+      
+      // Log stream details for debugging
+      console.log("[Meeting] Remote stream ID:", remoteStream?.id);
+      console.log("[Meeting] Remote stream tracks:", remoteStream?.getTracks().map(t => ({
+        kind: t.kind,
+        enabled: t.enabled,
+        readyState: t.readyState
+      })));
+      
+      // Force React to see this as a new stream by creating a reference update
       setPeers((prev) => {
         const updated = new Map(prev);
         const existing = updated.get(remoteSocketId) || {};
-        updated.set(remoteSocketId, { ...existing, stream: remoteStream });
-        console.log(`[Meeting] Updated peer ${remoteSocketId} with stream`);
+        // Create a new object reference to trigger re-render
+        updated.set(remoteSocketId, { 
+          ...existing, 
+          stream: remoteStream,
+          streamId: remoteStream?.id, // Track stream ID for debugging
+          lastTrackUpdate: Date.now() // Force new reference
+        });
+        console.log(`[Meeting] Updated peer ${remoteSocketId} with stream, tracks:`, remoteStream?.getTracks().length);
         return updated;
       });
+      
+      // Listen for track ended events
+      event.track.onended = () => {
+        console.log(`[Meeting] Track ended for peer ${remoteSocketId}:`, event.track.kind);
+      };
+      
+      event.track.onmute = () => {
+        console.log(`[Meeting] Track muted for peer ${remoteSocketId}:`, event.track.kind);
+      };
+      
+      event.track.onunmute = () => {
+        console.log(`[Meeting] Track unmuted for peer ${remoteSocketId}:`, event.track.kind);
+      };
     };
 
     // Handle ICE candidates
@@ -990,10 +1050,50 @@ const RemoteVideo = ({ stream, name, isHost }) => {
   const videoRef = useRef(null);
 
   useEffect(() => {
-    if (videoRef.current && stream) {
+    const videoElement = videoRef.current;
+    if (videoElement && stream) {
       console.log("[RemoteVideo] Setting stream for", name, stream);
-      videoRef.current.srcObject = stream;
+      console.log("[RemoteVideo] Stream tracks:", stream.getTracks().map(t => `${t.kind}: ${t.enabled}, readyState: ${t.readyState}`));
+      
+      videoElement.srcObject = stream;
+      
+      // Force play with retry mechanism
+      const playVideo = async () => {
+        try {
+          await videoElement.play();
+          console.log("[RemoteVideo] Video playing for", name);
+        } catch (err) {
+          console.warn("[RemoteVideo] Autoplay failed for", name, "- will retry on user interaction:", err.message);
+          // Add click handler to play on user interaction
+          const handleClick = async () => {
+            try {
+              await videoElement.play();
+              document.removeEventListener('click', handleClick);
+            } catch (e) {
+              console.error("[RemoteVideo] Play on click failed:", e);
+            }
+          };
+          document.addEventListener('click', handleClick, { once: true });
+        }
+      };
+      
+      // Wait for loadedmetadata before playing
+      videoElement.onloadedmetadata = () => {
+        console.log("[RemoteVideo] Metadata loaded for", name);
+        playVideo();
+      };
+      
+      // If metadata already loaded, play immediately
+      if (videoElement.readyState >= 1) {
+        playVideo();
+      }
     }
+    
+    return () => {
+      if (videoElement) {
+        videoElement.srcObject = null;
+      }
+    };
   }, [stream, name]);
 
   return (
@@ -1003,6 +1103,7 @@ const RemoteVideo = ({ stream, name, isHost }) => {
           ref={videoRef}
           autoPlay
           playsInline
+          muted={false}
           className="w-full h-full object-cover"
         />
       ) : (

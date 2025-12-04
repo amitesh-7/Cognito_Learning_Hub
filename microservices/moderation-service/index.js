@@ -9,10 +9,9 @@ const authMiddleware = require("./middleware/authMiddleware");
 
 const app = express();
 
-// Trust proxy for production (required for rate limiting behind Render load balancer)
-if (process.env.NODE_ENV === "production") {
-  app.set("trust proxy", 1);
-}
+// Trust proxy - Required for rate limiter to work correctly
+// Allows express-rate-limit to correctly identify client IPs from X-Forwarded-For
+app.set("trust proxy", 1); // Trust first proxy (required in all environments)
 
 // Input validation and sanitization
 const { sanitizeAll } = require("../shared/middleware/inputValidation");
