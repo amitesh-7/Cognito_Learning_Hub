@@ -27,7 +27,7 @@ router.post('/create', authenticateToken, async (req, res) => {
     }
 
     // Fetch quiz details
-    const QUIZ_SERVICE_URL = process.env.QUIZ_SERVICE_URL || 'http://localhost:3005';
+    const QUIZ_SERVICE_URL = process.env.QUIZ_SERVICE_URL || 'http://localhost:3002';
     const quizResponse = await fetch(`${QUIZ_SERVICE_URL}/api/quizzes/${quizId}`);
     if (!quizResponse.ok) {
       return ApiResponse.notFound(res, 'Quiz not found');

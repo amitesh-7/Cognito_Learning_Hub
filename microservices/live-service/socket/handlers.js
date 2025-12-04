@@ -11,7 +11,7 @@ const LiveSession = require("../models/LiveSession");
 
 const logger = createLogger("socket-handlers");
 const QUIZ_SERVICE_URL =
-  process.env.QUIZ_SERVICE_URL || "http://localhost:3005";
+  process.env.QUIZ_SERVICE_URL || "http://localhost:3002";
 
 // Batched leaderboard updates
 const leaderboardUpdateQueue = new Map();
