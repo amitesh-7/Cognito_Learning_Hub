@@ -32,6 +32,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Public quiz count endpoint (no auth required)
+app.get("/api/quizzes/count", async (req, res) => {
+  try {
+    const Quiz = require("./models/Quiz");
+    const count = await Quiz.countDocuments();
+    return ApiResponse.success(res, { count });
+  } catch (error) {
+    logger.error("Count error:", error);
+    return ApiResponse.success(res, { count: 0 });
+  }
+});
+
 // Routes
 app.use("/api/generate", require("./routes/generation"));
 app.use("/api/quizzes", require("./routes/quizzes"));

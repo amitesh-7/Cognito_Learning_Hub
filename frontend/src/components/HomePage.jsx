@@ -27,6 +27,10 @@ import {
   Lock,
   BookOpen,
   ListChecks,
+  Trophy,
+  Code,
+  Database,
+  BarChart3,
 } from "lucide-react";
 import {
   Card,
@@ -38,6 +42,7 @@ import {
 import Button from "./ui/Button";
 import Badge from "./ui/Badge";
 import FloatingIconsBackground from "./FloatingIconsBackground";
+import ProductDemo from "./ProductDemo";
 import { staggerContainer, staggerItem, fadeInUp } from "../lib/utils";
 import "../animations.css";
 
@@ -45,7 +50,34 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [openFAQ, setOpenFAQ] = useState(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [platformStats, setPlatformStats] = useState({
+    totalUsers: 0,
+    totalQuizzes: 0,
+    totalTeachers: 0,
+    totalQuizzesTaken: 0,
+    satisfactionRate: 95,
+  });
   const lenisRef = useRef(null);
+
+  // Fetch real platform stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/public/stats`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.stats) {
+            setPlatformStats(data.stats);
+          }
+        }
+      } catch (error) {
+        console.log("Using default stats");
+      }
+    };
+    fetchStats();
+  }, []);
 
   useEffect(() => {
     // Simulate loading time
@@ -100,15 +132,17 @@ export default function HomePage() {
       price: "0",
       priceCurrency: "USD",
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      ratingCount: "10000",
-    },
     creator: {
       "@type": "Organization",
       name: "OPTIMISTIC MUTANT CODERS",
     },
+    featureList: [
+      "AI-powered quiz generation",
+      "PDF and YouTube content import",
+      "Real-time collaborative learning",
+      "Gamified learning experience",
+      "Mobile-responsive design"
+    ],
   };
 
   // FAQ Data
@@ -349,12 +383,11 @@ export default function HomePage() {
                 variants={fadeInUp}
               >
                 Turn any PDF into an interactive mock test, get instant
-                doubt-solving, and track your progress—all in one place. Join{" "}
+                AI-powered doubt-solving, and track your progress—all in one place.
+                Experience the future of education with{" "}
                 <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                  10,000+
-                </span>{" "}
-                learners already transforming their education with Cognito
-                Learning Hub.
+                  Cognito Learning Hub
+                </span>.
               </motion.p>
 
               <motion.div
@@ -395,46 +428,22 @@ export default function HomePage() {
                 </Button>
               </motion.div>
 
-              {/* Quick Stats */}
+              {/* Quick Feature Highlights - REAL features only */}
               <motion.div
-                className="flex flex-wrap gap-8 pt-8 border-t border-gray-200 dark:border-gray-700"
+                className="flex flex-wrap gap-4 pt-8 border-t border-gray-200 dark:border-gray-700"
                 variants={fadeInUp}
               >
-                <div className="text-left">
-                  <motion.div
-                    className="text-2xl md:text-3xl font-bold text-indigo-600 dark:text-indigo-400 mb-1"
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    10K+
-                  </motion.div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Active Users
-                  </div>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700">
+                  <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">AI Quiz Generation</span>
                 </div>
-                <div className="text-left">
-                  <motion.div
-                    className="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400 mb-1"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                  >
-                    50K+
-                  </motion.div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Quizzes Created
-                  </div>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700">
+                  <Gamepad2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  <span className="text-sm font-medium text-green-700 dark:text-green-300">1v1 Duel Battles</span>
                 </div>
-                <div className="text-left p-4 rounded-2xl bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800">
-                  <motion.div
-                    className="text-2xl md:text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  >
-                    98%
-                  </motion.div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Satisfaction
-                  </div>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700">
+                  <Trophy className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <span className="text-sm font-medium text-purple-700 dark:text-purple-300">Live Leaderboards</span>
                 </div>
               </motion.div>
             </motion.div>
@@ -678,7 +687,7 @@ export default function HomePage() {
                   </CardHeader>
                   <CardContent className="p-6">
                     <div className="space-y-4">
-                      {/* Mock AI Generation Process */}
+                      {/* AI Generation Demo Preview */}
                       <motion.div
                         className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
                         initial={{ opacity: 0, x: -20 }}
@@ -691,7 +700,7 @@ export default function HomePage() {
                           transition={{ duration: 1, repeat: Infinity }}
                         />
                         <span className="text-sm">
-                          Analyzing topic: "Solar System"
+                          ✨ Enter any topic to generate quizzes
                         </span>
                       </motion.div>
 
@@ -711,7 +720,7 @@ export default function HomePage() {
                           }}
                         />
                         <span className="text-sm">
-                          Generated 5 questions in 3.2s ⚡
+                          📄 Or upload PDF / YouTube links
                         </span>
                       </motion.div>
 
@@ -722,26 +731,19 @@ export default function HomePage() {
                         transition={{ delay: 1.5 }}
                       >
                         <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                          🪐 Sample Question Generated:
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-300">
-                          "Which planet is known as the Red Planet?"
+                          🎯 AI-Generated Questions Include:
                         </div>
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {["Mars ✓", "Venus", "Jupiter", "Saturn"].map(
-                            (option, idx) => (
+                          {["Multiple Choice", "Explanations", "Difficulty Levels", "Instant Feedback"].map(
+                            (feature, idx) => (
                               <motion.span
                                 key={idx}
-                                className={`px-2 py-1 text-xs rounded ${
-                                  idx === 0
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-400"
-                                    : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                                }`}
+                                className="px-2 py-1 text-xs rounded bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 dark:from-blue-900 dark:to-indigo-900 dark:text-blue-200"
                                 initial={{ scale: 0 }}
                                 whileInView={{ scale: 1 }}
                                 transition={{ delay: 2 + idx * 0.1 }}
                               >
-                                {option}
+                                {feature}
                               </motion.span>
                             )
                           )}
@@ -777,7 +779,7 @@ export default function HomePage() {
                 </Card>
               </motion.div>
 
-              {/* Live Activity Feed */}
+              {/* Why Choose Us Section */}
               <motion.div variants={staggerItem}>
                 <Card className="h-full overflow-hidden group card-lift shadow-large spotlight">
                   <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 glass">
@@ -787,74 +789,52 @@ export default function HomePage() {
                         animate={{ scale: [1, 1.1, 1] }}
                         transition={{ duration: 2, repeat: Infinity }}
                       >
-                        <Users className="w-5 h-5" />
+                        <Award className="w-5 h-5" />
                       </motion.div>
-                      Live Activity Feed
+                      Why Choose Us
                     </CardTitle>
                     <CardDescription>
-                      Real-time learning happening now
+                      Built for modern learning
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6">
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {[
                         {
-                          name: "Sarah M.",
-                          action: "completed",
-                          quiz: "Math Quiz",
-                          score: "95%",
-                          time: "2m ago",
-                          color: "green",
+                          icon: "🎯",
+                          title: "AI-Powered",
+                          description: "Smart quiz generation from any topic",
                         },
                         {
-                          name: "Alex K.",
-                          action: "created",
-                          quiz: "History Test",
-                          score: "New",
-                          time: "5m ago",
-                          color: "blue",
+                          icon: "⚡",
+                          title: "Instant Results",
+                          description: "Real-time feedback and analytics",
                         },
                         {
-                          name: "Maya P.",
-                          action: "achieved",
-                          quiz: "Perfect Score!",
-                          score: "100%",
-                          time: "8m ago",
-                          color: "yellow",
+                          icon: "🎮",
+                          title: "Gamified Learning",
+                          description: "Earn badges, climb leaderboards",
                         },
                         {
-                          name: "John D.",
-                          action: "started",
-                          quiz: "Science Quiz",
-                          score: "In Progress",
-                          time: "12m ago",
-                          color: "purple",
+                          icon: "👥",
+                          title: "Social Features",
+                          description: "Challenge friends, share progress",
                         },
-                      ].map((activity, idx) => (
+                      ].map((feature, idx) => (
                         <motion.div
                           key={idx}
                           className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
                           initial={{ opacity: 0, x: 20 }}
                           whileInView={{ opacity: 1, x: 0 }}
-                          transition={{ delay: idx * 0.2 }}
+                          transition={{ delay: idx * 0.15 }}
                         >
-                          <motion.div
-                            className={`w-3 h-3 rounded-full bg-${activity.color}-500`}
-                            animate={{ opacity: [0.5, 1, 0.5] }}
-                            transition={{
-                              duration: 2,
-                              repeat: Infinity,
-                              delay: idx * 0.3,
-                            }}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {activity.name} {activity.action} "{activity.quiz}
-                              "
+                          <span className="text-2xl">{feature.icon}</span>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {feature.title}
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 flex justify-between">
-                              <span>{activity.score}</span>
-                              <span>{activity.time}</span>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {feature.description}
                             </div>
                           </div>
                         </motion.div>
@@ -864,10 +844,10 @@ export default function HomePage() {
                         className="text-center pt-4"
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
-                        transition={{ delay: 1 }}
+                        transition={{ delay: 0.8 }}
                       >
                         <Badge variant="success" className="animate-pulse">
-                          🔥 Join 50+ active learners right now!
+                          🚀 Start learning for free!
                         </Badge>
                       </motion.div>
                     </div>
@@ -877,7 +857,7 @@ export default function HomePage() {
             </motion.div>
           </motion.section>
 
-          {/* Stats Section */}
+          {/* Platform Features Section - showing REAL capabilities */}
           <motion.section
             variants={staggerContainer}
             initial="initial"
@@ -885,70 +865,63 @@ export default function HomePage() {
             viewport={{ once: true, amount: 0.3 }}
             className="animated-gradient rounded-3xl p-12 text-white shadow-2xl reveal-scale"
           >
+            <motion.div className="text-center mb-8" variants={staggerItem}>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                100% Free • No Hidden Costs • Open Source
+              </h2>
+              <p className="text-indigo-100 text-lg max-w-2xl mx-auto">
+                Everything you need to supercharge your learning journey
+              </p>
+            </motion.div>
+            
             <motion.div
               className="grid md:grid-cols-4 gap-8 text-center"
               variants={staggerContainer}
             >
               <motion.div variants={staggerItem}>
-                <div className="space-y-2">
-                  <motion.div
-                    className="text-3xl font-bold text-white"
-                    initial={{ scale: 0 }}
-                    whileInView={{ scale: 1 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                  >
-                    10K+
-                  </motion.div>
-                  <p className="text-indigo-100 dark:text-indigo-200">
-                    Active Users
+                <div className="space-y-3 p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
+                  <div className="w-14 h-14 mx-auto bg-white/20 rounded-xl flex items-center justify-center">
+                    <Brain className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="text-lg font-bold text-white">AI Quiz Generator</div>
+                  <p className="text-sm text-indigo-100">
+                    From PDFs, Topics & YouTube
                   </p>
                 </div>
               </motion.div>
 
               <motion.div variants={staggerItem}>
-                <div className="space-y-2">
-                  <motion.div
-                    className="text-3xl font-bold text-white"
-                    initial={{ scale: 0 }}
-                    whileInView={{ scale: 1 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                  >
-                    50K+
-                  </motion.div>
-                  <p className="text-indigo-100 dark:text-indigo-200">
-                    Quizzes Created
+                <div className="space-y-3 p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
+                  <div className="w-14 h-14 mx-auto bg-white/20 rounded-xl flex items-center justify-center">
+                    <Gamepad2 className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="text-lg font-bold text-white">1v1 Duel Battles</div>
+                  <p className="text-sm text-indigo-100">
+                    Challenge Friends in Real-time
                   </p>
                 </div>
               </motion.div>
 
               <motion.div variants={staggerItem}>
-                <div className="space-y-2">
-                  <motion.div
-                    className="text-3xl font-bold text-white"
-                    initial={{ scale: 0 }}
-                    whileInView={{ scale: 1 }}
-                    transition={{ duration: 0.5, delay: 0.4 }}
-                  >
-                    5K+
-                  </motion.div>
-                  <p className="text-indigo-100 dark:text-indigo-200">
-                    Educators Teaching
+                <div className="space-y-3 p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
+                  <div className="w-14 h-14 mx-auto bg-white/20 rounded-xl flex items-center justify-center">
+                    <Trophy className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="text-lg font-bold text-white">Live Leaderboards</div>
+                  <p className="text-sm text-indigo-100">
+                    Compete & Climb Rankings
                   </p>
                 </div>
               </motion.div>
 
               <motion.div variants={staggerItem}>
-                <div className="space-y-2">
-                  <motion.div
-                    className="text-3xl font-bold text-white"
-                    initial={{ scale: 0 }}
-                    whileInView={{ scale: 1 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
-                  >
-                    99%
-                  </motion.div>
-                  <p className="text-indigo-100 dark:text-indigo-200">
-                    Satisfaction Rate
+                <div className="space-y-3 p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
+                  <div className="w-14 h-14 mx-auto bg-white/20 rounded-xl flex items-center justify-center">
+                    <MessageCircle className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="text-lg font-bold text-white">24/7 AI Tutor</div>
+                  <p className="text-sm text-indigo-100">
+                    Instant Doubt Solving
                   </p>
                 </div>
               </motion.div>
@@ -1031,6 +1004,11 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
           </motion.section>
+
+          {/* Interactive Product Demo Section */}
+          <div id="product-demo">
+            <ProductDemo />
+          </div>
 
           {/* Why Choose Our AI Tutor - 2x2 Feature Grid */}
           <motion.section
@@ -1146,7 +1124,7 @@ export default function HomePage() {
             </motion.div>
           </motion.section>
 
-          {/* Testimonials Section */}
+          {/* REAL Built Features Showcase - No fake testimonials */}
           <motion.section
             variants={staggerContainer}
             initial="initial"
@@ -1160,14 +1138,13 @@ export default function HomePage() {
             >
               <Badge variant="gradient" size="lg" className="mb-4 pulse-ring">
                 <Award className="w-4 h-4 mr-2" />
-                💝 Success Stories
+                🛠️ What's Actually Built
               </Badge>
               <h2 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">
-                Loved by Students and Teachers Worldwide
+                Real Features, Real Functionality
               </h2>
               <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-                Join thousands of learners who are transforming their education
-                with Cognito Learning Hub
+                Every feature listed here is fully implemented and working. No vaporware, no promises—just working code.
               </p>
             </motion.div>
 
@@ -1175,215 +1152,142 @@ export default function HomePage() {
               className="grid md:grid-cols-3 gap-10"
               variants={staggerContainer}
             >
+              {/* Feature 1: AI Quiz Generation */}
               <motion.div variants={staggerItem}>
-                <Card className="h-full group border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-                  <CardContent className="p-10 relative overflow-hidden">
-                    <div className="flex justify-between items-start mb-6">
-                      <motion.div
-                        className="flex text-yellow-400 text-lg"
-                        initial={{ scale: 0 }}
-                        whileInView={{ scale: 1 }}
-                        transition={{ delay: 0.5, staggerChildren: 0.1 }}
-                      >
-                        {[...Array(5)].map((_, i) => (
-                          <motion.span
-                            key={i}
-                            initial={{ scale: 0, rotate: -180 }}
-                            whileInView={{ scale: 1, rotate: 0 }}
-                            transition={{ delay: 0.5 + i * 0.1 }}
-                          >
-                            ⭐
-                          </motion.span>
-                        ))}
-                      </motion.div>
-                      <Badge variant="success" size="sm">
-                        Teacher
-                      </Badge>
-                    </div>
-
-                    <p className="text-gray-700 dark:text-gray-300 mb-8 relative z-10 text-base leading-relaxed">
-                      "🚀 Cognito Learning Hub has completely revolutionized my
-                      classroom! I can create engaging quizzes in under 30
-                      seconds. My students are more motivated than ever!"
-                    </p>
-
+                <Card className="h-full group border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+                  <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6">
                     <motion.div
-                      className="flex items-center"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ duration: 0.2 }}
+                      className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4"
+                      whileHover={{ scale: 1.1, rotate: 5 }}
                     >
-                      <motion.div
-                        className="h-14 w-14 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-semibold text-lg"
-                        whileHover={{ scale: 1.1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        MS
-                      </motion.div>
-                      <div className="ml-4">
-                        <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
-                          Rakshita
-                        </h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          High School Science Teacher • �� India
-                        </p>
-                      </div>
+                      <Brain className="w-8 h-8 text-white" />
                     </motion.div>
+                    <h3 className="text-xl font-bold text-white mb-2">AI Quiz Generator</h3>
+                  </div>
+                  <CardContent className="p-6">
+                    <ul className="space-y-3">
+                      <li className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>Generate from any topic</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>Upload PDFs for quiz creation</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>YouTube video to quiz</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>Multiple difficulty levels</span>
+                      </li>
+                    </ul>
+                    <Button asChild className="w-full mt-6 bg-gradient-to-r from-indigo-600 to-purple-600">
+                      <Link to="/quiz-maker">Try Quiz Maker →</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               </motion.div>
 
+              {/* Feature 2: Live Duel Battles */}
               <motion.div variants={staggerItem}>
-                <Card className="h-full group border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-                  <CardContent className="p-10 relative overflow-hidden">
-                    <div className="flex justify-between items-start mb-6">
-                      <motion.div
-                        className="flex text-yellow-400 text-lg"
-                        initial={{ scale: 0 }}
-                        whileInView={{ scale: 1 }}
-                        transition={{ delay: 0.7, staggerChildren: 0.1 }}
-                      >
-                        {[...Array(5)].map((_, i) => (
-                          <motion.span
-                            key={i}
-                            initial={{ scale: 0, rotate: -180 }}
-                            whileInView={{ scale: 1, rotate: 0 }}
-                            transition={{ delay: 0.7 + i * 0.1 }}
-                          >
-                            ⭐
-                          </motion.span>
-                        ))}
-                      </motion.div>
-                      <Badge variant="secondary" size="sm">
-                        Student
-                      </Badge>
-                    </div>
-
-                    <p className="text-gray-700 dark:text-gray-300 mb-8 relative z-10 text-base leading-relaxed">
-                      "🎯 The AI Doubt Solver is like having a genius tutor
-                      24/7! My grades improved from C+ to A- in just 2 months.
-                      This app is pure magic!"
-                    </p>
-
+                <Card className="h-full group border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+                  <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6">
                     <motion.div
-                      className="flex items-center"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ duration: 0.2 }}
+                      className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4"
+                      whileHover={{ scale: 1.1, rotate: -5 }}
                     >
-                      <motion.div
-                        className="h-14 w-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 font-semibold text-lg"
-                        whileHover={{ scale: 1.1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        AK
-                      </motion.div>
-                      <div className="ml-4">
-                        <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
-                          Amitesh Vishwakarma
-                        </h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Computer Science Student • 🇮🇳 India
-                        </p>
-                      </div>
+                      <Gamepad2 className="w-8 h-8 text-white" />
                     </motion.div>
+                    <h3 className="text-xl font-bold text-white mb-2">1v1 Duel Battles</h3>
+                  </div>
+                  <CardContent className="p-6">
+                    <ul className="space-y-3">
+                      <li className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>Real-time multiplayer duels</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>Matchmaking system</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>Live score tracking</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>Challenge friends by username</span>
+                      </li>
+                    </ul>
+                    <Button asChild className="w-full mt-6 bg-gradient-to-r from-green-600 to-emerald-600">
+                      <Link to="/duel-arena">Enter Duel Arena →</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               </motion.div>
 
+              {/* Feature 3: Achievement System */}
               <motion.div variants={staggerItem}>
-                <Card className="h-full group border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-                  <CardContent className="p-10 relative overflow-hidden">
-                    <div className="flex justify-between items-start mb-6">
-                      <motion.div
-                        className="flex text-yellow-400 text-lg"
-                        initial={{ scale: 0 }}
-                        whileInView={{ scale: 1 }}
-                        transition={{ delay: 0.9, staggerChildren: 0.1 }}
-                      >
-                        {[...Array(5)].map((_, i) => (
-                          <motion.span
-                            key={i}
-                            initial={{ scale: 0, rotate: -180 }}
-                            whileInView={{ scale: 1, rotate: 0 }}
-                            transition={{ delay: 0.9 + i * 0.1 }}
-                          >
-                            ⭐
-                          </motion.span>
-                        ))}
-                      </motion.div>
-                      <Badge variant="warning" size="sm">
-                        Principal
-                      </Badge>
-                    </div>
-
-                    <p className="text-gray-700 dark:text-gray-300 mb-8 relative z-10 text-base leading-relaxed">
-                      "💼 We deployed Cognito Learning Hub across our entire
-                      school district. Student engagement is up 300% and teacher
-                      productivity has doubled. Outstanding!"
-                    </p>
-
+                <Card className="h-full group border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+                  <div className="bg-gradient-to-br from-orange-500 to-red-600 p-6">
                     <motion.div
-                      className="flex items-center"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ duration: 0.2 }}
+                      className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4"
+                      whileHover={{ scale: 1.1, rotate: 5 }}
                     >
-                      <motion.div
-                        className="h-14 w-14 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center text-pink-600 dark:text-pink-400 font-semibold text-lg"
-                        whileHover={{ scale: 1.1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        DR
-                      </motion.div>
-                      <div className="ml-4">
-                        <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
-                          Sarah Johnson
-                        </h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Government Teacher • India{" "}
-                        </p>
-                      </div>
+                      <Trophy className="w-8 h-8 text-white" />
                     </motion.div>
+                    <h3 className="text-xl font-bold text-white mb-2">Gamification System</h3>
+                  </div>
+                  <CardContent className="p-6">
+                    <ul className="space-y-3">
+                      <li className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>Unlockable achievements</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>XP and leveling system</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>Daily streak rewards</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>Global leaderboards</span>
+                      </li>
+                    </ul>
+                    <Button asChild className="w-full mt-6 bg-gradient-to-r from-orange-600 to-red-600">
+                      <Link to="/achievements">View Achievements →</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               </motion.div>
             </motion.div>
 
-            {/* Trust Badges */}
+            {/* More Real Features Grid */}
             <motion.div
-              className="flex flex-wrap justify-center items-center gap-8 pt-8"
+              className="grid md:grid-cols-4 gap-6 pt-8"
               variants={staggerContainer}
             >
-              <motion.div variants={staggerItem} className="text-center">
-                <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                  4.9/5
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  App Store Rating
-                </div>
-              </motion.div>
-              <motion.div variants={staggerItem} className="text-center">
-                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                  10K+
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Happy Teachers
-                </div>
-              </motion.div>
-              <motion.div variants={staggerItem} className="text-center">
-                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                  500K+
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Students Served
-                </div>
-              </motion.div>
-              <motion.div variants={staggerItem} className="text-center">
-                <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
-                  50+
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Countries
-                </div>
-              </motion.div>
+              {[
+                { icon: MessageCircle, title: "AI Doubt Solver", desc: "24/7 instant help", color: "blue" },
+                { icon: Users, title: "Social Hub", desc: "Connect & collaborate", color: "purple" },
+                { icon: BookOpen, title: "Quiz Library", desc: "Browse community quizzes", color: "green" },
+                { icon: BarChart3, title: "Analytics", desc: "Track your progress", color: "orange" },
+              ].map((feature, idx) => (
+                <motion.div
+                  key={idx}
+                  variants={staggerItem}
+                  className={`p-6 rounded-2xl bg-${feature.color}-50 dark:bg-${feature.color}-900/20 border border-${feature.color}-200 dark:border-${feature.color}-700 text-center`}
+                >
+                  <feature.icon className={`w-8 h-8 mx-auto mb-3 text-${feature.color}-600 dark:text-${feature.color}-400`} />
+                  <h4 className="font-bold text-gray-900 dark:text-white mb-1">{feature.title}</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{feature.desc}</p>
+                </motion.div>
+              ))}
             </motion.div>
           </motion.section>
 
@@ -1467,12 +1371,11 @@ export default function HomePage() {
                 transition={{ duration: 0.6, delay: 0.4 }}
                 style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
               >
-                🌟 Join{" "}
+                🌟 Experience the power of{" "}
                 <span className="font-bold text-yellow-300 drop-shadow-md">
-                  10,000+
+                  AI-powered learning
                 </span>{" "}
-                students and educators who are already transforming education
-                with AI-powered learning. Start your journey today!
+                with features that actually work. Start your journey today—completely free, forever!
               </motion.p>
 
               <motion.div
@@ -1516,7 +1419,7 @@ export default function HomePage() {
                 </motion.div>
               </motion.div>
 
-              {/* Social Proof */}
+              {/* Real Feature Highlights */}
               <motion.div
                 className="flex flex-wrap justify-center items-center gap-6 pt-8 text-white font-semibold"
                 initial={{ opacity: 0 }}
@@ -1530,9 +1433,9 @@ export default function HomePage() {
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    🔥
+                    🆓
                   </motion.span>
-                  <span className="font-bold">10K+ Active Users</span>
+                  <span className="font-bold">100% Free Forever</span>
                 </div>
                 <div className="flex items-center gap-2 drop-shadow-lg">
                   <motion.span
@@ -1540,9 +1443,9 @@ export default function HomePage() {
                     animate={{ rotate: [0, 10, -10, 0] }}
                     transition={{ duration: 3, repeat: Infinity }}
                   >
-                    ⚡
+                    🤖
                   </motion.span>
-                  <span className="font-bold">50K+ Quizzes Created</span>
+                  <span className="font-bold">AI-Powered Quizzes</span>
                 </div>
                 <div className="flex items-center gap-2 drop-shadow-lg">
                   <motion.span
@@ -1550,15 +1453,15 @@ export default function HomePage() {
                     animate={{ y: [0, -5, 0] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    🎖️
+                    ⚔️
                   </motion.span>
-                  <span className="font-bold">4.9/5 Rating</span>
+                  <span className="font-bold">1v1 Duel Battles</span>
                 </div>
               </motion.div>
             </motion.div>
           </motion.section>
 
-          {/* Trust Signals Section */}
+          {/* Built With Modern Tech - Real trust signals */}
           <motion.section
             variants={staggerContainer}
             initial="initial"
@@ -1572,8 +1475,9 @@ export default function HomePage() {
                 id="trust-heading"
                 className="text-2xl font-bold text-gray-900 dark:text-white mb-4"
               >
-                Trusted by Educators Worldwide
+                Built With Modern Technology
               </h2>
+              <p className="text-gray-600 dark:text-gray-400">Open source and built for reliability</p>
             </motion.div>
 
             <motion.div
@@ -1584,9 +1488,19 @@ export default function HomePage() {
                 variants={staggerItem}
                 className="flex items-center gap-2 bg-white dark:bg-gray-700 px-4 py-2 rounded-lg shadow-sm"
               >
-                <Shield className="w-5 h-5 text-green-500" />
+                <Code className="w-5 h-5 text-indigo-500" />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  SOC 2 Certified
+                  React + Vite
+                </span>
+              </motion.div>
+
+              <motion.div
+                variants={staggerItem}
+                className="flex items-center gap-2 bg-white dark:bg-gray-700 px-4 py-2 rounded-lg shadow-sm"
+              >
+                <Database className="w-5 h-5 text-green-500" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Node.js + MongoDB
                 </span>
               </motion.div>
 
@@ -1596,7 +1510,7 @@ export default function HomePage() {
               >
                 <Lock className="w-5 h-5 text-blue-500" />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  GDPR Compliant
+                  JWT Authentication
                 </span>
               </motion.div>
 
@@ -1604,9 +1518,9 @@ export default function HomePage() {
                 variants={staggerItem}
                 className="flex items-center gap-2 bg-white dark:bg-gray-700 px-4 py-2 rounded-lg shadow-sm"
               >
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <Zap className="w-5 h-5 text-yellow-500" />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  SSL Secured
+                  Real-time Socket.io
                 </span>
               </motion.div>
 
@@ -1614,19 +1528,9 @@ export default function HomePage() {
                 variants={staggerItem}
                 className="flex items-center gap-2 bg-white dark:bg-gray-700 px-4 py-2 rounded-lg shadow-sm"
               >
-                <Globe className="w-5 h-5 text-indigo-500" />
+                <Brain className="w-5 h-5 text-purple-500" />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  50+ Countries
-                </span>
-              </motion.div>
-
-              <motion.div
-                variants={staggerItem}
-                className="flex items-center gap-2 bg-white dark:bg-gray-700 px-4 py-2 rounded-lg shadow-sm"
-              >
-                <Star className="w-5 h-5 text-yellow-500" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  4.9/5 Rating
+                  AI-Powered (Gemini)
                 </span>
               </motion.div>
             </motion.div>
@@ -1842,7 +1746,7 @@ export default function HomePage() {
             </motion.div>
           </motion.section>
 
-          {/* Pricing Preview Section - 3 Column Layout */}
+          {/* Pricing Section - 100% FREE */}
           <motion.section
             variants={staggerContainer}
             initial="initial"
@@ -1855,208 +1759,147 @@ export default function HomePage() {
               className="text-center space-y-6"
               variants={staggerItem}
             >
+              <Badge variant="gradient" size="lg" className="mb-4">
+                <Sparkles className="w-4 h-4 mr-2" />
+                🎉 100% FREE
+              </Badge>
               <h2
                 id="pricing-heading"
                 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white"
               >
-                Simple, Transparent Pricing
+                No Pricing—It's Completely Free!
               </h2>
               <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-                Get started for free, upgrade when you need more power
+                Unlike Kahoot, Quizlet, and other platforms that charge $15-50/month for premium features, 
+                <span className="font-bold text-indigo-600 dark:text-indigo-400"> Cognito Learning Hub is 100% free forever</span>.
               </p>
             </motion.div>
 
+            {/* Single FREE plan card */}
             <motion.div
-              className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
-              variants={staggerContainer}
+              className="max-w-lg mx-auto"
+              variants={staggerItem}
             >
-              {/* Basic (Free) Plan */}
-              <motion.div
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border-2 border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300"
-                variants={staggerItem}
-              >
-                <div className="mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    Basic
-                  </h3>
-                  <div className="flex items-baseline gap-1 mb-2">
-                    <span className="text-5xl font-bold text-gray-900 dark:text-white">
-                      $0
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-400">
-                      /month
-                    </span>
+              <Card className="relative overflow-hidden border-2 border-indigo-500 shadow-2xl rounded-3xl">
+                {/* Glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 blur-3xl" />
+                
+                <div className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-8 text-white text-center">
+                  <motion.div
+                    animate={{ rotate: [0, 5, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="text-5xl mb-4"
+                  >
+                    🎁
+                  </motion.div>
+                  <h3 className="text-3xl font-bold mb-2">Everything Free</h3>
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <span className="text-6xl font-black">$0</span>
+                    <span className="text-xl opacity-80">/forever</span>
                   </div>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Perfect for individual students
-                  </p>
+                  <p className="text-white/90">No credit card required. No hidden fees.</p>
                 </div>
 
-                <ul className="space-y-4 mb-8">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      10 AI-generated quizzes/month
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Access to quiz library
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Basic AI Doubt Solver
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Progress tracking
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Community support
-                    </span>
-                  </li>
-                </ul>
-
-                <Button
-                  asChild
-                  variant="outline"
-                  className="w-full border-2 border-gray-300 dark:border-gray-600 hover:border-indigo-600 hover:text-indigo-600 transition-all"
-                >
-                  <Link to="/signup">Get Started Free</Link>
-                </Button>
-              </motion.div>
-
-              {/* Student Plan - Highlighted */}
-              <motion.div
-                className="bg-indigo-600 dark:bg-indigo-700 rounded-2xl shadow-2xl p-8 text-white relative border-2 border-indigo-500 scale-105"
-                variants={staggerItem}
-              >
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-yellow-400 text-yellow-900 px-4 py-1 rounded-full text-sm font-bold shadow-lg">
-                    Most Popular
-                  </span>
-                </div>
-
-                <div className="mb-8 mt-2">
-                  <h3 className="text-2xl font-bold mb-2">Student</h3>
-                  <div className="flex items-baseline gap-1 mb-2">
-                    <span className="text-5xl font-bold">$9</span>
-                    <span className="opacity-80">/month</span>
+                <CardContent className="p-8">
+                  <h4 className="font-bold text-gray-900 dark:text-white mb-6 text-center text-lg">
+                    All Features Included:
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-4 mb-8">
+                    {[
+                      "Unlimited AI Quiz Generation",
+                      "PDF & YouTube Quiz Creation",
+                      "1v1 Real-time Duel Battles",
+                      "Live Leaderboards",
+                      "Achievement System",
+                      "24/7 AI Doubt Solver",
+                      "Social Hub & Chat",
+                      "Progress Analytics",
+                      "Live Sessions Hosting",
+                      "Video Meetings",
+                      "Custom Quiz Builder",
+                      "Export Results as PDF",
+                    ].map((feature, idx) => (
+                      <motion.div
+                        key={idx}
+                        className="flex items-center gap-3"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                      >
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span className="text-gray-700 dark:text-gray-300">{feature}</span>
+                      </motion.div>
+                    ))}
                   </div>
-                  <p className="opacity-90">For serious learners</p>
-                </div>
 
-                <ul className="space-y-4 mb-8">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
-                    <span>Everything in Basic</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
-                    <span>Unlimited AI quizzes</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
-                    <span>Advanced AI Tutor access</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
-                    <span>Detailed analytics & insights</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
-                    <span>Priority doubt resolution</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
-                    <span>Study groups & challenges</span>
-                  </li>
-                </ul>
+                  <Button asChild size="lg" className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-6 text-lg font-bold rounded-xl">
+                    <Link to="/signup">
+                      <span className="flex items-center justify-center gap-2">
+                        🚀 Start Learning Now - It's Free!
+                        <ArrowRight className="w-5 h-5" />
+                      </span>
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-                <Button
-                  asChild
-                  className="w-full bg-white text-indigo-600 hover:bg-gray-100 font-semibold shadow-lg hover:shadow-xl transition-all"
-                >
-                  <Link to="/signup?plan=student">Choose Student</Link>
-                </Button>
-              </motion.div>
-
-              {/* Pro / Teacher Plan */}
-              <motion.div
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border-2 border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300"
-                variants={staggerItem}
-              >
-                <div className="mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    Pro / Teacher
-                  </h3>
-                  <div className="flex items-baseline gap-1 mb-2">
-                    <span className="text-5xl font-bold text-gray-900 dark:text-white">
-                      $19
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-400">
-                      /month
-                    </span>
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    For educators & teams
-                  </p>
-                </div>
-
-                <ul className="space-y-4 mb-8">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Everything in Student
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Unlimited students
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Advanced reports & analytics
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Team collaboration tools
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Custom branding
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Priority email support
-                    </span>
-                  </li>
-                </ul>
-
-                <Button
-                  asChild
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-all"
-                >
-                  <Link to="/signup?plan=pro">Choose Pro</Link>
-                </Button>
-              </motion.div>
+            {/* Comparison with competitors */}
+            <motion.div
+              className="mt-16"
+              variants={staggerItem}
+            >
+              <h3 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-8">
+                Why Cognito is Better Than Paid Alternatives
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                  <thead className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+                    <tr>
+                      <th className="px-6 py-4 text-left font-semibold">Feature</th>
+                      <th className="px-6 py-4 text-center font-semibold">
+                        <div className="flex items-center justify-center gap-2">
+                          <Sparkles className="w-4 h-4" />
+                          Cognito (FREE)
+                        </div>
+                      </th>
+                      <th className="px-6 py-4 text-center font-semibold">Kahoot ($15+/mo)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-6 py-4 text-gray-900 dark:text-white">AI Quiz Generation</td>
+                      <td className="px-6 py-4 text-center"><CheckCircle className="w-6 h-6 text-green-500 mx-auto" /></td>
+                      <td className="px-6 py-4 text-center"><span className="text-red-500">✕</span></td>
+                    </tr>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-6 py-4 text-gray-900 dark:text-white">1v1 Duel Battles</td>
+                      <td className="px-6 py-4 text-center"><CheckCircle className="w-6 h-6 text-green-500 mx-auto" /></td>
+                      <td className="px-6 py-4 text-center"><span className="text-red-500">✕</span></td>
+                    </tr>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-6 py-4 text-gray-900 dark:text-white">AI Doubt Solver</td>
+                      <td className="px-6 py-4 text-center"><CheckCircle className="w-6 h-6 text-green-500 mx-auto" /></td>
+                      <td className="px-6 py-4 text-center"><span className="text-red-500">✕</span></td>
+                    </tr>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-6 py-4 text-gray-900 dark:text-white">Unlimited Quizzes</td>
+                      <td className="px-6 py-4 text-center"><CheckCircle className="w-6 h-6 text-green-500 mx-auto" /></td>
+                      <td className="px-6 py-4 text-center"><span className="text-yellow-500">Paid only</span></td>
+                    </tr>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-6 py-4 text-gray-900 dark:text-white">PDF/YouTube Import</td>
+                      <td className="px-6 py-4 text-center"><CheckCircle className="w-6 h-6 text-green-500 mx-auto" /></td>
+                      <td className="px-6 py-4 text-center"><span className="text-red-500">✕</span></td>
+                    </tr>
+                    <tr className="bg-indigo-50 dark:bg-indigo-900/30">
+                      <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">Price</td>
+                      <td className="px-6 py-4 text-center font-bold text-green-600 text-xl">FREE</td>
+                      <td className="px-6 py-4 text-center text-red-600 font-semibold">$15-50/month</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </motion.div>
           </motion.section>
 

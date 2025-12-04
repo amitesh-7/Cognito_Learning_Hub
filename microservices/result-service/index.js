@@ -55,6 +55,22 @@ app.use((req, res, next) => {
   next();
 });
 
+// Public result count endpoint (no auth required)
+app.get("/api/results/count", async (req, res) => {
+  try {
+    const Result = require("./models/Result");
+    const [count, highScoreCount] = await Promise.all([
+      Result.countDocuments(),
+      Result.countDocuments({ percentage: { $gte: 70 } }),
+    ]);
+    const satisfactionRate = count > 0 ? Math.round((highScoreCount / count) * 100) : 95;
+    return ApiResponse.success(res, { count, satisfactionRate });
+  } catch (error) {
+    logger.error("Count error:", error);
+    return ApiResponse.success(res, { count: 0, satisfactionRate: 95 });
+  }
+});
+
 // Routes
 app.use("/api/results", require("./routes/submission"));
 app.use("/api/leaderboards", require("./routes/leaderboards"));

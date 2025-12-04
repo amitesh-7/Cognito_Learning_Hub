@@ -133,6 +133,21 @@ app.get("/", (req, res) => {
   );
 });
 
+// Public user count endpoint (no auth required)
+app.get("/api/auth/count", async (req, res) => {
+  try {
+    const User = require("./models/User");
+    const [totalCount, teacherCount] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ role: "Teacher" }),
+    ]);
+    return ApiResponse.success(res, { count: totalCount, teacherCount });
+  } catch (error) {
+    logger.error("Count error:", error);
+    return ApiResponse.success(res, { count: 0, teacherCount: 0 });
+  }
+});
+
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

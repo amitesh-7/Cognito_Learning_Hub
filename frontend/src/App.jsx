@@ -1,6 +1,6 @@
 import React, { useContext, Suspense, lazy } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ToastProvider } from "./components/ui/Toast";
 import ParticleBackground from "./components/ParticleBackground";
 import FloatingShapes from "./components/FloatingShapes";
@@ -21,8 +21,10 @@ import { SocketProvider } from "./context/SocketContext";
 // Lazy load pages for better performance (code splitting)
 // Critical pages - load immediately
 import Home from "./pages/Home";
-import Login from "./pages/Login";
-import SignUp from "./pages/SignUp";
+
+// Auth Pages - Modern 2025 Design
+const Login = lazy(() => import("./pages/AuthPages/Login"));
+const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
 
 // Less critical pages - lazy load
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -48,7 +50,6 @@ const PDFQuizGenerator = lazy(() => import("./pages/PDFQuizGenerator"));
 const SocialDashboard = lazy(() => import("./pages/SocialDashboard"));
 const ChallengeCreator = lazy(() => import("./pages/ChallengeCreator"));
 const AdminBroadcast = lazy(() => import("./pages/AdminBroadcast"));
-const Features = lazy(() => import("./pages/Features"));
 const LiveSessionHost = lazy(() => import("./pages/LiveSessionHost"));
 const LiveSessionJoin = lazy(() => import("./pages/LiveSessionJoin"));
 const LiveSessionAnalytics = lazy(() => import("./pages/LiveSessionAnalytics"));
@@ -62,6 +63,12 @@ const TeachingHub = lazy(() => import("./pages/TeachingHub"));
 const TeacherMeetingStart = lazy(() => import("./pages/TeacherMeetingStart"));
 const StudentJoinMeeting = lazy(() => import("./pages/StudentJoinMeeting"));
 const MeetingRoom = lazy(() => import("./pages/MeetingRoom"));
+
+// Public Pages - Modern 2025 Design
+const Features = lazy(() => import("./pages/PublicPages/Features"));
+const About = lazy(() => import("./pages/PublicPages/About"));
+const Contact = lazy(() => import("./pages/PublicPages/Contact"));
+const Pricing = lazy(() => import("./pages/PublicPages/Pricing"));
 
 function App() {
   const [theme] = useTheme();
@@ -111,12 +118,26 @@ function App() {
                   </div>
                 }
               >
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<Home />} />
-                  <Route path="/features" element={<Features />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<SignUp />} />
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={location.pathname}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ 
+                      duration: 0.3, 
+                      ease: [0.22, 1, 0.36, 1]
+                    }}
+                  >
+                    <Routes location={location}>
+                      {/* Public Routes */}
+                      <Route path="/" element={<Home />} />
+                      <Route path="/features" element={<Features />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/pricing" element={<Pricing />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/signup" element={<SignUp />} />
 
                   {/* Protected Routes */}
                   <Route
@@ -407,7 +428,9 @@ function App() {
                       </ModeratorRoute>
                     }
                   />
-                </Routes>
+                    </Routes>
+                  </motion.div>
+                </AnimatePresence>
               </Suspense>
             </main>
 

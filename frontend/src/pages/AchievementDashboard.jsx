@@ -236,96 +236,145 @@ export default function AchievementDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-    fetchUserStats();
-  }, []);
+    fetchUserData();
+  }, [user]);
 
-  const fetchUserStats = async () => {
+  const fetchUserData = async () => {
+    if (!user) return;
+    
     try {
       const token = localStorage.getItem("quizwise-token");
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/users/stats`,
-        {
+      
+      // Fetch stats and achievements in parallel
+      const [statsResponse, achievementsResponse] = await Promise.all([
+        fetch(`${import.meta.env.VITE_API_URL}/api/stats/${user.id || user._id}`, {
           headers: { "x-auth-token": token },
-        }
-      );
-
-      if (!response.ok) throw new Error("Failed to fetch stats");
-
-      const data = await response.json();
-      setUserStats(data.stats);
-      setRecentAchievements(data.recentAchievements);
-
-      // Mock achievements data (in production, fetch from API)
-      setAchievements([
-        {
-          id: 1,
-          name: "First Steps",
-          description: "Complete your first quiz",
-          icon: "🎯",
-          type: "quiz_completion",
-          rarity: "common",
-          points: 10,
-          isUnlocked: data.stats.totalQuizzesTaken >= 1,
-        },
-        {
-          id: 2,
-          name: "Quiz Enthusiast",
-          description: "Complete 10 quizzes",
-          icon: "📚",
-          type: "quiz_completion",
-          rarity: "rare",
-          points: 25,
-          isUnlocked: data.stats.totalQuizzesTaken >= 10,
-          progress: Math.min((data.stats.totalQuizzesTaken / 10) * 100, 100),
-        },
-        {
-          id: 3,
-          name: "Perfect Score",
-          description: "Get 100% on any quiz",
-          icon: "🏆",
-          type: "score_achievement",
-          rarity: "epic",
-          points: 50,
-          isUnlocked: false, // Would check from results
-        },
-        {
-          id: 4,
-          name: "Speed Demon",
-          description: "Answer 5 questions in under 10 seconds each",
-          icon: "⚡",
-          type: "speed",
-          rarity: "rare",
-          points: 30,
-          isUnlocked: false,
-        },
-        {
-          id: 5,
-          name: "Streak Master",
-          description: "Maintain a 7-day learning streak",
-          icon: "🔥",
-          type: "streak",
-          rarity: "epic",
-          points: 40,
-          isUnlocked: data.stats.longestStreak >= 7,
-          progress: Math.min((data.stats.currentStreak / 7) * 100, 100),
-        },
-        {
-          id: 6,
-          name: "Knowledge Seeker",
-          description: "Earn 1000 total points",
-          icon: "⭐",
-          type: "special",
-          rarity: "legendary",
-          points: 100,
-          isUnlocked: data.stats.totalPoints >= 1000,
-          progress: Math.min((data.stats.totalPoints / 1000) * 100, 100),
-        },
+        }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/achievements/${user.id || user._id}`, {
+          headers: { "x-auth-token": token },
+        }),
       ]);
+
+      // Handle stats response
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setUserStats(statsData.stats || {
+          totalQuizzesTaken: 0,
+          totalPoints: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          averageScore: 0,
+          level: 1,
+        });
+      }
+
+      // Handle achievements response
+      if (achievementsResponse.ok) {
+        const achievementsData = await achievementsResponse.json();
+        const userAchievements = achievementsData.achievements || [];
+        
+        // Map achievements with unlock status
+        const mappedAchievements = userAchievements.map(a => ({
+          id: a._id || a.id,
+          name: a.name || a.achievement?.name,
+          description: a.description || a.achievement?.description,
+          icon: a.icon || a.achievement?.icon || "🏆",
+          type: a.type || a.achievement?.type || "general",
+          rarity: a.rarity || a.achievement?.rarity || "common",
+          points: a.points || a.achievement?.points || 10,
+          isUnlocked: a.isUnlocked ?? a.unlockedAt != null,
+          progress: a.progress || 0,
+          unlockedAt: a.unlockedAt,
+        }));
+        
+        setAchievements(mappedAchievements);
+        setRecentAchievements(
+          mappedAchievements
+            .filter(a => a.isUnlocked)
+            .sort((a, b) => new Date(b.unlockedAt) - new Date(a.unlockedAt))
+            .slice(0, 5)
+        );
+      } else {
+        // Fallback: Show default achievement categories if API fails
+        setAchievements(getDefaultAchievementDefinitions(userStats));
+      }
     } catch (error) {
-      console.error("Error fetching user stats:", error);
+      console.error("Error fetching user data:", error);
+      // Set default achievements based on stats
+      setAchievements(getDefaultAchievementDefinitions(userStats));
     } finally {
       setLoading(false);
     }
+  };
+
+  // Default achievement definitions based on user stats
+  const getDefaultAchievementDefinitions = (stats) => {
+    const s = stats || {};
+    return [
+      {
+        id: 1,
+        name: "First Steps",
+        description: "Complete your first quiz",
+        icon: "🎯",
+        type: "quiz_completion",
+        rarity: "common",
+        points: 10,
+        isUnlocked: (s.totalQuizzesTaken || 0) >= 1,
+      },
+      {
+        id: 2,
+        name: "Quiz Enthusiast",
+        description: "Complete 10 quizzes",
+        icon: "📚",
+        type: "quiz_completion",
+        rarity: "rare",
+        points: 25,
+        isUnlocked: (s.totalQuizzesTaken || 0) >= 10,
+        progress: Math.min(((s.totalQuizzesTaken || 0) / 10) * 100, 100),
+      },
+      {
+        id: 3,
+        name: "Perfect Score",
+        description: "Get 100% on any quiz",
+        icon: "🏆",
+        type: "score_achievement",
+        rarity: "epic",
+        points: 50,
+        isUnlocked: (s.averageScore || 0) >= 100,
+      },
+      {
+        id: 4,
+        name: "Speed Demon",
+        description: "Answer 5 questions in under 10 seconds each",
+        icon: "⚡",
+        type: "speed",
+        rarity: "rare",
+        points: 30,
+        isUnlocked: false,
+      },
+      {
+        id: 5,
+        name: "Streak Master",
+        description: "Maintain a 7-day learning streak",
+        icon: "🔥",
+        type: "streak",
+        rarity: "epic",
+        points: 40,
+        isUnlocked: (s.longestStreak || 0) >= 7,
+        progress: Math.min(((s.currentStreak || 0) / 7) * 100, 100),
+      },
+      {
+        id: 6,
+        name: "Knowledge Seeker",
+        description: "Earn 1000 total points",
+        icon: "⭐",
+        type: "special",
+        rarity: "legendary",
+        points: 100,
+        isUnlocked: (s.totalPoints || 0) >= 1000,
+        progress: Math.min(((s.totalPoints || 0) / 1000) * 100, 100),
+      },
+    ];
   };
 
   if (loading) return <LoadingSpinner />;

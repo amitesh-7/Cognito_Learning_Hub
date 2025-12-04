@@ -27,6 +27,12 @@ import {
   Crown,
   Star,
   Zap,
+  Swords,
+  Video,
+  FileText,
+  ChevronDown,
+  Play,
+  Gamepad2,
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useTheme } from "../hooks/useTheme";
@@ -38,11 +44,48 @@ const Navbar = () => {
   const [theme, toggleTheme] = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const { scrollY } = useScroll();
   const navigate = useNavigate();
   const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
   const isMobile = useIsMobile();
+
+  // Product demos for mega menu
+  const productDemos = [
+    {
+      id: 'quiz',
+      title: 'AI Quiz Generator',
+      description: 'Create quizzes from PDFs, topics, or YouTube videos',
+      icon: Brain,
+      color: 'from-blue-500 to-cyan-500',
+      features: ['PDF Upload', 'Topic Input', 'YouTube Links', 'MCQ, T/F, Descriptive']
+    },
+    {
+      id: 'battle',
+      title: '1v1 Duel Battles',
+      description: 'Challenge friends in real-time quiz battles',
+      icon: Swords,
+      color: 'from-red-500 to-orange-500',
+      features: ['Real-time Scoring', 'Leaderboards', 'Matchmaking', 'XP Rewards']
+    },
+    {
+      id: 'multiplayer',
+      title: 'Live Sessions',
+      description: 'Teachers host, students join and compete live',
+      icon: Users,
+      color: 'from-purple-500 to-pink-500',
+      features: ['Live Lobbies', 'Real-time Progress', 'Session Controls', 'Analytics']
+    },
+    {
+      id: 'meeting',
+      title: 'Video Meetings',
+      description: 'Built-in video conferencing for classes',
+      icon: Video,
+      color: 'from-green-500 to-teal-500',
+      features: ['HD Video', 'Screen Share', 'Chat', 'Scheduling']
+    }
+  ];
 
   // Navigation links - Dashboard always goes to student dashboard for everyone
   const navLinks = user
@@ -138,7 +181,7 @@ const Navbar = () => {
 
   return (
     <>
-      {/* Main Navbar with Enhanced Glassmorphism - Always Visible (Sticky) */}
+      {/* Main Navbar with Ultra-Modern Glassmorphism - Always Visible (Sticky) */}
       <motion.header
         initial={shouldReduceMotion ? { opacity: 1 } : { y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -154,17 +197,53 @@ const Navbar = () => {
         }
         className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-700 ${
           isScrolled
-            ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl md:backdrop-blur-3xl shadow-lg md:shadow-2xl shadow-indigo-500/20 border-b border-white/40 dark:border-indigo-400/30"
-            : "bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg md:backdrop-blur-2xl border-b border-white/30 dark:border-indigo-500/20 shadow-md md:shadow-xl shadow-indigo-500/10"
+            ? "bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl md:backdrop-blur-3xl shadow-2xl md:shadow-[0_8px_32px_rgba(99,102,241,0.15)] border-b border-white/50 dark:border-indigo-400/30"
+            : "bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl md:backdrop-blur-2xl border-b border-white/40 dark:border-indigo-500/20 shadow-lg md:shadow-xl shadow-indigo-500/10"
         }`}
+        style={{
+          WebkitBackdropFilter: isScrolled ? "blur(24px) saturate(180%)" : "blur(16px) saturate(150%)",
+          backdropFilter: isScrolled ? "blur(24px) saturate(180%)" : "blur(16px) saturate(150%)",
+        }}
       >
-        {/* Multi-layer Gradient overlays for premium depth - simplified on mobile */}
+        {/* Ultra-modern multi-layer gradient overlays */}
         {!isMobile && (
           <>
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-indigo-500/10 pointer-events-none" />
+            {/* Primary gradient overlay */}
+            <motion.div 
+              className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/8 to-pink-500/10 pointer-events-none"
+              animate={{
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+              }}
+              transition={{
+                duration: 15,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+              style={{ backgroundSize: "200% 200%" }}
+            />
+            {/* Prismatic light refraction effect */}
             <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-purple-500/5 dark:via-white/[0.02] dark:to-purple-500/10 pointer-events-none" />
-            {/* Subtle noise texture for glassmorphism realism */}
-            <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.025] pointer-events-none mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]" />
+            {/* Subtle animated shimmer */}
+            <motion.div
+              className="absolute inset-0 pointer-events-none overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <motion.div
+                className="absolute -inset-full w-[300%] h-full bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
+                animate={{ x: ["-100%", "100%"] }}
+                transition={{
+                  duration: 8,
+                  repeat: Infinity,
+                  repeatDelay: 5,
+                  ease: "easeInOut",
+                }}
+              />
+            </motion.div>
+            {/* Frosted glass texture */}
+            <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]" />
+            {/* Iridescent border glow */}
+            <div className={`absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent transition-opacity duration-700 ${isScrolled ? 'opacity-100' : 'opacity-50'}`} />
           </>
         )}
 
@@ -181,7 +260,7 @@ const Navbar = () => {
           }}
         >
           <div className="flex justify-between items-center h-16 lg:h-18">
-            {/* Logo */}
+            {/* Logo with Ultra-Modern Effects */}
             <motion.div
               initial={
                 shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -20 }
@@ -198,7 +277,7 @@ const Navbar = () => {
                 className="flex items-center space-x-2 sm:space-x-3 group"
               >
                 <motion.div
-                  className="relative p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 shadow-lg sm:shadow-2xl shadow-blue-500/40 dark:shadow-purple-500/30"
+                  className="relative p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 shadow-lg sm:shadow-2xl shadow-blue-500/40 dark:shadow-purple-500/30 overflow-hidden"
                   whileHover={
                     shouldReduceMotion
                       ? {}
@@ -208,34 +287,72 @@ const Navbar = () => {
                     shouldReduceMotion ? { duration: 0 } : { duration: 0.5 }
                   }
                 >
-                  {/* Enhanced multi-layer glow effect - simplified on mobile */}
+                  {/* Enhanced multi-layer glow effect */}
                   {!isMobile && (
                     <>
-                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400 via-purple-500 to-indigo-600 blur-2xl opacity-60 group-hover:opacity-90 transition-all duration-500 animate-pulse" />
-                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/20 to-transparent opacity-40" />
+                      <motion.div 
+                        className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400 via-purple-500 to-indigo-600 blur-2xl opacity-60 group-hover:opacity-90 transition-all duration-500"
+                        animate={{
+                          scale: [1, 1.2, 1],
+                          opacity: [0.6, 0.8, 0.6],
+                        }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      />
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/30 to-transparent opacity-50" />
+                      {/* Holographic shine effect */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
+                        animate={{ x: ["-200%", "200%"] }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          repeatDelay: 2,
+                          ease: "easeInOut",
+                        }}
+                      />
                     </>
                   )}
                   <Brain className="h-6 w-6 sm:h-7 sm:w-7 text-white relative z-10 drop-shadow-lg" />
 
-                  {/* Enhanced sparkle effect on hover */}
+                  {/* Enhanced sparkle effect */}
                   <motion.div
                     className="absolute -top-1 -right-1"
-                    initial={{ scale: 0, opacity: 0, rotate: 0 }}
-                    whileHover={{
-                      scale: [0, 1.2, 1],
-                      opacity: [0, 1, 0.8],
+                    animate={{
+                      scale: [0.8, 1.2, 0.8],
                       rotate: [0, 180, 360],
+                      opacity: [0.6, 1, 0.6],
                     }}
-                    transition={{ duration: 0.6 }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
                   >
                     <Sparkles className="h-4 w-4 text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.8)]" />
                   </motion.div>
                 </motion.div>
 
-                <div>
-                  <h1 className="text-base sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-indigo-600 group-hover:to-blue-600 transition-all duration-700 tracking-tight drop-shadow-sm">
+                <div className="overflow-hidden">
+                  <motion.h1 
+                    className="text-base sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-indigo-600 group-hover:to-blue-600 transition-all duration-700 tracking-tight"
+                    style={{
+                      backgroundSize: "200% 200%",
+                    }}
+                  >
                     Cognito Learning Hub
-                  </h1>
+                  </motion.h1>
+                  <motion.p 
+                    className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium hidden sm:block"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    AI-Powered Learning • 100% Free
+                  </motion.p>
                 </div>
               </Link>
             </motion.div>
@@ -425,14 +542,169 @@ const Navbar = () => {
                 </>
               ) : (
                 <>
+                  {/* Products Mega Menu */}
+                  <motion.div 
+                    variants={staggerItem}
+                    className="relative"
+                    onMouseEnter={() => setIsMegaMenuOpen(true)}
+                    onMouseLeave={() => setIsMegaMenuOpen(false)}
+                  >
+                    <button
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 relative group"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Products
+                      <motion.div
+                        animate={{ rotate: isMegaMenuOpen ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </motion.div>
+                      <span className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 group-hover:w-full transition-all duration-300 rounded-full shadow-lg shadow-blue-500/50"></span>
+                    </button>
+
+                    {/* Mega Menu Dropdown */}
+                    <AnimatePresence>
+                      {isMegaMenuOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[700px] p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/50 dark:border-indigo-500/30 z-50"
+                          style={{
+                            boxShadow: '0 25px 50px -12px rgba(99, 102, 241, 0.25), 0 0 0 1px rgba(255,255,255,0.1)'
+                          }}
+                        >
+                          {/* Mega Menu Glow Effect */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-2xl pointer-events-none" />
+                          
+                          <div className="relative z-10">
+                            {/* Header */}
+                            <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200/50 dark:border-indigo-500/20">
+                              <div>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                                  Our Products
+                                </h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  Explore our AI-powered learning tools
+                                </p>
+                              </div>
+                              <Link
+                                to="/features"
+                                className="flex items-center gap-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                              >
+                                View All Features
+                                <Play className="w-3 h-3" />
+                              </Link>
+                            </div>
+
+                            {/* Products Grid */}
+                            <div className="grid grid-cols-2 gap-4">
+                              {productDemos.map((product, index) => (
+                                <motion.div
+                                  key={product.id}
+                                  initial={{ opacity: 0, y: 20 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                  className="group p-4 rounded-xl hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100/50 dark:hover:from-slate-800 dark:hover:to-slate-800/50 transition-all duration-300 cursor-pointer border border-transparent hover:border-gray-200/50 dark:hover:border-indigo-500/20"
+                                  onClick={() => {
+                                    setIsMegaMenuOpen(false);
+                                    // Scroll to demo section on homepage
+                                    if (location.pathname === '/') {
+                                      document.getElementById('product-demo')?.scrollIntoView({ behavior: 'smooth' });
+                                    } else {
+                                      navigate('/#product-demo');
+                                    }
+                                  }}
+                                >
+                                  <div className="flex items-start gap-4">
+                                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${product.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                      <product.icon className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <h4 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                        {product.title}
+                                      </h4>
+                                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                        {product.description}
+                                      </p>
+                                      <div className="flex flex-wrap gap-1 mt-2">
+                                        {product.features.slice(0, 3).map((feature, i) => (
+                                          <span
+                                            key={i}
+                                            className="text-[10px] px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 rounded-full"
+                                          >
+                                            {feature}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </div>
+
+                            {/* CTA Footer */}
+                            <div className="mt-6 pt-4 border-t border-gray-200/50 dark:border-indigo-500/20 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                                  <Zap className="w-4 h-4 text-white" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900 dark:text-white">100% Free Forever</p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">No credit card required</p>
+                                </div>
+                              </div>
+                              <Link
+                                to="/signup"
+                                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                                onClick={() => setIsMegaMenuOpen(false)}
+                              >
+                                Get Started Free
+                              </Link>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+
                   <motion.div variants={staggerItem}>
                     <Link
                       to="/features"
                       className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 relative group"
                     >
-                      <Sparkles className="w-4 h-4" />
+                      <FileText className="w-4 h-4" />
                       Features
                       <span className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 group-hover:w-full transition-all duration-300 rounded-full shadow-lg shadow-blue-500/50"></span>
+                    </Link>
+                  </motion.div>
+                  <motion.div variants={staggerItem}>
+                    <Link
+                      to="/about"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-violet-600 dark:hover:text-violet-400 transition-all duration-300 relative group"
+                    >
+                      About
+                      <span className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 group-hover:w-full transition-all duration-300 rounded-full"></span>
+                    </Link>
+                  </motion.div>
+                  <motion.div variants={staggerItem}>
+                    <Link
+                      to="/pricing"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-300 relative group"
+                    >
+                      Pricing
+                      <span className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 group-hover:w-full transition-all duration-300 rounded-full"></span>
+                    </Link>
+                  </motion.div>
+                  <motion.div variants={staggerItem}>
+                    <Link
+                      to="/contact"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-pink-600 dark:hover:text-pink-400 transition-all duration-300 relative group"
+                    >
+                      Contact
+                      <span className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-pink-500 to-rose-500 group-hover:w-full transition-all duration-300 rounded-full"></span>
                     </Link>
                   </motion.div>
                   <motion.div variants={staggerItem}>
@@ -449,23 +721,53 @@ const Navbar = () => {
                       to="/signup"
                       className="relative flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:shadow-purple-500/50 overflow-hidden group transition-all duration-300 border border-white/20"
                     >
+                      {/* Animated gradient background */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"
+                        animate={{
+                          backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                        }}
+                        transition={{
+                          duration: 5,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                        style={{ backgroundSize: "200% 200%" }}
+                      />
                       <UserCog className="w-5 h-5 relative z-10" />
                       <span className="relative z-10 drop-shadow-md">
-                        Sign Up
+                        Sign Up Free
                       </span>
-                      {/* Enhanced shine effect */}
+                      {/* Premium shine sweep effect */}
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
                         initial={{ x: "-150%" }}
-                        whileHover={{ x: "150%" }}
-                        transition={{ duration: 0.8 }}
+                        animate={{ x: ["150%", "-150%"] }}
+                        transition={{ 
+                          duration: 2,
+                          repeat: Infinity,
+                          repeatDelay: 3,
+                          ease: "easeInOut"
+                        }}
                       />
-                      {/* Glow pulse on hover */}
+                      {/* Glow pulse */}
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 blur-xl"
-                        whileHover={{ opacity: 0.3 }}
+                        className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 blur-xl group-hover:opacity-30"
                         transition={{ duration: 0.3 }}
                       />
+                      {/* Sparkle badge */}
+                      <motion.div
+                        className="absolute -top-1 -right-1 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg"
+                        animate={{
+                          scale: [1, 1.1, 1],
+                        }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                        }}
+                      >
+                        FREE
+                      </motion.div>
                     </Link>
                   </motion.div>
                 </>
@@ -730,6 +1032,30 @@ const Navbar = () => {
                     >
                       <Sparkles className="w-5 h-5" />
                       <span>Features</span>
+                    </Link>
+                    <Link
+                      onClick={closeMenu}
+                      to="/about"
+                      className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
+                    >
+                      <Users className="w-5 h-5" />
+                      <span>About</span>
+                    </Link>
+                    <Link
+                      onClick={closeMenu}
+                      to="/pricing"
+                      className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
+                    >
+                      <Crown className="w-5 h-5" />
+                      <span>Pricing</span>
+                    </Link>
+                    <Link
+                      onClick={closeMenu}
+                      to="/contact"
+                      className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
+                    >
+                      <MessageSquare className="w-5 h-5" />
+                      <span>Contact</span>
                     </Link>
 
                     {/* Login Button */}
