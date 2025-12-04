@@ -15,7 +15,7 @@ _An AI-powered educational platform revolutionizing the learning experience_
 
 **Made by team OPTIMISTIC MUTANT CODERS** 🚀
 
-[Features](#-key-features) • [Competition Features](#-competition-features) • [Tech Stack](#️-tech-stack) • [Getting Started](#-getting-started) • [Documentation](#-documentation)
+[Features](#-key-features) • [Competition Features](#-competition-features) • [Tech Stack](#️-tech-stack) • [Getting Started](#-getting-started) • [Project Structure](#-project-structure)
 
 </div>
 
@@ -311,71 +311,121 @@ Collections:
 
 ```
 Cognito-Learning-Hub/
-├── frontend/                    # React Frontend
+├── frontend/                          # React Frontend (Vite)
 │   ├── public/
-│   │   ├── animations/         # Lottie JSON files
-│   │   ├── sounds/             # Audio effects
+│   │   ├── animations/               # Lottie JSON files
+│   │   ├── sounds/                   # Audio effects
+│   │   ├── manifest.json             # PWA manifest
+│   │   ├── sw.js                     # Service Worker
 │   │   ├── robots.txt
 │   │   └── sitemap.xml
 │   ├── src/
-│   │   ├── components/         # Reusable UI components
-│   │   │   ├── ui/            # Base UI elements (Button, Card, etc.)
-│   │   │   ├── GoogleAuthButton.jsx
-│   │   │   ├── LiveLeaderboard.jsx
-│   │   │   ├── ParticleBackground.jsx
-│   │   │   └── ProtectedRoute.jsx
-│   │   ├── pages/             # Route components
-│   │   │   ├── Home.jsx
-│   │   │   ├── Login.jsx
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── QuizList.jsx
-│   │   │   ├── QuizTaker.jsx
-│   │   │   ├── LiveSessionHost.jsx
-│   │   │   ├── LiveSessionJoin.jsx
-│   │   │   └── ... (33 pages total)
-│   │   ├── context/           # React Context providers
-│   │   │   ├── AuthContext.jsx
-│   │   │   └── SocketContext.jsx
-│   │   ├── hooks/             # Custom React hooks
-│   │   ├── lib/               # Utility functions
-│   │   ├── assets/            # Static assets
-│   │   ├── App.jsx            # Main app component
-│   │   └── main.jsx           # Entry point
+│   │   ├── assets/                   # Static assets
+│   │   ├── components/               # Reusable UI components
+│   │   │   └── ui/                   # Base UI elements
+│   │   ├── config/                   # App configuration
+│   │   ├── context/                  # React Context providers
+│   │   ├── hooks/                    # Custom React hooks
+│   │   ├── lib/                      # Utility functions
+│   │   ├── pages/                    # Route components (33+ pages)
+│   │   ├── styles/                   # Global styles
+│   │   ├── utils/                    # Helper utilities
+│   │   ├── App.jsx                   # Main app component
+│   │   └── main.jsx                  # Entry point
 │   ├── package.json
 │   ├── vite.config.js
 │   ├── tailwind.config.cjs
-│   └── vercel.json            # Vercel deployment config
+│   └── vercel.json
 │
-├── backend/                    # Node.js Backend
-│   ├── models/                # Mongoose schemas
-│   │   ├── User.js
-│   │   ├── Quiz.js
-│   │   ├── Result.js
-│   │   ├── LiveSession.js
-│   │   ├── Achievement.js
-│   │   ├── SocialFeatures.js
-│   │   └── Report.js
-│   ├── utils/
-│   │   └── pdfGenerator.js
-│   ├── uploads/               # File upload storage
-│   ├── index.js               # Express + Socket.IO server
-│   ├── authMiddleware.js      # JWT authentication
-│   ├── adminMiddleware.js     # Admin route guard
-│   ├── moderatorMiddleware.js # Moderator route guard
-│   ├── package.json
-│   └── vercel.json            # Vercel deployment config
+├── backend/                           # Monolith Backend (Legacy)
+│   ├── models/                       # Mongoose schemas
+│   ├── utils/                        # Utility functions
+│   ├── uploads/                      # File upload storage
+│   ├── index.js                      # Express server
+│   ├── authMiddleware.js
+│   ├── adminMiddleware.js
+│   ├── moderatorMiddleware.js
+│   └── package.json
 │
-├── ARCHITECTURE.md             # System architecture documentation
-├── PROJECT_CONTEXT.md          # Project context & decisions
-├── DEPLOYMENT_CHECKLIST.md     # Deployment guide
-├── PRODUCTION_DEPLOYMENT.md    # Production setup instructions
-├── VERCEL_DEPLOYMENT.md        # Vercel-specific deployment
-├── VERCEL_BACKEND_DEPLOYMENT.md
-├── QUICK_START.md              # Quick start guide
-├── ProblemStatement.md         # Original problem statement
+├── microservices/                     # Microservices Architecture
+│   ├── api-gateway/                  # API Gateway (Port 3000)
+│   │   └── index.js                  # Request routing & CORS
+│   │
+│   ├── auth-service/                 # Authentication (Port 3001)
+│   │   ├── models/                   # User model
+│   │   ├── routes/                   # Auth routes
+│   │   └── index.js
+│   │
+│   ├── quiz-service/                 # Quiz Management (Port 3002)
+│   │   ├── models/                   # Quiz model
+│   │   ├── routes/                   # Quiz CRUD routes
+│   │   ├── services/                 # AI quiz generation
+│   │   ├── workers/                  # Background workers
+│   │   └── index.js
+│   │
+│   ├── result-service/               # Results & Analytics (Port 3003)
+│   │   ├── models/                   # Result model
+│   │   ├── routes/                   # Result routes
+│   │   ├── services/                 # Analytics services
+│   │   └── index.js
+│   │
+│   ├── live-service/                 # Live Quiz Sessions (Port 3004)
+│   │   ├── models/                   # LiveSession, DuelMatch models
+│   │   ├── routes/                   # Live session routes
+│   │   ├── services/                 # Session management
+│   │   ├── socket/                   # WebSocket handlers
+│   │   └── index.js
+│   │
+│   ├── social-service/               # Social Features (Port 3006)
+│   │   ├── models/                   # Social models
+│   │   ├── routes/                   # Social routes
+│   │   ├── services/                 # Social services
+│   │   ├── socket/                   # Real-time notifications
+│   │   ├── workers/                  # Background tasks
+│   │   └── index.js
+│   │
+│   ├── gamification-service/         # Achievements & XP (Port 3007)
+│   │   └── src/                      # Gamification logic
+│   │
+│   ├── moderation-service/           # Content Moderation (Port 3008)
+│   │   ├── models/                   # Report model
+│   │   ├── routes/                   # Moderation routes
+│   │   ├── middleware/               # Moderation checks
+│   │   ├── utils/                    # Moderation utilities
+│   │   └── index.js
+│   │
+│   ├── meeting-service/              # Video Meetings (Port 3009)
+│   │   ├── models/                   # Meeting model
+│   │   ├── routes/                   # Meeting routes
+│   │   ├── services/                 # Meeting management
+│   │   ├── socket/                   # WebRTC signaling
+│   │   └── index.js
+│   │
+│   └── shared/                       # Shared Utilities
+│       ├── config/                   # Shared configuration
+│       ├── middleware/               # Common middleware
+│       └── utils/                    # Shared utilities
+│
+├── logs/                              # Application logs
+├── .env.production                    # Production environment
 ├── .gitignore
-└── README.md                   # This file
+└── README.md
 ```
+
+### Service Ports
+
+| Service              | Port | Description                    |
+| -------------------- | ---- | ------------------------------ |
+| API Gateway          | 3000 | Request routing & load balance |
+| Auth Service         | 3001 | Authentication & authorization |
+| Quiz Service         | 3002 | Quiz CRUD & AI generation      |
+| Result Service       | 3003 | Results & analytics            |
+| Live Service         | 3004 | Live sessions & 1v1 duels      |
+| Social Service       | 3006 | Social features & challenges   |
+| Gamification Service | 3007 | Achievements, XP & badges      |
+| Moderation Service   | 3008 | Content moderation             |
+| Meeting Service      | 3009 | WebRTC video meetings          |
+| Frontend             | 5173 | Vite dev server                |
 
 ---
 
@@ -386,6 +436,7 @@ Cognito-Learning-Hub/
 - **Node.js** 20.19.4 or higher
 - **npm** or **yarn** package manager
 - **MongoDB Atlas** account (or local MongoDB)
+- **Upstash Redis** account (for caching & rate limiting)
 - **Google Gemini API** key
 - **Google OAuth** credentials (optional)
 
@@ -398,7 +449,33 @@ Cognito-Learning-Hub/
    cd Cognito_Learning_Hub
    ```
 
-2. **Backend Setup**
+2. **Microservices Setup (Recommended)**
+
+   Each microservice requires its own `.env` file with the following common variables:
+
+   ```env
+   PORT=<service_port>
+   MONGO_URI=your_mongodb_atlas_connection_string
+   JWT_SECRET=your_super_secret_jwt_key
+   REDIS_URL=redis://your-redis-host:6379
+   REDIS_TOKEN=your_redis_token
+   ```
+
+   Install dependencies for all microservices:
+
+   ```powershell
+   cd microservices/api-gateway && npm install
+   cd ../auth-service && npm install
+   cd ../quiz-service && npm install
+   cd ../result-service && npm install
+   cd ../live-service && npm install
+   cd ../social-service && npm install
+   cd ../gamification-service && npm install
+   cd ../moderation-service && npm install
+   cd ../meeting-service && npm install
+   ```
+
+3. **Backend Setup (Legacy Monolith)**
 
    ```powershell
    cd backend
@@ -415,9 +492,11 @@ Cognito-Learning-Hub/
    GOOGLE_CLIENT_ID=your_google_oauth_client_id
    GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
    CLIENT_URL=http://localhost:5173
+   REDIS_URL=redis://your-redis-host:6379
+   REDIS_TOKEN=your_redis_token
    ```
 
-3. **Frontend Setup**
+4. **Frontend Setup**
 
    ```powershell
    cd ../frontend
@@ -432,7 +511,26 @@ Cognito-Learning-Hub/
    VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
    ```
 
-4. **Run Development Servers**
+5. **Run Development Servers**
+
+   **Option A: Microservices Mode (Recommended)**
+
+   Start each microservice in separate terminals:
+
+   ```powershell
+   # Terminal 1: API Gateway
+   cd microservices/api-gateway && npm run dev
+
+   # Terminal 2: Auth Service
+   cd microservices/auth-service && npm run dev
+
+   # Terminal 3: Quiz Service
+   cd microservices/quiz-service && npm run dev
+
+   # ... start other services as needed
+   ```
+
+   **Option B: Monolith Mode (Legacy)**
 
    Terminal 1 (Backend):
 
@@ -448,20 +546,10 @@ Cognito-Learning-Hub/
    npm run dev
    ```
 
-5. **Access the Application**
+6. **Access the Application**
    - Frontend: `http://localhost:5173`
-   - Backend API: `http://localhost:3001`
-
----
-
-## 📚 Documentation
-
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Complete system architecture with data flow diagrams
-- **[QUICK_START.md](./QUICK_START.md)** - Quick setup guide for developers
-- **[PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md)** - Project decisions and context
-- **[DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
-- **[PRODUCTION_DEPLOYMENT.md](./PRODUCTION_DEPLOYMENT.md)** - Production deployment guide
-- **[VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)** - Vercel deployment instructions
+   - API Gateway: `http://localhost:3000` (microservices mode)
+   - Backend API: `http://localhost:3001` (monolith mode)
 
 ---
 
@@ -573,10 +661,9 @@ vercel --prod
 - **Environment-Aware**: Automatic development mode detection
 - **WebSocket Support**: Socket.IO with fallback to HTTP polling
 - **Database**: MongoDB Atlas with connection pooling
+- **Cache**: Upstash Redis for rate limiting and session management
 - **CDN**: Static assets served via Vercel Edge Network
 - **SSL**: Automatic HTTPS with Let's Encrypt certificates
-
-See [PRODUCTION_DEPLOYMENT.md](./PRODUCTION_DEPLOYMENT.md) for detailed instructions.
 
 ---
 
