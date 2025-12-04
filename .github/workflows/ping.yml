@@ -17,7 +17,7 @@ jobs:
       - name: Ping Auth Service
         run: |
           echo "Pinging Auth Service..."
-          curl -s https://auth-service-3ijg.onrender.com/health || true
+          curl -s https://auth-service-3iig.onrender.com/health || true
 
       - name: Ping Quiz Service
         run: |
