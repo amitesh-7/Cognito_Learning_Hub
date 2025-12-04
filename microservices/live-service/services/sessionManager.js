@@ -2,6 +2,7 @@
  * Redis Session Manager
  * Handles all Redis operations for live sessions
  * Replaces in-memory Map with Redis for horizontal scaling
+ * Falls back to in-memory storage if Redis is unavailable
  */
 
 const Redis = require("ioredis");
@@ -14,6 +15,17 @@ class SessionManager {
     this.redis = null;
     this.subscriber = null;
     this.connected = false;
+    this.useInMemory = false; // Fallback flag
+
+    // In-memory fallback storage
+    this.memoryStore = {
+      sessions: new Map(),
+      leaderboards: new Map(),
+      participants: new Map(),
+      answers: new Map(),
+      quizCache: new Map(),
+      currentQuestions: new Map(),
+    };
 
     this.keyPrefix = process.env.REDIS_KEY_PREFIX || "live:";
     this.sessionTTL = parseInt(process.env.SESSION_TTL) || 7200; // 2 hours
@@ -21,6 +33,7 @@ class SessionManager {
 
   /**
    * Connect to Redis (with pub/sub)
+   * Falls back to in-memory if Redis is unavailable
    */
   async connect() {
     try {
@@ -28,69 +41,153 @@ class SessionManager {
 
       // Check if Upstash Redis is configured
       if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
-        logger.info("Connecting to Upstash Redis (cloud)...");
+        logger.info("Attempting to connect to Upstash Redis (cloud)...");
 
-        const url = new URL(process.env.UPSTASH_REDIS_URL);
+        try {
+          const url = new URL(process.env.UPSTASH_REDIS_URL);
 
-        redisConfig = {
-          host: url.hostname,
-          port: parseInt(url.port) || 6379,
-          password: process.env.UPSTASH_REDIS_TOKEN,
-          tls: {
-            rejectUnauthorized: false,
-          },
-          maxRetriesPerRequest: null,
-          enableReadyCheck: false,
-          retryStrategy(times) {
-            const delay = Math.min(times * 50, 2000);
-            return delay;
-          },
-        };
+          redisConfig = {
+            host: url.hostname,
+            port: parseInt(url.port) || 6379,
+            password: process.env.UPSTASH_REDIS_TOKEN,
+            tls: {
+              rejectUnauthorized: false,
+            },
+            maxRetriesPerRequest: 3,
+            enableReadyCheck: false,
+            connectTimeout: 10000, // 10 second timeout
+            retryStrategy(times) {
+              if (times > 3) {
+                return null; // Stop retrying after 3 attempts
+              }
+              const delay = Math.min(times * 100, 2000);
+              return delay;
+            },
+            lazyConnect: true, // Don't connect immediately
+          };
 
-        // Main Redis client
-        this.redis = new Redis(redisConfig);
+          // Main Redis client
+          this.redis = new Redis(redisConfig);
 
-        // Subscriber client (for pub/sub) - clone config
-        this.subscriber = new Redis(redisConfig);
-      } else {
-        // Fallback to local Redis
-        logger.info("Connecting to local Redis...");
+          // Handle connection errors gracefully
+          this.redis.on("error", (err) => {
+            if (!this.useInMemory) {
+              logger.warn("Redis connection error, switching to in-memory mode:", err.message);
+              this.switchToInMemory();
+            }
+          });
 
-        const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
+          this.redis.on("connect", () => {
+            this.connected = true;
+            this.useInMemory = false;
+            logger.info("Redis connected successfully");
+          });
 
-        // Main Redis client
-        this.redis = new Redis(redisUrl, {
-          maxRetriesPerRequest: null,
-          enableReadyCheck: false,
-          retryStrategy(times) {
-            const delay = Math.min(times * 50, 2000);
-            return delay;
-          },
-        });
+          // Try to connect with timeout
+          await Promise.race([
+            this.redis.connect(),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Redis connection timeout")), 10000)
+            )
+          ]);
 
-        // Subscriber client (for pub/sub)
-        this.subscriber = new Redis(redisUrl, {
-          maxRetriesPerRequest: null,
-          enableReadyCheck: false,
-        });
+          await this.redis.ping();
+          
+          // Create subscriber only if main connection succeeded
+          this.subscriber = new Redis(redisConfig);
+          await this.subscriber.connect();
+          
+          this.connected = true;
+          logger.info("Redis connected (Upstash)");
+          return true;
+        } catch (upstashError) {
+          logger.warn("Upstash Redis connection failed:", upstashError.message);
+          logger.info("Falling back to local Redis or in-memory mode...");
+          
+          // Clean up failed connections
+          if (this.redis) {
+            try { this.redis.disconnect(); } catch (e) {}
+            this.redis = null;
+          }
+        }
       }
 
-      this.redis.on("connect", () => {
-        this.connected = true;
-        logger.info("Redis connected");
-      });
+      // Try local Redis
+      if (!this.connected) {
+        const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
+        logger.info(`Attempting to connect to local Redis: ${redisUrl}`);
 
-      this.redis.on("error", (err) => {
-        logger.error("Redis error:", err);
-        this.connected = false;
-      });
+        try {
+          this.redis = new Redis(redisUrl, {
+            maxRetriesPerRequest: 3,
+            enableReadyCheck: false,
+            connectTimeout: 5000,
+            lazyConnect: true,
+            retryStrategy(times) {
+              if (times > 2) {
+                return null;
+              }
+              return Math.min(times * 100, 1000);
+            },
+          });
 
-      await this.redis.ping();
+          this.redis.on("error", (err) => {
+            if (!this.useInMemory) {
+              logger.warn("Local Redis error, switching to in-memory:", err.message);
+              this.switchToInMemory();
+            }
+          });
+
+          await Promise.race([
+            this.redis.connect(),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Local Redis timeout")), 5000)
+            )
+          ]);
+
+          await this.redis.ping();
+          
+          this.subscriber = new Redis(redisUrl, {
+            maxRetriesPerRequest: 3,
+            enableReadyCheck: false,
+          });
+          
+          this.connected = true;
+          logger.info("Local Redis connected");
+          return true;
+        } catch (localError) {
+          logger.warn("Local Redis connection failed:", localError.message);
+        }
+      }
+
+      // Final fallback: in-memory mode
+      this.switchToInMemory();
       return true;
     } catch (error) {
-      logger.error("Failed to connect to Redis:", error);
-      throw error;
+      logger.error("Redis connection error:", error.message);
+      this.switchToInMemory();
+      return true; // Return true since in-memory is working
     }
+  }
+
+  /**
+   * Switch to in-memory fallback mode
+   */
+  switchToInMemory() {
+    this.useInMemory = true;
+    this.connected = false;
+    
+    // Clean up Redis connections
+    if (this.redis) {
+      try { this.redis.disconnect(); } catch (e) {}
+      this.redis = null;
+    }
+    if (this.subscriber) {
+      try { this.subscriber.disconnect(); } catch (e) {}
+      this.subscriber = null;
+    }
+    
+    logger.info("⚠️ Running in IN-MEMORY mode (sessions will not persist across restarts)");
   }
 
   /**
@@ -108,13 +205,16 @@ class SessionManager {
   }
 
   isConnected() {
-    return this.connected;
+    return this.connected || this.useInMemory;
   }
 
   /**
    * Check if Redis is healthy (connected and ready)
    */
   isHealthy() {
+    if (this.useInMemory) {
+      return true; // In-memory mode is always "healthy"
+    }
     return this.connected && this.redis && this.redis.status === "ready";
   }
 
@@ -151,12 +251,10 @@ class SessionManager {
   // ============================================
 
   /**
-   * Create new session in Redis
+   * Create new session in Redis or in-memory
    */
   async createSession(sessionData) {
     try {
-      const key = this.getSessionKey(sessionData.sessionCode);
-
       const session = {
         sessionCode: sessionData.sessionCode,
         quizId: sessionData.quizId,
@@ -171,9 +269,18 @@ class SessionManager {
         endedAt: null,
       };
 
-      await this.redis.setex(key, this.sessionTTL, JSON.stringify(session));
-      logger.info(`Created session: ${sessionData.sessionCode}`);
+      if (this.useInMemory) {
+        this.memoryStore.sessions.set(sessionData.sessionCode, session);
+        // Set up TTL cleanup
+        setTimeout(() => {
+          this.memoryStore.sessions.delete(sessionData.sessionCode);
+        }, this.sessionTTL * 1000);
+      } else {
+        const key = this.getSessionKey(sessionData.sessionCode);
+        await this.redis.setex(key, this.sessionTTL, JSON.stringify(session));
+      }
 
+      logger.info(`Created session: ${sessionData.sessionCode} (${this.useInMemory ? 'in-memory' : 'Redis'})`);
       return session;
     } catch (error) {
       logger.error("Error creating session:", error);
@@ -182,10 +289,14 @@ class SessionManager {
   }
 
   /**
-   * Get session from Redis
+   * Get session from Redis or in-memory
    */
   async getSession(sessionCode) {
     try {
+      if (this.useInMemory) {
+        return this.memoryStore.sessions.get(sessionCode) || null;
+      }
+
       const key = this.getSessionKey(sessionCode);
       const data = await this.redis.get(key);
 
@@ -201,7 +312,7 @@ class SessionManager {
   }
 
   /**
-   * Update session in Redis
+   * Update session in Redis or in-memory
    */
   async updateSession(sessionCode, updates) {
     try {
@@ -217,12 +328,16 @@ class SessionManager {
         updatedAt: new Date().toISOString(),
       };
 
-      const key = this.getSessionKey(sessionCode);
-      await this.redis.setex(
-        key,
-        this.sessionTTL,
-        JSON.stringify(updatedSession)
-      );
+      if (this.useInMemory) {
+        this.memoryStore.sessions.set(sessionCode, updatedSession);
+      } else {
+        const key = this.getSessionKey(sessionCode);
+        await this.redis.setex(
+          key,
+          this.sessionTTL,
+          JSON.stringify(updatedSession)
+        );
+      }
 
       return updatedSession;
     } catch (error) {
@@ -232,20 +347,30 @@ class SessionManager {
   }
 
   /**
-   * Delete session from Redis
+   * Delete session from Redis or in-memory
    */
   async deleteSession(sessionCode) {
     try {
-      const pipeline = this.redis.pipeline();
+      if (this.useInMemory) {
+        this.memoryStore.sessions.delete(sessionCode);
+        this.memoryStore.leaderboards.delete(sessionCode);
+        this.memoryStore.participants.delete(sessionCode);
+        this.memoryStore.answers.delete(sessionCode);
+        this.memoryStore.quizCache.delete(sessionCode);
+        this.memoryStore.currentQuestions.delete(sessionCode);
+      } else {
+        const pipeline = this.redis.pipeline();
 
-      pipeline.del(this.getSessionKey(sessionCode));
-      pipeline.del(this.getLeaderboardKey(sessionCode));
-      pipeline.del(this.getParticipantsKey(sessionCode));
-      pipeline.del(this.getAnswersKey(sessionCode));
-      pipeline.del(this.getQuizCacheKey(sessionCode));
-      pipeline.del(this.getCurrentQuestionKey(sessionCode));
+        pipeline.del(this.getSessionKey(sessionCode));
+        pipeline.del(this.getLeaderboardKey(sessionCode));
+        pipeline.del(this.getParticipantsKey(sessionCode));
+        pipeline.del(this.getAnswersKey(sessionCode));
+        pipeline.del(this.getQuizCacheKey(sessionCode));
+        pipeline.del(this.getCurrentQuestionKey(sessionCode));
 
-      await pipeline.exec();
+        await pipeline.exec();
+      }
+      
       logger.info(`Deleted session: ${sessionCode}`);
 
       return true;
@@ -260,6 +385,10 @@ class SessionManager {
    */
   async extendSessionTTL(sessionCode) {
     try {
+      if (this.useInMemory) {
+        // In-memory doesn't need TTL extension
+        return true;
+      }
       const key = this.getSessionKey(sessionCode);
       await this.redis.expire(key, this.sessionTTL);
       return true;
@@ -275,12 +404,10 @@ class SessionManager {
 
   /**
    * Add participant to session
-   * Uses Redis Hash for fast lookups
+   * Uses Redis Hash for fast lookups or in-memory Map
    */
   async addParticipant(sessionCode, participant) {
     try {
-      const key = this.getParticipantsKey(sessionCode);
-
       const participantData = {
         userId: participant.userId,
         userName: participant.userName,
@@ -293,15 +420,26 @@ class SessionManager {
         socketId: participant.socketId || "",
       };
 
-      await this.redis.hset(
-        key,
-        participant.userId,
-        JSON.stringify(participantData)
-      );
-      await this.redis.expire(key, this.sessionTTL);
+      if (this.useInMemory) {
+        if (!this.memoryStore.participants.has(sessionCode)) {
+          this.memoryStore.participants.set(sessionCode, new Map());
+        }
+        this.memoryStore.participants.get(sessionCode).set(participant.userId, participantData);
+        
+        // Initialize in leaderboard
+        await this.updateLeaderboard(sessionCode, participant.userId, 0);
+      } else {
+        const key = this.getParticipantsKey(sessionCode);
+        await this.redis.hset(
+          key,
+          participant.userId,
+          JSON.stringify(participantData)
+        );
+        await this.redis.expire(key, this.sessionTTL);
 
-      // Initialize in leaderboard (sorted set)
-      await this.updateLeaderboard(sessionCode, participant.userId, 0);
+        // Initialize in leaderboard (sorted set)
+        await this.updateLeaderboard(sessionCode, participant.userId, 0);
+      }
 
       logger.debug(
         `Added participant ${participant.userId} to session ${sessionCode}`
@@ -318,6 +456,11 @@ class SessionManager {
    */
   async getParticipant(sessionCode, userId) {
     try {
+      if (this.useInMemory) {
+        const participants = this.memoryStore.participants.get(sessionCode);
+        return participants ? participants.get(userId) || null : null;
+      }
+
       const key = this.getParticipantsKey(sessionCode);
       const data = await this.redis.hget(key, userId);
 
@@ -337,6 +480,11 @@ class SessionManager {
    */
   async getAllParticipants(sessionCode) {
     try {
+      if (this.useInMemory) {
+        const participants = this.memoryStore.participants.get(sessionCode);
+        return participants ? Array.from(participants.values()) : [];
+      }
+
       const key = this.getParticipantsKey(sessionCode);
       const data = await this.redis.hgetall(key);
 
@@ -368,8 +516,12 @@ class SessionManager {
         ...updates,
       };
 
-      const key = this.getParticipantsKey(sessionCode);
-      await this.redis.hset(key, userId, JSON.stringify(updatedParticipant));
+      if (this.useInMemory) {
+        this.memoryStore.participants.get(sessionCode).set(userId, updatedParticipant);
+      } else {
+        const key = this.getParticipantsKey(sessionCode);
+        await this.redis.hset(key, userId, JSON.stringify(updatedParticipant));
+      }
 
       return updatedParticipant;
     } catch (error) {
@@ -383,12 +535,23 @@ class SessionManager {
    */
   async removeParticipant(sessionCode, userId) {
     try {
-      const key = this.getParticipantsKey(sessionCode);
-      await this.redis.hdel(key, userId);
+      if (this.useInMemory) {
+        const participants = this.memoryStore.participants.get(sessionCode);
+        if (participants) {
+          participants.delete(userId);
+        }
+        const leaderboard = this.memoryStore.leaderboards.get(sessionCode);
+        if (leaderboard) {
+          leaderboard.delete(userId);
+        }
+      } else {
+        const key = this.getParticipantsKey(sessionCode);
+        await this.redis.hdel(key, userId);
 
-      // Remove from leaderboard
-      const leaderboardKey = this.getLeaderboardKey(sessionCode);
-      await this.redis.zrem(leaderboardKey, userId);
+        // Remove from leaderboard
+        const leaderboardKey = this.getLeaderboardKey(sessionCode);
+        await this.redis.zrem(leaderboardKey, userId);
+      }
 
       logger.debug(`Removed participant ${userId} from session ${sessionCode}`);
       return true;
@@ -403,6 +566,11 @@ class SessionManager {
    */
   async getParticipantCount(sessionCode) {
     try {
+      if (this.useInMemory) {
+        const participants = this.memoryStore.participants.get(sessionCode);
+        return participants ? participants.size : 0;
+      }
+
       const key = this.getParticipantsKey(sessionCode);
       return await this.redis.hlen(key);
     } catch (error) {
@@ -412,7 +580,7 @@ class SessionManager {
   }
 
   // ============================================
-  // LEADERBOARD OPERATIONS (Redis Sorted Set)
+  // LEADERBOARD OPERATIONS (Redis Sorted Set / In-memory Map)
   // ============================================
 
   /**
@@ -421,6 +589,17 @@ class SessionManager {
    */
   async updateLeaderboard(sessionCode, userId, scoreIncrement) {
     try {
+      if (this.useInMemory) {
+        if (!this.memoryStore.leaderboards.has(sessionCode)) {
+          this.memoryStore.leaderboards.set(sessionCode, new Map());
+        }
+        const leaderboard = this.memoryStore.leaderboards.get(sessionCode);
+        const currentScore = leaderboard.get(userId) || 0;
+        const newScore = currentScore + scoreIncrement;
+        leaderboard.set(userId, newScore);
+        return newScore;
+      }
+
       const key = this.getLeaderboardKey(sessionCode);
 
       // ZINCRBY is atomic - no race conditions
@@ -440,6 +619,41 @@ class SessionManager {
    */
   async getLeaderboard(sessionCode, limit = 50) {
     try {
+      if (this.useInMemory) {
+        const leaderboard = this.memoryStore.leaderboards.get(sessionCode);
+        if (!leaderboard) return [];
+
+        // Sort by score descending
+        const sorted = Array.from(leaderboard.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, limit);
+
+        const result = [];
+        for (let i = 0; i < sorted.length; i++) {
+          const [userId, score] = sorted[i];
+          const participant = await this.getParticipant(sessionCode, userId);
+          if (participant) {
+            result.push({
+              rank: i + 1,
+              userId,
+              userName: participant.userName,
+              username: participant.userName,
+              userPicture: participant.userPicture,
+              avatar: participant.userPicture,
+              score,
+              correctAnswers: participant.correctAnswers,
+              incorrectAnswers: participant.incorrectAnswers,
+              accuracy:
+                participant.correctAnswers + participant.incorrectAnswers > 0
+                  ? (participant.correctAnswers /
+                      (participant.correctAnswers + participant.incorrectAnswers)) * 100
+                  : 0,
+            });
+          }
+        }
+        return result;
+      }
+
       const key = this.getLeaderboardKey(sessionCode);
 
       // ZREVRANGE with WITHSCORES - returns top N users
@@ -492,6 +706,17 @@ class SessionManager {
    */
   async getUserRank(sessionCode, userId) {
     try {
+      if (this.useInMemory) {
+        const leaderboard = this.memoryStore.leaderboards.get(sessionCode);
+        if (!leaderboard) return null;
+
+        const sorted = Array.from(leaderboard.entries())
+          .sort((a, b) => b[1] - a[1]);
+        
+        const index = sorted.findIndex(([id]) => id === userId);
+        return index >= 0 ? index + 1 : null;
+      }
+
       const key = this.getLeaderboardKey(sessionCode);
       const rank = await this.redis.zrevrank(key, userId);
 
@@ -511,13 +736,11 @@ class SessionManager {
   // ============================================
 
   /**
-   * Record answer in Redis
+   * Record answer in Redis or in-memory
    * Uses List for ordered storage
    */
   async recordAnswer(sessionCode, answerData) {
     try {
-      const key = this.getAnswersKey(sessionCode);
-
       const answer = {
         userId: answerData.userId,
         questionId: answerData.questionId,
@@ -528,8 +751,16 @@ class SessionManager {
         timeSpent: answerData.timeSpent || 0,
       };
 
-      await this.redis.rpush(key, JSON.stringify(answer));
-      await this.redis.expire(key, this.sessionTTL);
+      if (this.useInMemory) {
+        if (!this.memoryStore.answers.has(sessionCode)) {
+          this.memoryStore.answers.set(sessionCode, []);
+        }
+        this.memoryStore.answers.get(sessionCode).push(answer);
+      } else {
+        const key = this.getAnswersKey(sessionCode);
+        await this.redis.rpush(key, JSON.stringify(answer));
+        await this.redis.expire(key, this.sessionTTL);
+      }
 
       return answer;
     } catch (error) {
@@ -543,6 +774,10 @@ class SessionManager {
    */
   async getAllAnswers(sessionCode) {
     try {
+      if (this.useInMemory) {
+        return this.memoryStore.answers.get(sessionCode) || [];
+      }
+
       const key = this.getAnswersKey(sessionCode);
       const answers = await this.redis.lrange(key, 0, -1);
 
@@ -558,6 +793,11 @@ class SessionManager {
    */
   async getAnswerCount(sessionCode) {
     try {
+      if (this.useInMemory) {
+        const answers = this.memoryStore.answers.get(sessionCode);
+        return answers ? answers.length : 0;
+      }
+
       const key = this.getAnswersKey(sessionCode);
       return await this.redis.llen(key);
     } catch (error) {
@@ -571,12 +811,16 @@ class SessionManager {
   // ============================================
 
   /**
-   * Cache quiz data in Redis (for fast access)
+   * Cache quiz data (for fast access)
    */
   async cacheQuiz(sessionCode, quizData) {
     try {
-      const key = this.getQuizCacheKey(sessionCode);
-      await this.redis.setex(key, this.sessionTTL, JSON.stringify(quizData));
+      if (this.useInMemory) {
+        this.memoryStore.quizCache.set(sessionCode, quizData);
+      } else {
+        const key = this.getQuizCacheKey(sessionCode);
+        await this.redis.setex(key, this.sessionTTL, JSON.stringify(quizData));
+      }
       logger.debug(`Cached quiz for session ${sessionCode}`);
       return true;
     } catch (error) {
@@ -590,6 +834,10 @@ class SessionManager {
    */
   async getCachedQuiz(sessionCode) {
     try {
+      if (this.useInMemory) {
+        return this.memoryStore.quizCache.get(sessionCode) || null;
+      }
+
       const key = this.getQuizCacheKey(sessionCode);
       const data = await this.redis.get(key);
 
@@ -613,6 +861,13 @@ class SessionManager {
    */
   async publishToSession(sessionCode, event, data) {
     try {
+      if (this.useInMemory) {
+        // In-memory mode doesn't support pub/sub across instances
+        // But for single-instance, we can use local event emitter if needed
+        logger.debug(`In-memory publish to ${sessionCode}: ${event}`);
+        return true;
+      }
+
       const channel = `${this.keyPrefix}channel:${sessionCode}`;
       const message = JSON.stringify({ event, data, timestamp: Date.now() });
 
@@ -629,6 +884,17 @@ class SessionManager {
    */
   subscribeToSession(sessionCode, callback) {
     try {
+      if (this.useInMemory) {
+        // In-memory mode doesn't support pub/sub
+        logger.debug(`In-memory subscribe to ${sessionCode} (no-op)`);
+        return true;
+      }
+
+      if (!this.subscriber) {
+        logger.warn("Subscriber not available");
+        return false;
+      }
+
       const channel = `${this.keyPrefix}channel:${sessionCode}`;
 
       this.subscriber.subscribe(channel, (err) => {
@@ -672,6 +938,7 @@ class SessionManager {
         answerCount,
         status: session?.status,
         currentQuestion: session?.currentQuestionIndex,
+        storageMode: this.useInMemory ? "in-memory" : "redis",
       };
     } catch (error) {
       logger.error("Error getting session stats:", error);
@@ -684,11 +951,22 @@ class SessionManager {
    */
   async getRedisStats() {
     try {
+      if (this.useInMemory) {
+        return {
+          connected: false,
+          mode: "in-memory",
+          sessions: this.memoryStore.sessions.size,
+          participants: this.memoryStore.participants.size,
+          leaderboards: this.memoryStore.leaderboards.size,
+        };
+      }
+
       const info = await this.redis.info("stats");
       const keyspace = await this.redis.info("keyspace");
 
       return {
         connected: this.connected,
+        mode: "redis",
         info,
         keyspace,
       };
