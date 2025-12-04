@@ -9,7 +9,7 @@ const ApiResponse = require("../utils/response");
 // General API rate limiter - Only count failed requests
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // Increased from 100 to 300 requests per window
+  max: 500, // Increased from 300 to 500 requests per window for mobile apps
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
