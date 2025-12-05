@@ -67,7 +67,7 @@ app.use(cors(corsOptions));
 // Handle ALL preflight OPTIONS requests BEFORE any other middleware
 // Using middleware instead of app.options('*') for compatibility with newer path-to-regexp
 app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     const origin = req.headers.origin;
     if (origin) {
       res.setHeader("Access-Control-Allow-Origin", origin);
