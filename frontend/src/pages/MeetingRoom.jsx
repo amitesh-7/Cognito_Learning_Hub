@@ -58,28 +58,34 @@ const MeetingRoom = () => {
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun2.l.google.com:19302" },
-    { urls: "stun:stun.relay.metered.ca:80" },
-    // Free TURN servers from OpenRelay (limited capacity - get your own for production)
-    // Sign up at: https://www.metered.ca/tools/openrelay/
+    { urls: "stun:stun3.l.google.com:19302" },
+    { urls: "stun:stun4.l.google.com:19302" },
+    // Free TURN servers from Metered - these are public free servers
+    // Get your own at: https://www.metered.ca/stun-turn (free tier available)
     {
-      urls: "turn:openrelay.metered.ca:80",
-      username: "openrelayproject",
-      credential: "openrelayproject",
+      urls: "turn:a.relay.metered.ca:80",
+      username: "e8dd65b92aee3dfc528dfe01",
+      credential: "1lTpaSO4yHL8WYuW",
     },
     {
-      urls: "turn:openrelay.metered.ca:80?transport=tcp",
-      username: "openrelayproject",
-      credential: "openrelayproject",
+      urls: "turn:a.relay.metered.ca:80?transport=tcp",
+      username: "e8dd65b92aee3dfc528dfe01",
+      credential: "1lTpaSO4yHL8WYuW",
     },
     {
-      urls: "turn:openrelay.metered.ca:443",
-      username: "openrelayproject",
-      credential: "openrelayproject",
+      urls: "turn:a.relay.metered.ca:443",
+      username: "e8dd65b92aee3dfc528dfe01",
+      credential: "1lTpaSO4yHL8WYuW",
     },
     {
-      urls: "turns:openrelay.metered.ca:443?transport=tcp",
-      username: "openrelayproject",
-      credential: "openrelayproject",
+      urls: "turn:a.relay.metered.ca:443?transport=tcp",
+      username: "e8dd65b92aee3dfc528dfe01",
+      credential: "1lTpaSO4yHL8WYuW",
+    },
+    {
+      urls: "turns:a.relay.metered.ca:443?transport=tcp",
+      username: "e8dd65b92aee3dfc528dfe01",
+      credential: "1lTpaSO4yHL8WYuW",
     },
   ]);
   const iceServersRef = useRef(iceServers); // Ref for use in callbacks
@@ -93,6 +99,68 @@ const MeetingRoom = () => {
     iceServers: iceServers,
     iceCandidatePoolSize: 10,
   };
+
+  // Debug: Test TURN server connectivity on mount
+  useEffect(() => {
+    const testTurnServer = async () => {
+      console.log("[Meeting] Testing TURN server connectivity...");
+      const testPc = new RTCPeerConnection({ iceServers });
+      testPc.createDataChannel("test");
+
+      let hasRelayCandidate = false;
+      let hasSrflxCandidate = false;
+
+      testPc.onicecandidate = (e) => {
+        if (e.candidate) {
+          console.log(
+            `[Meeting] ICE Candidate: ${e.candidate.type} - ${
+              e.candidate.address || e.candidate.relatedAddress
+            }`
+          );
+          if (e.candidate.type === "relay") {
+            hasRelayCandidate = true;
+            console.log(
+              "[Meeting] ✅ TURN server is working (relay candidate found)"
+            );
+          }
+          if (e.candidate.type === "srflx") {
+            hasSrflxCandidate = true;
+            console.log(
+              "[Meeting] ✅ STUN server is working (srflx candidate found)"
+            );
+          }
+        }
+      };
+
+      testPc.onicegatheringstatechange = () => {
+        if (testPc.iceGatheringState === "complete") {
+          console.log("[Meeting] ICE gathering complete");
+          console.log(
+            `[Meeting] STUN working: ${hasSrflxCandidate}, TURN working: ${hasRelayCandidate}`
+          );
+          if (!hasRelayCandidate) {
+            console.warn(
+              "[Meeting] ⚠️ No relay candidate found - TURN server may not be working!"
+            );
+            console.warn(
+              "[Meeting] This may cause video issues when users are behind strict NAT/firewalls"
+            );
+          }
+          testPc.close();
+        }
+      };
+
+      try {
+        const offer = await testPc.createOffer();
+        await testPc.setLocalDescription(offer);
+      } catch (err) {
+        console.error("[Meeting] TURN test failed:", err);
+        testPc.close();
+      }
+    };
+
+    testTurnServer();
+  }, [iceServers]);
 
   // Initialize socket connection to meeting service
   useEffect(() => {
