@@ -50,18 +50,45 @@ const MeetingRoom = () => {
   const socketRef = useRef(null); // Ref to store socket for use in functions
   const createPeerConnectionRef = useRef(null); // Ref to store createPeerConnection
   const pendingOffersRef = useRef([]); // Queue offers received before local stream is ready
+
+  // ICE servers for WebRTC - STUN for discovery, TURN for relay through NAT/firewalls
+  // IMPORTANT: TURN servers are essential when users are behind different NAT/firewalls
   const [iceServers, setIceServers] = useState([
+    // STUN servers (free, for NAT discovery)
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun2.l.google.com:19302" },
+    { urls: "stun:stun.relay.metered.ca:80" },
+    // Free TURN servers from OpenRelay (limited capacity - get your own for production)
+    // Sign up at: https://www.metered.ca/tools/openrelay/
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:80?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turns:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
   ]);
   const iceServersRef = useRef(iceServers); // Ref for use in callbacks
-  
+
   // Keep ref in sync with state
   useEffect(() => {
     iceServersRef.current = iceServers;
   }, [iceServers]);
-  
+
   const configuration = {
     iceServers: iceServers,
     iceCandidatePoolSize: 10,
@@ -113,7 +140,10 @@ const MeetingRoom = () => {
 
     // Receive ICE servers from backend
     meetSocket.on("ice-servers", ({ iceServers: serverIceServers }) => {
-      console.log("[Meeting] Received ICE servers from backend:", serverIceServers);
+      console.log(
+        "[Meeting] Received ICE servers from backend:",
+        serverIceServers
+      );
       if (serverIceServers && serverIceServers.length > 0) {
         setIceServers(serverIceServers);
       }
@@ -485,14 +515,14 @@ const MeetingRoom = () => {
     }
 
     console.log(`[Meeting] Creating new peer connection for ${remoteSocketId}`);
-    
+
     // Use ref to get latest ICE servers
     const config = {
       iceServers: iceServersRef.current || iceServers,
       iceCandidatePoolSize: 10,
     };
     console.log(`[Meeting] Using ICE servers:`, config.iceServers);
-    
+
     const pc = new RTCPeerConnection(config);
 
     // Add local tracks to peer connection - Use ref to get current stream
@@ -520,41 +550,56 @@ const MeetingRoom = () => {
         event.track.readyState
       );
       const remoteStream = event.streams[0];
-      
+
       // Log stream details for debugging
       console.log("[Meeting] Remote stream ID:", remoteStream?.id);
-      console.log("[Meeting] Remote stream tracks:", remoteStream?.getTracks().map(t => ({
-        kind: t.kind,
-        enabled: t.enabled,
-        readyState: t.readyState
-      })));
-      
+      console.log(
+        "[Meeting] Remote stream tracks:",
+        remoteStream?.getTracks().map((t) => ({
+          kind: t.kind,
+          enabled: t.enabled,
+          readyState: t.readyState,
+        }))
+      );
+
       // Force React to see this as a new stream by creating a reference update
       setPeers((prev) => {
         const updated = new Map(prev);
         const existing = updated.get(remoteSocketId) || {};
         // Create a new object reference to trigger re-render
-        updated.set(remoteSocketId, { 
-          ...existing, 
+        updated.set(remoteSocketId, {
+          ...existing,
           stream: remoteStream,
           streamId: remoteStream?.id, // Track stream ID for debugging
-          lastTrackUpdate: Date.now() // Force new reference
+          lastTrackUpdate: Date.now(), // Force new reference
         });
-        console.log(`[Meeting] Updated peer ${remoteSocketId} with stream, tracks:`, remoteStream?.getTracks().length);
+        console.log(
+          `[Meeting] Updated peer ${remoteSocketId} with stream, tracks:`,
+          remoteStream?.getTracks().length
+        );
         return updated;
       });
-      
+
       // Listen for track ended events
       event.track.onended = () => {
-        console.log(`[Meeting] Track ended for peer ${remoteSocketId}:`, event.track.kind);
+        console.log(
+          `[Meeting] Track ended for peer ${remoteSocketId}:`,
+          event.track.kind
+        );
       };
-      
+
       event.track.onmute = () => {
-        console.log(`[Meeting] Track muted for peer ${remoteSocketId}:`, event.track.kind);
+        console.log(
+          `[Meeting] Track muted for peer ${remoteSocketId}:`,
+          event.track.kind
+        );
       };
-      
+
       event.track.onunmute = () => {
-        console.log(`[Meeting] Track unmuted for peer ${remoteSocketId}:`, event.track.kind);
+        console.log(
+          `[Meeting] Track unmuted for peer ${remoteSocketId}:`,
+          event.track.kind
+        );
       };
     };
 
@@ -573,12 +618,48 @@ const MeetingRoom = () => {
       console.log(
         `[Meeting] Peer ${remoteSocketId} connection state: ${pc.connectionState}`
       );
+
+      // Handle failed connection - try ICE restart
+      if (pc.connectionState === "failed") {
+        console.warn(
+          `[Meeting] Connection failed for ${remoteSocketId}, attempting ICE restart`
+        );
+        // ICE restart
+        pc.restartIce();
+        // Create new offer with ICE restart
+        pc.createOffer({ iceRestart: true })
+          .then((offer) => {
+            return pc.setLocalDescription(offer);
+          })
+          .then(() => {
+            const currentSocket = socketRef.current || socket;
+            currentSocket?.emit("webrtc-offer", {
+              targetSocketId: remoteSocketId,
+              offer: pc.localDescription,
+              from: myUserNameRef.current || "Guest",
+              iceRestart: true,
+            });
+            console.log(
+              `[Meeting] Sent ICE restart offer to ${remoteSocketId}`
+            );
+          })
+          .catch((err) => {
+            console.error(
+              `[Meeting] ICE restart failed for ${remoteSocketId}:`,
+              err
+            );
+          });
+      }
     };
 
     pc.oniceconnectionstatechange = () => {
       console.log(
         `[Meeting] Peer ${remoteSocketId} ICE connection state: ${pc.iceConnectionState}`
       );
+
+      // Log ICE gathering state for debugging
+      console.log(`[Meeting] ICE gathering state: ${pc.iceGatheringState}`);
+
       if (
         pc.iceConnectionState === "failed" ||
         pc.iceConnectionState === "disconnected"
@@ -586,7 +667,31 @@ const MeetingRoom = () => {
         console.warn(
           `[Meeting] ICE state ${pc.iceConnectionState} for ${remoteSocketId}`
         );
+        // If ICE fails, it usually means TURN server is needed but not working
+        if (pc.iceConnectionState === "failed") {
+          console.error(
+            "[Meeting] ICE connection failed - this often means TURN servers are not accessible. " +
+              "Check if TURN server credentials are valid and accessible from your network."
+          );
+        }
       }
+
+      // Log when connected
+      if (
+        pc.iceConnectionState === "connected" ||
+        pc.iceConnectionState === "completed"
+      ) {
+        console.log(
+          `[Meeting] ✅ ICE connected successfully to ${remoteSocketId}`
+        );
+      }
+    };
+
+    // Monitor ICE gathering state
+    pc.onicegatheringstatechange = () => {
+      console.log(
+        `[Meeting] ICE gathering state changed: ${pc.iceGatheringState}`
+      );
     };
 
     peerConnectionsRef.current.set(remoteSocketId, pc);
@@ -1053,42 +1158,52 @@ const RemoteVideo = ({ stream, name, isHost }) => {
     const videoElement = videoRef.current;
     if (videoElement && stream) {
       console.log("[RemoteVideo] Setting stream for", name, stream);
-      console.log("[RemoteVideo] Stream tracks:", stream.getTracks().map(t => `${t.kind}: ${t.enabled}, readyState: ${t.readyState}`));
-      
+      console.log(
+        "[RemoteVideo] Stream tracks:",
+        stream
+          .getTracks()
+          .map((t) => `${t.kind}: ${t.enabled}, readyState: ${t.readyState}`)
+      );
+
       videoElement.srcObject = stream;
-      
+
       // Force play with retry mechanism
       const playVideo = async () => {
         try {
           await videoElement.play();
           console.log("[RemoteVideo] Video playing for", name);
         } catch (err) {
-          console.warn("[RemoteVideo] Autoplay failed for", name, "- will retry on user interaction:", err.message);
+          console.warn(
+            "[RemoteVideo] Autoplay failed for",
+            name,
+            "- will retry on user interaction:",
+            err.message
+          );
           // Add click handler to play on user interaction
           const handleClick = async () => {
             try {
               await videoElement.play();
-              document.removeEventListener('click', handleClick);
+              document.removeEventListener("click", handleClick);
             } catch (e) {
               console.error("[RemoteVideo] Play on click failed:", e);
             }
           };
-          document.addEventListener('click', handleClick, { once: true });
+          document.addEventListener("click", handleClick, { once: true });
         }
       };
-      
+
       // Wait for loadedmetadata before playing
       videoElement.onloadedmetadata = () => {
         console.log("[RemoteVideo] Metadata loaded for", name);
         playVideo();
       };
-      
+
       // If metadata already loaded, play immediately
       if (videoElement.readyState >= 1) {
         playVideo();
       }
     }
-    
+
     return () => {
       if (videoElement) {
         videoElement.srcObject = null;
