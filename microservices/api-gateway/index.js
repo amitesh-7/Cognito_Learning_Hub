@@ -64,23 +64,27 @@ const corsOptions = {
 // Middleware - CORS must be first
 app.use(cors(corsOptions));
 
-// Handle ALL preflight requests BEFORE any other middleware
-app.options("*", (req, res) => {
-  const origin = req.headers.origin;
-  if (origin) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
+// Handle ALL preflight OPTIONS requests BEFORE any other middleware
+// Using middleware instead of app.options('*') for compatibility with newer path-to-regexp
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    const origin = req.headers.origin;
+    if (origin) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, x-auth-token"
+    );
+    res.setHeader("Access-Control-Max-Age", "86400");
+    return res.status(204).end();
   }
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, x-auth-token"
-  );
-  res.setHeader("Access-Control-Max-Age", "86400");
-  res.status(204).end();
+  next();
 });
 
 // Add CORS headers to ALL responses (fallback)
