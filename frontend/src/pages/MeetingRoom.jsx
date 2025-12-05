@@ -52,7 +52,7 @@ const MeetingRoom = () => {
   const pendingOffersRef = useRef([]); // Queue offers received before local stream is ready
 
   // ICE servers for WebRTC - STUN for discovery, TURN for relay through NAT/firewalls
-  // IMPORTANT: TURN servers are essential when users are behind different NAT/firewalls
+  // Get your own TURN credentials at: https://www.metered.ca/stun-turn (free tier available)
   const [iceServers, setIceServers] = useState([
     // STUN servers (free, for NAT discovery)
     { urls: "stun:stun.l.google.com:19302" },
@@ -60,35 +60,80 @@ const MeetingRoom = () => {
     { urls: "stun:stun2.l.google.com:19302" },
     { urls: "stun:stun3.l.google.com:19302" },
     { urls: "stun:stun4.l.google.com:19302" },
-    // Free TURN servers from Metered - these are public free servers
-    // Get your own at: https://www.metered.ca/stun-turn (free tier available)
-    {
-      urls: "turn:a.relay.metered.ca:80",
-      username: "e8dd65b92aee3dfc528dfe01",
-      credential: "1lTpaSO4yHL8WYuW",
-    },
-    {
-      urls: "turn:a.relay.metered.ca:80?transport=tcp",
-      username: "e8dd65b92aee3dfc528dfe01",
-      credential: "1lTpaSO4yHL8WYuW",
-    },
-    {
-      urls: "turn:a.relay.metered.ca:443",
-      username: "e8dd65b92aee3dfc528dfe01",
-      credential: "1lTpaSO4yHL8WYuW",
-    },
-    {
-      urls: "turn:a.relay.metered.ca:443?transport=tcp",
-      username: "e8dd65b92aee3dfc528dfe01",
-      credential: "1lTpaSO4yHL8WYuW",
-    },
-    {
-      urls: "turns:a.relay.metered.ca:443?transport=tcp",
-      username: "e8dd65b92aee3dfc528dfe01",
-      credential: "1lTpaSO4yHL8WYuW",
-    },
   ]);
   const iceServersRef = useRef(iceServers); // Ref for use in callbacks
+  const [turnFetched, setTurnFetched] = useState(false);
+
+  // Fetch TURN server credentials
+  useEffect(() => {
+    const fetchTurnCredentials = async () => {
+      try {
+        console.log("[Meeting] Fetching TURN server credentials...");
+
+        // Check if TURN API key is configured via environment variable
+        const meteredApiKey = import.meta.env.VITE_METERED_API_KEY;
+
+        if (meteredApiKey) {
+          // Fetch from Metered API with your own key
+          const response = await fetch(
+            `https://cognito.metered.live/api/v1/turn/credentials?apiKey=${meteredApiKey}`
+          );
+
+          if (response.ok) {
+            const turnServers = await response.json();
+            console.log(
+              "[Meeting] TURN credentials received:",
+              turnServers.length,
+              "servers"
+            );
+
+            const allServers = [
+              { urls: "stun:stun.l.google.com:19302" },
+              { urls: "stun:stun1.l.google.com:19302" },
+              ...turnServers,
+            ];
+
+            setIceServers(allServers);
+            iceServersRef.current = allServers;
+            setTurnFetched(true);
+            console.log(
+              "[Meeting] ✅ ICE servers configured with Metered TURN"
+            );
+            return;
+          }
+        }
+
+        // Fallback: Use free Xirsys TURN servers (limited but works)
+        console.log("[Meeting] Using fallback TURN servers...");
+        const fallbackServers = [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+          { urls: "stun:stun2.l.google.com:19302" },
+          // Free TURN servers - these are publicly available
+          {
+            urls: "turn:numb.viagenie.ca",
+            username: "webrtc@live.com",
+            credential: "muazkh",
+          },
+          {
+            urls: "turn:turn.anyfirewall.com:443?transport=tcp",
+            username: "webrtc",
+            credential: "webrtc",
+          },
+        ];
+
+        setIceServers(fallbackServers);
+        iceServersRef.current = fallbackServers;
+        setTurnFetched(true);
+        console.log("[Meeting] ✅ ICE servers configured with fallback TURN");
+      } catch (error) {
+        console.error("[Meeting] Failed to configure TURN:", error);
+        setTurnFetched(true); // Continue with STUN only
+      }
+    };
+
+    fetchTurnCredentials();
+  }, []);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -100,10 +145,13 @@ const MeetingRoom = () => {
     iceCandidatePoolSize: 10,
   };
 
-  // Debug: Test TURN server connectivity on mount
+  // Debug: Test TURN server connectivity after credentials are fetched
   useEffect(() => {
+    if (!turnFetched) return; // Wait for TURN credentials to be fetched
+
     const testTurnServer = async () => {
       console.log("[Meeting] Testing TURN server connectivity...");
+      console.log("[Meeting] ICE servers to test:", iceServers);
       const testPc = new RTCPeerConnection({ iceServers });
       testPc.createDataChannel("test");
 
@@ -160,7 +208,7 @@ const MeetingRoom = () => {
     };
 
     testTurnServer();
-  }, [iceServers]);
+  }, [turnFetched, iceServers]);
 
   // Initialize socket connection to meeting service
   useEffect(() => {
