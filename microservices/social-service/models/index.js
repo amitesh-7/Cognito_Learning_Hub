@@ -12,8 +12,13 @@ const connectDB = async () => {
     const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/cognito_social';
     
     await mongoose.connect(mongoUri, {
+      maxPoolSize: 10, // Maximum connection pool size
+      minPoolSize: 2, // Minimum connections to maintain
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
+      heartbeatFrequencyMS: 10000, // Check server health every 10s
+      retryWrites: true,
+      retryReads: true,
     });
     
     logger.info('MongoDB connected successfully to:', mongoUri.replace(/\/\/([^:]+):([^@]+)@/, '//****:****@'));

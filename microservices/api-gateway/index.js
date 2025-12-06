@@ -8,6 +8,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const compression = require("compression");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const createLogger = require("../shared/utils/logger");
 const { SERVICES } = require("../shared/config/services");
@@ -74,6 +75,7 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
+app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -88,11 +90,18 @@ app.use("/api/", (req, res, next) => {
 
 // Health check endpoint
 app.get("/health", (req, res) => {
+  const memUsage = process.memoryUsage();
   res.json({
     status: "healthy",
     service: "API Gateway",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    memory: {
+      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + "MB",
+      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + "MB",
+      rss: Math.round(memUsage.rss / 1024 / 1024) + "MB",
+      external: Math.round(memUsage.external / 1024 / 1024) + "MB",
+    },
   });
 });
 

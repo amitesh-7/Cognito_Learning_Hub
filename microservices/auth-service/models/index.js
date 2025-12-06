@@ -27,6 +27,13 @@ class AuthDatabase {
       // Use the EXACT same connection as monolith backend
       await mongoose.connect(mongoUri, {
         autoIndex: true, // Build indexes
+        maxPoolSize: 10, // Maximum connection pool size
+        minPoolSize: 2, // Minimum connections to maintain
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        heartbeatFrequencyMS: 10000, // Check server health every 10s
+        retryWrites: true,
+        retryReads: true,
       });
 
       logger.info("✓ MongoDB connected successfully");

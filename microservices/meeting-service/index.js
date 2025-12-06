@@ -9,6 +9,7 @@ const http = require("http");
 const socketIO = require("socket.io");
 const cors = require("cors");
 const helmet = require("helmet");
+const compression = require("compression");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config();
@@ -49,6 +50,7 @@ const io = socketIO(server, {
 // ============================================
 
 app.use(helmet());
+app.use(compression({ level: 6, threshold: 1024 }));
 app.use(
   cors({
     origin: process.env.CORS_ORIGINS?.split(",") || ["http://localhost:5173"],
@@ -87,10 +89,17 @@ app.use("/api/meetings", meetingRoutes);
 
 // Health check
 app.get("/health", (req, res) => {
+  const memUsage = process.memoryUsage();
   res.json({
     success: true,
     service: "meeting-service",
     status: "healthy",
+    uptime: process.uptime(),
+    memory: {
+      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + "MB",
+      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + "MB",
+      rss: Math.round(memUsage.rss / 1024 / 1024) + "MB",
+    },
     redis: meetingManager.isHealthy() ? "connected" : "disconnected",
     timestamp: new Date().toISOString(),
   });

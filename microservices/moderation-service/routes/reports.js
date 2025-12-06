@@ -202,7 +202,7 @@ router.get('/stats', authMiddleware, moderatorMiddleware, async (req, res) => {
 // Get single report details (moderators only)
 router.get('/:reportId', authMiddleware, moderatorMiddleware, async (req, res) => {
   try {
-    const report = await Report.findById(req.params.reportId);
+    const report = await Report.findById(req.params.reportId).lean();
     
     if (!report) {
       return res.status(404).json({ error: 'Report not found' });
