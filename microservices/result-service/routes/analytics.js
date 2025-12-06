@@ -1,6 +1,7 @@
 /**
  * Analytics Routes
  * User statistics and quiz analytics with caching
+ * AI-powered personalized insights
  */
 
 const express = require("express");
@@ -10,6 +11,7 @@ const createLogger = require("../../shared/utils/logger");
 const { authenticateToken } = require("../../shared/middleware/auth");
 const Result = require("../models/Result");
 const cacheManager = require("../services/cacheManager");
+const aiInsightsService = require("../services/aiInsightsService");
 
 const router = express.Router();
 const logger = createLogger("analytics-routes");
@@ -334,4 +336,148 @@ router.get("/teacher/stats", authenticateToken, async (req, res) => {
     return ApiResponse.error(res, "Failed to fetch teacher statistics", 500);
   }
 });
+
+/**
+ * @route   GET /api/analytics/user/:userId/insights
+ * @desc    Get AI-powered personalized learning insights
+ * @access  Private
+ */
+router.get("/user/:userId/insights", authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Verify user can only access their own insights (unless admin)
+    if (userId !== req.user.userId && req.user.role !== "Admin") {
+      return ApiResponse.forbidden(res, "Access denied");
+    }
+
+    // Check cache first (cache for 1 hour since AI generation is expensive)
+    const cacheKey = `insights:${userId}`;
+    let insights = await cacheManager.get(cacheKey);
+
+    if (!insights) {
+      logger.info(`Generating AI insights for user: ${userId}`);
+      
+      // Get user name for personalization
+      const userName = req.user.name || "Student";
+      
+      // Generate personalized insights
+      insights = await aiInsightsService.getPersonalizedInsights(userId, userName);
+
+      // Cache for 1 hour
+      if (insights.hasData) {
+        await cacheManager.set(cacheKey, insights, 3600);
+      }
+    }
+
+    res.json(
+      ApiResponse.success({
+        insights,
+        cached: !!insights,
+      })
+    );
+  } catch (error) {
+    logger.error("Get AI insights error:", error);
+    return ApiResponse.error(res, "Failed to generate insights", 500);
+  }
+});
+
+/**
+ * @route   GET /api/analytics/user/:userId/peer-comparison
+ * @desc    Get peer comparison and percentile ranking
+ * @access  Private
+ */
+router.get("/user/:userId/peer-comparison", authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Verify access
+    if (userId !== req.user.userId && req.user.role !== "Admin") {
+      return ApiResponse.forbidden(res, "Access denied");
+    }
+
+    const comparison = await aiInsightsService.getPeerComparison(userId);
+
+    res.json(ApiResponse.success({ comparison }));
+  } catch (error) {
+    logger.error("Get peer comparison error:", error);
+    return ApiResponse.error(res, "Failed to fetch peer comparison", 500);
+  }
+});
+
+/**
+ * @route   GET /api/analytics/user/:userId/learning-patterns
+ * @desc    Get detailed learning patterns analysis
+ * @access  Private
+ */
+router.get("/user/:userId/learning-patterns", authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Verify access
+    if (userId !== req.user.userId && req.user.role !== "Admin") {
+      return ApiResponse.forbidden(res, "Access denied");
+    }
+
+    const analytics = await aiInsightsService.getUserAnalytics(userId);
+    const patterns = aiInsightsService.calculateLearningPatterns(analytics);
+
+    res.json(
+      ApiResponse.success({
+        patterns,
+        analytics: {
+          byCategory: analytics.byCategory,
+          byDifficulty: analytics.byDifficulty,
+          weeklyTrend: analytics.weeklyTrend,
+          dailyActivity: analytics.dailyActivity,
+        },
+      })
+    );
+  } catch (error) {
+    logger.error("Get learning patterns error:", error);
+    return ApiResponse.error(res, "Failed to fetch learning patterns", 500);
+  }
+});
+
+/**
+ * @route   POST /api/analytics/user/:userId/refresh-insights
+ * @desc    Force refresh AI insights (bypasses cache)
+ * @access  Private
+ */
+router.post("/user/:userId/refresh-insights", authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Verify access
+    if (userId !== req.user.userId && req.user.role !== "Admin") {
+      return ApiResponse.forbidden(res, "Access denied");
+    }
+
+    // Clear cache
+    const cacheKey = `insights:${userId}`;
+    await cacheManager.del(cacheKey);
+
+    // Get user name for personalization
+    const userName = req.user.name || "Student";
+
+    // Generate fresh insights
+    const insights = await aiInsightsService.getPersonalizedInsights(userId, userName);
+
+    // Cache for 1 hour
+    if (insights.hasData) {
+      await cacheManager.set(cacheKey, insights, 3600);
+    }
+
+    res.json(
+      ApiResponse.success({
+        insights,
+        refreshed: true,
+      })
+    );
+  } catch (error) {
+    logger.error("Refresh insights error:", error);
+    return ApiResponse.error(res, "Failed to refresh insights", 500);
+  }
+});
+
 module.exports = router;

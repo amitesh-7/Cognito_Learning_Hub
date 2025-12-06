@@ -35,10 +35,22 @@ import {
   Zap,
   Trophy,
   ArrowLeft,
+  Sparkles,
+  Brain,
 } from "lucide-react";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "../components/ui/PullToRefreshIndicator";
 import { useHaptic } from "../hooks/useHaptic";
+import {
+  EnhancedStatsGrid,
+  CategoryPerformance,
+  LearningPatterns,
+} from "../components/EnhancedStats";
+import {
+  AIInsightsCard,
+  PeerComparisonCard,
+  WeeklyActivityCard,
+} from "../components/AIInsights";
 
 // --- Animation Variants ---
 const containerVariants = {
@@ -68,13 +80,42 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [streakCount, setStreakCount] = useState(0);
-  const [viewMode, setViewMode] = useState("overview"); // 'overview', 'detailed'
+  const [viewMode, setViewMode] = useState("overview"); // 'overview', 'detailed', 'insights'
   const { success } = useHaptic();
+
+  // AI Insights state
+  const [aiInsights, setAiInsights] = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
 
   // Redirect teachers to teacher dashboard (only after auth is loaded)
   if (!authLoading && user?.role === "Teacher") {
     return <Navigate to="/teacher-dashboard" replace />;
   }
+
+  // Fetch AI-powered personalized insights
+  const fetchAIInsights = async (forceRefresh = false) => {
+    try {
+      setInsightsLoading(true);
+      const token = localStorage.getItem("quizwise-token");
+      const endpoint = forceRefresh
+        ? `${import.meta.env.VITE_API_URL}/api/analytics/user/${user?._id}/refresh-insights`
+        : `${import.meta.env.VITE_API_URL}/api/analytics/user/${user?._id}/insights`;
+
+      const response = await fetch(endpoint, {
+        method: forceRefresh ? "POST" : "GET",
+        headers: { "x-auth-token": token },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAiInsights(data.data?.insights || data.insights);
+      }
+    } catch (err) {
+      console.error("Failed to fetch AI insights:", err);
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
 
   const fetchResults = async () => {
     try {
@@ -121,7 +162,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchResults();
-  }, []);
+    if (user?._id) {
+      fetchAIInsights();
+    }
+  }, [user?._id]);
 
   // Pull-to-refresh functionality
   const handleRefresh = async () => {
@@ -338,6 +382,19 @@ export default function Dashboard() {
             >
               <Eye className="w-4 h-4 mr-2" />
               Overview
+            </Button>
+            <Button
+              variant={viewMode === "insights" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("insights")}
+              className={
+                viewMode === "insights"
+                  ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+                  : ""
+              }
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI Insights
             </Button>
             <Button
               variant={viewMode === "detailed" ? "default" : "outline"}
@@ -889,6 +946,108 @@ export default function Dashboard() {
                   </Card>
                 </motion.div>
               </div>
+            </motion.div>
+          ) : viewMode === "insights" ? (
+            /* AI Insights View */
+            <motion.div
+              key="insights"
+              className="space-y-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+            >
+              {/* Enhanced Stats Grid */}
+              {aiInsights?.analytics && (
+                <motion.div variants={itemVariants}>
+                  <EnhancedStatsGrid
+                    analytics={aiInsights.analytics}
+                    patterns={aiInsights.patterns}
+                  />
+                </motion.div>
+              )}
+
+              {/* Main Insights Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* AI Insights Card */}
+                <motion.div variants={itemVariants}>
+                  <AIInsightsCard
+                    insights={aiInsights?.insights}
+                    onRefresh={() => fetchAIInsights(true)}
+                    isLoading={insightsLoading}
+                  />
+                </motion.div>
+
+                {/* Peer Comparison */}
+                <motion.div variants={itemVariants}>
+                  <PeerComparisonCard comparison={aiInsights?.peerComparison} />
+                </motion.div>
+              </div>
+
+              {/* Second Row: Learning Patterns & Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Learning Patterns */}
+                <motion.div variants={itemVariants}>
+                  <LearningPatterns patterns={aiInsights?.patterns} />
+                </motion.div>
+
+                {/* Category Performance */}
+                <motion.div variants={itemVariants}>
+                  <CategoryPerformance
+                    categories={aiInsights?.analytics?.byCategory}
+                  />
+                </motion.div>
+              </div>
+
+              {/* Weekly Activity */}
+              <motion.div variants={itemVariants}>
+                <WeeklyActivityCard
+                  dailyActivity={aiInsights?.analytics?.dailyActivity}
+                  weeklyTrend={aiInsights?.analytics?.weeklyTrend}
+                />
+              </motion.div>
+
+              {/* Loading State */}
+              {insightsLoading && !aiInsights && (
+                <motion.div
+                  className="flex items-center justify-center py-20"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <div className="text-center">
+                    <div className="relative">
+                      <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mx-auto mb-4"></div>
+                      <Brain className="absolute inset-0 m-auto w-6 h-6 text-purple-600 animate-pulse" />
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 font-medium">
+                      Analyzing your learning patterns...
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* No Data State */}
+              {!insightsLoading && !aiInsights?.hasData && (
+                <motion.div
+                  className="text-center py-20"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <Sparkles className="w-16 h-16 mx-auto mb-4 text-purple-400" />
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    Unlock AI Insights
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                    {aiInsights?.message ||
+                      "Complete a few quizzes to unlock personalized AI-powered learning insights!"}
+                  </p>
+                  <Link to="/quizzes">
+                    <Button className="mt-4 bg-gradient-to-r from-purple-500 to-pink-600">
+                      Start a Quiz
+                    </Button>
+                  </Link>
+                </motion.div>
+              )}
             </motion.div>
           ) : (
             <motion.div

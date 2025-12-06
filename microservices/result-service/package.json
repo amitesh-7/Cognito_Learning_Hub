@@ -17,6 +17,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "axios": "^1.13.2",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
