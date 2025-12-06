@@ -3,95 +3,90 @@
  * CRUD operations for meetings
  */
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { nanoid } = require('nanoid');
-const Meeting = require('../models/Meeting');
-const meetingManager = require('../services/meetingManager');
-const createLogger = require('../../shared/utils/logger');
-const { authenticateToken } = require('../../shared/middleware/auth');
-const { validateFields } = require('../../shared/middleware/inputValidation');
+const { nanoid } = require("nanoid");
+const Meeting = require("../models/Meeting");
+const meetingManager = require("../services/meetingManager");
+const createLogger = require("../../shared/utils/logger");
+const { authenticateToken } = require("../../shared/middleware/auth");
+const { validateFields } = require("../../shared/middleware/inputValidation");
 
-const logger = createLogger('meeting-routes');
+const logger = createLogger("meeting-routes");
 
 // ============================================
 // CREATE MEETING
 // ============================================
 
 router.post(
-  '/create',
+  "/create",
   authenticateToken,
   validateFields({
-    title: { required: true, type: 'string', minLength: 3, maxLength: 200 },
-    description: { type: 'string', maxLength: 1000 },
-    hostId: { required: true, type: 'objectId' },
-    hostName: { type: 'string', maxLength: 100 },
-    scheduledAt: { type: 'string' },
+    title: { required: true, type: "string", minLength: 3, maxLength: 200 },
+    description: { type: "string", maxLength: 1000 },
+    hostId: { required: true, type: "objectId" },
+    hostName: { type: "string", maxLength: 100 },
+    scheduledAt: { type: "string" },
   }),
   async (req, res) => {
     try {
-      const {
+      const { title, description, hostId, hostName, scheduledAt, settings } =
+        req.body;
+
+      // Generate unique room ID
+      const roomId = nanoid(10);
+
+      // Create meeting in database
+      const meeting = new Meeting({
+        roomId,
         title,
         description,
         hostId,
         hostName,
-        scheduledAt,
-        settings,
-      } = req.body;
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+        status: scheduledAt ? "scheduled" : "active",
+        settings: {
+          maxParticipants: settings?.maxParticipants || 50,
+          isRecordingEnabled: settings?.isRecordingEnabled || false,
+          isChatEnabled: settings?.isChatEnabled !== false,
+          isScreenShareEnabled: settings?.isScreenShareEnabled !== false,
+          requireApproval: settings?.requireApproval || false,
+          allowedDomains: settings?.allowedDomains || [],
+        },
+      });
 
-    // Generate unique room ID
-    const roomId = nanoid(10);
+      await meeting.save();
 
-    // Create meeting in database
-    const meeting = new Meeting({
-      roomId,
-      title,
-      description,
-      hostId,
-      hostName,
-      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-      status: scheduledAt ? 'scheduled' : 'active',
-      settings: {
-        maxParticipants: settings?.maxParticipants || 50,
-        isRecordingEnabled: settings?.isRecordingEnabled || false,
-        isChatEnabled: settings?.isChatEnabled !== false,
-        isScreenShareEnabled: settings?.isScreenShareEnabled !== false,
-        requireApproval: settings?.requireApproval || false,
-        allowedDomains: settings?.allowedDomains || [],
-      },
-    });
+      logger.info(`Meeting created: ${roomId} by ${hostId}`);
 
-    await meeting.save();
-
-    logger.info(`Meeting created: ${roomId} by ${hostId}`);
-
-    res.status(201).json({
-      success: true,
-      meeting: {
-        roomId: meeting.roomId,
-        title: meeting.title,
-        description: meeting.description,
-        hostId: meeting.hostId,
-        scheduledAt: meeting.scheduledAt,
-        status: meeting.status,
-        settings: meeting.settings,
-        createdAt: meeting.createdAt,
-      },
-    });
-  } catch (error) {
-    logger.error('Error creating meeting:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create meeting',
-    });
+      res.status(201).json({
+        success: true,
+        meeting: {
+          roomId: meeting.roomId,
+          title: meeting.title,
+          description: meeting.description,
+          hostId: meeting.hostId,
+          scheduledAt: meeting.scheduledAt,
+          status: meeting.status,
+          settings: meeting.settings,
+          createdAt: meeting.createdAt,
+        },
+      });
+    } catch (error) {
+      logger.error("Error creating meeting:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to create meeting",
+      });
+    }
   }
-});
+);
 
 // ============================================
 // GET MEETING
 // ============================================
 
-router.get('/:roomId', authenticateToken, async (req, res) => {
+router.get("/:roomId", authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -105,7 +100,7 @@ router.get('/:roomId', authenticateToken, async (req, res) => {
       if (!dbMeeting) {
         return res.status(404).json({
           success: false,
-          error: 'Meeting not found',
+          error: "Meeting not found",
         });
       }
 
@@ -133,10 +128,10 @@ router.get('/:roomId', authenticateToken, async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Error getting meeting:', error);
+    logger.error("Error getting meeting:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get meeting',
+      error: "Failed to get meeting",
     });
   }
 });
@@ -145,7 +140,7 @@ router.get('/:roomId', authenticateToken, async (req, res) => {
 // GET PARTICIPANTS
 // ============================================
 
-router.get('/:roomId/participants', authenticateToken, async (req, res) => {
+router.get("/:roomId/participants", authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -154,7 +149,7 @@ router.get('/:roomId/participants', authenticateToken, async (req, res) => {
 
     res.json({
       success: true,
-      participants: participants.map(p => ({
+      participants: participants.map((p) => ({
         userId: p.userId,
         userName: p.userName,
         userPicture: p.userPicture,
@@ -167,10 +162,10 @@ router.get('/:roomId/participants', authenticateToken, async (req, res) => {
       count: participants.length,
     });
   } catch (error) {
-    logger.error('Error getting participants:', error);
+    logger.error("Error getting participants:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get participants',
+      error: "Failed to get participants",
     });
   }
 });
@@ -179,7 +174,7 @@ router.get('/:roomId/participants', authenticateToken, async (req, res) => {
 // UPDATE MEETING
 // ============================================
 
-router.put('/:roomId', authenticateToken, async (req, res) => {
+router.put("/:roomId", authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
     const { title, description, settings } = req.body;
@@ -198,7 +193,7 @@ router.put('/:roomId', authenticateToken, async (req, res) => {
     if (!meeting) {
       return res.status(404).json({
         success: false,
-        error: 'Meeting not found',
+        error: "Meeting not found",
       });
     }
 
@@ -221,10 +216,10 @@ router.put('/:roomId', authenticateToken, async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error('Error updating meeting:', error);
+    logger.error("Error updating meeting:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to update meeting',
+      error: "Failed to update meeting",
     });
   }
 });
@@ -233,7 +228,7 @@ router.put('/:roomId', authenticateToken, async (req, res) => {
 // END MEETING
 // ============================================
 
-router.post('/:roomId/end', authenticateToken, async (req, res) => {
+router.post("/:roomId/end", authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -243,7 +238,7 @@ router.post('/:roomId/end', authenticateToken, async (req, res) => {
     if (!meeting) {
       return res.status(404).json({
         success: false,
-        error: 'Meeting not found',
+        error: "Meeting not found",
       });
     }
 
@@ -251,7 +246,7 @@ router.post('/:roomId/end', authenticateToken, async (req, res) => {
     if (meeting.hostId !== req.user.userId) {
       return res.status(403).json({
         success: false,
-        error: 'Only host can end meeting',
+        error: "Only host can end meeting",
       });
     }
 
@@ -259,7 +254,7 @@ router.post('/:roomId/end', authenticateToken, async (req, res) => {
     const participants = await meetingManager.getAllParticipants(roomId);
 
     // Update meeting analytics
-    meeting.status = 'completed';
+    meeting.status = "completed";
     meeting.endedAt = new Date();
     meeting.analytics.totalParticipantsJoined = participants.length;
     meeting.analytics.peakParticipants = Math.max(
@@ -281,14 +276,14 @@ router.post('/:roomId/end', authenticateToken, async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Meeting ended',
+      message: "Meeting ended",
       analytics: meeting.analytics,
     });
   } catch (error) {
-    logger.error('Error ending meeting:', error);
+    logger.error("Error ending meeting:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to end meeting',
+      error: "Failed to end meeting",
     });
   }
 });
@@ -297,7 +292,7 @@ router.post('/:roomId/end', authenticateToken, async (req, res) => {
 // GET MEETING STATS
 // ============================================
 
-router.get('/:roomId/stats', authenticateToken, async (req, res) => {
+router.get("/:roomId/stats", authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -306,7 +301,7 @@ router.get('/:roomId/stats', authenticateToken, async (req, res) => {
     if (!stats) {
       return res.status(404).json({
         success: false,
-        error: 'Meeting not found',
+        error: "Meeting not found",
       });
     }
 
@@ -315,10 +310,10 @@ router.get('/:roomId/stats', authenticateToken, async (req, res) => {
       stats,
     });
   } catch (error) {
-    logger.error('Error getting meeting stats:', error);
+    logger.error("Error getting meeting stats:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get meeting stats',
+      error: "Failed to get meeting stats",
     });
   }
 });
@@ -327,24 +322,21 @@ router.get('/:roomId/stats', authenticateToken, async (req, res) => {
 // GET USER MEETINGS
 // ============================================
 
-router.get('/user/:userId', authenticateToken, async (req, res) => {
+router.get("/user/:userId", authenticateToken, async (req, res) => {
   try {
     const { userId } = req.params;
 
     // Authorization: Users can only view their own meetings unless admin
-    if (userId !== req.user.userId && req.user.role !== 'Admin') {
+    if (userId !== req.user.userId && req.user.role !== "Admin") {
       return res.status(403).json({
         success: false,
-        error: 'Unauthorized to view other users meetings',
+        error: "Unauthorized to view other users meetings",
       });
     }
     const { status, limit = 20, skip = 0 } = req.query;
 
     const query = {
-      $or: [
-        { hostId: userId },
-        { 'participants.userId': userId },
-      ],
+      $or: [{ hostId: userId }, { "participants.userId": userId }],
     };
 
     if (status) {
@@ -355,7 +347,9 @@ router.get('/user/:userId', authenticateToken, async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip(parseInt(skip))
-      .select('roomId title description hostId status scheduledAt createdAt startedAt endedAt analytics');
+      .select(
+        "roomId title description hostId status scheduledAt createdAt startedAt endedAt analytics"
+      );
 
     const total = await Meeting.countDocuments(query);
 
@@ -367,10 +361,10 @@ router.get('/user/:userId', authenticateToken, async (req, res) => {
       skip: parseInt(skip),
     });
   } catch (error) {
-    logger.error('Error getting user meetings:', error);
+    logger.error("Error getting user meetings:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get user meetings',
+      error: "Failed to get user meetings",
     });
   }
 });
@@ -379,7 +373,7 @@ router.get('/user/:userId', authenticateToken, async (req, res) => {
 // DELETE MEETING
 // ============================================
 
-router.delete('/:roomId', authenticateToken, async (req, res) => {
+router.delete("/:roomId", authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -388,7 +382,7 @@ router.delete('/:roomId', authenticateToken, async (req, res) => {
     if (!meeting) {
       return res.status(404).json({
         success: false,
-        error: 'Meeting not found',
+        error: "Meeting not found",
       });
     }
 
@@ -396,15 +390,15 @@ router.delete('/:roomId', authenticateToken, async (req, res) => {
     if (meeting.hostId !== req.user.userId) {
       return res.status(403).json({
         success: false,
-        error: 'Only host can delete meeting',
+        error: "Only host can delete meeting",
       });
     }
 
     // Can only delete scheduled/waiting meetings
-    if (meeting.status === 'active') {
+    if (meeting.status === "active") {
       return res.status(400).json({
         success: false,
-        error: 'Cannot delete active meeting. End it first.',
+        error: "Cannot delete active meeting. End it first.",
       });
     }
 
@@ -415,13 +409,13 @@ router.delete('/:roomId', authenticateToken, async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Meeting deleted',
+      message: "Meeting deleted",
     });
   } catch (error) {
-    logger.error('Error deleting meeting:', error);
+    logger.error("Error deleting meeting:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to delete meeting',
+      error: "Failed to delete meeting",
     });
   }
 });
@@ -430,20 +424,90 @@ router.delete('/:roomId', authenticateToken, async (req, res) => {
 // HEALTH CHECK
 // ============================================
 
-router.get('/health/check', async (req, res) => {
+router.get("/health/check", async (req, res) => {
   try {
     const redisConnected = meetingManager.isConnected();
 
     res.json({
       success: true,
-      service: 'meeting-service',
-      redis: redisConnected ? 'connected' : 'disconnected',
+      service: "meeting-service",
+      redis: redisConnected ? "connected" : "disconnected",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Health check failed',
+      error: "Health check failed",
+    });
+  }
+});
+
+// ============================================
+// GET ICE SERVERS FOR WEBRTC
+// ============================================
+
+/**
+ * Returns ICE server configuration for WebRTC connections
+ * STUN servers help discover public IP addresses
+ * TURN servers relay media when direct P2P connection fails (NAT/firewall)
+ */
+router.get("/config/ice-servers", authenticateToken, async (req, res) => {
+  try {
+    // If you have your own TURN server credentials from environment variables
+    const turnUsername = process.env.TURN_USERNAME;
+    const turnCredential = process.env.TURN_CREDENTIAL;
+    const turnServer =
+      process.env.TURN_SERVER || "turn:openrelay.metered.ca:80";
+    const turnsServer =
+      process.env.TURNS_SERVER || "turns:openrelay.metered.ca:443";
+
+    // Build ICE servers array
+    const iceServers = [
+      // STUN servers (free, no authentication needed)
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:19302" },
+      { urls: "stun:stun.relay.metered.ca:80" },
+    ];
+
+    // Add TURN servers if credentials are configured
+    if (turnUsername && turnCredential) {
+      // Your own TURN server
+      iceServers.push(
+        {
+          urls: turnServer,
+          username: turnUsername,
+          credential: turnCredential,
+        },
+        {
+          urls: `${turnServer}?transport=tcp`,
+          username: turnUsername,
+          credential: turnCredential,
+        },
+        {
+          urls: turnsServer,
+          username: turnUsername,
+          credential: turnCredential,
+        }
+      );
+    } else {
+      // Fallback to free open relay TURN servers (limited capacity)
+      // Sign up at https://www.metered.ca/tools/openrelay/ for free credentials
+      logger.warn(
+        "No TURN credentials configured - using fallback STUN-only configuration"
+      );
+    }
+
+    res.json({
+      success: true,
+      iceServers,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error("Error getting ICE servers:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to get ICE server configuration",
     });
   }
 });

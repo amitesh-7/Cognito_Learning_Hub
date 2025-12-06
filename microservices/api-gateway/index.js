@@ -65,8 +65,39 @@ const corsOptions = {
 // Middleware - CORS must be first
 app.use(cors(corsOptions));
 
-// Handle preflight requests explicitly for all /api routes
-app.options(/^\/api\/.*/, cors(corsOptions));
+// Handle ALL preflight OPTIONS requests BEFORE any other middleware
+// Using middleware instead of app.options('*') for compatibility with newer path-to-regexp
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    const origin = req.headers.origin;
+    if (origin) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, x-auth-token"
+    );
+    res.setHeader("Access-Control-Max-Age", "86400");
+    return res.status(204).end();
+  }
+  next();
+});
+
+// Add CORS headers to ALL responses (fallback)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+  next();
+});
+
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -109,20 +140,36 @@ app.get("/health", (req, res) => {
 app.get("/api/public/stats", async (req, res) => {
   try {
     const axios = require("axios");
-    
+
     // Fetch stats from multiple services in parallel
-    const [authResponse, quizResponse, resultResponse] = await Promise.allSettled([
-      axios.get(`${SERVICES.AUTH}/api/auth/count`, { timeout: 5000 }),
-      axios.get(`${SERVICES.QUIZ}/api/quizzes/count`, { timeout: 5000 }),
-      axios.get(`${SERVICES.RESULT}/api/results/count`, { timeout: 5000 }),
-    ]);
+    const [authResponse, quizResponse, resultResponse] =
+      await Promise.allSettled([
+        axios.get(`${SERVICES.AUTH}/api/auth/count`, { timeout: 5000 }),
+        axios.get(`${SERVICES.QUIZ}/api/quizzes/count`, { timeout: 5000 }),
+        axios.get(`${SERVICES.RESULT}/api/results/count`, { timeout: 5000 }),
+      ]);
 
     // Extract values with fallbacks
-    const totalUsers = authResponse.status === 'fulfilled' ? authResponse.value.data?.count || 0 : 0;
-    const totalTeachers = authResponse.status === 'fulfilled' ? authResponse.value.data?.teacherCount || 0 : 0;
-    const totalQuizzes = quizResponse.status === 'fulfilled' ? quizResponse.value.data?.count || 0 : 0;
-    const totalResults = resultResponse.status === 'fulfilled' ? resultResponse.value.data?.count || 0 : 0;
-    const satisfactionRate = resultResponse.status === 'fulfilled' ? resultResponse.value.data?.satisfactionRate || 95 : 95;
+    const totalUsers =
+      authResponse.status === "fulfilled"
+        ? authResponse.value.data?.count || 0
+        : 0;
+    const totalTeachers =
+      authResponse.status === "fulfilled"
+        ? authResponse.value.data?.teacherCount || 0
+        : 0;
+    const totalQuizzes =
+      quizResponse.status === "fulfilled"
+        ? quizResponse.value.data?.count || 0
+        : 0;
+    const totalResults =
+      resultResponse.status === "fulfilled"
+        ? resultResponse.value.data?.count || 0
+        : 0;
+    const satisfactionRate =
+      resultResponse.status === "fulfilled"
+        ? resultResponse.value.data?.satisfactionRate || 95
+        : 95;
 
     res.json({
       success: true,
@@ -479,10 +526,24 @@ app.use(
     logLevel: "warn",
     timeout: 60000,
     proxyTimeout: 60000,
+    onProxyRes: (proxyRes, req, res) => {
+      // Add CORS headers to WebSocket handshake responses
+      const origin = req.headers.origin;
+      if (origin) {
+        proxyRes.headers["access-control-allow-origin"] = origin;
+        proxyRes.headers["access-control-allow-credentials"] = "true";
+      }
+    },
     onError: (err, req, res) => {
       logger.error("WebSocket proxy error:", err.message);
       // For WebSocket upgrades, res might be a socket, not an HTTP response
       if (res && typeof res.status === "function" && !res.headersSent) {
+        // Add CORS headers to error response
+        const origin = req.headers.origin;
+        if (origin) {
+          res.setHeader("Access-Control-Allow-Origin", origin);
+          res.setHeader("Access-Control-Allow-Credentials", "true");
+        }
         res.status(503).json({
           success: false,
           message: "Live service unavailable",
@@ -491,7 +552,12 @@ app.use(
       } else if (res && typeof res.writeHead === "function") {
         // WebSocket handshake - send proper HTTP error
         try {
-          res.writeHead(503, { "Content-Type": "application/json" });
+          const origin = req.headers.origin || "*";
+          res.writeHead(503, {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+          });
           res.end(
             JSON.stringify({
               success: false,
