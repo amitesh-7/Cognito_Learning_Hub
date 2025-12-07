@@ -330,12 +330,21 @@ export default function GamifiedQuizTaker() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const { success, error: showError } = useToast();
-  
+
   // Avatar integration for emotional reactions
-  const { triggerReaction, addExperience, analyzeQuizPerformance, isAvatarEnabled } = useAvatar();
-  
+  const {
+    triggerReaction,
+    addExperience,
+    analyzeQuizPerformance,
+    isAvatarEnabled,
+  } = useAvatar();
+
   // Gamification integration for real-time achievements
-  const { checkAchievements, awardXP, refreshData: refreshGamification } = useGamification();
+  const {
+    checkAchievements,
+    awardXP,
+    refreshData: refreshGamification,
+  } = useGamification();
 
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -399,16 +408,16 @@ export default function GamifiedQuizTaker() {
       if (!response.ok) throw new Error("Failed to fetch quiz");
 
       const data = await response.json();
-      
+
       // Normalize question data - ensure correct_answer exists (backend sends correctAnswer)
       if (data.questions) {
-        data.questions = data.questions.map(q => ({
+        data.questions = data.questions.map((q) => ({
           ...q,
           correct_answer: q.correct_answer || q.correctAnswer,
           correctAnswer: q.correctAnswer || q.correct_answer,
         }));
       }
-      
+
       setQuiz(data);
       setTimeLeft(data.questions[0]?.timeLimit || 30);
     } catch (error) {
@@ -476,13 +485,20 @@ export default function GamifiedQuizTaker() {
     }));
 
     // Check for achievements
-    checkAchievements(isCorrect, timeTaken, pointsEarned + bonusPoints);
+    checkAchievements({
+      type: "quiz_answer",
+      isCorrect,
+      timeTaken,
+      pointsEarned: pointsEarned + bonusPoints,
+      currentStreak,
+      totalScore: gameStats.score + pointsEarned + bonusPoints,
+    });
 
     // Play sound effect
     if (isCorrect) {
       const audio = new Audio("/sounds/correct.mp3");
       audio.play().catch(() => {}); // Ignore errors
-      
+
       // Trigger avatar celebration reaction
       if (isAvatarEnabled) {
         triggerReaction("correct_answer", {
@@ -494,7 +510,7 @@ export default function GamifiedQuizTaker() {
     } else {
       const audio = new Audio("/sounds/incorrect.mp3");
       audio.play().catch(() => {});
-      
+
       // Trigger avatar encouragement reaction
       if (isAvatarEnabled) {
         triggerReaction("wrong_answer", {
@@ -503,32 +519,6 @@ export default function GamifiedQuizTaker() {
           streakLost: currentStreak > 0,
         });
       }
-    }
-  };
-
-  const checkAchievements = (isCorrect, timeTaken, totalPoints) => {
-    const newAchievements = [];
-
-    // Speed achievements
-    if (isCorrect && timeTaken <= 5) {
-      newAchievements.push({ name: "Lightning Fast!", icon: "⚡" });
-    }
-
-    // Streak achievements
-    if (currentStreak + 1 === 5) {
-      newAchievements.push({ name: "On Fire!", icon: "🔥" });
-    } else if (currentStreak + 1 === 10) {
-      newAchievements.push({ name: "Unstoppable!", icon: "👑" });
-    }
-
-    // Point achievements
-    if (gameStats.score + totalPoints >= 100) {
-      newAchievements.push({ name: "Century Club!", icon: "💯" });
-    }
-
-    if (newAchievements.length > 0) {
-      setShowAchievement(newAchievements[0]);
-      setTimeout(() => setShowAchievement(null), 4000);
     }
   };
 
@@ -567,7 +557,7 @@ export default function GamifiedQuizTaker() {
       // Schema expects: questionId, selectedAnswer, isCorrect, points, timeSpent
       const now = new Date();
       const startTime = new Date(now.getTime() - gameStats.totalTime);
-      
+
       const answersArray = Object.entries(answers).map(([index, answer]) => ({
         questionId: quiz.questions[index]?._id || `q-${index}`,
         selectedAnswer: answer.answer,
@@ -575,7 +565,7 @@ export default function GamifiedQuizTaker() {
         points: (answer.pointsEarned || 0) + (answer.bonusPoints || 0),
         timeSpent: Math.round((answer.timeTaken || 0) * 1000), // Convert to milliseconds
       }));
-      
+
       const resultData = {
         quizId,
         answers: answersArray,
@@ -583,8 +573,8 @@ export default function GamifiedQuizTaker() {
         completedAt: now.toISOString(),
         quizMetadata: {
           title: quiz.title,
-          category: quiz.category || 'General',
-          difficulty: quiz.difficulty || 'medium',
+          category: quiz.category || "General",
+          difficulty: quiz.difficulty || "medium",
         },
       };
 
@@ -601,7 +591,7 @@ export default function GamifiedQuizTaker() {
       );
 
       if (!response.ok) throw new Error("Failed to submit quiz");
-      
+
       const submitResult = await response.json();
       console.log("Quiz submitted successfully:", submitResult);
 
@@ -614,12 +604,12 @@ export default function GamifiedQuizTaker() {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 5000);
       }
-      
+
       // Avatar: Grant experience and analyze performance
       if (isAvatarEnabled) {
         // Add experience based on quiz performance
         addExperience(finalScore, "quiz_completion");
-        
+
         // Analyze performance for learning style
         analyzeQuizPerformance({
           quizId,
@@ -631,14 +621,17 @@ export default function GamifiedQuizTaker() {
             difficulty: quiz.questions[index].difficulty,
           })),
         });
-        
+
         // Trigger completion celebration or encouragement
         if (percentage >= 80) {
           triggerReaction("quiz_mastery", { percentage, score: finalScore });
         } else if (percentage >= 60) {
           triggerReaction("quiz_passed", { percentage, score: finalScore });
         } else {
-          triggerReaction("quiz_needs_improvement", { percentage, correctCount: gameStats.correct });
+          triggerReaction("quiz_needs_improvement", {
+            percentage,
+            correctCount: gameStats.correct,
+          });
         }
       }
 
@@ -810,7 +803,7 @@ export default function GamifiedQuizTaker() {
           </div>
         </div>
       </div>
-      
+
       {/* AI Learning Avatar Companion */}
       {isAvatarEnabled && (
         <QuizAvatarCompanion
