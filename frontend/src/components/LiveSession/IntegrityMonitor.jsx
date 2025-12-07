@@ -145,8 +145,13 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
       parts.push(`Answer time: ${details.timeSpent}ms`);
     if (details.threshold !== undefined)
       parts.push(`Minimum allowed: ${details.threshold}ms`);
-    if (details.violationCount !== undefined && details.maxViolations !== undefined)
-      parts.push(`Violations: ${details.violationCount}/${details.maxViolations}`);
+    if (
+      details.violationCount !== undefined &&
+      details.maxViolations !== undefined
+    )
+      parts.push(
+        `Violations: ${details.violationCount}/${details.maxViolations}`
+      );
 
     return parts.length > 0 ? parts.join(" • ") : JSON.stringify(details);
   };

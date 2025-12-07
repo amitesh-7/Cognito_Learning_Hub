@@ -365,7 +365,7 @@ const LiveSessionJoin = () => {
         setSelectedAnswer("");
         setAnswerResult(null);
         setTimeLeft(30);
-        
+
         // Enter fullscreen mode
         if (fullscreenRef.current) {
           await fullscreenRef.current.startQuiz();
@@ -445,7 +445,7 @@ const LiveSessionJoin = () => {
         setLeaderboard(finalLeaderboard);
         setTotalQuestions(total);
         setQuizEnded(true);
-        
+
         // Exit fullscreen mode
         if (fullscreenRef.current) {
           await fullscreenRef.current.endQuiz();
@@ -466,12 +466,12 @@ const LiveSessionJoin = () => {
     // Host disconnected
     socket.on("host-disconnected", async ({ message }) => {
       console.warn("⚠️ Host disconnected");
-      
+
       // Exit fullscreen mode before redirecting
       if (fullscreenRef.current) {
         await fullscreenRef.current.endQuiz();
       }
-      
+
       alert(message);
       navigate("/dashboard");
     });
@@ -479,12 +479,12 @@ const LiveSessionJoin = () => {
     // Kicked from session
     socket.on("kicked-from-session", async ({ message, reason }) => {
       console.warn("⚠️ Kicked from session:", message);
-      
+
       // Exit fullscreen mode before redirecting
       if (fullscreenRef.current) {
         await fullscreenRef.current.endQuiz();
       }
-      
+
       alert(
         `❌ ${message}\n\nReason: ${reason}\n\nYou will be redirected to the dashboard.`
       );
