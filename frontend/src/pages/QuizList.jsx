@@ -159,6 +159,27 @@ const PlayIcon = (props) => (
     <polygon points="5,3 19,12 5,21" />
   </svg>
 );
+const BotIcon = (props) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 8V4H8" />
+    <rect width="16" height="12" x="4" y="8" rx="2" />
+    <path d="M2 14h2" />
+    <path d="M20 14h2" />
+    <path d="M15 13v2" />
+    <path d="M9 13v2" />
+  </svg>
+);
 const FlagIcon = (props) => (
   <svg
     {...props}
@@ -604,6 +625,19 @@ export default function QuizList() {
                           >
                             <TrendingUpIcon className="w-4 h-4" />
                             Leaderboard
+                          </motion.button>
+                        </Link>
+                        <Link
+                          to={`/quiz/${quiz._id}/ai-battle`}
+                          className="flex-1"
+                        >
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="w-full px-3 py-2.5 text-sm font-black text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 rounded-xl transition-all duration-200 shadow-lg hover:shadow-cyan-500/50 flex items-center justify-center gap-2"
+                          >
+                            <BotIcon className="w-4 h-4" />
+                            AI Battle
                           </motion.button>
                         </Link>
                         <Link to={`/quiz/${quiz._id}`} className="flex-1">

@@ -73,6 +73,16 @@ export default function QuizTaker() {
         );
         if (!response.ok) throw new Error("Quiz not found.");
         const data = await response.json();
+        
+        // Normalize question data - ensure correct_answer exists (backend sends correctAnswer)
+        if (data.questions) {
+          data.questions = data.questions.map(q => ({
+            ...q,
+            correct_answer: q.correct_answer || q.correctAnswer,
+            correctAnswer: q.correctAnswer || q.correct_answer,
+          }));
+        }
+        
         setQuiz(data);
       } catch (err) {
         setError(err.message);

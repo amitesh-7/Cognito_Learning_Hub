@@ -399,6 +399,16 @@ export default function GamifiedQuizTaker() {
       if (!response.ok) throw new Error("Failed to fetch quiz");
 
       const data = await response.json();
+      
+      // Normalize question data - ensure correct_answer exists (backend sends correctAnswer)
+      if (data.questions) {
+        data.questions = data.questions.map(q => ({
+          ...q,
+          correct_answer: q.correct_answer || q.correctAnswer,
+          correctAnswer: q.correctAnswer || q.correct_answer,
+        }));
+      }
+      
       setQuiz(data);
       setTimeLeft(data.questions[0]?.timeLimit || 30);
     } catch (error) {
