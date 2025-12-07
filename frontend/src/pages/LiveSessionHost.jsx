@@ -557,15 +557,15 @@ const LiveSessionHost = () => {
                   </div>
 
                   <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">
-                    {currentQuestion.question}
+                    {currentQuestion?.question || "Loading question..."}
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    {currentQuestion.options.map((option, index) => (
+                    {currentQuestion?.options?.map((option, index) => (
                       <div
                         key={index}
                         className={`p-4 rounded-xl border-2 ${
-                          option === currentQuestion.correctAnswer
+                          option === currentQuestion?.correctAnswer
                             ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                             : "border-gray-300 dark:border-gray-600"
                         }`}
@@ -573,7 +573,7 @@ const LiveSessionHost = () => {
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                              option === currentQuestion.correctAnswer
+                              option === currentQuestion?.correctAnswer
                                 ? "bg-green-500 text-white"
                                 : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
                             }`}
@@ -583,7 +583,7 @@ const LiveSessionHost = () => {
                           <span className="text-gray-800 dark:text-white font-medium">
                             {option}
                           </span>
-                          {option === currentQuestion.correctAnswer && (
+                          {option === currentQuestion?.correctAnswer && (
                             <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
                           )}
                         </div>
@@ -591,11 +591,11 @@ const LiveSessionHost = () => {
                     ))}
                   </div>
 
-                  {currentQuestion.explanation && (
+                  {currentQuestion?.explanation && (
                     <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-lg">
                       <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
                         <strong>Explanation:</strong>{" "}
-                        {currentQuestion.explanation}
+                        {currentQuestion?.explanation}
                       </p>
                     </div>
                   )}
