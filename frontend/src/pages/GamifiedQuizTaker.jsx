@@ -563,29 +563,33 @@ export default function GamifiedQuizTaker() {
         (gameStats.correct / quiz.questions.length) * 100
       );
 
+      // Build answers array in format expected by result-service
+      // Schema expects: questionId, selectedAnswer, isCorrect, points, timeSpent
+      const now = new Date();
+      const startTime = new Date(now.getTime() - gameStats.totalTime);
+      
+      const answersArray = Object.entries(answers).map(([index, answer]) => ({
+        questionId: quiz.questions[index]?._id || `q-${index}`,
+        selectedAnswer: answer.answer,
+        isCorrect: answer.isCorrect,
+        points: (answer.pointsEarned || 0) + (answer.bonusPoints || 0),
+        timeSpent: Math.round((answer.timeTaken || 0) * 1000), // Convert to milliseconds
+      }));
+      
       const resultData = {
-        score: gameStats.correct,
-        totalQuestions: quiz.questions.length,
-        pointsEarned: gameStats.score,
-        bonusPoints: gameStats.bonusPoints,
-        totalTimeTaken: gameStats.totalTime,
-        percentage,
-        passed: percentage >= (quiz.passingScore || 60),
-        questionResults: Object.entries(answers).map(([index, answer]) => ({
-          questionId: quiz.questions[index]._id,
-          userAnswer: answer.answer,
-          correctAnswer: quiz.questions[index].correct_answer,
-          isCorrect: answer.isCorrect,
-          timeTaken: answer.timeTaken,
-          pointsEarned: answer.pointsEarned,
-          bonusPoints: answer.bonusPoints,
-        })),
-        streakAtCompletion: currentStreak,
-        experienceGained: finalScore,
+        quizId,
+        answers: answersArray,
+        startedAt: startTime.toISOString(),
+        completedAt: now.toISOString(),
+        quizMetadata: {
+          title: quiz.title,
+          category: quiz.category || 'General',
+          difficulty: quiz.difficulty || 'medium',
+        },
       };
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/quizzes/${quizId}/submit`,
+        `${import.meta.env.VITE_API_URL}/api/results/submit`,
         {
           method: "POST",
           headers: {
@@ -597,26 +601,13 @@ export default function GamifiedQuizTaker() {
       );
 
       if (!response.ok) throw new Error("Failed to submit quiz");
+      
+      const submitResult = await response.json();
+      console.log("Quiz submitted successfully:", submitResult);
 
-      // 🎮 Trigger real-time gamification updates
-      // Award XP based on quiz performance
-      const xpEarned = Math.round(finalScore * (percentage >= 80 ? 1.5 : percentage >= 60 ? 1.2 : 1));
-      awardXP(xpEarned, "quiz_completion");
-      
-      // Check for achievement unlocks
-      checkAchievements({
-        type: "quiz_completed",
-        quizId,
-        score: percentage,
-        totalQuestions: quiz.questions.length,
-        correctAnswers: gameStats.correct,
-        timeTaken: gameStats.totalTime,
-        streak: currentStreak,
-        isPerfect: percentage === 100,
-      });
-      
-      // Refresh gamification data to update UI
-      refreshGamification();
+      // Result-service automatically notifies gamification-service
+      // Refresh gamification data after a short delay to allow processing
+      setTimeout(() => refreshGamification(), 1000);
 
       // Show confetti for good performance
       if (percentage >= 80) {

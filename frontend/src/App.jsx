@@ -63,6 +63,8 @@ const DuelBattle = lazy(() => import("./pages/DuelBattle"));
 const TeachingHub = lazy(() => import("./pages/TeachingHub"));
 const AvatarDashboard = lazy(() => import("./pages/AvatarDashboard"));
 const AIQuizOpponent = lazy(() => import("./pages/AIQuizOpponent"));
+const QuizHistory = lazy(() => import("./pages/QuizHistory"));
+const QuizResultDetail = lazy(() => import("./pages/QuizResultDetail"));
 
 // Video Meeting Routes
 const TeacherMeetingStart = lazy(() => import("./pages/TeacherMeetingStart"));
@@ -219,6 +221,22 @@ function App() {
                         element={
                           <ProtectedRoute>
                             <AIQuizOpponent />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quiz-history"
+                        element={
+                          <ProtectedRoute>
+                            <QuizHistory />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quiz/result/:resultId"
+                        element={
+                          <ProtectedRoute>
+                            <QuizResultDetail />
                           </ProtectedRoute>
                         }
                       />

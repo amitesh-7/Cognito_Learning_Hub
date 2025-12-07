@@ -868,13 +868,13 @@ export default function Dashboard() {
                         <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         Recent Results
                       </h3>
-                      <Link to="/quizzes">
+                      <Link to="/quiz-history">
                         <Button
                           size="sm"
                           variant="outline"
                           className="hover:scale-105 transition-transform"
                         >
-                          View All
+                          View All History
                         </Button>
                       </Link>
                     </div>

@@ -40,12 +40,27 @@ router.post(
         quizMetadata,
       } = req.body;
 
+    logger.info(`Processing result submission for quiz ${quizId}`);
+    logger.info(`Received ${answers.length} answers`);
+
+    // Map answers to match schema - handle both field name variations
+    const mongoose = require('mongoose');
+    const processedAnswers = answers.map(ans => ({
+      questionId: mongoose.Types.ObjectId.isValid(ans.questionId) 
+        ? ans.questionId 
+        : new mongoose.Types.ObjectId(),
+      selectedAnswer: ans.selectedAnswer || ans.userAnswer || 'no_answer',
+      isCorrect: Boolean(ans.isCorrect),
+      points: Number(ans.points) || 0,
+      timeSpent: Number(ans.timeSpent || ans.timeTaken || 0),
+    }));
+
     // Calculate metrics
-    const totalQuestions = answers.length;
-    const correctAnswers = answers.filter(ans => ans.isCorrect).length;
+    const totalQuestions = processedAnswers.length;
+    const correctAnswers = processedAnswers.filter(ans => ans.isCorrect).length;
     const incorrectAnswers = totalQuestions - correctAnswers;
-    const score = answers.reduce((sum, ans) => sum + (ans.points || 0), 0);
-    const maxScore = answers.reduce((sum, ans) => sum + (ans.points || 10), 0); // Assume 10 if not provided
+    const score = processedAnswers.reduce((sum, ans) => sum + (ans.points || 0), 0);
+    const maxScore = processedAnswers.reduce((sum, ans) => sum + (ans.points || 10), 0); // Assume 10 if not provided
     
     const startTime = new Date(startedAt);
     const endTime = new Date(completedAt);
@@ -70,7 +85,7 @@ router.post(
       completedAt: endTime,
       totalTimeSpent,
       averageTimePerQuestion,
-      answers,
+      answers: processedAnswers,
       quizMetadata: quizMetadata || {},
     });
 

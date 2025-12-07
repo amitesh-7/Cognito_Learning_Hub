@@ -49,7 +49,7 @@ export const GamificationProvider = ({ children }) => {
         return;
       }
 
-      // Fetch all data in parallel
+      // Fetch all data in parallel from gamification service
       const [statsRes, achievementsRes, userAchievementsRes, leaderboardRes] = await Promise.all([
         fetch(`${API_URL}/api/gamification/stats`, { headers }).catch(() => null),
         fetch(`${API_URL}/api/achievements`, { headers }).catch(() => null),
@@ -57,9 +57,11 @@ export const GamificationProvider = ({ children }) => {
         fetch(`${API_URL}/api/gamification/leaderboard?limit=10`, { headers }).catch(() => null),
       ]);
 
+      // Get stats from gamification service
       if (statsRes?.ok) {
-        const stats = await statsRes.json();
-        setUserStats(stats);
+        const data = await statsRes.json();
+        console.log("📊 Gamification stats fetched:", data);
+        setUserStats(data.stats || data);
       }
 
       if (achievementsRes?.ok) {

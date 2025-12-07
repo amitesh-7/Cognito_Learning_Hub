@@ -34,6 +34,7 @@ import {
   Play,
   Gamepad2,
   User,
+  History,
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useTheme } from "../hooks/useTheme";

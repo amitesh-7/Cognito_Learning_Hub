@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,11 +37,13 @@ import { useToast } from "../components/ui/Toast";
 import { cn, fadeInUp, staggerContainer, staggerItem } from "../lib/utils";
 import ReportModal from "../components/ReportModal";
 import TextToSpeech from "../components/TextToSpeech";
+import { useGamification } from "../context/GamificationContext";
 
 export default function QuizTaker() {
   const { quizId } = useParams();
   const { user } = useContext(AuthContext);
   const { success, error: showError } = useToast();
+  const { refreshData } = useGamification();
 
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,6 +56,11 @@ export default function QuizTaker() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [answered, setAnswered] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  
+  // Track all answers for detailed results
+  const [questionResults, setQuestionResults] = useState([]);
+  const [questionStartTime, setQuestionStartTime] = useState(Date.now());
+  const hasSubmittedRef = useRef(false);
 
   const [showReportModal, setShowReportModal] = useState(false);
 
@@ -94,16 +101,67 @@ export default function QuizTaker() {
   }, [quizId]);
 
   useEffect(() => {
-    if (isFinished && quiz) {
+    if (isFinished && quiz && !hasSubmittedRef.current) {
+      hasSubmittedRef.current = true; // Prevent double submission
+      
+      console.log("🎮 Quiz finished! Preparing to submit...");
+      console.log("Score:", score, "Questions:", quiz.questions.length);
+      console.log("Question Results:", questionResults);
+      
       const submitScore = async () => {
         try {
           const token = localStorage.getItem("quizwise-token");
+          if (!token) {
+            console.error("No auth token found!");
+            return;
+          }
+          
+          const API_URL = import.meta.env.VITE_API_URL;
+          console.log("API URL:", API_URL);
+          
+          const percentage = Math.round((score / quiz.questions.length) * 100);
+          const totalTimeTaken = questionResults.reduce((acc, q) => acc + (q.timeTaken || 0), 0);
+          
+          // Calculate XP: base 10 per question + bonus for correct answers
+          const xpEarned = score * 15 + quiz.questions.length * 5;
+          
+          // Build answers array in the format expected by result-service
+          // Schema expects: questionId, selectedAnswer, isCorrect, points, timeSpent
+          const answers = questionResults.length > 0 
+            ? questionResults.map((qr, index) => ({
+                questionId: quiz.questions[index]?._id || `q-${index}`,
+                selectedAnswer: qr.userAnswer,
+                isCorrect: qr.isCorrect,
+                points: qr.isCorrect ? 10 : 0,
+                timeSpent: Math.round((qr.timeTaken || 0) * 1000), // Convert to milliseconds
+              }))
+            : quiz.questions.map((q, index) => ({
+                questionId: q._id || `q-${index}`,
+                selectedAnswer: "not_answered",
+                isCorrect: false,
+                points: 0,
+                timeSpent: 0,
+              }));
+          
+          const now = new Date();
+          const startTime = new Date(now.getTime() - (totalTimeTaken || 60000));
+          
           const resultData = {
             quizId: quiz._id,
-            score: score,
-            totalQuestions: quiz.questions.length,
+            answers: answers,
+            startedAt: startTime.toISOString(),
+            completedAt: now.toISOString(),
+            quizMetadata: {
+              title: quiz.title,
+              category: quiz.category || 'General',
+              difficulty: quiz.difficulty || 'medium',
+            },
           };
-          await fetch(`${import.meta.env.VITE_API_URL}/api/quizzes/submit`, {
+          
+          console.log("📤 Submitting quiz result:", resultData);
+          
+          // Submit quiz result to result-service
+          const submitRes = await fetch(`${API_URL}/api/results/submit`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -111,13 +169,36 @@ export default function QuizTaker() {
             },
             body: JSON.stringify(resultData),
           });
+          
+          console.log("📥 Response status:", submitRes.status);
+          
+          if (submitRes.ok) {
+            const submitData = await submitRes.json();
+            console.log("✅ Quiz result submitted successfully:", submitData);
+            
+            // Result-service automatically notifies gamification-service
+            // Just refresh UI and show success message
+            if (refreshData) {
+              // Delay refresh to allow gamification service to process
+              setTimeout(() => refreshData(), 1000);
+            }
+            
+            success(`Quiz completed! +${xpEarned} XP earned!`);
+          } else {
+            const errorText = await submitRes.text();
+            console.error("❌ Failed to submit quiz result:", submitRes.status, errorText);
+            // Still show completion even if submission failed
+            success(`Quiz completed! (Score: ${score}/${quiz.questions.length})`);
+          }
         } catch (err) {
-          console.error("Failed to submit score:", err);
+          console.error("❌ Failed to submit score:", err);
+          // Still show completion even if submission failed
+          success(`Quiz completed! (Score: ${score}/${quiz.questions.length})`);
         }
       };
       submitScore();
     }
-  }, [isFinished, quiz, score]);
+  }, [isFinished, quiz, score, questionResults, refreshData, success]);
 
   // Timer logic
   useEffect(() => {
@@ -138,8 +219,25 @@ export default function QuizTaker() {
 
   const handleAnswerSelect = (option) => {
     if (selectedAnswer) return;
+    
+    const currentQuestion = quiz.questions[currentQuestionIndex];
+    const correctAnswer = currentQuestion.correct_answer;
+    const isCorrect = option === correctAnswer;
+    const timeTaken = (Date.now() - questionStartTime) / 1000;
+    
+    // Track this question result
+    setQuestionResults(prev => [...prev, {
+      questionId: currentQuestion._id,
+      questionText: currentQuestion.question,
+      userAnswer: option || "timeout",
+      correctAnswer: correctAnswer,
+      isCorrect: isCorrect,
+      timeTaken: timeTaken,
+      options: currentQuestion.options,
+    }]);
+    
     setSelectedAnswer(option || "timeout"); // Mark as timeout if no option
-    if (option === quiz.questions[currentQuestionIndex].correct_answer) {
+    if (isCorrect) {
       setScore((prev) => prev + 1);
       correctSound.play();
     } else {
@@ -152,6 +250,7 @@ export default function QuizTaker() {
       setCurrentQuestionIndex((prev) => prev + 1);
       setSelectedAnswer(null);
       setTimeLeft(30); // Reset timer
+      setQuestionStartTime(Date.now()); // Reset question start time
     } else {
       setIsFinished(true);
     }
@@ -163,6 +262,9 @@ export default function QuizTaker() {
     setScore(0);
     setIsFinished(false);
     setTimeLeft(30);
+    setQuestionResults([]);
+    setQuestionStartTime(Date.now());
+    hasSubmittedRef.current = false; // Allow re-submission on restart
   };
 
   // Enhanced loading and error states

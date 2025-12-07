@@ -28,7 +28,8 @@ import { LoadingSpinner } from "../components/ui/Loading";
 import { useToast } from "../components/ui/Toast";
 
 /**
- * AI Opponent Personalities
+ * AI Opponent Personalities - All LOCAL computation, NO API calls
+ * Speed is in milliseconds for instant response feel
  */
 const AI_PERSONALITIES = {
   einstein: {
@@ -36,8 +37,8 @@ const AI_PERSONALITIES = {
     name: "Einstein",
     emoji: "🧠",
     description: "Genius-level AI that rarely makes mistakes",
-    accuracy: 0.95, // 95% accuracy
-    speedRange: [3, 8], // 3-8 seconds to answer
+    accuracy: 0.92, // 92% accuracy
+    speedRange: [0.5, 1.5], // 0.5-1.5 seconds (FAST!)
     color: "from-purple-500 to-indigo-600",
     textColor: "text-purple-600",
     bgColor: "bg-purple-100",
@@ -54,8 +55,8 @@ const AI_PERSONALITIES = {
     name: "Speedy",
     emoji: "⚡",
     description: "Lightning fast but makes more mistakes",
-    accuracy: 0.65, // 65% accuracy
-    speedRange: [1, 3], // 1-3 seconds to answer
+    accuracy: 0.60, // 60% accuracy
+    speedRange: [0.2, 0.6], // 0.2-0.6 seconds (SUPER FAST!)
     color: "from-yellow-400 to-orange-500",
     textColor: "text-orange-600",
     bgColor: "bg-orange-100",
@@ -71,9 +72,9 @@ const AI_PERSONALITIES = {
     id: "careful",
     name: "Careful",
     emoji: "🎯",
-    description: "Slow and methodical but highly accurate",
-    accuracy: 0.88, // 88% accuracy
-    speedRange: [8, 15], // 8-15 seconds to answer
+    description: "Takes a moment but highly accurate",
+    accuracy: 0.85, // 85% accuracy
+    speedRange: [1.5, 3], // 1.5-3 seconds (still quick)
     color: "from-green-500 to-teal-600",
     textColor: "text-green-600",
     bgColor: "bg-green-100",
@@ -90,8 +91,8 @@ const AI_PERSONALITIES = {
     name: "Adaptive",
     emoji: "🤖",
     description: "Learns from your performance and adapts",
-    accuracy: 0.75, // Base 75%, adapts based on player
-    speedRange: [4, 10], // Adapts based on player
+    accuracy: 0.72, // Base 72%, adapts based on player
+    speedRange: [0.8, 2], // Quick and adapts
     color: "from-cyan-500 to-blue-600",
     textColor: "text-cyan-600",
     bgColor: "bg-cyan-100",

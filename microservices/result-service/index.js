@@ -196,7 +196,14 @@ let server;
 const startServer = async () => {
   try {
     await connectDB();
-    await cacheManager.connect();
+    
+    // Try to connect to Redis, but don't fail if it doesn't work
+    try {
+      await cacheManager.connect();
+    } catch (redisError) {
+      logger.warn("Redis connection failed, running without cache:", redisError.message);
+      logger.warn("Service will continue without caching functionality");
+    }
 
     server = app.listen(PORT, () => {
       const serviceUrl =

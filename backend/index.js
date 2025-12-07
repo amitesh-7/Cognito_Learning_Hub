@@ -2292,7 +2292,7 @@ app.post("/api/generate-pdf-questions", auth, async (req, res) => {
 // *** NEW *** SUBMIT QUIZ RESULT
 app.post("/api/quizzes/submit", auth, async (req, res) => {
   try {
-    const { quizId, score, totalQuestions } = req.body;
+    const { quizId, score, totalQuestions, percentage, totalTimeTaken, questionResults, experienceGained } = req.body;
     const userId = req.user.id;
 
     const newResult = new Result({
@@ -2300,11 +2300,18 @@ app.post("/api/quizzes/submit", auth, async (req, res) => {
       quiz: quizId,
       score,
       totalQuestions,
+      percentage: percentage || Math.round((score / totalQuestions) * 100),
+      totalTimeTaken: totalTimeTaken || 0,
+      averageTimePerQuestion: totalTimeTaken ? totalTimeTaken / totalQuestions : 0,
+      questionResults: questionResults || [],
+      experienceGained: experienceGained || 0,
+      passed: percentage >= 60,
+      rank: percentage >= 90 ? 'A+' : percentage >= 80 ? 'A' : percentage >= 70 ? 'B+' : percentage >= 60 ? 'B' : 'C',
     });
 
     await newResult.save();
     console.log(`Result saved for user ${userId} on quiz ${quizId}`);
-    res.status(201).json({ message: "Result saved successfully!" });
+    res.status(201).json({ message: "Result saved successfully!", resultId: newResult._id });
   } catch (error) {
     console.error("Error saving result:", error);
     res.status(500).send("Server Error");
@@ -2321,6 +2328,111 @@ app.get("/api/results/my-results", auth, async (req, res) => {
     res.json(results);
   } catch (error) {
     console.error("Error fetching user results:", error);
+    res.status(500).send("Server Error");
+  }
+});
+
+// *** GET SINGLE RESULT BY ID ***
+app.get("/api/results/:resultId", auth, async (req, res) => {
+  try {
+    const result = await Result.findOne({
+      _id: req.params.resultId,
+      user: req.user.id, // Ensure user can only view their own results
+    }).populate("quiz", "title");
+
+    if (!result) {
+      return res.status(404).json({ message: "Result not found" });
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error fetching result:", error);
+    res.status(500).send("Server Error");
+  }
+});
+
+// *** GET USER STATS - Real stats calculated from results ***
+app.get("/api/user/stats", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Get all user's quiz results
+    const results = await Result.find({ user: userId }).sort({ createdAt: -1 });
+    
+    // Calculate real stats
+    const totalQuizzesTaken = results.length;
+    const totalCorrect = results.reduce((acc, r) => acc + (r.score || 0), 0);
+    const totalQuestions = results.reduce((acc, r) => acc + (r.totalQuestions || 0), 0);
+    const totalXP = results.reduce((acc, r) => acc + (r.experienceGained || 0), 0);
+    const totalTimeTaken = results.reduce((acc, r) => acc + (r.totalTimeTaken || 0), 0);
+    const perfectScores = results.filter(r => r.score === r.totalQuestions).length;
+    
+    // Get last quiz date
+    const lastQuizDate = results.length > 0 ? results[0].createdAt : null;
+    
+    // Calculate averages
+    const averageScore = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+    const avgTime = totalQuizzesTaken > 0 ? Math.round(totalTimeTaken / totalQuizzesTaken) : 0;
+    
+    // Calculate streak (consecutive days with quizzes)
+    let currentStreak = 0;
+    let longestStreak = 0;
+    if (results.length > 0) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      let checkDate = today;
+      let streak = 0;
+      
+      for (const result of results) {
+        const resultDate = new Date(result.createdAt);
+        resultDate.setHours(0, 0, 0, 0);
+        
+        const diffDays = Math.floor((checkDate - resultDate) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0 || diffDays === 1) {
+          streak++;
+          checkDate = resultDate;
+        } else if (diffDays > 1) {
+          break;
+        }
+      }
+      currentStreak = streak;
+      longestStreak = streak;
+    }
+    
+    // Calculate level from XP (100 XP per level)
+    const level = Math.floor(totalXP / 100) + 1;
+    const xpForNextLevel = level * 100;
+    const xpProgress = totalXP % 100;
+    
+    // Total time spent in minutes
+    const totalTimeSpent = Math.round(totalTimeTaken / 60);
+    
+    res.json({
+      success: true,
+      stats: {
+        // Core stats - matching frontend expected field names
+        totalQuizzesTaken,
+        totalCorrectAnswers: totalCorrect,
+        totalQuestions,
+        totalPoints: totalXP,
+        experience: totalXP,
+        level,
+        xpProgress,
+        xpForNextLevel,
+        currentStreak,
+        longestStreak,
+        averageScore, // Frontend expects averageScore not avgScore
+        avgTimePerQuiz: avgTime,
+        perfectScores,
+        totalTimeSpent, // in minutes - frontend expects this name
+        totalTimeTaken: totalTimeSpent,
+        lastQuizDate, // For "Last Activity" display
+      }
+    });
+  } catch (error) {
+    console.error("Error calculating user stats:", error);
     res.status(500).send("Server Error");
   }
 });
