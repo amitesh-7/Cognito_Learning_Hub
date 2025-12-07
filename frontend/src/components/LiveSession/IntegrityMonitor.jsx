@@ -242,14 +242,14 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
                               {getActivityIcon(alert.type)}
                             </div>
                             <span className="font-semibold text-sm text-gray-800">
-                              {alert.type.replace(/_/g, " ")}
+                              {(alert.type || "UNKNOWN").replace(/_/g, " ")}
                             </span>
                             <span
                               className={`px-2 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(
                                 alert.severity
                               )} text-white`}
                             >
-                              {alert.severity}
+                              {alert.severity || "UNKNOWN"}
                             </span>
                           </div>
 
