@@ -15,6 +15,7 @@ import {
   validateAnswerTime,
   getDeviceFingerprint,
 } from "../utils/antiCheatingDetector";
+import { initializeFullscreenEnforcement } from "../utils/fullscreenEnforcement";
 import {
   LogIn,
   Clock,
@@ -60,6 +61,7 @@ const LiveSessionJoin = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [myAnswers, setMyAnswers] = useState([]); // Track all answers for analysis
   const qrScannerRef = useRef(null);
+  const fullscreenRef = useRef(null); // Fullscreen enforcement API
 
   // Handle QR code from file upload
   const handleQRImageUpload = async (file) => {
@@ -313,6 +315,21 @@ const LiveSessionJoin = () => {
       userId
     );
 
+    // Initialize fullscreen enforcement
+    const fullscreenAPI = initializeFullscreenEnforcement(
+      socket,
+      sessionCode.toUpperCase(),
+      userId,
+      {
+        maxViolations: 3,
+        warningDuration: 5000,
+        autoReenterDelay: 2000,
+        enableBeforeUnload: true,
+      }
+    );
+    fullscreenRef.current = fullscreenAPI;
+    console.log("[AntiCheat] Fullscreen enforcement initialized");
+
     // Send device fingerprint for anomaly detection
     const fingerprint = getDeviceFingerprint();
     socket.emit("device-fingerprint", {
@@ -328,6 +345,7 @@ const LiveSessionJoin = () => {
       cleanupTabDetection?.();
       cleanupCopyPrevention?.();
       cleanupDevTools?.();
+      fullscreenAPI?.cleanup();
     };
   }, [hasJoined, socket, sessionCode, user]);
 
@@ -338,7 +356,7 @@ const LiveSessionJoin = () => {
     // Quiz started
     socket.on(
       "quiz-started",
-      ({ questionIndex, question, totalQuestions: total, timestamp }) => {
+      async ({ questionIndex, question, totalQuestions: total, timestamp }) => {
         console.log("🚀 Quiz started! Question:", questionIndex + 1);
         setCurrentQuestion(question);
         setCurrentQuestionIndex(questionIndex);
@@ -347,6 +365,11 @@ const LiveSessionJoin = () => {
         setSelectedAnswer("");
         setAnswerResult(null);
         setTimeLeft(30);
+        
+        // Enter fullscreen mode
+        if (fullscreenRef.current) {
+          await fullscreenRef.current.startQuiz();
+        }
       }
     );
 
@@ -413,7 +436,7 @@ const LiveSessionJoin = () => {
     // Session ended
     socket.on(
       "session-ended",
-      ({
+      async ({
         leaderboard: finalLeaderboard,
         totalParticipants,
         totalQuestions: total,
@@ -422,6 +445,11 @@ const LiveSessionJoin = () => {
         setLeaderboard(finalLeaderboard);
         setTotalQuestions(total);
         setQuizEnded(true);
+        
+        // Exit fullscreen mode
+        if (fullscreenRef.current) {
+          await fullscreenRef.current.endQuiz();
+        }
 
         // Show confetti if user is in top 3
         const userId = user?._id || user?.id || user?.userId;
@@ -436,15 +464,27 @@ const LiveSessionJoin = () => {
     );
 
     // Host disconnected
-    socket.on("host-disconnected", ({ message }) => {
+    socket.on("host-disconnected", async ({ message }) => {
       console.warn("⚠️ Host disconnected");
+      
+      // Exit fullscreen mode before redirecting
+      if (fullscreenRef.current) {
+        await fullscreenRef.current.endQuiz();
+      }
+      
       alert(message);
       navigate("/dashboard");
     });
 
     // Kicked from session
-    socket.on("kicked-from-session", ({ message, reason }) => {
+    socket.on("kicked-from-session", async ({ message, reason }) => {
       console.warn("⚠️ Kicked from session:", message);
+      
+      // Exit fullscreen mode before redirecting
+      if (fullscreenRef.current) {
+        await fullscreenRef.current.endQuiz();
+      }
+      
       alert(
         `❌ ${message}\n\nReason: ${reason}\n\nYou will be redirected to the dashboard.`
       );

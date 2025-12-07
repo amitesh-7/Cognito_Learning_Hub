@@ -116,6 +116,10 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
         return <Clock className="w-4 h-4" />;
       case "ANSWER_PATTERN_MATCH":
         return <Users className="w-4 h-4" />;
+      case "FULLSCREEN_EXIT":
+      case "FULLSCREEN_DENIED":
+      case "F11_ATTEMPT":
+        return <ShieldAlert className="w-4 h-4" />;
       default:
         return <ShieldAlert className="w-4 h-4" />;
     }
@@ -141,6 +145,8 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
       parts.push(`Answer time: ${details.timeSpent}ms`);
     if (details.threshold !== undefined)
       parts.push(`Minimum allowed: ${details.threshold}ms`);
+    if (details.violationCount !== undefined && details.maxViolations !== undefined)
+      parts.push(`Violations: ${details.violationCount}/${details.maxViolations}`);
 
     return parts.length > 0 ? parts.join(" • ") : JSON.stringify(details);
   };
@@ -155,6 +161,9 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
       ANSWER_PATTERN_MATCH: "Similar Answer Pattern",
       LATE_SUBMISSION: "Late Submission",
       FULLSCREEN_EXIT: "Exited Fullscreen",
+      FULLSCREEN_DENIED: "Fullscreen Denied",
+      F11_ATTEMPT: "Tried to Toggle Fullscreen",
+      PAGE_UNLOAD_ATTEMPT: "Tried to Leave Page",
     };
     return names[type] || type?.replace(/_/g, " ") || "Unknown Activity";
   };
