@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 
@@ -18,6 +19,7 @@ const { sanitizeAll } = require("../shared/middleware/inputValidation");
 
 // Middleware
 app.use(cors());
+app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(sanitizeAll);
@@ -39,8 +41,13 @@ if (!mongoUri) {
 
 mongoose
   .connect(mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+    maxPoolSize: 10, // Maximum connection pool size
+    minPoolSize: 2, // Minimum connections to maintain
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+    heartbeatFrequencyMS: 10000, // Check server health every 10s
+    retryWrites: true,
+    retryReads: true,
   })
   .then(() => logger.info("MongoDB connected successfully"))
   .catch((err) => {
@@ -63,10 +70,17 @@ app.use("/api/admin", adminRoutes);
 
 // Health check
 app.get("/health", (req, res) => {
+  const memUsage = process.memoryUsage();
   res.json({
     status: "healthy",
     service: "moderation-service",
     timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: {
+      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + "MB",
+      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + "MB",
+      rss: Math.round(memUsage.rss / 1024 / 1024) + "MB",
+    },
     mongodb:
       mongoose.connection.readyState === 1 ? "connected" : "disconnected",
   });

@@ -8,6 +8,7 @@ const http = require("http");
 const socketIO = require("socket.io");
 const cors = require("cors");
 const helmet = require("helmet");
+const compression = require("compression");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config();
@@ -59,6 +60,7 @@ const io = socketIO(server, {
 // ============================================
 
 app.use(helmet());
+app.use(compression({ level: 6, threshold: 1024 }));
 app.use(
   cors({
     origin: process.env.CORS_ORIGINS?.split(",") || ["http://localhost:5173"],
@@ -110,6 +112,7 @@ app.use("/api/chat", chatRoutes);
 app.get("/health", async (req, res) => {
   try {
     let queueStats = { status: "not initialized" };
+    const memUsage = process.memoryUsage();
 
     // Safely get queue stats if queues are initialized
     if (queueManager.feedQueue && queueManager.notificationQueue) {
@@ -125,6 +128,12 @@ app.get("/health", async (req, res) => {
       success: true,
       service: "social-service",
       status: "healthy",
+      uptime: process.uptime(),
+      memory: {
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + "MB",
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + "MB",
+        rss: Math.round(memUsage.rss / 1024 / 1024) + "MB",
+      },
       redis: feedManager.isHealthy() ? "connected" : "disconnected",
       queues: queueStats,
       timestamp: new Date().toISOString(),

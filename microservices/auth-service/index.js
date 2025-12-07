@@ -7,6 +7,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const compression = require("compression");
 
 // Shared utilities
 const createLogger = require("../shared/utils/logger");
@@ -64,6 +65,7 @@ app.use(
 );
 
 // Security & Middleware
+app.use(compression({ level: 6, threshold: 1024 }));
 app.use(
   helmet({
     contentSecurityPolicy: false,

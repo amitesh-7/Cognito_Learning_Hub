@@ -7,6 +7,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const compression = require("compression");
 const mongoose = require("mongoose");
 const createLogger = require("../shared/utils/logger");
 const ApiResponse = require("../shared/utils/response");
@@ -25,6 +26,7 @@ if (process.env.NODE_ENV === "production") {
 
 // Middleware
 app.use(cors());
+app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -76,10 +78,17 @@ app.get("/", (req, res) => {
 // Health check
 app.get("/health", async (req, res) => {
   try {
+    const memUsage = process.memoryUsage();
     const health = {
       status: "healthy",
       service: "quiz-service",
       timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: {
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + "MB",
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + "MB",
+        rss: Math.round(memUsage.rss / 1024 / 1024) + "MB",
+      },
       checks: {
         database:
           mongoose.connection.readyState === 1 ? "connected" : "disconnected",
@@ -123,7 +132,15 @@ const connectDB = async () => {
     if (!mongoUri) {
       throw new Error("MONGO_URI environment variable is not defined");
     }
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(mongoUri, {
+      maxPoolSize: 10, // Maximum connection pool size
+      minPoolSize: 2, // Minimum connections to maintain
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      heartbeatFrequencyMS: 10000, // Check server health every 10s
+      retryWrites: true,
+      retryReads: true,
+    });
     logger.info("MongoDB connected");
   } catch (error) {
     logger.error("MongoDB connection error:", error);

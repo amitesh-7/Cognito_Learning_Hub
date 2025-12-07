@@ -48,12 +48,19 @@ app.get("/health", async (req, res) => {
   const redisStatus = redis ? "connected" : "disconnected";
   const mongoStatus =
     mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+  const memUsage = process.memoryUsage();
 
   res.json({
     status: "ok",
     service: "gamification-service",
     port: PORT,
     timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: {
+      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + "MB",
+      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + "MB",
+      rss: Math.round(memUsage.rss / 1024 / 1024) + "MB",
+    },
     connections: {
       mongodb: mongoStatus,
       redis: redisStatus,
@@ -81,8 +88,13 @@ async function initialize() {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+      maxPoolSize: 10, // Maximum connection pool size
+      minPoolSize: 2, // Minimum connections to maintain
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      heartbeatFrequencyMS: 10000, // Check server health every 10s
+      retryWrites: true,
+      retryReads: true,
     });
     console.log("✅ MongoDB connected");
 

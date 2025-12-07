@@ -9,6 +9,7 @@ const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
+const compression = require("compression");
 const createLogger = require("../shared/utils/logger");
 const ApiResponse = require("../shared/utils/response");
 const { connectDB } = require("./models");
@@ -39,6 +40,7 @@ const io = new Server(httpServer, {
 
 // Middleware
 app.use(cors());
+app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -73,11 +75,18 @@ app.get("/", (req, res) => {
 app.get("/health", async (req, res) => {
   try {
     const mongoose = require("mongoose");
+    const memUsage = process.memoryUsage();
 
     const health = {
       status: "healthy",
       service: "live-service",
       timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: {
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + "MB",
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + "MB",
+        rss: Math.round(memUsage.rss / 1024 / 1024) + "MB",
+      },
       checks: {
         database:
           mongoose.connection.readyState === 1 ? "connected" : "disconnected",

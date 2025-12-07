@@ -41,7 +41,8 @@ router.get('/search', authenticateToken, async (req, res) => {
       ],
     })
       .select('name email picture role createdAt')
-      .limit(20); // Limit results
+      .limit(20)
+      .lean(); // Performance optimization - returns plain JS objects
 
     logger.info(`Search found ${users.length} users for query: ${query}`);
 
@@ -71,7 +72,9 @@ router.get('/search', authenticateToken, async (req, res) => {
  */
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id)
+      .select('name email role picture status lastSeen createdAt')
+      .lean();
     
     if (!user) {
       return ApiResponse.notFound(res, 'User not found');

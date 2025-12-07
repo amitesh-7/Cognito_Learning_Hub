@@ -27,7 +27,8 @@ router.get('/', authenticateToken, async (req, res) => {
     })
       .populate('requester', 'name email role profilePicture status lastSeen lastActivity')
       .populate('recipient', 'name email role profilePicture status lastSeen lastActivity')
-      .sort({ acceptedAt: -1 });
+      .sort({ acceptedAt: -1 })
+      .lean(); // Performance optimization - returns plain JS objects
 
     const friends = friendships.map(friendship => {
       const friend = friendship.requester._id.toString() === userId
@@ -81,7 +82,7 @@ router.post('/request', authenticateToken, async (req, res) => {
         { requester: requesterId, recipient: recipientId },
         { requester: recipientId, recipient: requesterId },
       ],
-    });
+    }).lean();
 
     if (existingFriendship) {
       return res.status(400).json({ message: 'Friendship request already exists' });

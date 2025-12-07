@@ -7,6 +7,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 const createLogger = require("../shared/utils/logger");
 const ApiResponse = require("../shared/utils/response");
@@ -40,6 +41,7 @@ const limiter = rateLimit({
 
 // Middleware
 app.use(cors());
+app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -95,9 +97,16 @@ app.get("/", (req, res) => {
 app.get("/health", async (req, res) => {
   try {
     const mongoose = require("mongoose");
+    const memUsage = process.memoryUsage();
 
     const health = {
       status: "healthy",
+      uptime: process.uptime(),
+      memory: {
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024) + "MB",
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + "MB",
+        rss: Math.round(memUsage.rss / 1024 / 1024) + "MB",
+      },
       service: "result-service",
       timestamp: new Date().toISOString(),
       checks: {

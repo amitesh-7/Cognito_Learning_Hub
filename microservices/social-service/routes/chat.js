@@ -81,7 +81,7 @@ router.post('/send', authenticateToken, async (req, res) => {
         { requester: senderId, recipient: recipientId, status: 'accepted' },
         { requester: recipientId, recipient: senderId, status: 'accepted' },
       ],
-    });
+    }).lean();
 
     if (!friendship) {
       return res.status(403).json({ message: 'You can only message friends' });
@@ -174,7 +174,8 @@ router.get('/messages/:friendId', authenticateToken, async (req, res) => {
     const messages = await Message.find({ chatRoom: chatRoom._id })
       .populate('sender', 'name email role')
       .sort({ timestamp: 1 })
-      .limit(100);
+      .limit(100)
+      .lean();
 
     res.json({ messages });
   } catch (error) {
@@ -195,7 +196,8 @@ router.get('/rooms', authenticateToken, async (req, res) => {
     })
       .populate('participants', 'name email role')
       .populate('lastMessage')
-      .sort({ lastActivity: -1 });
+      .sort({ lastActivity: -1 })
+      .lean();
 
     res.json({ chatRooms });
   } catch (error) {

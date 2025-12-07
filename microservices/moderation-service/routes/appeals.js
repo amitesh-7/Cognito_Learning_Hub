@@ -16,7 +16,7 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     // Check if action exists and belongs to user
-    const action = await ModerationAction.findById(actionId);
+    const action = await ModerationAction.findById(actionId).lean();
     if (!action) {
       return res.status(404).json({ error: 'Moderation action not found' });
     }
@@ -33,7 +33,7 @@ router.post('/', authMiddleware, async (req, res) => {
     const existingAppeal = await Appeal.findOne({
       actionId,
       status: { $in: ['pending', 'under_review'] }
-    });
+    }).lean();
 
     if (existingAppeal) {
       return res.status(409).json({ error: 'An appeal is already pending for this action' });
@@ -72,7 +72,8 @@ router.get('/', authMiddleware, moderatorMiddleware, async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
-      .populate('actionId');
+      .populate('actionId')
+      .lean();
 
     const total = await Appeal.countDocuments(query);
 
@@ -96,7 +97,8 @@ router.get('/my-appeals', authMiddleware, async (req, res) => {
   try {
     const appeals = await Appeal.find({ userId: req.user.userId })
       .sort({ createdAt: -1 })
-      .populate('actionId');
+      .populate('actionId')
+      .lean();
 
     res.json({ appeals });
   } catch (error) {
