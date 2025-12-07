@@ -169,10 +169,10 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
 
     if (confirmed) {
       socket.emit("kick-participant", { sessionCode, userId, userName });
-      
+
       // Show feedback
       alert(`✅ ${userName} has been removed from the quiz.`);
-      
+
       // Remove alerts from this user
       setAlerts((prev) => prev.filter((alert) => alert.userId !== userId));
     }
@@ -339,14 +339,16 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
                           {/* Kick Student Button */}
                           {alert.userId && alert.userName && (
                             <button
-                              onClick={() => kickStudent(alert.userId, alert.userName)}
+                              onClick={() =>
+                                kickStudent(alert.userId, alert.userName)
+                              }
                               className="p-1.5 rounded bg-red-100 hover:bg-red-200 text-red-600 transition-colors"
                               title={`Remove ${alert.userName} from quiz`}
                             >
                               <UserX className="w-4 h-4" />
                             </button>
                           )}
-                          
+
                           {/* Dismiss Button */}
                           <button
                             onClick={() => dismissAlert(alert.id)}

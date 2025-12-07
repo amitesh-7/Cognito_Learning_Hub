@@ -231,9 +231,7 @@ const LiveSessionHost = () => {
     // Participant kicked
     const handleParticipantKicked = ({ userId, userName }) => {
       console.log(`👢 Participant kicked: ${userName} (${userId})`);
-      setParticipants((prev) =>
-        prev.filter((p) => p.userId !== userId)
-      );
+      setParticipants((prev) => prev.filter((p) => p.userId !== userId));
       // Could show a toast notification here
     };
 
