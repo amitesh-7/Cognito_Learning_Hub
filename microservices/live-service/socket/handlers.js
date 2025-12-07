@@ -599,13 +599,30 @@ function initializeSocketHandlers(io) {
         // Broadcast to host for real-time monitoring
         const session = await sessionManager.getSession(sessionCode);
         if (session && session.hostId) {
+          // Format a readable message
+          let message = `${userName} - ${activityType.replace(/_/g, " ").toLowerCase()}`;
+          
+          // Add specific details to message
+          if (details.switchCount) {
+            message = `${userName} switched tabs/windows ${details.switchCount} time(s)`;
+          } else if (details.blurCount) {
+            message = `${userName} left the quiz window ${details.blurCount} time(s)`;
+          } else if (details.duration) {
+            message = `${userName} was away for ${(details.duration / 1000).toFixed(1)}s`;
+          } else if (details.attemptedText) {
+            message = `${userName} tried to copy text: "${details.attemptedText.substring(0, 30)}..."`;
+          } else if (details.timeSpent !== undefined) {
+            message = `${userName} answered in ${details.timeSpent}ms (impossibly fast)`;
+          }
+
           io.to(sessionCode).emit("integrity-alert", {
+            type: activityType, // Use 'type' instead of 'activityType'
             userId,
             userName,
-            activityType,
             severity,
             timestamp,
             details,
+            message, // Add formatted message
           });
         }
 

@@ -120,6 +120,37 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
     }
   };
 
+  // Format activity details for display
+  const formatDetails = (details) => {
+    if (!details) return null;
+    if (typeof details === "string") return details;
+
+    // Format common detail types
+    const parts = [];
+    if (details.switchCount) parts.push(`Switch count: ${details.switchCount}`);
+    if (details.blurCount) parts.push(`Left window: ${details.blurCount} times`);
+    if (details.duration) parts.push(`Duration: ${(details.duration / 1000).toFixed(1)}s`);
+    if (details.attemptedText) parts.push(`Attempted to copy: "${details.attemptedText.substring(0, 50)}..."`);
+    if (details.timeSpent !== undefined) parts.push(`Answer time: ${details.timeSpent}ms`);
+    if (details.threshold !== undefined) parts.push(`Minimum allowed: ${details.threshold}ms`);
+
+    return parts.length > 0 ? parts.join(" • ") : JSON.stringify(details);
+  };
+
+  // Get friendly activity name
+  const getActivityName = (type) => {
+    const names = {
+      TAB_SWITCH: "Tab Switch",
+      COPY_ATTEMPT: "Copy Attempt",
+      DEVTOOLS_OPENED: "DevTools Detected",
+      IMPOSSIBLE_TIME: "Impossibly Fast Answer",
+      ANSWER_PATTERN_MATCH: "Similar Answer Pattern",
+      LATE_SUBMISSION: "Late Submission",
+      FULLSCREEN_EXIT: "Exited Fullscreen",
+    };
+    return names[type] || type?.replace(/_/g, " ") || "Unknown Activity";
+  };
+
   // Clear alert
   const dismissAlert = (alertId) => {
     setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
@@ -242,28 +273,26 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
                               {getActivityIcon(alert.type)}
                             </div>
                             <span className="font-semibold text-sm text-gray-800">
-                              {(alert.type || "UNKNOWN").replace(/_/g, " ")}
+                              {getActivityName(alert.type)}
                             </span>
                             <span
                               className={`px-2 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(
                                 alert.severity
                               )} text-white`}
                             >
-                              {alert.severity || "UNKNOWN"}
+                              {alert.severity || "MEDIUM"}
                             </span>
                           </div>
 
                           {/* Alert Message */}
                           <p className="text-sm text-gray-600 mb-1">
-                            {alert.message}
+                            {alert.message || `${alert.userName || "Student"} triggered ${getActivityName(alert.type).toLowerCase()}`}
                           </p>
 
                           {/* Alert Details */}
                           {alert.details && (
                             <div className="text-xs text-gray-500 bg-gray-100 rounded px-2 py-1 mt-2">
-                              {typeof alert.details === "string"
-                                ? alert.details
-                                : JSON.stringify(alert.details, null, 2)}
+                              {formatDetails(alert.details)}
                             </div>
                           )}
 
