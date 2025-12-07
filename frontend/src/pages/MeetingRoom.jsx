@@ -52,7 +52,7 @@ const MeetingRoom = () => {
   const pendingOffersRef = useRef([]); // Queue offers received before local stream is ready
 
   // ICE servers for WebRTC - STUN for discovery, TURN for relay through NAT/firewalls
-  // Get your own TURN credentials at: https://www.metered.ca/stun-turn (free tier available)
+  // Configure via environment variables or use fallback free servers
   const [iceServers, setIceServers] = useState([
     // STUN servers (free, for NAT discovery)
     { urls: "stun:stun.l.google.com:19302" },
@@ -64,28 +64,63 @@ const MeetingRoom = () => {
   const iceServersRef = useRef(iceServers); // Ref for use in callbacks
   const [turnFetched, setTurnFetched] = useState(false);
 
-  // Fetch TURN server credentials
+  // Fetch/Configure TURN server credentials
   useEffect(() => {
-    const fetchTurnCredentials = async () => {
+    const configureTurnServers = async () => {
       try {
-        console.log("[Meeting] Fetching TURN server credentials...");
+        console.log("[Meeting] Configuring TURN servers...");
+        
+        // Option 1: Self-hosted Coturn server (recommended for production)
+        const coturnServer = import.meta.env.VITE_COTURN_SERVER;
+        const coturnUsername = import.meta.env.VITE_COTURN_USERNAME;
+        const coturnCredential = import.meta.env.VITE_COTURN_CREDENTIAL;
+        
+        if (coturnServer && coturnUsername && coturnCredential) {
+          console.log("[Meeting] Using self-hosted Coturn server");
+          const coturnServers = [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" },
+            // Coturn TURN servers
+            {
+              urls: `turn:${coturnServer}:3478`,
+              username: coturnUsername,
+              credential: coturnCredential,
+            },
+            {
+              urls: `turn:${coturnServer}:3478?transport=tcp`,
+              username: coturnUsername,
+              credential: coturnCredential,
+            },
+            {
+              urls: `turn:${coturnServer}:5349`,
+              username: coturnUsername,
+              credential: coturnCredential,
+            },
+            {
+              urls: `turns:${coturnServer}:5349`,
+              username: coturnUsername,
+              credential: coturnCredential,
+            },
+          ];
+          
+          setIceServers(coturnServers);
+          iceServersRef.current = coturnServers;
+          setTurnFetched(true);
+          console.log("[Meeting] ✅ ICE servers configured with Coturn");
+          return;
+        }
 
-        // Check if TURN API key is configured via environment variable
+        // Option 2: Metered.ca API (free tier available)
         const meteredApiKey = import.meta.env.VITE_METERED_API_KEY;
 
         if (meteredApiKey) {
-          // Fetch from Metered API with your own key
           const response = await fetch(
             `https://cognito.metered.live/api/v1/turn/credentials?apiKey=${meteredApiKey}`
           );
 
           if (response.ok) {
             const turnServers = await response.json();
-            console.log(
-              "[Meeting] TURN credentials received:",
-              turnServers.length,
-              "servers"
-            );
+            console.log("[Meeting] TURN credentials received:", turnServers.length, "servers");
 
             const allServers = [
               { urls: "stun:stun.l.google.com:19302" },
@@ -96,20 +131,18 @@ const MeetingRoom = () => {
             setIceServers(allServers);
             iceServersRef.current = allServers;
             setTurnFetched(true);
-            console.log(
-              "[Meeting] ✅ ICE servers configured with Metered TURN"
-            );
+            console.log("[Meeting] ✅ ICE servers configured with Metered TURN");
             return;
           }
         }
 
-        // Fallback: Use free Xirsys TURN servers (limited but works)
+        // Option 3: Fallback to free public TURN servers (unreliable)
         console.log("[Meeting] Using fallback TURN servers...");
         const fallbackServers = [
           { urls: "stun:stun.l.google.com:19302" },
           { urls: "stun:stun1.l.google.com:19302" },
           { urls: "stun:stun2.l.google.com:19302" },
-          // Free TURN servers - these are publicly available
+          // Free TURN servers - may not always work
           {
             urls: "turn:numb.viagenie.ca",
             username: "webrtc@live.com",
@@ -132,7 +165,7 @@ const MeetingRoom = () => {
       }
     };
 
-    fetchTurnCredentials();
+    configureTurnServers();
   }, []);
 
   // Keep ref in sync with state
