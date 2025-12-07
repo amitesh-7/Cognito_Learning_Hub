@@ -128,11 +128,18 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
     // Format common detail types
     const parts = [];
     if (details.switchCount) parts.push(`Switch count: ${details.switchCount}`);
-    if (details.blurCount) parts.push(`Left window: ${details.blurCount} times`);
-    if (details.duration) parts.push(`Duration: ${(details.duration / 1000).toFixed(1)}s`);
-    if (details.attemptedText) parts.push(`Attempted to copy: "${details.attemptedText.substring(0, 50)}..."`);
-    if (details.timeSpent !== undefined) parts.push(`Answer time: ${details.timeSpent}ms`);
-    if (details.threshold !== undefined) parts.push(`Minimum allowed: ${details.threshold}ms`);
+    if (details.blurCount)
+      parts.push(`Left window: ${details.blurCount} times`);
+    if (details.duration)
+      parts.push(`Duration: ${(details.duration / 1000).toFixed(1)}s`);
+    if (details.attemptedText)
+      parts.push(
+        `Attempted to copy: "${details.attemptedText.substring(0, 50)}..."`
+      );
+    if (details.timeSpent !== undefined)
+      parts.push(`Answer time: ${details.timeSpent}ms`);
+    if (details.threshold !== undefined)
+      parts.push(`Minimum allowed: ${details.threshold}ms`);
 
     return parts.length > 0 ? parts.join(" • ") : JSON.stringify(details);
   };
@@ -286,7 +293,12 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
 
                           {/* Alert Message */}
                           <p className="text-sm text-gray-600 mb-1">
-                            {alert.message || `${alert.userName || "Student"} triggered ${getActivityName(alert.type).toLowerCase()}`}
+                            {alert.message ||
+                              `${
+                                alert.userName || "Student"
+                              } triggered ${getActivityName(
+                                alert.type
+                              ).toLowerCase()}`}
                           </p>
 
                           {/* Alert Details */}
