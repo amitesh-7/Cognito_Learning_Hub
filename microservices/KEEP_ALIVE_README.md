@@ -118,7 +118,7 @@ Edit the `SERVICES` array in `keep-alive.js`:
 
 ```javascript
 const SERVICES = [
-  { name: 'Service Name', url: 'https://your-service.onrender.com' },
+  { name: "Service Name", url: "https://your-service.onrender.com" },
   // Add more services here
 ];
 ```
@@ -126,11 +126,13 @@ const SERVICES = [
 ## Deployment Options
 
 ### Option 1: Run on Your Local Machine
+
 - Simple and free
 - Requires your computer to be always on
 - Stops when computer sleeps/shuts down
 
 ### Option 2: Deploy on Render (Recommended)
+
 - Create a new Web Service on Render
 - Connect your GitHub repo
 - Set build command: `npm install`
@@ -138,16 +140,19 @@ const SERVICES = [
 - Keep this service on a paid plan (it's cheap and will keep all other services alive)
 
 ### Option 3: Deploy on Heroku/Railway/Fly.io
+
 - Similar to Render deployment
 - Use free tier for the keep-alive service itself
 - Configure start command accordingly
 
 ### Option 4: Use GitHub Actions (Free)
+
 - Create a GitHub Action workflow
 - Runs every 14 minutes using cron
 - Completely free but less reliable than a dedicated service
 
 ### Option 5: Use a Cron Job Service
+
 - Use services like cron-job.org, easycron.com
 - Configure to hit all URLs every 14 minutes
 - Limited to HTTP GET requests only
@@ -155,16 +160,19 @@ const SERVICES = [
 ## Troubleshooting
 
 ### Services Still Sleeping
+
 - Verify the ping interval is < 15 minutes
 - Check if keep-alive.js is running: `ps aux | grep keep-alive`
 - Check logs for errors
 
 ### Timeout Errors
+
 - Normal for first ping after service wakes up (cold start)
 - Render free tier can take 30-60 seconds to wake up
 - Script has 30s timeout to handle this
 
 ### High Response Times
+
 - Expected on Render free tier (cold starts)
 - First ping after sleep: 10-30 seconds
 - Subsequent pings: 1-5 seconds
@@ -172,11 +180,13 @@ const SERVICES = [
 ## Cost Optimization
 
 **Recommended Setup:**
+
 - Deploy keep-alive.js on Render paid tier (~$7/month)
 - Keep all 9 services on free tier
 - Total cost: $7/month (vs $63/month if all services were paid)
 
 **Alternative (100% Free):**
+
 - Run keep-alive.js on your local machine
 - Use PM2 to auto-restart on crashes
 - Only works when your computer is on
