@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { useAvatar } from "../context/AvatarContext";
+import { useGamification } from "../context/GamificationContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy,
@@ -36,6 +38,7 @@ import Badge from "../components/ui/Badge";
 import { LoadingSpinner } from "../components/ui/Loading";
 import { useToast } from "../components/ui/Toast";
 import TextToSpeech from "../components/TextToSpeech";
+import { QuizAvatarCompanion } from "../components/Avatar";
 
 const QuestionCard = ({
   question,
@@ -327,6 +330,12 @@ export default function GamifiedQuizTaker() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const { success, error: showError } = useToast();
+  
+  // Avatar integration for emotional reactions
+  const { triggerReaction, addExperience, analyzeQuizPerformance, isAvatarEnabled } = useAvatar();
+  
+  // Gamification integration for real-time achievements
+  const { checkAchievements, awardXP, refreshData: refreshGamification } = useGamification();
 
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -336,6 +345,7 @@ export default function GamifiedQuizTaker() {
   const [isFinished, setIsFinished] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [avatarMinimized, setAvatarMinimized] = useState(false);
 
   // Game stats
   const [gameStats, setGameStats] = useState({
@@ -462,9 +472,27 @@ export default function GamifiedQuizTaker() {
     if (isCorrect) {
       const audio = new Audio("/sounds/correct.mp3");
       audio.play().catch(() => {}); // Ignore errors
+      
+      // Trigger avatar celebration reaction
+      if (isAvatarEnabled) {
+        triggerReaction("correct_answer", {
+          streak: currentStreak + 1,
+          pointsEarned: pointsEarned + bonusPoints,
+          wasQuick: timeTaken <= 5,
+        });
+      }
     } else {
       const audio = new Audio("/sounds/incorrect.mp3");
       audio.play().catch(() => {});
+      
+      // Trigger avatar encouragement reaction
+      if (isAvatarEnabled) {
+        triggerReaction("wrong_answer", {
+          correctAnswer: currentQuestion.correct_answer,
+          explanation: currentQuestion.explanation,
+          streakLost: currentStreak > 0,
+        });
+      }
     }
   };
 
@@ -560,10 +588,57 @@ export default function GamifiedQuizTaker() {
 
       if (!response.ok) throw new Error("Failed to submit quiz");
 
+      // 🎮 Trigger real-time gamification updates
+      // Award XP based on quiz performance
+      const xpEarned = Math.round(finalScore * (percentage >= 80 ? 1.5 : percentage >= 60 ? 1.2 : 1));
+      awardXP(xpEarned, "quiz_completion");
+      
+      // Check for achievement unlocks
+      checkAchievements({
+        type: "quiz_completed",
+        quizId,
+        score: percentage,
+        totalQuestions: quiz.questions.length,
+        correctAnswers: gameStats.correct,
+        timeTaken: gameStats.totalTime,
+        streak: currentStreak,
+        isPerfect: percentage === 100,
+      });
+      
+      // Refresh gamification data to update UI
+      refreshGamification();
+
       // Show confetti for good performance
       if (percentage >= 80) {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 5000);
+      }
+      
+      // Avatar: Grant experience and analyze performance
+      if (isAvatarEnabled) {
+        // Add experience based on quiz performance
+        addExperience(finalScore, "quiz_completion");
+        
+        // Analyze performance for learning style
+        analyzeQuizPerformance({
+          quizId,
+          percentage,
+          totalTime: gameStats.totalTime,
+          questionsData: Object.entries(answers).map(([index, answer]) => ({
+            timeTaken: answer.timeTaken,
+            isCorrect: answer.isCorrect,
+            difficulty: quiz.questions[index].difficulty,
+          })),
+        });
+        
+        // Trigger completion celebration or encouragement
+        if (percentage >= 80) {
+          triggerReaction("quiz_mastery", { percentage, score: finalScore });
+        } else if (percentage >= 60) {
+          triggerReaction("quiz_passed", { percentage, score: finalScore });
+        } else {
+          triggerReaction("quiz_needs_improvement", { percentage, correctCount: gameStats.correct });
+        }
       }
 
       setShowResults(true);
@@ -734,6 +809,15 @@ export default function GamifiedQuizTaker() {
           </div>
         </div>
       </div>
+      
+      {/* AI Learning Avatar Companion */}
+      {isAvatarEnabled && (
+        <QuizAvatarCompanion
+          position="bottom-right"
+          minimized={avatarMinimized}
+          onMinimize={() => setAvatarMinimized(true)}
+        />
+      )}
     </div>
   );
 }

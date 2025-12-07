@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { useGamification } from "../context/GamificationContext";
 import { Link, Navigate } from "react-router-dom";
 import {
   LineChart,
@@ -51,6 +52,7 @@ import {
   PeerComparisonCard,
   WeeklyActivityCard,
 } from "../components/AIInsights";
+import { RealTimeStats } from "../components/Gamification";
 
 // --- Animation Variants ---
 const containerVariants = {
@@ -76,6 +78,7 @@ const itemVariants = {
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useContext(AuthContext);
+  const { userStats, currentLevel, totalXP, currentStreak: gamificationStreak } = useGamification();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -545,6 +548,12 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </Card>
+
+                {/* Real-Time Gamification Stats */}
+                <RealTimeStats 
+                  showDetailed={true} 
+                  className="shadow-2xl"
+                />
 
                 {/* Learning Toolkit */}
                 <Link to="/quick-actions">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthContext } from "../context/AuthContext";
+import { useGamification } from "../context/GamificationContext";
 import {
   Trophy,
   Star,
@@ -16,6 +17,7 @@ import {
   BookOpen,
   BarChart3,
   Sparkles,
+  RefreshCw,
 } from "lucide-react";
 import {
   Card,
@@ -26,6 +28,7 @@ import {
 import Badge from "../components/ui/Badge";
 import Progress from "../components/ui/Progress";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { RealTimeStats } from "../components/Gamification";
 
 const AchievementCard = ({ achievement, isUnlocked = false, progress = 0 }) => (
   <motion.div
@@ -229,83 +232,99 @@ const StatCard = ({ icon, label, value, change, color = "blue" }) => {
 
 export default function AchievementDashboard() {
   const { user } = useContext(AuthContext);
-  const [userStats, setUserStats] = useState(null);
+  const {
+    userStats,
+    achievements: allAchievements,
+    userAchievements,
+    recentUnlocks,
+    loading: gamificationLoading,
+    refreshData,
+    currentLevel,
+    totalXP,
+    currentStreak,
+    unlockedCount,
+    totalAchievements,
+  } = useGamification();
+  
   const [achievements, setAchievements] = useState([]);
   const [recentAchievements, setRecentAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Sync achievements from context
   useEffect(() => {
-    fetchUserData();
-  }, [user]);
-
-  const fetchUserData = async () => {
-    if (!user) return;
-    
-    try {
-      const token = localStorage.getItem("quizwise-token");
+    if (!gamificationLoading) {
+      // Combine all achievements with user unlock status
+      const achievementMap = new Map();
       
-      // Fetch stats and achievements in parallel
-      const [statsResponse, achievementsResponse] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL}/api/stats/${user.id || user._id}`, {
-          headers: { "x-auth-token": token },
-        }),
-        fetch(`${import.meta.env.VITE_API_URL}/api/achievements/${user.id || user._id}`, {
-          headers: { "x-auth-token": token },
-        }),
-      ]);
-
-      // Handle stats response
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        setUserStats(statsData.stats || {
-          totalQuizzesTaken: 0,
-          totalPoints: 0,
-          currentStreak: 0,
-          longestStreak: 0,
-          averageScore: 0,
-          level: 1,
-        });
-      }
-
-      // Handle achievements response
-      if (achievementsResponse.ok) {
-        const achievementsData = await achievementsResponse.json();
-        const userAchievements = achievementsData.achievements || [];
-        
-        // Map achievements with unlock status
-        const mappedAchievements = userAchievements.map(a => ({
+      // Add all available achievements
+      allAchievements.forEach((a) => {
+        achievementMap.set(a._id || a.id, {
           id: a._id || a.id,
-          name: a.name || a.achievement?.name,
-          description: a.description || a.achievement?.description,
-          icon: a.icon || a.achievement?.icon || "🏆",
-          type: a.type || a.achievement?.type || "general",
-          rarity: a.rarity || a.achievement?.rarity || "common",
-          points: a.points || a.achievement?.points || 10,
-          isUnlocked: a.isUnlocked ?? a.unlockedAt != null,
-          progress: a.progress || 0,
-          unlockedAt: a.unlockedAt,
-        }));
+          name: a.name,
+          description: a.description,
+          icon: a.icon || "🏆",
+          type: a.type || "general",
+          rarity: a.rarity || "common",
+          points: a.points || 10,
+          isUnlocked: false,
+          progress: 0,
+        });
+      });
+      
+      // Mark unlocked achievements
+      userAchievements.forEach((ua) => {
+        const achievement = ua.achievement || ua;
+        const id = achievement._id || achievement.id || ua._id;
         
-        setAchievements(mappedAchievements);
-        setRecentAchievements(
-          mappedAchievements
-            .filter(a => a.isUnlocked)
-            .sort((a, b) => new Date(b.unlockedAt) - new Date(a.unlockedAt))
-            .slice(0, 5)
-        );
-      } else {
-        // Fallback: Show default achievement categories if API fails
-        setAchievements(getDefaultAchievementDefinitions(userStats));
+        if (achievementMap.has(id)) {
+          const existing = achievementMap.get(id);
+          achievementMap.set(id, {
+            ...existing,
+            isUnlocked: ua.isCompleted ?? true,
+            progress: ua.progress || 100,
+            unlockedAt: ua.unlockedAt,
+          });
+        } else {
+          // Achievement from user but not in all list
+          achievementMap.set(id, {
+            id,
+            name: achievement.name,
+            description: achievement.description,
+            icon: achievement.icon || "🏆",
+            type: achievement.type || "general",
+            rarity: achievement.rarity || "common",
+            points: achievement.points || 10,
+            isUnlocked: ua.isCompleted ?? true,
+            progress: ua.progress || 100,
+            unlockedAt: ua.unlockedAt,
+          });
+        }
+      });
+      
+      // If no achievements from API, use default definitions
+      let finalAchievements = Array.from(achievementMap.values());
+      if (finalAchievements.length === 0) {
+        finalAchievements = getDefaultAchievementDefinitions(userStats);
       }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      // Set default achievements based on stats
-      setAchievements(getDefaultAchievementDefinitions(userStats));
-    } finally {
+      
+      setAchievements(finalAchievements);
+      
+      // Recent unlocks
+      const recent = recentUnlocks.length > 0 
+        ? recentUnlocks.slice(0, 5).map(a => ({
+            ...a,
+            isUnlocked: true,
+          }))
+        : finalAchievements
+            .filter(a => a.isUnlocked)
+            .sort((a, b) => new Date(b.unlockedAt || 0) - new Date(a.unlockedAt || 0))
+            .slice(0, 5);
+      
+      setRecentAchievements(recent);
       setLoading(false);
     }
-  };
+  }, [gamificationLoading, allAchievements, userAchievements, recentUnlocks, userStats]);
 
   // Default achievement definitions based on user stats
   const getDefaultAchievementDefinitions = (stats) => {
@@ -409,6 +428,17 @@ export default function AchievementDashboard() {
             >
               <Trophy className="w-12 h-12" />
             </motion.div>
+            {/* Real-time refresh button */}
+            <motion.button
+              onClick={refreshData}
+              disabled={gamificationLoading}
+              className="p-3 bg-white/70 backdrop-blur-xl border-2 border-white/80 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50"
+              whileHover={{ rotate: 180 }}
+              whileTap={{ scale: 0.9 }}
+              title="Refresh real-time stats"
+            >
+              <RefreshCw className={`w-6 h-6 text-violet-600 ${gamificationLoading ? 'animate-spin' : ''}`} />
+            </motion.button>
           </div>
           <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-slate-900 via-violet-700 to-fuchsia-600 bg-clip-text text-transparent drop-shadow-lg mb-4">
             Achievements & Stats
@@ -420,6 +450,16 @@ export default function AchievementDashboard() {
             </span>{" "}
             and unlock rewards ✨
           </p>
+          {/* Real-time indicator */}
+          <motion.div 
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100/80 rounded-full border border-green-200"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-sm font-medium text-green-700">Real-time updates active</span>
+          </motion.div>
         </motion.div>
 
         {/* Level Progress */}

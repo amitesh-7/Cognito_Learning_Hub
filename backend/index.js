@@ -544,6 +544,81 @@ io.on("connection", (socket) => {
   console.log(`[Socket.IO] Client connected: ${socket.id}`);
 
   // ========================================
+  // GAMIFICATION: Real-time updates subscription
+  // ========================================
+  socket.on("gamification:subscribe", (data) => {
+    const { userId } = data;
+    if (userId) {
+      userGamificationSockets.set(userId.toString(), socket.id);
+      console.log(`[Socket.IO] 🎮 User ${userId} subscribed to gamification updates`);
+    }
+  });
+
+  socket.on("gamification:unsubscribe", (data) => {
+    const { userId } = data;
+    if (userId) {
+      userGamificationSockets.delete(userId.toString());
+      console.log(`[Socket.IO] 🎮 User ${userId} unsubscribed from gamification updates`);
+    }
+  });
+
+  // Gamification: Check achievements manually
+  socket.on("gamification:check-achievements", async (data) => {
+    try {
+      const { userId, eventData } = data;
+      if (!userId) return;
+      
+      const unlockedAchievements = await checkUserAchievements(userId, eventData || {});
+      
+      if (unlockedAchievements.length > 0) {
+        socket.emit("achievements:checked", {
+          success: true,
+          unlockedCount: unlockedAchievements.length,
+          achievements: unlockedAchievements,
+        });
+      }
+    } catch (error) {
+      console.error("[Socket.IO] Error checking achievements:", error);
+    }
+  });
+
+  // Gamification: Award XP manually
+  socket.on("gamification:award-xp", async (data) => {
+    try {
+      const { userId, amount, reason } = data;
+      if (!userId || !amount) return;
+      
+      let userStats = await UserStats.findOne({ user: userId });
+      const previousLevel = userStats?.level || 1;
+      
+      if (!userStats) {
+        userStats = new UserStats({ user: userId });
+      }
+      
+      userStats.experience += amount;
+      userStats.totalPoints += amount;
+      userStats.level = Math.floor(userStats.experience / 100) + 1;
+      
+      await userStats.save();
+      
+      socket.emit("stats:updated", {
+        stats: {
+          experience: userStats.experience,
+          level: userStats.level,
+          totalPoints: userStats.totalPoints,
+        },
+        xpGained: amount,
+        levelUp: userStats.level > previousLevel,
+        reason,
+      });
+      
+      console.log(`[Socket.IO] 🎮 Awarded ${amount} XP to user ${userId} for: ${reason}`);
+    } catch (error) {
+      console.error("[Socket.IO] Error awarding XP:", error);
+    }
+  });
+
+  // ========================================
   // EVENT: create-session
   // Teacher/Admin creates a live quiz session
   // ========================================
@@ -1490,6 +1565,15 @@ io.on("connection", (socket) => {
     console.log(
       `[Socket.IO] Client disconnected: ${socket.id}, reason: ${reason}`
     );
+
+    // Cleanup gamification subscriptions
+    for (const [userId, socketId] of userGamificationSockets.entries()) {
+      if (socketId === socket.id) {
+        userGamificationSockets.delete(userId);
+        console.log(`[Socket.IO] 🎮 Cleaned up gamification subscription for user ${userId}`);
+        break;
+      }
+    }
 
     try {
       // Handle duel matches
@@ -2930,6 +3014,160 @@ app.post("/api/quizzes/generate-enhanced", auth, async (req, res) => {
   }
 });
 
+// ========================================
+// GAMIFICATION API ENDPOINTS
+// ========================================
+
+// Get gamification stats for current user
+app.get("/api/gamification/stats", auth, async (req, res) => {
+  try {
+    let userStats = await UserStats.findOne({ user: req.user.id });
+
+    if (!userStats) {
+      userStats = new UserStats({
+        user: req.user.id,
+        totalQuizzesTaken: 0,
+        totalQuizzesCreated: 0,
+        totalPoints: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        averageScore: 0,
+        totalTimeSpent: 0,
+        level: 1,
+        experience: 0,
+      });
+      await userStats.save();
+    }
+
+    res.json(userStats);
+  } catch (error) {
+    console.error("Error fetching gamification stats:", error);
+    res.status(500).json({ message: "Failed to fetch gamification stats." });
+  }
+});
+
+// Award XP via HTTP (fallback for non-socket scenarios)
+app.post("/api/gamification/award-xp", auth, async (req, res) => {
+  try {
+    const { amount, reason } = req.body;
+    const userId = req.user.id;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: "Invalid XP amount" });
+    }
+
+    let userStats = await UserStats.findOne({ user: userId });
+    const previousLevel = userStats?.level || 1;
+
+    if (!userStats) {
+      userStats = new UserStats({ user: userId });
+    }
+
+    userStats.experience += amount;
+    userStats.totalPoints += amount;
+    userStats.level = Math.floor(userStats.experience / 100) + 1;
+
+    await userStats.save();
+
+    const levelUp = userStats.level > previousLevel;
+
+    // Emit socket event if user is connected
+    const socketId = userGamificationSockets.get(userId.toString());
+    if (socketId) {
+      io.to(socketId).emit("stats:updated", {
+        stats: {
+          experience: userStats.experience,
+          level: userStats.level,
+          totalPoints: userStats.totalPoints,
+        },
+        xpGained: amount,
+        levelUp,
+        reason,
+      });
+    }
+
+    res.json({
+      success: true,
+      stats: userStats,
+      xpGained: amount,
+      levelUp,
+    });
+  } catch (error) {
+    console.error("Error awarding XP:", error);
+    res.status(500).json({ message: "Failed to award XP." });
+  }
+});
+
+// Check achievements manually via HTTP
+app.post("/api/gamification/check-achievements", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const eventData = req.body;
+
+    const unlockedAchievements = await checkUserAchievements(userId, eventData);
+
+    res.json({
+      success: true,
+      unlockedCount: unlockedAchievements.length,
+      achievements: unlockedAchievements,
+    });
+  } catch (error) {
+    console.error("Error checking achievements:", error);
+    res.status(500).json({ message: "Failed to check achievements." });
+  }
+});
+
+// Get leaderboard
+app.get("/api/gamification/leaderboard", auth, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const type = req.query.type || "xp"; // xp, points, quizzes, streak
+
+    let sortField;
+    switch (type) {
+      case "points":
+        sortField = "totalPoints";
+        break;
+      case "quizzes":
+        sortField = "totalQuizzesTaken";
+        break;
+      case "streak":
+        sortField = "longestStreak";
+        break;
+      default:
+        sortField = "experience";
+    }
+
+    const leaderboard = await UserStats.find()
+      .sort({ [sortField]: -1 })
+      .limit(limit)
+      .populate("user", "name email avatar");
+
+    // Find current user's rank
+    const allStats = await UserStats.find().sort({ [sortField]: -1 });
+    const userRank = allStats.findIndex(
+      (s) => s.user.toString() === req.user.id.toString()
+    ) + 1;
+
+    res.json({
+      leaderboard: leaderboard.map((entry, index) => ({
+        rank: index + 1,
+        userId: entry.user?._id,
+        name: entry.user?.name || "Anonymous",
+        avatar: entry.user?.avatar,
+        value: entry[sortField],
+        level: entry.level,
+        experience: entry.experience,
+      })),
+      userRank,
+      type,
+    });
+  } catch (error) {
+    console.error("Error fetching leaderboard:", error);
+    res.status(500).json({ message: "Failed to fetch leaderboard." });
+  }
+});
+
 // Get User Stats and Achievements
 app.get("/api/users/stats", auth, async (req, res) => {
   try {
@@ -2986,9 +3224,14 @@ function getRankFromPercentage(percentage) {
   return "F";
 }
 
+// Store user socket mappings for gamification events
+const userGamificationSockets = new Map(); // userId -> socketId
+
 async function updateUserStats(userId, resultData) {
   try {
     let userStats = await UserStats.findOne({ user: userId });
+    const previousLevel = userStats?.level || 1;
+    const previousXP = userStats?.experience || 0;
 
     if (!userStats) {
       userStats = new UserStats({ user: userId });
@@ -3021,12 +3264,40 @@ async function updateUserStats(userId, resultData) {
     }
 
     // Update experience and level
-    userStats.experience += resultData.experienceGained || 0;
+    const xpGained = resultData.experienceGained || 0;
+    userStats.experience += xpGained;
     userStats.level = Math.floor(userStats.experience / 100) + 1; // Level up every 100 XP
 
     userStats.lastQuizDate = new Date();
 
     await userStats.save();
+    
+    // Emit real-time stats update via Socket.IO
+    const socketId = userGamificationSockets.get(userId.toString());
+    if (socketId) {
+      io.to(socketId).emit("stats:updated", {
+        stats: {
+          totalQuizzesTaken: userStats.totalQuizzesTaken,
+          totalPoints: userStats.totalPoints,
+          experience: userStats.experience,
+          level: userStats.level,
+          currentStreak: userStats.currentStreak,
+          longestStreak: userStats.longestStreak,
+          averageScore: userStats.averageScore,
+        },
+        xpGained: xpGained,
+        levelUp: userStats.level > previousLevel,
+      });
+      
+      // Emit streak update if changed
+      if (userStats.currentStreak !== (resultData.previousStreak || 0)) {
+        io.to(socketId).emit("streak:updated", {
+          currentStreak: userStats.currentStreak,
+          longestStreak: userStats.longestStreak,
+        });
+      }
+    }
+    
     return userStats;
   } catch (error) {
     console.error("Error updating user stats:", error);
@@ -3046,44 +3317,53 @@ async function checkUserAchievements(userId, resultData) {
         criteria: userStats.totalQuizzesTaken >= 1,
         name: "First Quiz",
         type: "quiz_completion",
+        rarity: "common",
       },
       {
         criteria: userStats.totalQuizzesTaken >= 10,
         name: "Quiz Enthusiast",
         type: "quiz_completion",
+        rarity: "rare",
       },
       {
         criteria: userStats.totalQuizzesTaken >= 50,
         name: "Quiz Master",
         type: "quiz_completion",
+        rarity: "epic",
       },
       {
         criteria: userStats.currentStreak >= 5,
         name: "On Fire!",
         type: "streak",
+        rarity: "rare",
       },
       {
         criteria: userStats.currentStreak >= 10,
         name: "Unstoppable",
         type: "streak",
+        rarity: "epic",
       },
       {
         criteria: resultData.percentage >= 100,
         name: "Perfect Score",
         type: "score_achievement",
+        rarity: "legendary",
       },
       {
         criteria: resultData.percentage >= 90,
         name: "Excellence",
         type: "score_achievement",
+        rarity: "rare",
       },
       {
         criteria: userStats.totalPoints >= 1000,
         name: "Point Collector",
         type: "special",
+        rarity: "rare",
       },
-      { criteria: userStats.level >= 5, name: "Rising Star", type: "special" },
-      { criteria: userStats.level >= 10, name: "Champion", type: "special" },
+      { criteria: userStats.level >= 5, name: "Rising Star", type: "special", rarity: "rare" },
+      { criteria: userStats.level >= 10, name: "Champion", type: "special", rarity: "epic" },
+      { criteria: userStats.level >= 25, name: "Legend", type: "special", rarity: "legendary" },
     ];
 
     for (const check of achievementChecks) {
@@ -3104,6 +3384,7 @@ async function checkUserAchievements(userId, resultData) {
               description: `Awarded for ${check.name.toLowerCase()}`,
               icon: getAchievementIcon(check.type),
               type: check.type,
+              rarity: check.rarity || "common",
               points: getAchievementPoints(check.type),
             });
             await achievement.save();
@@ -3117,6 +3398,30 @@ async function checkUserAchievements(userId, resultData) {
 
           await userAchievement.save();
           unlockedAchievements.push(achievement);
+          
+          // Emit real-time achievement unlock via Socket.IO
+          const socketId = userGamificationSockets.get(userId.toString());
+          if (socketId) {
+            io.to(socketId).emit("achievement:unlocked", {
+              achievement: {
+                _id: achievement._id,
+                name: achievement.name,
+                description: achievement.description,
+                icon: achievement.icon,
+                type: achievement.type,
+                rarity: achievement.rarity || check.rarity,
+                points: achievement.points,
+              },
+              userStats: {
+                totalQuizzesTaken: userStats.totalQuizzesTaken,
+                totalPoints: userStats.totalPoints,
+                experience: userStats.experience,
+                level: userStats.level,
+                currentStreak: userStats.currentStreak,
+              },
+            });
+            console.log(`[Socket.IO] 🏆 Achievement unlocked for user ${userId}: ${achievement.name}`);
+          }
         }
       }
     }

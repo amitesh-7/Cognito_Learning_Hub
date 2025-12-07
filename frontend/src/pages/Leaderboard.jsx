@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { AuthContext } from "../context/AuthContext";
+import { useGamification } from "../context/GamificationContext";
 import {
   Trophy,
   Medal,
@@ -11,6 +12,7 @@ import {
   ArrowLeft,
   Users,
   TrendingUp,
+  RefreshCw,
 } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import Button from "../components/ui/Button";
@@ -29,61 +31,87 @@ const itemVariants = {
 export default function Leaderboard() {
   const { quizId } = useParams();
   const { user } = useContext(AuthContext);
+  const { leaderboard: globalLeaderboard, refreshData, loading: gamificationLoading } = useGamification();
   const [leaderboard, setLeaderboard] = useState([]);
   const [quizTitle, setQuizTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Use global leaderboard from context if no quizId
+  useEffect(() => {
+    if (!quizId && globalLeaderboard.length > 0) {
+      setLeaderboard(globalLeaderboard);
+      setQuizTitle("Global Rankings");
+      setLoading(false);
+    }
+  }, [globalLeaderboard, quizId]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    if (!quizId) {
+      refreshData();
+    } else {
+      // Refetch quiz-specific leaderboard
+      await fetchLeaderboard();
+    }
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const fetchLeaderboard = async () => {
+    try {
+      const token = localStorage.getItem("quizwise-token");
+
+      // If no quizId, fetch global leaderboard (all users ranked by total score)
+      if (!quizId) {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/users/leaderboard`,
+          {
+            headers: { "x-auth-token": token },
+          }
+        );
+
+        if (!response.ok)
+          throw new Error("Could not fetch global leaderboard.");
+
+        const data = await response.json();
+        setLeaderboard(data);
+        setQuizTitle("Global Rankings");
+      } else {
+        // Fetch quiz-specific leaderboard
+        const [leaderboardRes, quizRes] = await Promise.all([
+          fetch(
+            `${
+              import.meta.env.VITE_API_URL
+            }/api/quizzes/${quizId}/leaderboard`,
+            { headers: { "x-auth-token": token } }
+          ),
+          fetch(`${import.meta.env.VITE_API_URL}/api/quizzes/${quizId}`, {
+            headers: { "x-auth-token": token },
+          }),
+        ]);
+
+        if (!leaderboardRes.ok || !quizRes.ok)
+          throw new Error("Could not fetch leaderboard data.");
+
+        const leaderboardData = await leaderboardRes.json();
+        const quizData = await quizRes.json();
+
+        setLeaderboard(leaderboardData);
+        setQuizTitle(quizData.title);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        const token = localStorage.getItem("quizwise-token");
-
-        // If no quizId, fetch global leaderboard (all users ranked by total score)
-        if (!quizId) {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/users/leaderboard`,
-            {
-              headers: { "x-auth-token": token },
-            }
-          );
-
-          if (!response.ok)
-            throw new Error("Could not fetch global leaderboard.");
-
-          const data = await response.json();
-          setLeaderboard(data);
-          setQuizTitle("Global Rankings");
-        } else {
-          // Fetch quiz-specific leaderboard
-          const [leaderboardRes, quizRes] = await Promise.all([
-            fetch(
-              `${
-                import.meta.env.VITE_API_URL
-              }/api/quizzes/${quizId}/leaderboard`,
-              { headers: { "x-auth-token": token } }
-            ),
-            fetch(`${import.meta.env.VITE_API_URL}/api/quizzes/${quizId}`, {
-              headers: { "x-auth-token": token },
-            }),
-          ]);
-
-          if (!leaderboardRes.ok || !quizRes.ok)
-            throw new Error("Could not fetch leaderboard data.");
-
-          const leaderboardData = await leaderboardRes.json();
-          const quizData = await quizRes.json();
-
-          setLeaderboard(leaderboardData);
-          setQuizTitle(quizData.title);
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchLeaderboard();
+    // Only fetch from API if quizId is provided or no global data
+    if (quizId || globalLeaderboard.length === 0) {
+      fetchLeaderboard();
+    }
   }, [quizId]);
 
   const topThree = leaderboard.slice(0, 3);
@@ -197,7 +225,30 @@ export default function Leaderboard() {
                 <TrendingUp className="w-4 h-4" />
                 <span>{quizId ? "Quiz rankings" : "Overall rankings"}</span>
               </div>
+              {/* Real-time refresh button */}
+              <motion.button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white/70 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-full hover:bg-white transition-all duration-300 disabled:opacity-50"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="Refresh leaderboard"
+              >
+                <RefreshCw className={`w-4 h-4 text-yellow-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="text-xs font-medium">Refresh</span>
+              </motion.button>
             </div>
+            
+            {/* Real-time indicator */}
+            <motion.div 
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100/80 dark:bg-green-900/30 rounded-full border border-green-200 dark:border-green-800"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-sm font-medium text-green-700 dark:text-green-400">Live updates</span>
+            </motion.div>
           </motion.div>
 
           {leaderboard.length === 0 ? (

@@ -17,6 +17,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import ModeratorRoute from "./components/ModeratorRoute";
 import { SocketProvider } from "./context/SocketContext";
+import { AvatarProvider } from "./context/AvatarContext";
+import { GamificationProvider } from "./context/GamificationContext";
+import { AchievementNotification } from "./components/Gamification";
 
 // Lazy load pages for better performance (code splitting)
 // Critical pages - load immediately
@@ -58,6 +61,7 @@ const LiveSessionSelector = lazy(() => import("./pages/LiveSessionSelector"));
 const DuelMode = lazy(() => import("./pages/DuelMode"));
 const DuelBattle = lazy(() => import("./pages/DuelBattle"));
 const TeachingHub = lazy(() => import("./pages/TeachingHub"));
+const AvatarDashboard = lazy(() => import("./pages/AvatarDashboard"));
 
 // Video Meeting Routes
 const TeacherMeetingStart = lazy(() => import("./pages/TeacherMeetingStart"));
@@ -83,31 +87,36 @@ function App() {
 
   return (
     <SocketProvider>
-      <ToastProvider>
-        <LenisScroll>
-          <div className="min-h-screen bg-white dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300 relative overflow-x-hidden">
-            {/* Network Status Indicator */}
-            <NetworkStatusIndicator />
+      <AvatarProvider>
+        <GamificationProvider>
+          <ToastProvider>
+            <LenisScroll>
+            <div className="min-h-screen bg-white dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300 relative overflow-x-hidden">
+              {/* Network Status Indicator */}
+              <NetworkStatusIndicator />
 
-            {/* PWA Install Prompt */}
-            <PWAInstallPrompt />
+              {/* PWA Install Prompt */}
+              <PWAInstallPrompt />
+              
+              {/* Real-time Achievement Notifications */}
+              <AchievementNotification />
 
-            {/* Animated Background Layers - Disabled on mobile for performance */}
-            {!isMobile && (
-              <>
-                <ParticleBackground isDark={theme === "dark"} />
-                <FloatingShapes />
-              </>
-            )}
+              {/* Animated Background Layers - Disabled on mobile for performance */}
+              {!isMobile && (
+                <>
+                  <ParticleBackground isDark={theme === "dark"} />
+                  <FloatingShapes />
+                </>
+              )}
 
-            {/* Modern Glassmorphism Navbar with Scroll Behavior */}
-            {!isFullScreen && <Navbar />}
+              {/* Modern Glassmorphism Navbar with Scroll Behavior */}
+              {!isFullScreen && <Navbar />}
 
-            {/* Main Content with top padding for fixed navbar */}
-            <main
-              className={
-                isFullScreen
-                  ? ""
+              {/* Main Content with top padding for fixed navbar */}
+              <main
+                className={
+                  isFullScreen
+                    ? ""
                   : "container mx-auto px-6 lg:px-8 pt-32 lg:pt-36 relative z-10"
               }
             >
@@ -289,6 +298,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <AchievementDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/avatar"
+                    element={
+                      <ProtectedRoute>
+                        <AvatarDashboard />
                       </ProtectedRoute>
                     }
                   />
@@ -526,9 +543,11 @@ function App() {
                 </div>
               </motion.footer>
             )}
-          </div>
-        </LenisScroll>
-      </ToastProvider>
+            </div>
+          </LenisScroll>
+        </ToastProvider>
+        </GamificationProvider>
+      </AvatarProvider>
     </SocketProvider>
   );
 }
