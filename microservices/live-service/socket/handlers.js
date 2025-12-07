@@ -437,11 +437,7 @@ function initializeSocketHandlers(io) {
             timeSpent,
           });
 
-          // Update participant stats
-          const participant = await sessionManager.getParticipant(
-            sessionCode,
-            userId
-          );
+          // Update participant stats (reuse participant from anti-cheat section)
           await sessionManager.updateParticipant(sessionCode, userId, {
             score: participant.score + points,
             correctAnswers: participant.correctAnswers + (isCorrect ? 1 : 0),
