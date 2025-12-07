@@ -69,12 +69,12 @@ const MeetingRoom = () => {
     const configureTurnServers = async () => {
       try {
         console.log("[Meeting] Configuring TURN servers...");
-        
+
         // Option 1: Self-hosted Coturn server (recommended for production)
         const coturnServer = import.meta.env.VITE_COTURN_SERVER;
         const coturnUsername = import.meta.env.VITE_COTURN_USERNAME;
         const coturnCredential = import.meta.env.VITE_COTURN_CREDENTIAL;
-        
+
         if (coturnServer && coturnUsername && coturnCredential) {
           console.log("[Meeting] Using self-hosted Coturn server");
           const coturnServers = [
@@ -102,7 +102,7 @@ const MeetingRoom = () => {
               credential: coturnCredential,
             },
           ];
-          
+
           setIceServers(coturnServers);
           iceServersRef.current = coturnServers;
           setTurnFetched(true);
@@ -120,7 +120,11 @@ const MeetingRoom = () => {
 
           if (response.ok) {
             const turnServers = await response.json();
-            console.log("[Meeting] TURN credentials received:", turnServers.length, "servers");
+            console.log(
+              "[Meeting] TURN credentials received:",
+              turnServers.length,
+              "servers"
+            );
 
             const allServers = [
               { urls: "stun:stun.l.google.com:19302" },
@@ -131,7 +135,9 @@ const MeetingRoom = () => {
             setIceServers(allServers);
             iceServersRef.current = allServers;
             setTurnFetched(true);
-            console.log("[Meeting] ✅ ICE servers configured with Metered TURN");
+            console.log(
+              "[Meeting] ✅ ICE servers configured with Metered TURN"
+            );
             return;
           }
         }
