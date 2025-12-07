@@ -350,6 +350,11 @@ const LiveSessionJoin = () => {
     };
   }, [hasJoined, socket, sessionCode, user]);
 
+  // Debug: Log when fullscreen prompt state changes
+  useEffect(() => {
+    console.log(`[Fullscreen Debug] showFullscreenPrompt state: ${showFullscreenPrompt}`);
+  }, [showFullscreenPrompt]);
+
   // Socket event handlers
   useEffect(() => {
     if (!socket || !hasJoined) return;
@@ -359,6 +364,12 @@ const LiveSessionJoin = () => {
       "quiz-started",
       async ({ questionIndex, question, totalQuestions: total, timestamp }) => {
         console.log("🚀 Quiz started! Question:", questionIndex + 1);
+        
+        // Show fullscreen prompt modal FIRST
+        console.log("[Fullscreen] Showing fullscreen prompt...");
+        setShowFullscreenPrompt(true);
+        
+        // Then set question data
         setCurrentQuestion(question);
         setCurrentQuestionIndex(questionIndex);
         setTotalQuestions(total);
@@ -366,10 +377,6 @@ const LiveSessionJoin = () => {
         setSelectedAnswer("");
         setAnswerResult(null);
         setTimeLeft(30);
-
-        // Show fullscreen prompt modal
-        console.log("[Fullscreen] Showing fullscreen prompt...");
-        setShowFullscreenPrompt(true);
       }
     );
 
@@ -1047,8 +1054,64 @@ const LiveSessionJoin = () => {
 
   // Active Quiz
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+    <>
+      {/* Fullscreen Prompt Modal - Rendered at root level */}
+      {showFullscreenPrompt && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full border-4 border-purple-500"
+          >
+            <div className="text-center">
+              {/* Icon */}
+              <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                <AlertCircle className="w-10 h-10 text-white" />
+              </div>
+
+              {/* Title */}
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+                🔒 Fullscreen Required
+              </h2>
+
+              {/* Message */}
+              <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+                For security and fair play, you must enter fullscreen mode to
+                take this quiz.
+              </p>
+
+              {/* Warning List */}
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-700 rounded-xl p-4 mb-6 text-left">
+                <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">
+                  ⚠️ Important Rules:
+                </p>
+                <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
+                  <li>• Do not exit fullscreen during the quiz</li>
+                  <li>• Do not switch tabs or windows</li>
+                  <li>• Do not use browser DevTools</li>
+                  <li>• Violations will be reported to your teacher</li>
+                </ul>
+              </div>
+
+              {/* Action Button */}
+              <button
+                onClick={handleEnterFullscreen}
+                className="w-full py-4 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-xl font-bold text-lg transition shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                Enter Fullscreen & Start Quiz
+              </button>
+
+              {/* Helper Text */}
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+                Click the button above to enable fullscreen mode
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 mb-6">
           <div className="flex items-center justify-between">
@@ -1215,62 +1278,8 @@ const LiveSessionJoin = () => {
           <LiveLeaderboard leaderboard={leaderboard.slice(0, 5)} compact />
         )}
       </div>
-
-      {/* Fullscreen Prompt Modal */}
-      {showFullscreenPrompt && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full border-4 border-purple-500"
-          >
-            <div className="text-center">
-              {/* Icon */}
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-                <AlertCircle className="w-10 h-10 text-white" />
-              </div>
-
-              {/* Title */}
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
-                🔒 Fullscreen Required
-              </h2>
-
-              {/* Message */}
-              <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                For security and fair play, you must enter fullscreen mode to
-                take this quiz.
-              </p>
-
-              {/* Warning List */}
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-700 rounded-xl p-4 mb-6 text-left">
-                <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">
-                  ⚠️ Important Rules:
-                </p>
-                <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
-                  <li>• Do not exit fullscreen during the quiz</li>
-                  <li>• Do not switch tabs or windows</li>
-                  <li>• Do not use browser DevTools</li>
-                  <li>• Violations will be reported to your teacher</li>
-                </ul>
-              </div>
-
-              {/* Action Button */}
-              <button
-                onClick={handleEnterFullscreen}
-                className="w-full py-4 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-xl font-bold text-lg transition shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                Enter Fullscreen & Start Quiz
-              </button>
-
-              {/* Helper Text */}
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-                Click the button above to enable fullscreen mode
-              </p>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
+    </>
   );
 };
 
