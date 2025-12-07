@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const Avatar = require("../../../../backend/models/Avatar");
+const Avatar = require("../models/Avatar");
 const { verifyToken } = require("../middleware/auth");
 const { VoiceCloneService } = require("../services/voiceService");
 

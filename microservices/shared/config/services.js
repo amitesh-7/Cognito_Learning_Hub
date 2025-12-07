@@ -25,6 +25,7 @@ const getServiceUrl = (serviceName) => {
     social: PORTS.SOCIAL_SERVICE,
     gamification: PORTS.GAMIFICATION_SERVICE,
     moderation: PORTS.MODERATION_SERVICE,
+    avatar: PORTS.AVATAR_SERVICE,
   };
 
   const port = portMap[serviceName] || 3000;
@@ -40,6 +41,7 @@ const SERVICES = {
   SOCIAL: getServiceUrl("social"),
   GAMIFICATION: getServiceUrl("gamification"),
   MODERATION: getServiceUrl("moderation"),
+  AVATAR: getServiceUrl("avatar"),
 };
 
 module.exports = { SERVICES, getServiceUrl };

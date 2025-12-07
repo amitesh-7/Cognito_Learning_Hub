@@ -14,6 +14,9 @@ const learningStyleRoutes = require("./routes/learningStyle");
 const app = express();
 const PORT = process.env.PORT || 3010;
 
+// Trust proxy - Required for rate limiting behind API Gateway/reverse proxy
+app.set("trust proxy", 1);
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

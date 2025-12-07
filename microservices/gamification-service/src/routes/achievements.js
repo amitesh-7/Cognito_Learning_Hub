@@ -38,9 +38,10 @@ router.get('/', authenticateToken, async (req, res, next) => {
 router.get('/:userId', authenticateToken, async (req, res, next) => {
   try {
     const { userId } = req.params;
+    const currentUserId = req.user.userId || req.user.id || req.user._id;
 
     // Authorization: Users can only view their own achievements unless admin
-    if (userId !== req.user.userId && req.user.role !== 'Admin') {
+    if (userId !== currentUserId && req.user.role !== 'Admin') {
       return res.status(403).json({
         success: false,
         error: 'Unauthorized to view other users achievements',

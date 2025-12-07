@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Avatar = require("../../../../backend/models/Avatar");
+const Avatar = require("../models/Avatar");
 const { verifyToken } = require("../middleware/auth");
 const { EmotionAnalyzer } = require("../services/emotionService");
 

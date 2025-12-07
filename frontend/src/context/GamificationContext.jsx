@@ -42,11 +42,18 @@ export const GamificationProvider = ({ children }) => {
       const headers = { "x-auth-token": token };
       const API_URL = import.meta.env.VITE_API_URL;
 
+      // Get user ID from auth context
+      const userId = user?.id || user?._id;
+      if (!userId) {
+        console.warn("No user ID available for gamification data fetch");
+        return;
+      }
+
       // Fetch all data in parallel
       const [statsRes, achievementsRes, userAchievementsRes, leaderboardRes] = await Promise.all([
         fetch(`${API_URL}/api/gamification/stats`, { headers }).catch(() => null),
         fetch(`${API_URL}/api/achievements`, { headers }).catch(() => null),
-        fetch(`${API_URL}/api/achievements/user`, { headers }).catch(() => null),
+        fetch(`${API_URL}/api/achievements/${userId}`, { headers }).catch(() => null),
         fetch(`${API_URL}/api/gamification/leaderboard?limit=10`, { headers }).catch(() => null),
       ]);
 

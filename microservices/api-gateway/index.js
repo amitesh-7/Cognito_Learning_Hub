@@ -212,6 +212,7 @@ app.get("/", (req, res) => {
       social: SERVICES.SOCIAL,
       gamification: SERVICES.GAMIFICATION,
       moderation: SERVICES.MODERATION,
+      avatar: SERVICES.AVATAR,
     },
   });
 });
@@ -460,7 +461,34 @@ app.use(
   })
 );
 
-// Route to Gamification Service
+// Route to Gamification Service - Handle all /api/gamification routes
+app.use(
+  "/api/gamification/stats",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.GAMIFICATION,
+    pathRewrite: { "^/api/gamification/stats": "/api/stats/me" },
+  })
+);
+
+app.use(
+  "/api/gamification/leaderboard",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.GAMIFICATION,
+    pathRewrite: { "^/api/gamification/leaderboard": "/api/leaderboards/global" },
+  })
+);
+
+app.use(
+  "/api/gamification",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.GAMIFICATION,
+    pathRewrite: { "^/api/gamification": "/api" },
+  })
+);
+
 app.use(
   "/api/achievements",
   createProxyMiddleware({
@@ -476,6 +504,25 @@ app.use(
     ...proxyOptions,
     target: SERVICES.GAMIFICATION,
     pathRewrite: { "^/api/stats": "/api/stats" },
+  })
+);
+
+app.use(
+  "/api/leaderboards",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.GAMIFICATION,
+    pathRewrite: { "^/api/leaderboards": "/api/leaderboards" },
+  })
+);
+
+// Gamification Events - For quiz completion XP triggers
+app.use(
+  "/api/events",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.GAMIFICATION,
+    pathRewrite: { "^/api/events": "/api/events" },
   })
 );
 
@@ -495,6 +542,52 @@ app.use(
     ...proxyOptions,
     target: SERVICES.MODERATION,
     pathRewrite: { "^/api/admin": "/api/admin" },
+  })
+);
+
+// Route to Avatar Service
+app.use(
+  "/api/avatar",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.AVATAR,
+    pathRewrite: { "^/api/avatar": "/api/avatar" },
+  })
+);
+
+app.use(
+  "/api/emotions",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.AVATAR,
+    pathRewrite: { "^/api/emotions": "/api/emotions" },
+  })
+);
+
+app.use(
+  "/api/evolution",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.AVATAR,
+    pathRewrite: { "^/api/evolution": "/api/evolution" },
+  })
+);
+
+app.use(
+  "/api/voice",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.AVATAR,
+    pathRewrite: { "^/api/voice": "/api/voice" },
+  })
+);
+
+app.use(
+  "/api/learning-style",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.AVATAR,
+    pathRewrite: { "^/api/learning-style": "/api/learning-style" },
   })
 );
 

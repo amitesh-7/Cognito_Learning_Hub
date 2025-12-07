@@ -4,15 +4,43 @@ const statsManager = require('../services/statsManager');
 const { authenticateToken, adminMiddleware } = require('../../../shared/middleware/auth');
 
 /**
+ * GET /api/stats/me
+ * Get current user's stats (special route for convenience)
+ */
+router.get('/me', authenticateToken, async (req, res, next) => {
+  try {
+    const userId = req.user.userId || req.user.id || req.user._id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'User ID not found in token',
+      });
+    }
+
+    const stats = await statsManager.getStats(userId);
+
+    res.json({
+      success: true,
+      userId,
+      stats,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /api/stats/:userId
  * Get user stats
  */
 router.get('/:userId', authenticateToken, async (req, res, next) => {
   try {
     const { userId } = req.params;
+    const currentUserId = req.user.userId || req.user.id || req.user._id;
 
     // Authorization: Users can only view their own stats unless admin
-    if (userId !== req.user.userId && req.user.role !== 'Admin') {
+    if (userId !== currentUserId && req.user.role !== 'Admin') {
       return res.status(403).json({
         success: false,
         error: 'Unauthorized to view other users stats',

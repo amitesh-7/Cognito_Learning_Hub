@@ -33,6 +33,7 @@ import {
   ChevronDown,
   Play,
   Gamepad2,
+  User,
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useTheme } from "../hooks/useTheme";
@@ -97,6 +98,7 @@ const Navbar = () => {
         },
         { to: "/quizzes", label: "Quizzes", icon: BookOpen },
         { to: "/doubt-solver", label: "AI Tutor", icon: Bot },
+        { to: "/avatar", label: "My Avatar", icon: User },
         { to: "/achievements", label: "Achievements", icon: Trophy },
         { to: "/social", label: "Social Hub", icon: Users },
         { to: "/chat", label: "Chat", icon: MessageSquare },

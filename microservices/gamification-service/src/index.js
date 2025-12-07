@@ -11,6 +11,7 @@ const achievementRoutes = require("./routes/achievements");
 const leaderboardRoutes = require("./routes/leaderboards");
 const statsRoutes = require("./routes/stats");
 const eventRoutes = require("./routes/events");
+const xpRoutes = require("./routes/xp");
 const { startStreakCronJob } = require("./jobs/streakChecker");
 const { startStatsSyncJob } = require("./jobs/statsSync");
 
@@ -73,6 +74,7 @@ app.use("/api/achievements", achievementRoutes);
 app.use("/api/leaderboards", leaderboardRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api", xpRoutes); // XP and achievement check routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {

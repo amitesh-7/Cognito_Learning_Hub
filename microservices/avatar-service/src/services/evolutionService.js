@@ -1,4 +1,4 @@
-const Avatar = require("../../../../backend/models/Avatar");
+const Avatar = require("../models/Avatar");
 
 /**
  * Avatar Evolution Service

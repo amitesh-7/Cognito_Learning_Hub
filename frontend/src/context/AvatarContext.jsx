@@ -31,9 +31,7 @@ export const AvatarProvider = ({ children }) => {
     intensity: 50,
   });
 
-  const API_URL = import.meta.env.VITE_AVATAR_SERVICE_URL || 
-                  import.meta.env.VITE_API_URL?.replace("/api", "") || 
-                  "http://localhost:3010";
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
   // Fetch avatar data
   const fetchAvatar = useCallback(async () => {
@@ -70,7 +68,7 @@ export const AvatarProvider = ({ children }) => {
   }, [isAuthenticated, API_URL]);
 
   // Create avatar
-  const createAvatar = useCallback(async () => {
+  const createAvatar = useCallback(async (avatarData = {}) => {
     try {
       const token = localStorage.getItem("quizwise-token");
       const response = await fetch(`${API_URL}/api/avatar`, {
@@ -79,16 +77,20 @@ export const AvatarProvider = ({ children }) => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify(avatarData),
       });
 
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
           setAvatar(data.avatar);
+          return data.avatar;
         }
       }
+      throw new Error("Failed to create avatar");
     } catch (err) {
       console.error("Error creating avatar:", err);
+      throw err;
     }
   }, [API_URL]);
 
@@ -273,14 +275,21 @@ export const AvatarProvider = ({ children }) => {
     currentReaction,
     emotionalState,
     fetchAvatar,
+    createAvatar,
     updateAvatar,
     triggerReaction,
     addExperience,
     getReaction,
     analyzeLearningStyle,
     generateVoiceExplanation,
+    learningInsights: avatar?.learningStyle?.insights || null,
     isAvatarEnabled: avatar?.settings?.showAvatar ?? true,
     isVoiceEnabled: avatar?.settings?.enableVoice ?? false,
+    setIsAvatarEnabled: (enabled) => {
+      if (avatar) {
+        updateAvatar({ settings: { ...avatar.settings, showAvatar: enabled } });
+      }
+    },
   };
 
   return (

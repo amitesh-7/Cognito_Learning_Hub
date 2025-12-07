@@ -86,6 +86,7 @@ module.exports = {
     SOCIAL_SERVICE: 3006,
     GAMIFICATION_SERVICE: 3007,
     MODERATION_SERVICE: 3008,
+    AVATAR_SERVICE: 3010,
   },
 
   // Events (for event bus)
