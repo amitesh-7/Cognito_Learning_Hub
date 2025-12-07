@@ -442,6 +442,17 @@ const LiveSessionJoin = () => {
       navigate("/dashboard");
     });
 
+    // Kicked from session
+    socket.on("kicked-from-session", ({ message, reason }) => {
+      console.warn("⚠️ Kicked from session:", message);
+      alert(`❌ ${message}\n\nReason: ${reason}\n\nYou will be redirected to the dashboard.`);
+      
+      // Clean up and redirect
+      setHasJoined(false);
+      setSessionCode("");
+      setTimeout(() => navigate("/dashboard"), 2000);
+    });
+
     return () => {
       socket.off("quiz-started");
       socket.off("question-started");
@@ -449,6 +460,7 @@ const LiveSessionJoin = () => {
       socket.off("answer-submitted");
       socket.off("session-ended");
       socket.off("host-disconnected");
+      socket.off("kicked-from-session");
     };
   }, [
     socket,

@@ -10,6 +10,7 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  UserX,
 } from "lucide-react";
 
 /**
@@ -156,6 +157,25 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
       FULLSCREEN_EXIT: "Exited Fullscreen",
     };
     return names[type] || type?.replace(/_/g, " ") || "Unknown Activity";
+  };
+
+  // Kick student from session
+  const kickStudent = (userId, userName) => {
+    if (!socket || !sessionCode) return;
+
+    const confirmed = window.confirm(
+      `⚠️ Remove ${userName} from the quiz?\n\nThis action will:\n• Immediately disconnect the student\n• Their answers will NOT be saved\n• They cannot rejoin this session\n\nAre you sure?`
+    );
+
+    if (confirmed) {
+      socket.emit("kick-participant", { sessionCode, userId, userName });
+      
+      // Show feedback
+      alert(`✅ ${userName} has been removed from the quiz.`);
+      
+      // Remove alerts from this user
+      setAlerts((prev) => prev.filter((alert) => alert.userId !== userId));
+    }
   };
 
   // Clear alert
@@ -314,13 +334,28 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
                           </div>
                         </div>
 
-                        {/* Dismiss Button */}
-                        <button
-                          onClick={() => dismissAlert(alert.id)}
-                          className="text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                        {/* Action Buttons */}
+                        <div className="flex flex-col gap-1">
+                          {/* Kick Student Button */}
+                          {alert.userId && alert.userName && (
+                            <button
+                              onClick={() => kickStudent(alert.userId, alert.userName)}
+                              className="p-1.5 rounded bg-red-100 hover:bg-red-200 text-red-600 transition-colors"
+                              title={`Remove ${alert.userName} from quiz`}
+                            >
+                              <UserX className="w-4 h-4" />
+                            </button>
+                          )}
+                          
+                          {/* Dismiss Button */}
+                          <button
+                            onClick={() => dismissAlert(alert.id)}
+                            className="p-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                            title="Dismiss alert"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
                   ))}

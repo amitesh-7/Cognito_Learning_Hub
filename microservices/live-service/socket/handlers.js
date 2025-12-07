@@ -666,6 +666,68 @@ function initializeSocketHandlers(io) {
     });
 
     // ============================================
+    // KICK PARTICIPANT (HOST ONLY)
+    // ============================================
+    socket.on("kick-participant", async ({ sessionCode, userId, userName }) => {
+      try {
+        const session = await sessionManager.getSession(sessionCode);
+
+        if (!session) {
+          socket.emit("error", { message: "Session not found" });
+          return;
+        }
+
+        // Verify the requester is the host
+        const requesterId = socket.userId;
+        if (session.hostId !== requesterId) {
+          socket.emit("error", { message: "Only host can kick participants" });
+          logger.warn(
+            `[Security] Non-host ${requesterId} tried to kick participant ${userId} from session ${sessionCode}`
+          );
+          return;
+        }
+
+        // Remove participant from session
+        await sessionManager.updateParticipant(sessionCode, userId, {
+          isActive: false,
+          kickedAt: new Date().toISOString(),
+          kickedBy: requesterId,
+        });
+
+        // Get the kicked participant's socket
+        const participantSockets = await io.in(sessionCode).fetchSockets();
+        const kickedSocket = participantSockets.find(
+          (s) => s.userId === userId
+        );
+
+        // Disconnect the participant
+        if (kickedSocket) {
+          kickedSocket.emit("kicked-from-session", {
+            message: "You have been removed from this quiz by the host.",
+            reason: "Host decision - possible integrity violation",
+          });
+
+          kickedSocket.leave(sessionCode);
+          kickedSocket.disconnect(true);
+        }
+
+        // Notify all participants
+        io.to(sessionCode).emit("participant-kicked", {
+          userId,
+          userName,
+          timestamp: new Date().toISOString(),
+        });
+
+        logger.info(
+          `[Session] Host ${requesterId} kicked participant ${userName} (${userId}) from session ${sessionCode}`
+        );
+      } catch (error) {
+        logger.error("[Session] Error kicking participant:", error);
+        socket.emit("error", { message: "Failed to kick participant" });
+      }
+    });
+
+    // ============================================
     // DISCONNECT
     // ============================================
     socket.on("disconnect", async () => {

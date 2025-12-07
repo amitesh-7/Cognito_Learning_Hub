@@ -228,6 +228,15 @@ const LiveSessionHost = () => {
       setSessionStatus("ended");
     };
 
+    // Participant kicked
+    const handleParticipantKicked = ({ userId, userName }) => {
+      console.log(`👢 Participant kicked: ${userName} (${userId})`);
+      setParticipants((prev) =>
+        prev.filter((p) => p.userId !== userId)
+      );
+      // Could show a toast notification here
+    };
+
     socket.on("participant-joined", handleParticipantJoined);
     socket.on("participant-left", handleParticipantLeft);
     socket.on("leaderboard-updated", handleLeaderboardUpdate);
@@ -235,6 +244,7 @@ const LiveSessionHost = () => {
     socket.on("question-started", handleQuestionStarted);
     socket.on("question-ended", handleQuestionEnded);
     socket.on("session-ended", handleSessionEnded);
+    socket.on("participant-kicked", handleParticipantKicked);
 
     console.log("✅ Socket event listeners registered");
 
@@ -247,6 +257,7 @@ const LiveSessionHost = () => {
       socket.off("question-started", handleQuestionStarted);
       socket.off("question-ended", handleQuestionEnded);
       socket.off("session-ended", handleSessionEnded);
+      socket.off("participant-kicked", handleParticipantKicked);
     };
   }, [socket]);
 
