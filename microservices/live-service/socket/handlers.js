@@ -7,6 +7,7 @@ const { nanoid } = require("nanoid");
 const mongoose = require("mongoose");
 const createLogger = require("../../shared/utils/logger");
 const sessionManager = require("../services/sessionManager");
+const AntiCheatService = require("../services/antiCheatService");
 const LiveSession = require("../models/LiveSession");
 
 const logger = createLogger("socket-handlers");
@@ -343,6 +344,40 @@ function initializeSocketHandlers(io) {
             return;
           }
 
+          // Get participant info for anti-cheat logging
+          const participant = await sessionManager.getParticipant(
+            sessionCode,
+            userId
+          );
+          const userName = participant?.userName || "Unknown";
+
+          // ============================================
+          // ANTI-CHEAT: Server-Side Time Validation
+          // ============================================
+          const questionStartTime =
+            session.questionStartTimes?.[session.currentQuestionIndex];
+
+          if (questionStartTime) {
+            const validation = await AntiCheatService.validateAnswerTime(
+              sessionCode,
+              userId,
+              userName,
+              questionStartTime,
+              timeSpent
+            );
+
+            if (!validation.valid) {
+              socket.emit("answer-rejected", {
+                reason: validation.reason,
+                message: "Answer submitted after time limit",
+              });
+              logger.warn(
+                `[AntiCheat] Answer rejected - ${validation.reason} - User: ${userName}`
+              );
+              return;
+            }
+          }
+
           // Get quiz from cache
           const quiz = await sessionManager.getCachedQuiz(sessionCode);
           if (!quiz) {
@@ -535,6 +570,82 @@ function initializeSocketHandlers(io) {
     });
 
     // ============================================
+    // ANTI-CHEAT: SUSPICIOUS ACTIVITY
+    // ============================================
+    socket.on("suspicious-activity", async (data) => {
+      try {
+        const {
+          sessionCode,
+          userId,
+          activityType,
+          severity,
+          details,
+          timestamp,
+        } = data;
+
+        // Get participant info
+        const participant = await sessionManager.getParticipant(
+          sessionCode,
+          userId
+        );
+        const userName = participant?.userName || "Unknown";
+
+        // Record the activity
+        await AntiCheatService.recordActivity(
+          sessionCode,
+          userId,
+          userName,
+          activityType,
+          severity,
+          details
+        );
+
+        // Broadcast to host for real-time monitoring
+        const session = await sessionManager.getSession(sessionCode);
+        if (session && session.hostId) {
+          io.to(sessionCode).emit("integrity-alert", {
+            userId,
+            userName,
+            activityType,
+            severity,
+            timestamp,
+            details,
+          });
+        }
+
+        logger.warn(
+          `[AntiCheat] ${activityType} detected - User: ${userName} (${userId}), Session: ${sessionCode}`
+        );
+      } catch (error) {
+        logger.error("[AntiCheat] Error handling suspicious activity:", error);
+      }
+    });
+
+    // ============================================
+    // ANTI-CHEAT: DEVICE FINGERPRINT
+    // ============================================
+    socket.on("device-fingerprint", async (data) => {
+      try {
+        const { sessionCode, userId, fingerprint, timestamp } = data;
+
+        // Store fingerprint (could be used for detecting multiple devices)
+        await sessionManager.setDeviceFingerprint(
+          sessionCode,
+          userId,
+          fingerprint
+        );
+
+        logger.debug(
+          `[AntiCheat] Device fingerprint recorded for user ${userId} in session ${sessionCode}`
+        );
+
+        // TODO: Implement cross-checking logic for same device/different users
+      } catch (error) {
+        logger.error("[AntiCheat] Error storing device fingerprint:", error);
+      }
+    });
+
+    // ============================================
     // DISCONNECT
     // ============================================
     socket.on("disconnect", async () => {
@@ -630,6 +741,42 @@ async function endSession(sessionCode, io) {
 
     // Get final leaderboard
     const leaderboard = await sessionManager.getLeaderboard(sessionCode);
+
+    // ============================================
+    // ANTI-CHEAT: Answer Pattern Analysis
+    // ============================================
+    try {
+      const participants = await sessionManager.getAllParticipants(sessionCode);
+      const quiz = await sessionManager.getCachedQuiz(sessionCode);
+
+      if (participants && quiz && Object.keys(participants).length > 1) {
+        // Analyze answer patterns for potential collusion
+        const analysisResults = await AntiCheatService.analyzeAnswerPatterns(
+          sessionCode,
+          participants,
+          quiz
+        );
+
+        // Log high-risk patterns
+        if (analysisResults.suspiciousPairs.length > 0) {
+          logger.warn(
+            `[AntiCheat] Suspicious answer patterns detected in session ${sessionCode}:`,
+            analysisResults.suspiciousPairs
+          );
+
+          // Alert host about suspicious patterns
+          io.to(sessionCode).emit("integrity-alert", {
+            type: "ANSWER_PATTERN_MATCH",
+            severity: "HIGH",
+            message: `Detected ${analysisResults.suspiciousPairs.length} participant pairs with similar answer patterns (>85% match)`,
+            details: analysisResults.suspiciousPairs,
+          });
+        }
+      }
+    } catch (antiCheatError) {
+      logger.error("[AntiCheat] Pattern analysis failed:", antiCheatError);
+      // Don't block session ending if anti-cheat analysis fails
+    }
 
     // Broadcast session end
     io.to(sessionCode).emit("session-ended", {

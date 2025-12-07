@@ -4,6 +4,7 @@ import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 import LiveLeaderboard from "../components/LiveLeaderboard";
+import IntegrityMonitor from "../components/LiveSession/IntegrityMonitor";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   QrCode,
@@ -765,6 +766,13 @@ const LiveSessionHost = () => {
           </div>
         </div>
       </div>
+
+      {/* Integrity Monitor for Host */}
+      <IntegrityMonitor
+        socket={socket}
+        sessionCode={sessionCode}
+        isHost={true}
+      />
     </div>
   );
 };

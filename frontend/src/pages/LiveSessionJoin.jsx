@@ -9,6 +9,13 @@ import Confetti from "react-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import {
+  initializeTabFocusDetection,
+  initializeCopyPrevention,
+  initializeDevToolsDetection,
+  validateAnswerTime,
+  getDeviceFingerprint,
+} from "../utils/antiCheatingDetector";
+import {
   LogIn,
   Clock,
   Trophy,
@@ -275,6 +282,54 @@ const LiveSessionJoin = () => {
       handleJoinSession();
     }
   }, [searchParams, hasJoined, socket, isConnected, handleJoinSession]);
+
+  // Initialize anti-cheating measures after joining
+  useEffect(() => {
+    if (!hasJoined || !socket) return;
+
+    const userId = user?._id || user?.id || user?.userId;
+    if (!userId) return;
+
+    console.log("[AntiCheat] Initializing anti-cheating measures...");
+
+    // Initialize tab/window focus detection
+    const cleanupTabDetection = initializeTabFocusDetection(
+      socket,
+      sessionCode.toUpperCase(),
+      userId
+    );
+
+    // Initialize copy prevention
+    const cleanupCopyPrevention = initializeCopyPrevention(
+      socket,
+      sessionCode.toUpperCase(),
+      userId
+    );
+
+    // Initialize DevTools detection
+    const cleanupDevTools = initializeDevToolsDetection(
+      socket,
+      sessionCode.toUpperCase(),
+      userId
+    );
+
+    // Send device fingerprint for anomaly detection
+    const fingerprint = getDeviceFingerprint();
+    socket.emit("device-fingerprint", {
+      sessionCode: sessionCode.toUpperCase(),
+      userId,
+      fingerprint,
+      timestamp: Date.now(),
+    });
+
+    // Cleanup on unmount
+    return () => {
+      console.log("[AntiCheat] Cleaning up anti-cheating measures...");
+      cleanupTabDetection?.();
+      cleanupCopyPrevention?.();
+      cleanupDevTools?.();
+    };
+  }, [hasJoined, socket, sessionCode, user]);
 
   // Socket event handlers
   useEffect(() => {
