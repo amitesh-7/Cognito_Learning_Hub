@@ -15,6 +15,7 @@ import {
   validateAnswerTime,
   getDeviceFingerprint,
 } from "../utils/antiCheatingDetector";
+import { initializeFullscreenEnforcement } from "../utils/fullscreenEnforcement";
 import {
   LogIn,
   Clock,
@@ -59,7 +60,10 @@ const LiveSessionJoin = () => {
   const [quizEnded, setQuizEnded] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [myAnswers, setMyAnswers] = useState([]); // Track all answers for analysis
+  const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false); // Show fullscreen entry prompt
+  const [isInFullscreen, setIsInFullscreen] = useState(false); // Track fullscreen state
   const qrScannerRef = useRef(null);
+  const fullscreenRef = useRef(null); // Fullscreen enforcement API
 
   // Handle QR code from file upload
   const handleQRImageUpload = async (file) => {
@@ -313,6 +317,21 @@ const LiveSessionJoin = () => {
       userId
     );
 
+    // Initialize fullscreen enforcement
+    const fullscreenAPI = initializeFullscreenEnforcement(
+      socket,
+      sessionCode.toUpperCase(),
+      userId,
+      {
+        maxViolations: 3,
+        warningDuration: 5000,
+        autoReenterDelay: 2000,
+        enableBeforeUnload: true,
+      }
+    );
+    fullscreenRef.current = fullscreenAPI;
+    console.log("[AntiCheat] Fullscreen enforcement initialized");
+
     // Send device fingerprint for anomaly detection
     const fingerprint = getDeviceFingerprint();
     socket.emit("device-fingerprint", {
@@ -328,8 +347,51 @@ const LiveSessionJoin = () => {
       cleanupTabDetection?.();
       cleanupCopyPrevention?.();
       cleanupDevTools?.();
+      fullscreenAPI?.cleanup();
     };
   }, [hasJoined, socket, sessionCode, user]);
+
+  // Debug: Log when fullscreen prompt state changes
+  useEffect(() => {
+    console.log(
+      `[Fullscreen Debug] showFullscreenPrompt state: ${showFullscreenPrompt}`
+    );
+  }, [showFullscreenPrompt]);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isFullscreen = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+      console.log(`[Fullscreen] State changed: ${isFullscreen}`);
+      setIsInFullscreen(isFullscreen);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        "mozfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        "MSFullscreenChange",
+        handleFullscreenChange
+      );
+    };
+  }, []);
 
   // Socket event handlers
   useEffect(() => {
@@ -338,8 +400,14 @@ const LiveSessionJoin = () => {
     // Quiz started
     socket.on(
       "quiz-started",
-      ({ questionIndex, question, totalQuestions: total, timestamp }) => {
+      async ({ questionIndex, question, totalQuestions: total, timestamp }) => {
         console.log("🚀 Quiz started! Question:", questionIndex + 1);
+
+        // Show fullscreen prompt modal FIRST
+        console.log("[Fullscreen] Showing fullscreen prompt...");
+        setShowFullscreenPrompt(true);
+
+        // Then set question data
         setCurrentQuestion(question);
         setCurrentQuestionIndex(questionIndex);
         setTotalQuestions(total);
@@ -413,7 +481,7 @@ const LiveSessionJoin = () => {
     // Session ended
     socket.on(
       "session-ended",
-      ({
+      async ({
         leaderboard: finalLeaderboard,
         totalParticipants,
         totalQuestions: total,
@@ -422,6 +490,11 @@ const LiveSessionJoin = () => {
         setLeaderboard(finalLeaderboard);
         setTotalQuestions(total);
         setQuizEnded(true);
+
+        // Exit fullscreen mode
+        if (fullscreenRef.current) {
+          await fullscreenRef.current.endQuiz();
+        }
 
         // Show confetti if user is in top 3
         const userId = user?._id || user?.id || user?.userId;
@@ -436,15 +509,27 @@ const LiveSessionJoin = () => {
     );
 
     // Host disconnected
-    socket.on("host-disconnected", ({ message }) => {
+    socket.on("host-disconnected", async ({ message }) => {
       console.warn("⚠️ Host disconnected");
+
+      // Exit fullscreen mode before redirecting
+      if (fullscreenRef.current) {
+        await fullscreenRef.current.endQuiz();
+      }
+
       alert(message);
       navigate("/dashboard");
     });
 
     // Kicked from session
-    socket.on("kicked-from-session", ({ message, reason }) => {
+    socket.on("kicked-from-session", async ({ message, reason }) => {
       console.warn("⚠️ Kicked from session:", message);
+
+      // Exit fullscreen mode before redirecting
+      if (fullscreenRef.current) {
+        await fullscreenRef.current.endQuiz();
+      }
+
       alert(
         `❌ ${message}\n\nReason: ${reason}\n\nYou will be redirected to the dashboard.`
       );
@@ -542,6 +627,48 @@ const LiveSessionJoin = () => {
 
     // Submit to server
     handleSubmitAnswer(option);
+  };
+
+  // Handle fullscreen entry (requires user interaction)
+  const handleEnterFullscreen = async () => {
+    console.log("[Fullscreen] User clicked to enter fullscreen");
+
+    // Try using the fullscreen API from our ref
+    if (fullscreenRef.current) {
+      try {
+        const success = await fullscreenRef.current.startQuiz();
+        console.log(`[Fullscreen] Enter fullscreen result: ${success}`);
+        if (success) {
+          setShowFullscreenPrompt(false);
+          setIsInFullscreen(true);
+        }
+      } catch (error) {
+        console.error("[Fullscreen] Error entering fullscreen:", error);
+      }
+    } else {
+      // Fallback: Direct fullscreen request
+      console.log("[Fullscreen] Using fallback direct fullscreen request");
+      try {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          await elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+          await elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+          await elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+          await elem.msRequestFullscreen();
+        }
+        console.log("[Fullscreen] ✅ Entered fullscreen via fallback");
+        setShowFullscreenPrompt(false);
+        setIsInFullscreen(true);
+      } catch (error) {
+        console.error("[Fullscreen] Fallback fullscreen failed:", error);
+        alert(
+          "⚠️ Could not enter fullscreen. Please try pressing F11 or use your browser's fullscreen option."
+        );
+      }
+    }
   };
 
   if (!user) {
@@ -768,9 +895,46 @@ const LiveSessionJoin = () => {
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
             You're In!
           </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
             Waiting for the host to start the quiz...
           </p>
+
+          {/* Fullscreen Preparation Notice */}
+          {!isInFullscreen && (
+            <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-700 rounded-xl">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                <div className="text-left">
+                  <h3 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-1">
+                    🔒 Fullscreen Required
+                  </h3>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-3">
+                    This quiz requires fullscreen mode for security. Click the
+                    button below to enter fullscreen before the quiz starts.
+                  </p>
+                  <button
+                    onClick={handleEnterFullscreen}
+                    className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-lg font-bold text-sm transition shadow-lg hover:shadow-xl"
+                  >
+                    🖥️ Enter Fullscreen Now
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Success Message when in fullscreen */}
+          {isInFullscreen && (
+            <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-700 rounded-xl">
+              <div className="flex items-center gap-3 justify-center">
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <p className="text-sm font-semibold text-green-700 dark:text-green-400">
+                  ✅ Fullscreen Active - Ready for Quiz!
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-center gap-2">
             <div
               className="w-3 h-3 bg-purple-500 rounded-full animate-bounce"
@@ -972,175 +1136,233 @@ const LiveSessionJoin = () => {
 
   // Active Quiz
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Question {currentQuestionIndex + 1} / {totalQuestions}
+    <>
+      {/* Fullscreen Prompt Modal - Rendered at root level */}
+      {showFullscreenPrompt && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full border-4 border-purple-500"
+          >
+            <div className="text-center">
+              {/* Icon */}
+              <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                <AlertCircle className="w-10 h-10 text-white" />
               </div>
-            </div>
-            <div className="flex items-center gap-4">
+
+              {/* Title */}
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+                🔒 Fullscreen Required
+              </h2>
+
+              {/* Message */}
+              <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+                For security and fair play, you must enter fullscreen mode to
+                take this quiz.
+              </p>
+
+              {/* Warning List */}
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-700 rounded-xl p-4 mb-6 text-left">
+                <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">
+                  ⚠️ Important Rules:
+                </p>
+                <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
+                  <li>• Do not exit fullscreen during the quiz</li>
+                  <li>• Do not switch tabs or windows</li>
+                  <li>• Do not use browser DevTools</li>
+                  <li>• Violations will be reported to your teacher</li>
+                </ul>
+              </div>
+
+              {/* Action Button */}
               <button
-                onClick={toggleMute}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                title={isMuted() ? "Unmute sounds" : "Mute sounds"}
+                onClick={handleEnterFullscreen}
+                className="w-full py-4 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-xl font-bold text-lg transition shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                {isMuted() ? (
-                  <VolumeX className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                ) : (
-                  <Volume2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                )}
+                Enter Fullscreen & Start Quiz
               </button>
-              <div className="flex items-center gap-2">
-                <Clock
-                  className={`w-5 h-5 ${
-                    timeLeft <= 10
-                      ? "text-red-500"
-                      : "text-gray-600 dark:text-gray-400"
-                  }`}
-                />
-                <span
-                  className={`text-2xl font-bold ${
-                    timeLeft <= 10
-                      ? "text-red-500 animate-pulse"
-                      : "text-gray-800 dark:text-white"
-                  }`}
-                >
-                  {timeLeft}s
-                </span>
-              </div>
+
+              {/* Helper Text */}
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+                Click the button above to enable fullscreen mode
+              </p>
             </div>
-          </div>
+          </motion.div>
         </div>
+      )}
 
-        {/* Question Card */}
-        <motion.div
-          key={currentQuestionIndex}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 mb-6"
-        >
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-8 text-center">
-            {currentQuestion?.question}
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {currentQuestion?.options.map((option, index) => {
-              const isSelected = selectedAnswer === option;
-              const isCorrect = answerResult?.correctAnswer === option;
-              // Only show result after we get server response
-              const showResult = hasAnswered && answerResult;
-
-              let buttonClass =
-                "p-6 rounded-xl border-2 transition-all transform hover:scale-105 cursor-pointer ";
-
-              if (showResult) {
-                if (isCorrect) {
-                  buttonClass +=
-                    "border-green-500 bg-green-50 dark:bg-green-900/20";
-                } else if (isSelected && !isCorrect) {
-                  buttonClass += "border-red-500 bg-red-50 dark:bg-red-900/20";
-                } else {
-                  buttonClass +=
-                    "border-gray-300 dark:border-gray-600 opacity-60";
-                }
-              } else {
-                buttonClass += isSelected
-                  ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20 scale-105"
-                  : "border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-700";
-              }
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleAnswerClick(option)}
-                  disabled={hasAnswered}
-                  className={buttonClass}
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
-                        showResult && isCorrect
-                          ? "bg-green-500 text-white"
-                          : showResult && isSelected && !isCorrect
-                          ? "bg-red-500 text-white"
-                          : isSelected
-                          ? "bg-purple-500 text-white"
-                          : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      {String.fromCharCode(65 + index)}
-                    </div>
-                    <span className="text-lg font-medium text-gray-800 dark:text-white flex-1 text-left">
-                      {option}
-                    </span>
-                    {showResult && isCorrect && (
-                      <CheckCircle className="w-6 h-6 text-green-500" />
-                    )}
-                    {showResult && isSelected && !isCorrect && (
-                      <XCircle className="w-6 h-6 text-red-500" />
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Answer Result */}
-          {answerResult && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`mt-6 p-6 rounded-xl ${
-                answerResult.isCorrect
-                  ? "bg-green-50 dark:bg-green-900/20 border-2 border-green-500"
-                  : "bg-red-50 dark:bg-red-900/20 border-2 border-red-500"
-              }`}
-            >
-              <div className="flex items-center gap-3 mb-3">
-                {answerResult.isCorrect ? (
-                  <CheckCircle className="w-6 h-6 text-green-500" />
-                ) : (
-                  <XCircle className="w-6 h-6 text-red-500" />
-                )}
-                <h3
-                  className={`text-xl font-bold ${
-                    answerResult.isCorrect
-                      ? "text-green-700 dark:text-green-400"
-                      : "text-red-700 dark:text-red-400"
-                  }`}
-                >
-                  {answerResult.isCorrect ? "Correct!" : "Incorrect"}
-                </h3>
-                <div className="ml-auto text-right">
-                  <div className="text-2xl font-bold text-gray-800 dark:text-white">
-                    +{(answerResult.pointsEarned || 0).toFixed(1)} pts
-                  </div>
-                  {answerResult.streakBonus > 0 && (
-                    <div className="text-sm text-orange-600 dark:text-orange-400 font-semibold flex items-center gap-1 justify-end">
-                      🔥 +{answerResult.streakBonus} streak bonus!
-                    </div>
-                  )}
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Question {currentQuestionIndex + 1} / {totalQuestions}
                 </div>
               </div>
-              {answerResult.explanation && (
-                <p className="text-gray-700 dark:text-gray-300">
-                  <strong>Explanation:</strong> {answerResult.explanation}
-                </p>
-              )}
-            </motion.div>
-          )}
-        </motion.div>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={toggleMute}
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                  title={isMuted() ? "Unmute sounds" : "Mute sounds"}
+                >
+                  {isMuted() ? (
+                    <VolumeX className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  ) : (
+                    <Volume2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  )}
+                </button>
+                <div className="flex items-center gap-2">
+                  <Clock
+                    className={`w-5 h-5 ${
+                      timeLeft <= 10
+                        ? "text-red-500"
+                        : "text-gray-600 dark:text-gray-400"
+                    }`}
+                  />
+                  <span
+                    className={`text-2xl font-bold ${
+                      timeLeft <= 10
+                        ? "text-red-500 animate-pulse"
+                        : "text-gray-800 dark:text-white"
+                    }`}
+                  >
+                    {timeLeft}s
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {/* Mini Leaderboard */}
-        {leaderboard.length > 0 && (
-          <LiveLeaderboard leaderboard={leaderboard.slice(0, 5)} compact />
-        )}
+          {/* Question Card */}
+          <motion.div
+            key={currentQuestionIndex}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 mb-6"
+          >
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-8 text-center">
+              {currentQuestion?.question}
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {currentQuestion?.options.map((option, index) => {
+                const isSelected = selectedAnswer === option;
+                const isCorrect = answerResult?.correctAnswer === option;
+                // Only show result after we get server response
+                const showResult = hasAnswered && answerResult;
+
+                let buttonClass =
+                  "p-6 rounded-xl border-2 transition-all transform hover:scale-105 cursor-pointer ";
+
+                if (showResult) {
+                  if (isCorrect) {
+                    buttonClass +=
+                      "border-green-500 bg-green-50 dark:bg-green-900/20";
+                  } else if (isSelected && !isCorrect) {
+                    buttonClass +=
+                      "border-red-500 bg-red-50 dark:bg-red-900/20";
+                  } else {
+                    buttonClass +=
+                      "border-gray-300 dark:border-gray-600 opacity-60";
+                  }
+                } else {
+                  buttonClass += isSelected
+                    ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20 scale-105"
+                    : "border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-700";
+                }
+
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswerClick(option)}
+                    disabled={hasAnswered}
+                    className={buttonClass}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
+                          showResult && isCorrect
+                            ? "bg-green-500 text-white"
+                            : showResult && isSelected && !isCorrect
+                            ? "bg-red-500 text-white"
+                            : isSelected
+                            ? "bg-purple-500 text-white"
+                            : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                        }`}
+                      >
+                        {String.fromCharCode(65 + index)}
+                      </div>
+                      <span className="text-lg font-medium text-gray-800 dark:text-white flex-1 text-left">
+                        {option}
+                      </span>
+                      {showResult && isCorrect && (
+                        <CheckCircle className="w-6 h-6 text-green-500" />
+                      )}
+                      {showResult && isSelected && !isCorrect && (
+                        <XCircle className="w-6 h-6 text-red-500" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Answer Result */}
+            {answerResult && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`mt-6 p-6 rounded-xl ${
+                  answerResult.isCorrect
+                    ? "bg-green-50 dark:bg-green-900/20 border-2 border-green-500"
+                    : "bg-red-50 dark:bg-red-900/20 border-2 border-red-500"
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  {answerResult.isCorrect ? (
+                    <CheckCircle className="w-6 h-6 text-green-500" />
+                  ) : (
+                    <XCircle className="w-6 h-6 text-red-500" />
+                  )}
+                  <h3
+                    className={`text-xl font-bold ${
+                      answerResult.isCorrect
+                        ? "text-green-700 dark:text-green-400"
+                        : "text-red-700 dark:text-red-400"
+                    }`}
+                  >
+                    {answerResult.isCorrect ? "Correct!" : "Incorrect"}
+                  </h3>
+                  <div className="ml-auto text-right">
+                    <div className="text-2xl font-bold text-gray-800 dark:text-white">
+                      +{(answerResult.pointsEarned || 0).toFixed(1)} pts
+                    </div>
+                    {answerResult.streakBonus > 0 && (
+                      <div className="text-sm text-orange-600 dark:text-orange-400 font-semibold flex items-center gap-1 justify-end">
+                        🔥 +{answerResult.streakBonus} streak bonus!
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {answerResult.explanation && (
+                  <p className="text-gray-700 dark:text-gray-300">
+                    <strong>Explanation:</strong> {answerResult.explanation}
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </motion.div>
+
+          {/* Mini Leaderboard */}
+          {leaderboard.length > 0 && (
+            <LiveLeaderboard leaderboard={leaderboard.slice(0, 5)} compact />
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
