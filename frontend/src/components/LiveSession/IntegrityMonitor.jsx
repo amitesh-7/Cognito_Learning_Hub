@@ -161,20 +161,43 @@ const IntegrityMonitor = ({ socket, sessionCode, isHost }) => {
 
   // Kick student from session
   const kickStudent = (userId, userName) => {
-    if (!socket || !sessionCode) return;
+    if (!socket || !sessionCode) {
+      console.error("Cannot kick student: socket or sessionCode missing");
+      alert("❌ Error: Not connected to session");
+      return;
+    }
 
     const confirmed = window.confirm(
       `⚠️ Remove ${userName} from the quiz?\n\nThis action will:\n• Immediately disconnect the student\n• Their answers will NOT be saved\n• They cannot rejoin this session\n\nAre you sure?`
     );
 
     if (confirmed) {
-      socket.emit("kick-participant", { sessionCode, userId, userName });
+      console.log(
+        `Kicking student: ${userName} (${userId}) from session ${sessionCode}`
+      );
 
-      // Show feedback
-      alert(`✅ ${userName} has been removed from the quiz.`);
-
-      // Remove alerts from this user
-      setAlerts((prev) => prev.filter((alert) => alert.userId !== userId));
+      // Emit kick event to backend
+      socket.emit(
+        "kick-participant",
+        { sessionCode, userId, userName },
+        (response) => {
+          if (response?.success) {
+            console.log("✅ Student kicked successfully");
+            alert(`✅ ${userName} has been removed from the quiz.`);
+            // Remove alerts from this user
+            setAlerts((prev) =>
+              prev.filter((alert) => alert.userId !== userId)
+            );
+          } else {
+            console.error("❌ Failed to kick student:", response?.error);
+            alert(
+              `❌ Failed to remove student: ${
+                response?.error || "Unknown error"
+              }`
+            );
+          }
+        }
+      );
     }
   };
 
