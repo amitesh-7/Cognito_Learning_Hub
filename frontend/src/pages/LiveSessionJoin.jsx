@@ -352,7 +352,9 @@ const LiveSessionJoin = () => {
 
   // Debug: Log when fullscreen prompt state changes
   useEffect(() => {
-    console.log(`[Fullscreen Debug] showFullscreenPrompt state: ${showFullscreenPrompt}`);
+    console.log(
+      `[Fullscreen Debug] showFullscreenPrompt state: ${showFullscreenPrompt}`
+    );
   }, [showFullscreenPrompt]);
 
   // Socket event handlers
@@ -364,11 +366,11 @@ const LiveSessionJoin = () => {
       "quiz-started",
       async ({ questionIndex, question, totalQuestions: total, timestamp }) => {
         console.log("🚀 Quiz started! Question:", questionIndex + 1);
-        
+
         // Show fullscreen prompt modal FIRST
         console.log("[Fullscreen] Showing fullscreen prompt...");
         setShowFullscreenPrompt(true);
-        
+
         // Then set question data
         setCurrentQuestion(question);
         setCurrentQuestionIndex(questionIndex);
@@ -594,6 +596,8 @@ const LiveSessionJoin = () => {
   // Handle fullscreen entry (requires user interaction)
   const handleEnterFullscreen = async () => {
     console.log("[Fullscreen] User clicked to enter fullscreen");
+
+    // Try using the fullscreen API from our ref
     if (fullscreenRef.current) {
       try {
         const success = await fullscreenRef.current.startQuiz();
@@ -605,7 +609,27 @@ const LiveSessionJoin = () => {
         console.error("[Fullscreen] Error entering fullscreen:", error);
       }
     } else {
-      console.error("[Fullscreen] fullscreenRef.current is null");
+      // Fallback: Direct fullscreen request
+      console.log("[Fullscreen] Using fallback direct fullscreen request");
+      try {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          await elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+          await elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+          await elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+          await elem.msRequestFullscreen();
+        }
+        console.log("[Fullscreen] ✅ Entered fullscreen via fallback");
+        setShowFullscreenPrompt(false);
+      } catch (error) {
+        console.error("[Fullscreen] Fallback fullscreen failed:", error);
+        alert(
+          "⚠️ Could not enter fullscreen. Please try pressing F11 or use your browser's fullscreen option."
+        );
+      }
     }
   };
 
@@ -833,7 +857,7 @@ const LiveSessionJoin = () => {
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
             You're In!
           </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
             Waiting for the host to start the quiz...
           </p>
 
@@ -843,12 +867,18 @@ const LiveSessionJoin = () => {
               <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
               <div className="text-left">
                 <h3 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-1">
-                  Fullscreen Required
+                  🔒 Fullscreen Required
                 </h3>
-                <p className="text-sm text-yellow-700 dark:text-yellow-400">
-                  This quiz requires fullscreen mode for security. The quiz will
-                  automatically enter fullscreen when it starts.
+                <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-3">
+                  This quiz requires fullscreen mode for security. Click the
+                  button below to enter fullscreen before the quiz starts.
                 </p>
+                <button
+                  onClick={handleEnterFullscreen}
+                  className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-lg font-bold text-sm transition shadow-lg hover:shadow-xl"
+                >
+                  🖥️ Enter Fullscreen Now
+                </button>
               </div>
             </div>
           </div>
@@ -1112,173 +1142,174 @@ const LiveSessionJoin = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 py-8 px-4">
         <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Question {currentQuestionIndex + 1} / {totalQuestions}
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={toggleMute}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                title={isMuted() ? "Unmute sounds" : "Mute sounds"}
-              >
-                {isMuted() ? (
-                  <VolumeX className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                ) : (
-                  <Volume2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                )}
-              </button>
-              <div className="flex items-center gap-2">
-                <Clock
-                  className={`w-5 h-5 ${
-                    timeLeft <= 10
-                      ? "text-red-500"
-                      : "text-gray-600 dark:text-gray-400"
-                  }`}
-                />
-                <span
-                  className={`text-2xl font-bold ${
-                    timeLeft <= 10
-                      ? "text-red-500 animate-pulse"
-                      : "text-gray-800 dark:text-white"
-                  }`}
-                >
-                  {timeLeft}s
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Question Card */}
-        <motion.div
-          key={currentQuestionIndex}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 mb-6"
-        >
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-8 text-center">
-            {currentQuestion?.question}
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {currentQuestion?.options.map((option, index) => {
-              const isSelected = selectedAnswer === option;
-              const isCorrect = answerResult?.correctAnswer === option;
-              // Only show result after we get server response
-              const showResult = hasAnswered && answerResult;
-
-              let buttonClass =
-                "p-6 rounded-xl border-2 transition-all transform hover:scale-105 cursor-pointer ";
-
-              if (showResult) {
-                if (isCorrect) {
-                  buttonClass +=
-                    "border-green-500 bg-green-50 dark:bg-green-900/20";
-                } else if (isSelected && !isCorrect) {
-                  buttonClass += "border-red-500 bg-red-50 dark:bg-red-900/20";
-                } else {
-                  buttonClass +=
-                    "border-gray-300 dark:border-gray-600 opacity-60";
-                }
-              } else {
-                buttonClass += isSelected
-                  ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20 scale-105"
-                  : "border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-700";
-              }
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleAnswerClick(option)}
-                  disabled={hasAnswered}
-                  className={buttonClass}
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
-                        showResult && isCorrect
-                          ? "bg-green-500 text-white"
-                          : showResult && isSelected && !isCorrect
-                          ? "bg-red-500 text-white"
-                          : isSelected
-                          ? "bg-purple-500 text-white"
-                          : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      {String.fromCharCode(65 + index)}
-                    </div>
-                    <span className="text-lg font-medium text-gray-800 dark:text-white flex-1 text-left">
-                      {option}
-                    </span>
-                    {showResult && isCorrect && (
-                      <CheckCircle className="w-6 h-6 text-green-500" />
-                    )}
-                    {showResult && isSelected && !isCorrect && (
-                      <XCircle className="w-6 h-6 text-red-500" />
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Answer Result */}
-          {answerResult && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`mt-6 p-6 rounded-xl ${
-                answerResult.isCorrect
-                  ? "bg-green-50 dark:bg-green-900/20 border-2 border-green-500"
-                  : "bg-red-50 dark:bg-red-900/20 border-2 border-red-500"
-              }`}
-            >
-              <div className="flex items-center gap-3 mb-3">
-                {answerResult.isCorrect ? (
-                  <CheckCircle className="w-6 h-6 text-green-500" />
-                ) : (
-                  <XCircle className="w-6 h-6 text-red-500" />
-                )}
-                <h3
-                  className={`text-xl font-bold ${
-                    answerResult.isCorrect
-                      ? "text-green-700 dark:text-green-400"
-                      : "text-red-700 dark:text-red-400"
-                  }`}
-                >
-                  {answerResult.isCorrect ? "Correct!" : "Incorrect"}
-                </h3>
-                <div className="ml-auto text-right">
-                  <div className="text-2xl font-bold text-gray-800 dark:text-white">
-                    +{(answerResult.pointsEarned || 0).toFixed(1)} pts
-                  </div>
-                  {answerResult.streakBonus > 0 && (
-                    <div className="text-sm text-orange-600 dark:text-orange-400 font-semibold flex items-center gap-1 justify-end">
-                      🔥 +{answerResult.streakBonus} streak bonus!
-                    </div>
-                  )}
+          {/* Header */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Question {currentQuestionIndex + 1} / {totalQuestions}
                 </div>
               </div>
-              {answerResult.explanation && (
-                <p className="text-gray-700 dark:text-gray-300">
-                  <strong>Explanation:</strong> {answerResult.explanation}
-                </p>
-              )}
-            </motion.div>
-          )}
-        </motion.div>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={toggleMute}
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                  title={isMuted() ? "Unmute sounds" : "Mute sounds"}
+                >
+                  {isMuted() ? (
+                    <VolumeX className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  ) : (
+                    <Volume2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  )}
+                </button>
+                <div className="flex items-center gap-2">
+                  <Clock
+                    className={`w-5 h-5 ${
+                      timeLeft <= 10
+                        ? "text-red-500"
+                        : "text-gray-600 dark:text-gray-400"
+                    }`}
+                  />
+                  <span
+                    className={`text-2xl font-bold ${
+                      timeLeft <= 10
+                        ? "text-red-500 animate-pulse"
+                        : "text-gray-800 dark:text-white"
+                    }`}
+                  >
+                    {timeLeft}s
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {/* Mini Leaderboard */}
-        {leaderboard.length > 0 && (
-          <LiveLeaderboard leaderboard={leaderboard.slice(0, 5)} compact />
-        )}
+          {/* Question Card */}
+          <motion.div
+            key={currentQuestionIndex}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 mb-6"
+          >
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-8 text-center">
+              {currentQuestion?.question}
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {currentQuestion?.options.map((option, index) => {
+                const isSelected = selectedAnswer === option;
+                const isCorrect = answerResult?.correctAnswer === option;
+                // Only show result after we get server response
+                const showResult = hasAnswered && answerResult;
+
+                let buttonClass =
+                  "p-6 rounded-xl border-2 transition-all transform hover:scale-105 cursor-pointer ";
+
+                if (showResult) {
+                  if (isCorrect) {
+                    buttonClass +=
+                      "border-green-500 bg-green-50 dark:bg-green-900/20";
+                  } else if (isSelected && !isCorrect) {
+                    buttonClass +=
+                      "border-red-500 bg-red-50 dark:bg-red-900/20";
+                  } else {
+                    buttonClass +=
+                      "border-gray-300 dark:border-gray-600 opacity-60";
+                  }
+                } else {
+                  buttonClass += isSelected
+                    ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20 scale-105"
+                    : "border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-700";
+                }
+
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswerClick(option)}
+                    disabled={hasAnswered}
+                    className={buttonClass}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
+                          showResult && isCorrect
+                            ? "bg-green-500 text-white"
+                            : showResult && isSelected && !isCorrect
+                            ? "bg-red-500 text-white"
+                            : isSelected
+                            ? "bg-purple-500 text-white"
+                            : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                        }`}
+                      >
+                        {String.fromCharCode(65 + index)}
+                      </div>
+                      <span className="text-lg font-medium text-gray-800 dark:text-white flex-1 text-left">
+                        {option}
+                      </span>
+                      {showResult && isCorrect && (
+                        <CheckCircle className="w-6 h-6 text-green-500" />
+                      )}
+                      {showResult && isSelected && !isCorrect && (
+                        <XCircle className="w-6 h-6 text-red-500" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Answer Result */}
+            {answerResult && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`mt-6 p-6 rounded-xl ${
+                  answerResult.isCorrect
+                    ? "bg-green-50 dark:bg-green-900/20 border-2 border-green-500"
+                    : "bg-red-50 dark:bg-red-900/20 border-2 border-red-500"
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  {answerResult.isCorrect ? (
+                    <CheckCircle className="w-6 h-6 text-green-500" />
+                  ) : (
+                    <XCircle className="w-6 h-6 text-red-500" />
+                  )}
+                  <h3
+                    className={`text-xl font-bold ${
+                      answerResult.isCorrect
+                        ? "text-green-700 dark:text-green-400"
+                        : "text-red-700 dark:text-red-400"
+                    }`}
+                  >
+                    {answerResult.isCorrect ? "Correct!" : "Incorrect"}
+                  </h3>
+                  <div className="ml-auto text-right">
+                    <div className="text-2xl font-bold text-gray-800 dark:text-white">
+                      +{(answerResult.pointsEarned || 0).toFixed(1)} pts
+                    </div>
+                    {answerResult.streakBonus > 0 && (
+                      <div className="text-sm text-orange-600 dark:text-orange-400 font-semibold flex items-center gap-1 justify-end">
+                        🔥 +{answerResult.streakBonus} streak bonus!
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {answerResult.explanation && (
+                  <p className="text-gray-700 dark:text-gray-300">
+                    <strong>Explanation:</strong> {answerResult.explanation}
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </motion.div>
+
+          {/* Mini Leaderboard */}
+          {leaderboard.length > 0 && (
+            <LiveLeaderboard leaderboard={leaderboard.slice(0, 5)} compact />
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 };
