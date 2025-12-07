@@ -76,7 +76,7 @@ function App() {
   const location = useLocation();
 
   // Routes that need full-screen layout without navbar/padding
-  const fullScreenRoutes = ["/doubt-solver", "/meeting"];
+  const fullScreenRoutes = ["/doubt-solver", "/meeting", "/live/join"];
   const isFullScreen = fullScreenRoutes.some((route) =>
     location.pathname.startsWith(route)
   );
@@ -124,9 +124,9 @@ function App() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    transition={{ 
-                      duration: 0.3, 
-                      ease: [0.22, 1, 0.36, 1]
+                    transition={{
+                      duration: 0.3,
+                      ease: [0.22, 1, 0.36, 1],
                     }}
                   >
                     <Routes location={location}>
@@ -139,295 +139,295 @@ function App() {
                       <Route path="/login" element={<Login />} />
                       <Route path="/signup" element={<SignUp />} />
 
-                  {/* Protected Routes */}
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quick-actions"
-                    element={
-                      <ProtectedRoute>
-                        <QuickActions />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/teacher-dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <TeacherDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/teaching-hub"
-                    element={
-                      <ProtectedRoute>
-                        <TeachingHub />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quizzes"
-                    element={
-                      <ProtectedRoute>
-                        <QuizList />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quiz/:quizId"
-                    element={
-                      <ProtectedRoute>
-                        <QuizTaker />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quiz/edit/:quizId"
-                    element={
-                      <ProtectedRoute>
-                        <EditQuiz />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quiz/:quizId/leaderboard"
-                    element={
-                      <ProtectedRoute>
-                        <Leaderboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/leaderboard"
-                    element={
-                      <ProtectedRoute>
-                        <Leaderboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quiz-maker"
-                    element={
-                      <ProtectedRoute>
-                        <QuizMaker />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quiz-maker/topic"
-                    element={
-                      <ProtectedRoute>
-                        <TopicQuizGenerator />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quiz-maker/manual"
-                    element={
-                      <ProtectedRoute>
-                        <ManualQuizCreator />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quiz-maker/enhanced"
-                    element={
-                      <ProtectedRoute>
-                        <EnhancedQuizCreator />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quiz-maker/file"
-                    element={
-                      <ProtectedRoute>
-                        <FileQuizGenerator />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/pdf-quiz-generator"
-                    element={
-                      <ProtectedRoute>
-                        <PDFQuizGenerator />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/social"
-                    element={
-                      <ProtectedRoute>
-                        <SocialDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/create-challenge"
-                    element={
-                      <ProtectedRoute>
-                        <ChallengeCreator />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/quiz/:quizId/gamified"
-                    element={
-                      <ProtectedRoute>
-                        <GamifiedQuizTaker />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/achievements"
-                    element={
-                      <ProtectedRoute>
-                        <AchievementDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/doubt-solver"
-                    element={
-                      <ProtectedRoute>
-                        <AITutor />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/chat"
-                    element={
-                      <ProtectedRoute>
-                        <ChatSystem />
-                      </ProtectedRoute>
-                    }
-                  />
+                      {/* Protected Routes */}
+                      <Route
+                        path="/dashboard"
+                        element={
+                          <ProtectedRoute>
+                            <Dashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quick-actions"
+                        element={
+                          <ProtectedRoute>
+                            <QuickActions />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/teacher-dashboard"
+                        element={
+                          <ProtectedRoute>
+                            <TeacherDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/teaching-hub"
+                        element={
+                          <ProtectedRoute>
+                            <TeachingHub />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quizzes"
+                        element={
+                          <ProtectedRoute>
+                            <QuizList />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quiz/:quizId"
+                        element={
+                          <ProtectedRoute>
+                            <QuizTaker />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quiz/edit/:quizId"
+                        element={
+                          <ProtectedRoute>
+                            <EditQuiz />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quiz/:quizId/leaderboard"
+                        element={
+                          <ProtectedRoute>
+                            <Leaderboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/leaderboard"
+                        element={
+                          <ProtectedRoute>
+                            <Leaderboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quiz-maker"
+                        element={
+                          <ProtectedRoute>
+                            <QuizMaker />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quiz-maker/topic"
+                        element={
+                          <ProtectedRoute>
+                            <TopicQuizGenerator />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quiz-maker/manual"
+                        element={
+                          <ProtectedRoute>
+                            <ManualQuizCreator />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quiz-maker/enhanced"
+                        element={
+                          <ProtectedRoute>
+                            <EnhancedQuizCreator />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quiz-maker/file"
+                        element={
+                          <ProtectedRoute>
+                            <FileQuizGenerator />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/pdf-quiz-generator"
+                        element={
+                          <ProtectedRoute>
+                            <PDFQuizGenerator />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/social"
+                        element={
+                          <ProtectedRoute>
+                            <SocialDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/create-challenge"
+                        element={
+                          <ProtectedRoute>
+                            <ChallengeCreator />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quiz/:quizId/gamified"
+                        element={
+                          <ProtectedRoute>
+                            <GamifiedQuizTaker />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/achievements"
+                        element={
+                          <ProtectedRoute>
+                            <AchievementDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/doubt-solver"
+                        element={
+                          <ProtectedRoute>
+                            <AITutor />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/chat"
+                        element={
+                          <ProtectedRoute>
+                            <ChatSystem />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                  {/* Live Session Routes */}
-                  <Route
-                    path="/live/host/:quizId"
-                    element={
-                      <ProtectedRoute>
-                        <LiveSessionHost />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/live/join"
-                    element={
-                      <ProtectedRoute>
-                        <LiveSessionJoin />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/live/analytics/:sessionCode"
-                    element={
-                      <ProtectedRoute>
-                        <LiveSessionAnalytics />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/live/history"
-                    element={
-                      <ProtectedRoute>
-                        <LiveSessionHistory />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/live/start"
-                    element={
-                      <ProtectedRoute>
-                        <LiveSessionSelector />
-                      </ProtectedRoute>
-                    }
-                  />
+                      {/* Live Session Routes */}
+                      <Route
+                        path="/live/host/:quizId"
+                        element={
+                          <ProtectedRoute>
+                            <LiveSessionHost />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/live/join"
+                        element={
+                          <ProtectedRoute>
+                            <LiveSessionJoin />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/live/analytics/:sessionCode"
+                        element={
+                          <ProtectedRoute>
+                            <LiveSessionAnalytics />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/live/history"
+                        element={
+                          <ProtectedRoute>
+                            <LiveSessionHistory />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/live/start"
+                        element={
+                          <ProtectedRoute>
+                            <LiveSessionSelector />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                  {/* 1v1 Duel Routes */}
-                  <Route
-                    path="/duel"
-                    element={
-                      <ProtectedRoute>
-                        <DuelMode />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/duel/:quizId"
-                    element={
-                      <ProtectedRoute>
-                        <DuelBattle />
-                      </ProtectedRoute>
-                    }
-                  />
+                      {/* 1v1 Duel Routes */}
+                      <Route
+                        path="/duel"
+                        element={
+                          <ProtectedRoute>
+                            <DuelMode />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/duel/:quizId"
+                        element={
+                          <ProtectedRoute>
+                            <DuelBattle />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                  {/* Video Meeting Routes */}
-                  <Route
-                    path="/meeting/create"
-                    element={
-                      <ProtectedRoute>
-                        <TeacherMeetingStart />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/meeting/join"
-                    element={
-                      <ProtectedRoute>
-                        <StudentJoinMeeting />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/meeting/:roomId"
-                    element={
-                      <ProtectedRoute>
-                        <MeetingRoom />
-                      </ProtectedRoute>
-                    }
-                  />
+                      {/* Video Meeting Routes */}
+                      <Route
+                        path="/meeting/create"
+                        element={
+                          <ProtectedRoute>
+                            <TeacherMeetingStart />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/meeting/join"
+                        element={
+                          <ProtectedRoute>
+                            <StudentJoinMeeting />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/meeting/:roomId"
+                        element={
+                          <ProtectedRoute>
+                            <MeetingRoom />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                  {/* Admin & Moderator Routes */}
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminRoute>
-                        <AdminDashboard />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin-broadcast"
-                    element={
-                      <AdminRoute>
-                        <AdminBroadcast />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/moderator"
-                    element={
-                      <ModeratorRoute>
-                        <ModeratorDashboard />
-                      </ModeratorRoute>
-                    }
-                  />
-                  <Route
-                    path="/reports"
-                    element={
-                      <ModeratorRoute>
-                        <ReportsDashboard />
-                      </ModeratorRoute>
-                    }
-                  />
+                      {/* Admin & Moderator Routes */}
+                      <Route
+                        path="/admin"
+                        element={
+                          <AdminRoute>
+                            <AdminDashboard />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin-broadcast"
+                        element={
+                          <AdminRoute>
+                            <AdminBroadcast />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route
+                        path="/moderator"
+                        element={
+                          <ModeratorRoute>
+                            <ModeratorDashboard />
+                          </ModeratorRoute>
+                        }
+                      />
+                      <Route
+                        path="/reports"
+                        element={
+                          <ModeratorRoute>
+                            <ReportsDashboard />
+                          </ModeratorRoute>
+                        }
+                      />
                     </Routes>
                   </motion.div>
                 </AnimatePresence>
