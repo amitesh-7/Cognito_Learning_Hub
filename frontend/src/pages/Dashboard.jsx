@@ -38,6 +38,16 @@ import {
   ArrowLeft,
   Sparkles,
   Brain,
+  ChevronRight,
+  Star,
+  BarChart3,
+  Activity,
+  Gamepad2,
+  Users,
+  Lightbulb,
+  MessageCircle,
+  Coffee,
+  Rocket,
 } from "lucide-react";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "../components/ui/PullToRefreshIndicator";
@@ -368,7 +378,7 @@ export default function Dashboard() {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-gray-950 dark:via-slate-900 dark:to-indigo-950/30 relative overflow-hidden py-8 px-2 sm:px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-gray-950 dark:via-slate-900 dark:to-indigo-950/30 relative overflow-hidden pb-8 px-2 sm:px-4">
       {/* Animated floating particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Large floating orbs */}
@@ -456,77 +466,265 @@ export default function Dashboard() {
         isRefreshing={isRefreshing}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-10">
-        {/* Header Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 relative z-10">
+        {/* Enhanced Header Section with time-based greeting */}
         <motion.div
-          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-2"
+          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          <div>
+          <div className="flex-1">
             <motion.div
-              className="space-y-2"
+              className="space-y-3"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">
-                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent leading-tight">
-                  Welcome back, {user?.name?.split(" ")[0] || "Student"}!
-                </span>{" "}
-                <span className="inline-block animate-wave">👋</span>
-              </h1>
-              <p className="text-slate-600 dark:text-slate-300 font-medium text-base sm:text-lg">
-                Here's your{" "}
-                <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent font-semibold">
-                  learning progress
-                </span>{" "}
-                overview ✨
-              </p>
+              {/* Time-based greeting */}
+              <div className="flex items-center gap-3 mb-1">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                >
+                  {new Date().getHours() < 12 ? (
+                    <span className="text-5xl">🌅</span>
+                  ) : new Date().getHours() < 18 ? (
+                    <span className="text-5xl">☀️</span>
+                  ) : (
+                    <span className="text-5xl">🌙</span>
+                  )}
+                </motion.div>
+                <div>
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">
+                    <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent leading-tight">
+                      {new Date().getHours() < 12
+                        ? "Good Morning"
+                        : new Date().getHours() < 18
+                        ? "Good Afternoon"
+                        : "Good Evening"}
+                      , {user?.name?.split(" ")[0] || "Student"}!
+                    </span>
+                  </h1>
+                  <p className="text-slate-600 dark:text-slate-300 font-medium text-base sm:text-lg mt-1">
+                    Ready to{" "}
+                    <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent font-semibold">
+                      level up
+                    </span>{" "}
+                    your learning today? ✨
+                  </p>
+                </div>
+              </div>
+              
+              {/* Motivational badge based on activity */}
+              {quizzesCompleted > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-full border border-indigo-200/50 dark:border-indigo-700/50"
+                >
+                  <Rocket className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">
+                    {quizzesCompleted >= 50
+                      ? "🏆 Master Learner"
+                      : quizzesCompleted >= 20
+                      ? "⭐ Expert Student"
+                      : quizzesCompleted >= 10
+                      ? "🎯 Rising Star"
+                      : "🌱 Learning Journey"}
+                  </span>
+                  <div className="w-px h-4 bg-indigo-300 dark:bg-indigo-600"></div>
+                  <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                    Level {currentLevel || 1}
+                  </span>
+                </motion.div>
+              )}
             </motion.div>
           </div>
 
-          <div className="flex gap-3">
-            <Button
-              variant={viewMode === "overview" ? "default" : "outline"}
-              size="sm"
+          {/* Enhanced view mode selector with better visuals */}
+          <div className="flex gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-1.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-lg">
+            <motion.button
               onClick={() => setViewMode("overview")}
-              className={
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
                 viewMode === "overview"
-                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
-                  : ""
-              }
+                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <Eye className="w-4 h-4 mr-2" />
-              Overview
-            </Button>
-            <Button
-              variant={viewMode === "insights" ? "default" : "outline"}
-              size="sm"
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Overview</span>
+            </motion.button>
+            <motion.button
               onClick={() => setViewMode("insights")}
-              className={
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
                 viewMode === "insights"
-                  ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
-                  : ""
-              }
+                  ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI Insights
-            </Button>
-            <Button
-              variant={viewMode === "detailed" ? "default" : "outline"}
-              size="sm"
+              <Brain className="w-4 h-4" />
+              <span className="hidden sm:inline">AI Insights</span>
+            </motion.button>
+            <motion.button
               onClick={() => setViewMode("detailed")}
-              className={
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
                 viewMode === "detailed"
-                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
-                  : ""
-              }
+                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <EyeOff className="w-4 h-4 mr-2" />
-              Detailed
-            </Button>
+              <ClipboardList className="w-4 h-4" />
+              <span className="hidden sm:inline">Details</span>
+            </motion.button>
+          </div>
+        </motion.div>
+
+        {/* Quick Actions Section - Top Center */}
+        <motion.div
+          variants={itemVariants}
+          initial="hidden"
+          animate="visible"
+          className="mb-6"
+        >
+          <div className="text-center mb-4">
+            <motion.h2
+              className="text-2xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent inline-flex items-center gap-2"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <Zap className="w-6 h-6 text-amber-500" />
+              Quick Actions
+            </motion.h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Jump right into your learning experience
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+            {/* Learning Toolkit */}
+            <Link to="/quick-actions">
+              <motion.div
+                whileHover={{ scale: 1.05, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Card className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/60 dark:border-amber-700/40 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group rounded-2xl relative overflow-hidden h-full">
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber-100/0 via-amber-100/50 to-amber-100/0 dark:from-amber-500/0 dark:via-amber-500/10 dark:to-amber-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                  <div className="relative text-center">
+                    <motion.div 
+                      className="w-16 h-16 mx-auto bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg mb-4"
+                      whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <Zap className="w-8 h-8 text-white" />
+                    </motion.div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                      Learning Toolkit 🚀
+                    </h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      All tools in one place
+                    </p>
+                  </div>
+                </Card>
+              </motion.div>
+            </Link>
+
+            {/* Live Quiz */}
+            <Link to="/live-quiz">
+              <motion.div
+                whileHover={{ scale: 1.05, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Card className="p-5 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200/60 dark:border-purple-700/40 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group rounded-2xl relative overflow-hidden h-full">
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-100/0 via-purple-100/50 to-purple-100/0 dark:from-purple-500/0 dark:via-purple-500/10 dark:to-purple-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                  <motion.div
+                    className="absolute top-2 right-2 flex items-center gap-1.5 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full"
+                    animate={{ opacity: [1, 0.7, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                    LIVE
+                  </motion.div>
+                  <div className="relative text-center">
+                    <motion.div 
+                      className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg mb-4"
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <Video className="w-8 h-8 text-white" />
+                    </motion.div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                      Join Live Quiz 🎮
+                    </h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Compete in real-time
+                    </p>
+                  </div>
+                </Card>
+              </motion.div>
+            </Link>
+
+            {/* 1v1 Duel Battle */}
+            <Link to="/duel-mode">
+              <motion.div
+                whileHover={{ scale: 1.05, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Card className="p-5 bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20 border border-rose-200/60 dark:border-rose-700/40 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group rounded-2xl relative overflow-hidden h-full">
+                  <div className="absolute inset-0 bg-gradient-to-r from-rose-100/0 via-rose-100/50 to-rose-100/0 dark:from-rose-500/0 dark:via-rose-500/10 dark:to-rose-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                  <div className="relative text-center">
+                    <motion.div 
+                      className="w-16 h-16 mx-auto bg-gradient-to-br from-rose-400 to-red-500 rounded-2xl flex items-center justify-center shadow-lg mb-4"
+                      whileHover={{ rotate: [0, -15, 15, -15, 0] }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <Gamepad2 className="w-8 h-8 text-white" />
+                    </motion.div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                      1v1 Duel Battle ⚔️
+                    </h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Challenge a friend
+                    </p>
+                  </div>
+                </Card>
+              </motion.div>
+            </Link>
+
+            {/* AI Doubt Solver */}
+            <Link to="/ai-tutor">
+              <motion.div
+                whileHover={{ scale: 1.05, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Card className="p-5 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 border border-cyan-200/60 dark:border-cyan-700/40 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group rounded-2xl relative overflow-hidden h-full">
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-100/0 via-cyan-100/50 to-cyan-100/0 dark:from-cyan-500/0 dark:via-cyan-500/10 dark:to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                  <div className="relative text-center">
+                    <motion.div 
+                      className="w-16 h-16 mx-auto bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg mb-4"
+                      animate={{ y: [0, -3, 0] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <Lightbulb className="w-8 h-8 text-white" />
+                    </motion.div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                      AI Doubt Solver 🤖
+                    </h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Get instant answers
+                    </p>
+                  </div>
+                </Card>
+              </motion.div>
+            </Link>
           </div>
         </motion.div>
 
@@ -672,241 +870,408 @@ export default function Dashboard() {
                   className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-lg rounded-2xl p-5"
                 />
 
-                {/* Learning Toolkit */}
-                <Link to="/quick-actions">
-                  <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/60 dark:border-amber-700/40 shadow-md hover:shadow-lg transition-all duration-200 hover:border-amber-300 dark:hover:border-amber-600 cursor-pointer group rounded-xl">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                          <Zap className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
-                            Learning Toolkit{" "}
-                            <span className="text-base">🚀</span>
-                          </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Access all your learning tools
-                          </p>
-                        </div>
+                {/* Enhanced Achievements Section */}
+                <Card className="p-5 bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-lg rounded-2xl overflow-hidden relative">
+                  {/* Decorative background */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-yellow-200/20 to-amber-300/20 dark:from-yellow-600/10 dark:to-amber-700/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                  
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <motion.div
+                          animate={{ rotate: [0, -10, 10, -10, 0] }}
+                          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                        >
+                          <Trophy className="w-5 h-5 text-amber-500" />
+                        </motion.div>
+                        <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                          Achievements
+                        </h3>
                       </div>
-                      <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                        <span className="text-xs font-medium">View All</span>
-                        <ArrowLeft className="w-4 h-4 rotate-180 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-
-                {/* Quick Actions Card */}
-                <Link to="/live-quiz">
-                  <Card className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200/60 dark:border-purple-700/40 shadow-md hover:shadow-lg transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-600 cursor-pointer group rounded-xl">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                          <Video className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
-                            Join Live Quiz <span className="text-base">🎮</span>
-                          </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Compete in real-time
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
-                        <span className="text-xs font-medium">Join</span>
-                        <ArrowLeft className="w-4 h-4 rotate-180 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
-
-                {/* Achievements - Compact Version */}
-                <Card className="p-5 bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-lg rounded-2xl">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                      <Trophy className="w-4 h-4 text-amber-500" />
-                      Achievements
-                    </h3>
-                    {achievements.length > 4 && (
-                      <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-                        {achievements.length} total
-                      </span>
-                    )}
-                  </div>
-                  {achievements.length > 0 ? (
-                    <div className="space-y-2">
-                      {achievements.slice(0, 4).map((ach, index) => {
-                        const Icon = ach.icon;
-                        return (
+                      {achievements.length > 0 && (
+                        <Link to="/achievements">
                           <motion.div
-                            key={index}
-                            className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
+                            className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 cursor-pointer"
+                            whileHover={{ x: 3 }}
                           >
-                            <div
-                              className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                                ach.color === "yellow"
-                                  ? "bg-amber-100 dark:bg-amber-900/40"
-                                  : ach.color === "blue"
-                                  ? "bg-blue-100 dark:bg-blue-900/40"
-                                  : ach.color === "green"
-                                  ? "bg-emerald-100 dark:bg-emerald-900/40"
-                                  : ach.color === "red"
-                                  ? "bg-rose-100 dark:bg-rose-900/40"
-                                  : "bg-violet-100 dark:bg-violet-900/40"
-                              }`}
-                            >
-                              <Icon
-                                className={`w-4 h-4 ${
-                                  ach.color === "yellow"
-                                    ? "text-amber-600 dark:text-amber-400"
-                                    : ach.color === "blue"
-                                    ? "text-blue-600 dark:text-blue-400"
-                                    : ach.color === "green"
-                                    ? "text-emerald-600 dark:text-emerald-400"
-                                    : ach.color === "red"
-                                    ? "text-rose-600 dark:text-rose-400"
-                                    : "text-violet-600 dark:text-violet-400"
-                                }`}
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-gray-900 dark:text-white text-sm">
-                                {ach.title}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                {ach.description}
-                              </p>
-                            </div>
-                            <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-                              <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                            </div>
+                            <span className="text-xs font-semibold">
+                              {achievements.length} total
+                            </span>
+                            <ChevronRight className="w-4 h-4" />
                           </motion.div>
-                        );
-                      })}
-                      {achievements.length > 4 && (
-                        <Link to="/achievements" className="block">
-                          <div className="text-center py-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors cursor-pointer">
-                            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-                              +{achievements.length - 4} more • View All
-                            </p>
-                          </div>
                         </Link>
                       )}
                     </div>
-                  ) : (
-                    <div className="text-center py-6">
-                      <Award className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Complete quizzes to unlock achievements!
-                      </p>
-                    </div>
-                  )}
+                    
+                    {achievements.length > 0 ? (
+                      <div className="space-y-2.5">
+                        {achievements.slice(0, 3).map((ach, index) => {
+                          const Icon = ach.icon;
+                          return (
+                            <motion.div
+                              key={index}
+                              className="flex items-center gap-3 p-3.5 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-700/50 dark:to-gray-700/30 hover:from-gray-100 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-700 border border-gray-200/50 dark:border-gray-600/30 transition-all duration-200 group cursor-pointer"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              whileHover={{ scale: 1.02, x: 4 }}
+                            >
+                              <motion.div
+                                className={`w-11 h-11 rounded-xl flex items-center justify-center relative shadow-md ${
+                                  ach.color === "yellow"
+                                    ? "bg-gradient-to-br from-amber-400 to-amber-500"
+                                    : ach.color === "blue"
+                                    ? "bg-gradient-to-br from-blue-400 to-blue-500"
+                                    : ach.color === "green"
+                                    ? "bg-gradient-to-br from-emerald-400 to-emerald-500"
+                                    : ach.color === "red"
+                                    ? "bg-gradient-to-br from-rose-400 to-rose-500"
+                                    : "bg-gradient-to-br from-violet-400 to-violet-500"
+                                }`}
+                                whileHover={{ rotate: [0, -5, 5, -5, 0], scale: 1.1 }}
+                                transition={{ duration: 0.5 }}
+                              >
+                                <Icon className="w-5 h-5 text-white" />
+                                {/* Shine effect */}
+                                <motion.div
+                                  className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/40 to-white/0 rounded-xl"
+                                  animate={{ x: ['-100%', '100%'] }}
+                                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                                />
+                              </motion.div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-gray-900 dark:text-white text-sm mb-0.5">
+                                  {ach.title}
+                                </p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
+                                  {ach.description}
+                                </p>
+                              </div>
+                              <motion.div
+                                className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center shadow-md"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: index * 0.1 + 0.3, type: "spring", stiffness: 200 }}
+                              >
+                                <CheckCircle className="w-4 h-4 text-white" />
+                              </motion.div>
+                            </motion.div>
+                          );
+                        })}
+                        
+                        {/* View All Button */}
+                        {achievements.length > 3 && (
+                          <Link to="/achievements" className="block">
+                            <motion.div
+                              className="mt-3 p-3 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl border border-indigo-200/50 dark:border-indigo-700/30 hover:from-indigo-100 hover:to-purple-100 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30 transition-all cursor-pointer group"
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Star className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                  <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                                    +{achievements.length - 3} more achievements
+                                  </span>
+                                </div>
+                                <motion.div
+                                  animate={{ x: [0, 4, 0] }}
+                                  transition={{ duration: 1.5, repeat: Infinity }}
+                                >
+                                  <ChevronRight className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                </motion.div>
+                              </div>
+                            </motion.div>
+                          </Link>
+                        )}
+                      </div>
+                    ) : (
+                      <motion.div 
+                        className="text-center py-8"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                      >
+                        <motion.div
+                          animate={{ y: [0, -10, 0] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        >
+                          <Trophy className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                        </motion.div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                          No achievements yet
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                          Complete quizzes to unlock rewards!
+                        </p>
+                        <Link to="/quizzes">
+                          <Button size="sm" className="bg-gradient-to-r from-indigo-500 to-purple-600">
+                            Start Learning
+                          </Button>
+                        </Link>
+                      </motion.div>
+                    )}
+                  </div>
                 </Card>
               </motion.div>
 
               {/* Right Column: Main Content */}
               <div className="lg:col-span-2 space-y-5">
-                {/* Stat Cards - Clean and Modern */}
+                {/* Enhanced Stat Cards with Progress Rings */}
                 <motion.div
-                  className="grid grid-cols-2 lg:grid-cols-4 gap-3"
+                  className="grid grid-cols-2 lg:grid-cols-4 gap-4"
                   variants={itemVariants}
                 >
-                  <Card className="bg-gradient-to-br from-white to-emerald-50/30 dark:from-gray-800 dark:to-emerald-900/20 border border-emerald-200/60 dark:border-emerald-700/40 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 p-4 rounded-xl group">
-                    <div className="flex items-center gap-3">
-                      <motion.div 
-                        className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center shadow-md"
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                        transition={{ type: 'spring', stiffness: 300 }}
-                      >
-                        <CheckCircle className="w-5 h-5 text-white" />
-                      </motion.div>
-                      <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold uppercase tracking-wide">
-                          Completed
-                        </p>
-                        <p className="text-2xl font-extrabold bg-gradient-to-r from-emerald-600 to-emerald-700 dark:from-emerald-400 dark:to-emerald-500 bg-clip-text text-transparent">
-                          {quizzesCompleted}
-                        </p>
+                  {/* Quizzes Completed Card */}
+                  <motion.div whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 300 }}>
+                    <Card className="bg-gradient-to-br from-white via-emerald-50/50 to-emerald-100/30 dark:from-gray-800 dark:via-emerald-900/20 dark:to-emerald-900/30 border border-emerald-200/60 dark:border-emerald-700/40 shadow-xl hover:shadow-2xl transition-all duration-300 p-5 rounded-2xl group relative overflow-hidden">
+                      {/* Animated background particles */}
+                      <motion.div
+                        className="absolute top-0 right-0 w-20 h-20 bg-emerald-400/20 rounded-full blur-2xl"
+                        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                      />
+                      <div className="relative">
+                        <div className="flex items-start justify-between mb-3">
+                          <motion.div 
+                            className="w-14 h-14 bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                            whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
+                            transition={{ duration: 0.5 }}
+                          >
+                            <CheckCircle className="w-7 h-7 text-white relative z-10" />
+                            {/* Glow effect */}
+                            <motion.div
+                              className="absolute inset-0 bg-emerald-300 rounded-xl blur-md opacity-0 group-hover:opacity-50"
+                              animate={{ scale: [0.8, 1.2, 0.8] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                            />
+                          </motion.div>
+                          {quizzesCompleted >= 10 && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1, rotate: [0, 10, -10, 0] }}
+                              transition={{ delay: 0.3, duration: 0.5 }}
+                              className="text-xl"
+                            >
+                              🎉
+                            </motion.div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs text-emerald-700 dark:text-emerald-300 font-bold uppercase tracking-wider mb-1">
+                            Quizzes Done
+                          </p>
+                          <div className="flex items-end gap-2">
+                            <motion.p 
+                              className="text-4xl font-black bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 dark:from-emerald-400 dark:via-emerald-500 dark:to-emerald-600 bg-clip-text text-transparent"
+                              key={quizzesCompleted}
+                              initial={{ scale: 1.5, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: 'spring', stiffness: 200 }}
+                            >
+                              {quizzesCompleted}
+                            </motion.p>
+                            <motion.span 
+                              className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mb-1.5"
+                              initial={{ x: -10, opacity: 0 }}
+                              animate={{ x: 0, opacity: 1 }}
+                              transition={{ delay: 0.2 }}
+                            >
+                              total
+                            </motion.span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
+                    </Card>
+                  </motion.div>
 
-                  <Card className="bg-gradient-to-br from-white to-blue-50/30 dark:from-gray-800 dark:to-blue-900/20 border border-blue-200/60 dark:border-blue-700/40 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 p-4 rounded-xl group">
-                    <div className="flex items-center gap-3">
-                      <motion.div 
-                        className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center shadow-md"
-                        whileHover={{ scale: 1.1, rotate: -5 }}
-                        transition={{ type: 'spring', stiffness: 300 }}
-                      >
-                        <Target className="w-5 h-5 text-white" />
-                      </motion.div>
-                      <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold uppercase tracking-wide">
-                          Avg Score
-                        </p>
-                        <p className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500 bg-clip-text text-transparent">
-                          {averageScore.toFixed(1)}%
-                        </p>
+                  {/* Average Score Card */}
+                  <motion.div whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 300 }}>
+                    <Card className="bg-gradient-to-br from-white via-blue-50/50 to-blue-100/30 dark:from-gray-800 dark:via-blue-900/20 dark:to-blue-900/30 border border-blue-200/60 dark:border-blue-700/40 shadow-xl hover:shadow-2xl transition-all duration-300 p-5 rounded-2xl group relative overflow-hidden">
+                      <motion.div
+                        className="absolute top-0 right-0 w-20 h-20 bg-blue-400/20 rounded-full blur-2xl"
+                        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+                        transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+                      />
+                      <div className="relative">
+                        <div className="flex items-start justify-between mb-3">
+                          <motion.div 
+                            className="w-14 h-14 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                            whileHover={{ rotate: 360, scale: 1.1 }}
+                            transition={{ duration: 0.6 }}
+                          >
+                            <Target className="w-7 h-7 text-white" />
+                            <motion.div
+                              className="absolute inset-0 bg-blue-300 rounded-xl blur-md opacity-0 group-hover:opacity-50"
+                              animate={{ scale: [0.8, 1.2, 0.8] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                            />
+                          </motion.div>
+                          {averageScore >= 80 && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: 0.3 }}
+                              className="text-xl"
+                            >
+                              ⭐
+                            </motion.div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs text-blue-700 dark:text-blue-300 font-bold uppercase tracking-wider mb-1">
+                            Avg Score
+                          </p>
+                          <div className="flex items-end gap-1">
+                            <motion.p 
+                              className="text-4xl font-black bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 dark:from-blue-400 dark:via-blue-500 dark:to-blue-600 bg-clip-text text-transparent"
+                              key={averageScore}
+                              initial={{ scale: 1.5, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: 'spring', stiffness: 200 }}
+                            >
+                              {averageScore.toFixed(0)}
+                            </motion.p>
+                            <span className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                              %
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
+                    </Card>
+                  </motion.div>
 
-                  <Card className="bg-gradient-to-br from-white to-violet-50/30 dark:from-gray-800 dark:to-violet-900/20 border border-violet-200/60 dark:border-violet-700/40 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 p-4 rounded-xl group">
-                    <div className="flex items-center gap-3">
-                      <motion.div 
-                        className="w-10 h-10 bg-gradient-to-br from-violet-400 to-violet-600 rounded-lg flex items-center justify-center shadow-md"
-                        whileHover={{ scale: 1.1, y: -2 }}
-                        transition={{ type: 'spring', stiffness: 300 }}
-                      >
-                        <TrendingUp className="w-5 h-5 text-white" />
-                      </motion.div>
-                      <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold uppercase tracking-wide">
-                          Total Points
-                        </p>
-                        <p className="text-2xl font-extrabold bg-gradient-to-r from-violet-600 to-violet-700 dark:from-violet-400 dark:to-violet-500 bg-clip-text text-transparent">
-                          {totalPoints}
-                        </p>
+                  {/* Total Points Card */}
+                  <motion.div whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 300 }}>
+                    <Card className="bg-gradient-to-br from-white via-violet-50/50 to-violet-100/30 dark:from-gray-800 dark:via-violet-900/20 dark:to-violet-900/30 border border-violet-200/60 dark:border-violet-700/40 shadow-xl hover:shadow-2xl transition-all duration-300 p-5 rounded-2xl group relative overflow-hidden">
+                      <motion.div
+                        className="absolute top-0 right-0 w-20 h-20 bg-violet-400/20 rounded-full blur-2xl"
+                        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+                        transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+                      />
+                      <div className="relative">
+                        <div className="flex items-start justify-between mb-3">
+                          <motion.div 
+                            className="w-14 h-14 bg-gradient-to-br from-violet-400 via-violet-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                            animate={{ y: [-2, 2, -2] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            whileHover={{ scale: 1.1 }}
+                          >
+                            <TrendingUp className="w-7 h-7 text-white" />
+                            <motion.div
+                              className="absolute inset-0 bg-violet-300 rounded-xl blur-md opacity-0 group-hover:opacity-50"
+                              animate={{ scale: [0.8, 1.2, 0.8] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                            />
+                          </motion.div>
+                          {totalPoints >= 1000 && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: 0.3 }}
+                              className="text-xl"
+                            >
+                              💎
+                            </motion.div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs text-violet-700 dark:text-violet-300 font-bold uppercase tracking-wider mb-1">
+                            Total Points
+                          </p>
+                          <div className="flex items-end gap-2">
+                            <motion.p 
+                              className="text-4xl font-black bg-gradient-to-r from-violet-600 via-violet-700 to-violet-800 dark:from-violet-400 dark:via-violet-500 dark:to-violet-600 bg-clip-text text-transparent"
+                              key={totalPoints}
+                              initial={{ scale: 1.5, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: 'spring', stiffness: 200 }}
+                            >
+                              {totalPoints.toLocaleString()}
+                            </motion.p>
+                            <motion.span 
+                              className="text-xs text-violet-600 dark:text-violet-400 font-semibold mb-1.5"
+                              initial={{ x: -10, opacity: 0 }}
+                              animate={{ x: 0, opacity: 1 }}
+                              transition={{ delay: 0.2 }}
+                            >
+                              pts
+                            </motion.span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
+                    </Card>
+                  </motion.div>
 
-                  <Card className="bg-gradient-to-br from-white to-orange-50/30 dark:from-gray-800 dark:to-orange-900/20 border border-orange-200/60 dark:border-orange-700/40 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 p-4 rounded-xl group">
-                    <div className="flex items-center gap-3">
-                      <motion.div 
-                        className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center shadow-md relative"
-                        whileHover={{ scale: 1.1 }}
-                        animate={{ rotate: [0, -3, 3, -3, 0] }}
-                        transition={{ 
-                          rotate: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
-                          scale: { type: 'spring', stiffness: 300 }
-                        }}
-                      >
-                        <Flame className="w-5 h-5 text-white" />
-                        {(gamificationStreak || streakCount) > 0 && (
-                          <motion.span 
-                            className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full"
-                            animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
-                            transition={{ duration: 1.5, repeat: Infinity }}
-                          />
-                        )}
-                      </motion.div>
-                      <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold uppercase tracking-wide">
-                          Streak
-                        </p>
-                        <p className="text-2xl font-extrabold bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-500 bg-clip-text text-transparent">
-                          {gamificationStreak || streakCount} 🔥
-                        </p>
+                  {/* Streak Card */}
+                  <motion.div whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 300 }}>
+                    <Card className="bg-gradient-to-br from-white via-orange-50/50 to-red-100/30 dark:from-gray-800 dark:via-orange-900/20 dark:to-red-900/30 border border-orange-200/60 dark:border-orange-700/40 shadow-xl hover:shadow-2xl transition-all duration-300 p-5 rounded-2xl group relative overflow-hidden">
+                      <motion.div
+                        className="absolute top-0 right-0 w-20 h-20 bg-orange-400/20 rounded-full blur-2xl"
+                        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+                        transition={{ duration: 3, repeat: Infinity, delay: 1.5 }}
+                      />
+                      <div className="relative">
+                        <div className="flex items-start justify-between mb-3">
+                          <motion.div 
+                            className="w-14 h-14 bg-gradient-to-br from-orange-400 via-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg relative"
+                            animate={{ rotate: [0, -5, 5, -5, 0] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            whileHover={{ scale: 1.1 }}
+                          >
+                            <Flame className="w-7 h-7 text-white" />
+                            {(gamificationStreak || streakCount) > 0 && (
+                              <>
+                                <motion.span 
+                                  className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-white dark:border-gray-800"
+                                  animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
+                                  transition={{ duration: 1.5, repeat: Infinity }}
+                                />
+                                <motion.div
+                                  className="absolute inset-0 bg-orange-300 rounded-xl blur-md opacity-0 group-hover:opacity-60"
+                                  animate={{ scale: [0.8, 1.3, 0.8] }}
+                                  transition={{ duration: 1.5, repeat: Infinity }}
+                                />
+                              </>
+                            )}
+                          </motion.div>
+                          {(gamificationStreak || streakCount) >= 7 && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1, rotate: [0, 20, -20, 0] }}
+                              transition={{ delay: 0.3, duration: 0.6 }}
+                              className="text-xl"
+                            >
+                              🔥
+                            </motion.div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs text-orange-700 dark:text-orange-300 font-bold uppercase tracking-wider mb-1">
+                            Daily Streak
+                          </p>
+                          <div className="flex items-end gap-2">
+                            <motion.p 
+                              className="text-4xl font-black bg-gradient-to-r from-orange-600 via-red-600 to-red-700 dark:from-orange-400 dark:via-red-500 dark:to-red-600 bg-clip-text text-transparent"
+                              key={gamificationStreak || streakCount}
+                              initial={{ scale: 1.5, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: 'spring', stiffness: 200 }}
+                            >
+                              {gamificationStreak || streakCount}
+                            </motion.p>
+                            <motion.span 
+                              className="text-xs text-orange-600 dark:text-orange-400 font-semibold mb-1.5"
+                              initial={{ x: -10, opacity: 0 }}
+                              animate={{ x: 0, opacity: 1 }}
+                              transition={{ delay: 0.2 }}
+                            >
+                              days
+                            </motion.span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
+                    </Card>
+                  </motion.div>
                 </motion.div>
 
                 {/* Charts Row */}

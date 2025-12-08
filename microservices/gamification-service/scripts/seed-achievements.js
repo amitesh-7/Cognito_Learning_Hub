@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 const { Achievement } = require('../src/models/Achievement');
 
 const defaultAchievements = [
+  // Quiz Completion Achievements
   {
     name: 'First Steps',
     description: 'Complete your first quiz',
@@ -16,6 +17,16 @@ const defaultAchievements = [
     criteria: { target: 1 },
     rarity: 'common',
     points: 10,
+    isActive: true,
+  },
+  {
+    name: 'Quiz Novice',
+    description: 'Complete 5 quizzes',
+    icon: '📝',
+    type: 'quiz_completion',
+    criteria: { target: 5 },
+    rarity: 'common',
+    points: 15,
     isActive: true,
   },
   {

@@ -110,20 +110,51 @@ const Navbar = () => {
     },
   ];
 
-  // Navigation links - Dashboard always goes to student dashboard for everyone
-  const navLinks = user
+  // Smart navigation structure with dropdowns
+  const [activeDropdown, setActiveDropdown] = useState(null);
+
+  const navigationGroups = user
     ? [
         {
+          type: "link",
           to: "/dashboard",
           label: "Dashboard",
           icon: LayoutDashboard,
         },
-        { to: "/quizzes", label: "Quizzes", icon: BookOpen },
-        { to: "/doubt-solver", label: "AI Tutor", icon: Bot },
-        { to: "/avatar", label: "My Avatar", icon: User },
-        { to: "/achievements", label: "Achievements", icon: Trophy },
-        { to: "/social", label: "Social Hub", icon: Users },
-        { to: "/chat", label: "Chat", icon: MessageSquare },
+        {
+          type: "dropdown",
+          label: "Learning",
+          icon: Brain,
+          items: [
+            { to: "/quizzes", label: "My Quizzes", icon: BookOpen },
+            { to: "/doubt-solver", label: "AI Tutor", icon: Bot },
+            { to: "/duel", label: "1v1 Duel", icon: Swords },
+            { to: "/live", label: "Live Sessions", icon: Radio },
+          ],
+        },
+        {
+          type: "dropdown",
+          label: "Compete",
+          icon: Trophy,
+          items: [
+            { to: "/achievements", label: "Achievements", icon: Trophy, badge: true },
+            { to: "/social", label: "Social Hub", icon: Users },
+            { to: "/leaderboard", label: "Leaderboard", icon: Zap },
+          ],
+        },
+        {
+          type: "link",
+          to: "/chat",
+          label: "Chat",
+          icon: MessageSquare,
+          badge: true,
+        },
+        {
+          type: "link",
+          to: "/avatar",
+          label: "Avatar",
+          icon: User,
+        },
       ]
     : [];
 
@@ -219,19 +250,19 @@ const Navbar = () => {
                 duration: 0.6,
               }
         }
-        className={`sticky top-0 left-0 right-0 w-full z-50 transition-all duration-500 ${
-          isScrolled
-            ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl shadow-2xl shadow-indigo-500/10 border-b border-indigo-200/40 dark:border-indigo-400/30"
-            : "bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-b border-indigo-100/30 dark:border-indigo-500/20 shadow-lg"
-        }`}
-        style={{
-          WebkitBackdropFilter: isScrolled
-            ? "blur(24px) saturate(180%)"
-            : "blur(16px) saturate(150%)",
-          backdropFilter: isScrolled
-            ? "blur(24px) saturate(180%)"
-            : "blur(16px) saturate(150%)",
-        }}
+        className={`sticky top-0 left-0 right-0 z-50 transition-all duration-500 ${
+            isScrolled
+              ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-lg border-b border-indigo-200/30 dark:border-indigo-400/20"
+              : "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-indigo-100/20 dark:border-indigo-500/10"
+          }`}
+          style={{
+            WebkitBackdropFilter: isScrolled
+              ? "blur(24px) saturate(180%)"
+              : "blur(16px) saturate(150%)",
+            backdropFilter: isScrolled
+              ? "blur(24px) saturate(180%)"
+              : "blur(16px) saturate(150%)",
+          }}
       >
         {/* Ultra-modern multi-layer gradient overlays */}
         {!isMobile && (
@@ -282,8 +313,8 @@ const Navbar = () => {
         <motion.nav
           className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10"
           animate={{
-            paddingTop: isScrolled ? "0.5rem" : "0.75rem",
-            paddingBottom: isScrolled ? "0.5rem" : "0.75rem",
+            paddingTop: isScrolled ? "0.375rem" : "0.5rem",
+            paddingBottom: isScrolled ? "0.375rem" : "0.5rem",
           }}
           transition={{
             type: "spring",
@@ -291,7 +322,7 @@ const Navbar = () => {
             damping: 20,
           }}
         >
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-14">
             {/* Logo with Ultra-Modern Effects */}
             <motion.div
               initial={
@@ -398,116 +429,215 @@ const Navbar = () => {
             >
               {user ? (
                 <>
-                  {/* Gamification Badges - Real-time data */}
-                  <div className="flex items-center gap-2 mr-4">
-                    {/* Level Badge */}
+                  {/* Enhanced Gamification Badges - Real-time data */}
+                  <div className="flex items-center gap-1.5 mr-3">
+                    {/* Level Badge - Enhanced */}
                     <motion.div
                       variants={staggerItem}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      className="flex items-center gap-2 px-3 py-2 h-10 bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 rounded-xl shadow-lg hover:shadow-violet-500/50 transition-all duration-300 border border-white/30 relative overflow-hidden"
+                      whileHover={{ scale: 1.08, y: -3 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center gap-2 px-3 py-1.5 h-9 bg-gradient-to-br from-violet-500 via-purple-600 to-fuchsia-600 rounded-xl shadow-lg hover:shadow-xl hover:shadow-violet-500/60 transition-all duration-300 border border-white/40 relative overflow-hidden cursor-pointer group"
                     >
                       <motion.div
                         animate={{ x: [-50, 150] }}
                         transition={{
-                          duration: 3,
+                          duration: 2.5,
                           repeat: Infinity,
-                          repeatDelay: 1,
+                          repeatDelay: 2,
                         }}
-                        className="absolute inset-0 w-16 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                        className="absolute inset-0 w-16 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"
                       />
-                      <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-xl flex items-center justify-center border border-white/40 relative z-10">
-                        <Crown className="w-4 h-4 text-yellow-300" />
-                      </div>
+                      <motion.div 
+                        className="w-7 h-7 rounded-lg bg-white/25 backdrop-blur-xl flex items-center justify-center border border-white/50 relative z-10 shadow-inner"
+                        animate={{ rotate: [0, 5, -5, 0] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                      >
+                        <Crown className="w-4 h-4 text-yellow-300 drop-shadow-lg" />
+                      </motion.div>
                       <div className="relative z-10">
-                        <p className="text-[10px] font-black text-white/90 uppercase leading-none">
-                          Lvl
+                        <p className="text-[9px] font-black text-white/95 uppercase leading-none tracking-wider">
+                          LEVEL
                         </p>
-                        <p className="text-sm font-black text-white leading-none">
+                        <p className="text-base font-black text-white leading-none mt-0.5 drop-shadow-md">
                           {currentLevel || 1}
                         </p>
                       </div>
+                      {/* Level up indicator */}
+                      <motion.div
+                        className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full border border-white shadow-lg"
+                        animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
                     </motion.div>
 
-                    {/* Streak Badge */}
+                    {/* Enhanced Streak Badge */}
                     {gamificationStreak > 0 && (
                       <motion.div
                         variants={staggerItem}
-                        whileHover={{ scale: 1.05, rotate: [0, -3, 3, 0] }}
-                        className="flex items-center gap-2 px-3 py-2 h-10 bg-gradient-to-br from-orange-50 to-red-50 backdrop-blur-xl rounded-xl border border-orange-200/60 shadow-lg hover:shadow-xl transition-all duration-300"
+                        whileHover={{ scale: 1.08, rotate: [0, -5, 5, 0] }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center gap-2 px-3 py-1.5 h-9 bg-gradient-to-br from-orange-500/20 via-red-500/20 to-red-600/20 backdrop-blur-xl rounded-xl border border-orange-300/60 dark:border-orange-400/40 shadow-lg hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-300 cursor-pointer relative overflow-hidden group"
                       >
                         <motion.div
-                          animate={{ scale: [1, 1.15, 1] }}
+                          className="absolute inset-0 bg-gradient-to-r from-orange-400/0 via-orange-400/20 to-orange-400/0"
+                          animate={{ x: ["-100%", "100%"] }}
+                          transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+                        />
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
                           transition={{ duration: 2, repeat: Infinity }}
-                          className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-md relative"
+                          className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg relative z-10"
                         >
-                          <Flame className="w-4 h-4 text-white" />
-                          <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
+                          <Flame className="w-4 h-4 text-white drop-shadow-lg" />
+                          <motion.div 
+                            className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-white"
+                            animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                          />
                         </motion.div>
-                        <div>
-                          <p className="text-[10px] font-black text-orange-600 uppercase leading-none">
-                            Streak
+                        <div className="relative z-10">
+                          <p className="text-[9px] font-black text-orange-700 dark:text-orange-400 uppercase leading-none tracking-wider">
+                            STREAK
                           </p>
-                          <p className="text-sm font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent leading-none">
-                            {gamificationStreak}
+                          <p className="text-base font-black bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400 bg-clip-text text-transparent leading-none mt-0.5">
+                            {gamificationStreak} 🔥
                           </p>
                         </div>
                       </motion.div>
                     )}
 
-                    {/* XP Badge */}
+                    {/* Enhanced XP Badge */}
                     <motion.div
                       variants={staggerItem}
-                      whileHover={{ scale: 1.05 }}
-                      className="flex items-center gap-2 px-3 py-2 h-10 bg-white/60 backdrop-blur-xl rounded-xl border border-white/80 shadow-lg hover:shadow-xl transition-all duration-300"
+                      whileHover={{ scale: 1.08, y: -3 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center gap-2 px-3 py-1.5 h-9 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-900/30 dark:via-purple-900/30 dark:to-pink-900/30 backdrop-blur-xl rounded-xl border border-indigo-200/60 dark:border-indigo-400/40 shadow-lg hover:shadow-xl hover:shadow-indigo-500/30 transition-all duration-300 cursor-pointer relative overflow-hidden group"
                     >
-                      <Star className="w-4 h-4 text-violet-600 fill-violet-600" />
-                      <div>
-                        <p className="text-[10px] font-black text-slate-600 uppercase leading-none">
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-indigo-400/0 via-purple-400/10 to-pink-400/0"
+                        animate={{ x: ["-100%", "100%"] }}
+                        transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
+                      />
+                      <motion.div
+                        animate={{ rotate: [0, 360] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                        className="relative z-10"
+                      >
+                        <Star className="w-4 h-4 text-violet-600 dark:text-violet-400 fill-violet-600 dark:fill-violet-400 drop-shadow-md" />
+                      </motion.div>
+                      <div className="relative z-10">
+                        <p className="text-[9px] font-black text-indigo-700 dark:text-indigo-300 uppercase leading-none tracking-wider">
                           XP
                         </p>
-                        <p className="text-sm font-black bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent leading-none">
-                          {totalXP || 0}
+                        <p className="text-base font-black bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 dark:from-violet-400 dark:via-purple-400 dark:to-fuchsia-400 bg-clip-text text-transparent leading-none mt-0.5">
+                          {(totalXP || 0).toLocaleString()}
                         </p>
                       </div>
                     </motion.div>
                   </div>
 
-                  {/* Nav Links */}
-                  {navLinks.map((link) => (
-                    <motion.div key={link.to} variants={staggerItem}>
-                      <Link
-                        to={link.to}
-                        className={`relative px-4 h-10 text-sm font-semibold rounded-xl transition-all duration-300 group flex items-center justify-center gap-2 ${
-                          location.pathname === link.to
-                            ? "text-blue-700 dark:text-blue-300"
-                            : "text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
-                        }`}
-                      >
-                        {/* Active indicator with enhanced glassmorphism */}
-                        {location.pathname === link.to && (
+                  {/* Smart Navigation with Dropdowns */}
+                  {navigationGroups.map((group, index) => (
+                    <motion.div key={index} variants={staggerItem} className="relative">
+                      {group.type === "link" ? (
+                        // Direct Link
+                        <Link
+                          to={group.to}
+                          className={`relative px-3 h-9 text-sm font-semibold rounded-xl transition-all duration-300 group flex items-center justify-center gap-2 ${
+                            location.pathname === group.to
+                              ? "text-blue-700 dark:text-blue-300"
+                              : "text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                          }`}
+                        >
+                          {location.pathname === group.to && (
+                            <motion.div
+                              layoutId="activeTab"
+                              className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-indigo-500/20 dark:from-blue-500/30 dark:via-purple-500/30 dark:to-indigo-500/30 rounded-xl border border-white/70 dark:border-indigo-400/50 shadow-lg shadow-blue-500/30 backdrop-blur-xl"
+                              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                            />
+                          )}
                           <motion.div
-                            layoutId="activeTab"
-                            className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-indigo-500/20 dark:from-blue-500/25 dark:via-purple-500/25 dark:to-indigo-500/25 rounded-xl border border-white/60 dark:border-indigo-400/40 shadow-lg shadow-blue-500/20 backdrop-blur-xl"
-                            transition={{
-                              type: "spring",
-                              stiffness: 380,
-                              damping: 30,
-                            }}
-                          />
-                        )}
+                            className="relative"
+                            whileHover={{ scale: 1.1, rotate: location.pathname === group.to ? 0 : 5 }}
+                            transition={{ type: "spring", stiffness: 400 }}
+                          >
+                            <group.icon className="w-4 h-4 relative z-10" />
+                            {group.badge && (
+                              <motion.span
+                                className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-gray-800"
+                                animate={{ scale: [1, 1.2, 1] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                              />
+                            )}
+                          </motion.div>
+                          <span className="relative z-10 drop-shadow-sm">{group.label}</span>
+                        </Link>
+                      ) : (
+                        // Dropdown
+                        <div
+                          className="relative"
+                          onMouseEnter={() => setActiveDropdown(index)}
+                          onMouseLeave={() => setActiveDropdown(null)}
+                        >
+                          <button
+                            className={`relative px-3 h-9 text-sm font-semibold rounded-xl transition-all duration-300 group flex items-center justify-center gap-1.5 ${
+                              activeDropdown === index
+                                ? "text-blue-700 dark:text-blue-300 bg-blue-50/50 dark:bg-blue-900/20"
+                                : "text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                            }`}
+                          >
+                            <group.icon className="w-4 h-4" />
+                            <span className="drop-shadow-sm">{group.label}</span>
+                            <ChevronDown
+                              className={`w-3 h-3 transition-transform duration-300 ${
+                                activeDropdown === index ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
 
-                        {/* Icon and Label */}
-                        <link.icon className="w-4 h-4 relative z-10" />
-                        <span className="relative z-10 drop-shadow-sm">
-                          {link.label}
-                        </span>
-
-                        <motion.div
-                          className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg shadow-blue-500/50"
-                          initial={{ scaleX: 0 }}
-                          whileHover={{ scaleX: 1 }}
-                        />
-                      </Link>
+                          {/* Dropdown Menu */}
+                          <AnimatePresence>
+                            {activeDropdown === index && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                transition={{ duration: 0.2 }}
+                                className="absolute top-full mt-2 left-0 min-w-[200px] bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-xl shadow-2xl border border-indigo-200/50 dark:border-indigo-400/30 overflow-hidden"
+                              >
+                                {group.items.map((item, itemIndex) => (
+                                  <Link
+                                    key={itemIndex}
+                                    to={item.to}
+                                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 transition-all duration-200 group/item relative"
+                                  >
+                                    <motion.div
+                                      className="relative"
+                                      whileHover={{ scale: 1.2, rotate: 5 }}
+                                      transition={{ type: "spring", stiffness: 400 }}
+                                    >
+                                      <item.icon className="w-4 h-4 text-gray-600 dark:text-gray-400 group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400" />
+                                      {item.badge && (
+                                        <motion.span
+                                          className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
+                                          animate={{ scale: [1, 1.2, 1] }}
+                                          transition={{ duration: 2, repeat: Infinity }}
+                                        />
+                                      )}
+                                    </motion.div>
+                                    <span className="group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400">
+                                      {item.label}
+                                    </span>
+                                    {location.pathname === item.to && (
+                                      <div className="ml-auto w-1.5 h-1.5 bg-blue-600 rounded-full" />
+                                    )}
+                                  </Link>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )}
                     </motion.div>
                   ))}
 
@@ -562,16 +692,21 @@ const Navbar = () => {
                     </>
                   )}
 
-                  {/* Logout Button */}
+                  {/* Enhanced Logout Button */}
                   <motion.div variants={staggerItem}>
-                    <Button
+                    <motion.button
                       onClick={handleLogout}
-                      variant="default"
-                      size="sm"
-                      className="ml-2 h-10 px-4 flex items-center justify-center"
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="ml-2 h-9 px-4 flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold text-sm rounded-xl shadow-lg hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 border border-white/20 relative overflow-hidden group"
                     >
-                      Logout
-                    </Button>
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                        animate={{ x: ["-100%", "100%"] }}
+                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                      />
+                      <span className="relative z-10">Logout</span>
+                    </motion.button>
                   </motion.div>
                 </>
               ) : (
@@ -818,50 +953,73 @@ const Navbar = () => {
                 </>
               )}
 
-              {/* Theme Toggle */}
+              {/* Enhanced Theme Toggle */}
               <motion.div variants={staggerItem}>
                 <motion.button
                   onClick={toggleTheme}
-                  className="ml-3 p-3 rounded-xl bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 dark:from-slate-800 dark:via-indigo-900/50 dark:to-purple-900/50 hover:from-blue-200 hover:via-purple-200 hover:to-indigo-200 dark:hover:from-indigo-800/60 dark:hover:via-purple-800/60 dark:hover:to-blue-800/60 transition-all duration-500 shadow-lg hover:shadow-xl border border-white/60 dark:border-indigo-400/30 backdrop-blur-xl"
-                  whileHover={{ scale: 1.08, rotate: 5 }}
-                  whileTap={{ scale: 0.92 }}
+                  className="ml-2 p-2.5 rounded-xl bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 dark:from-slate-800 dark:via-indigo-900/50 dark:to-purple-900/50 hover:from-blue-200 hover:via-purple-200 hover:to-indigo-200 dark:hover:from-indigo-800/60 dark:hover:via-purple-800/60 dark:hover:to-blue-800/60 transition-all duration-500 shadow-md hover:shadow-lg border border-white/60 dark:border-indigo-400/30 backdrop-blur-xl relative overflow-hidden group"
+                  whileHover={{ scale: 1.1, rotate: [0, -10, 10, -10, 0] }}
+                  whileTap={{ scale: 0.9 }}
                 >
                   <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-indigo-400/20 to-transparent"
+                    animate={{ x: ["-100%", "100%"] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 4 }}
+                  />
+                  <motion.div
                     initial={false}
-                    animate={{ rotate: theme === "light" ? 0 : 180 }}
-                    transition={{ duration: 0.5, type: "spring" }}
+                    animate={{ rotate: theme === "light" ? 0 : 180, scale: [1, 1.2, 1] }}
+                    transition={{ duration: 0.6, type: "spring", stiffness: 200 }}
+                    className="relative z-10"
                   >
                     {theme === "light" ? (
-                      <Moon className="w-5 h-5 text-indigo-700 drop-shadow-sm" />
+                      <Moon className="w-5 h-5 text-indigo-700 drop-shadow-md" />
                     ) : (
-                      <Sun className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
+                      <Sun className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" />
                     )}
                   </motion.div>
                 </motion.button>
               </motion.div>
             </motion.div>
 
-            {/* Mobile Menu Button */}
+            {/* Enhanced Mobile Menu Button */}
             <div className="lg:hidden flex items-center space-x-2">
               <motion.button
                 onClick={toggleTheme}
-                className="p-2.5 rounded-xl bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 dark:from-slate-800 dark:via-indigo-900/50 dark:to-purple-900/50 border border-white/60 dark:border-indigo-400/30 shadow-md backdrop-blur-xl"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-xl bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 dark:from-slate-800 dark:via-indigo-900/50 dark:to-purple-900/50 border border-white/60 dark:border-indigo-400/30 shadow-md backdrop-blur-xl relative overflow-hidden"
+                whileHover={{ scale: 1.08, rotate: [0, -10, 10, 0] }}
+                whileTap={{ scale: 0.92 }}
               >
-                {theme === "light" ? (
-                  <Moon className="w-5 h-5 text-indigo-700" />
-                ) : (
-                  <Sun className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_6px_rgba(250,204,21,0.5)]" />
-                )}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  animate={{ x: ["-100%", "100%"] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                />
+                <motion.div
+                  animate={{ rotate: theme === "light" ? 0 : 180 }}
+                  transition={{ duration: 0.5, type: "spring" }}
+                  className="relative z-10"
+                >
+                  {theme === "light" ? (
+                    <Moon className="w-5 h-5 text-indigo-700" />
+                  ) : (
+                    <Sun className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
+                  )}
+                </motion.div>
               </motion.button>
 
               <motion.button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2.5 rounded-xl bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white shadow-xl shadow-blue-500/40 border border-white/20 backdrop-blur-xl"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-xl bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white shadow-lg hover:shadow-xl shadow-blue-500/40 border border-white/20 backdrop-blur-xl relative overflow-hidden group"
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
               >
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  animate={{ x: ["-100%", "100%"] }}
+                  transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
+                />
+
                 <AnimatePresence mode="wait">
                   {isMenuOpen ? (
                     <motion.div
@@ -963,17 +1121,43 @@ const Navbar = () => {
               <div className="p-4 space-y-1 max-h-[70vh] overflow-y-auto">
                 {user ? (
                   <>
-                    {/* Nav links */}
-                    {navLinks.map((link, index) => (
-                      <Link
-                        key={index}
-                        onClick={closeMenu}
-                        to={link.to}
-                        className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
-                      >
-                        <link.icon className="w-5 h-5" />
-                        <span>{link.label}</span>
-                      </Link>
+                    {/* Nav links from navigationGroups */}
+                    {navigationGroups.map((group, index) => (
+                      <div key={index}>
+                        {group.type === "link" ? (
+                          <Link
+                            onClick={closeMenu}
+                            to={group.to}
+                            className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
+                          >
+                            <group.icon className="w-5 h-5" />
+                            <span>{group.label}</span>
+                            {group.badge && (
+                              <span className="ml-auto w-2 h-2 bg-red-500 rounded-full" />
+                            )}
+                          </Link>
+                        ) : (
+                          <>
+                            <div className="px-4 py-2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              {group.label}
+                            </div>
+                            {group.items.map((item, itemIndex) => (
+                              <Link
+                                key={itemIndex}
+                                onClick={closeMenu}
+                                to={item.to}
+                                className="flex items-center gap-4 px-4 py-3.5 pl-8 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200 text-base font-medium"
+                              >
+                                <item.icon className="w-5 h-5" />
+                                <span>{item.label}</span>
+                                {item.badge && (
+                                  <span className="ml-auto w-2 h-2 bg-red-500 rounded-full" />
+                                )}
+                              </Link>
+                            ))}
+                          </>
+                        )}
+                      </div>
                     ))}
 
                     {user.role === "Teacher" && (

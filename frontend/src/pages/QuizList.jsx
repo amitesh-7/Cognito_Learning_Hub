@@ -306,7 +306,7 @@ export default function QuizList() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 flex items-center justify-center">
-        <div className="text-center bg-white/40 backdrop-blur-xl rounded-2xl border border-white/60 px-8 py-6 shadow-xl">
+        <div className="text-center bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 px-8 py-6 shadow-lg">
           <div className="w-14 h-14 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin mx-auto mb-4" />
           <p className="text-sm font-medium text-slate-700">
             Loading quizzes...
@@ -319,7 +319,7 @@ export default function QuizList() {
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white/40 backdrop-blur-xl rounded-2xl border border-white/60 p-8 shadow-xl text-center">
+        <div className="max-w-md w-full bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 p-8 shadow-lg text-center">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500/10 to-pink-500/10 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 border border-red-200/50">
             <svg
               className="w-8 h-8 text-red-500"
@@ -355,7 +355,7 @@ export default function QuizList() {
         />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 space-y-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-8 space-y-6">
         {/* Header Section - Gamified */}
         <motion.div
           className="flex items-center justify-between mb-8"
@@ -407,7 +407,7 @@ export default function QuizList() {
 
         {/* Search and Filter - Enhanced Glassmorphism */}
         <motion.div
-          className="bg-white/60 backdrop-blur-2xl rounded-2xl border-2 border-white/80 p-6 shadow-xl mb-6"
+          className="bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 p-6 shadow-lg mb-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -420,13 +420,13 @@ export default function QuizList() {
                 placeholder="Search quizzes or creators..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-white/80 backdrop-blur-sm border-2 border-violet-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-400 transition-all placeholder:text-slate-400 font-medium text-slate-800 shadow-sm"
+                className="w-full pl-12 pr-4 py-3.5 bg-white/30 backdrop-blur-md border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-400 transition-all placeholder:text-slate-400 font-medium text-slate-800 shadow-sm"
               />
             </div>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-5 py-3.5 border-2 border-violet-200/50 rounded-xl bg-white/80 backdrop-blur-sm text-slate-800 font-bold focus:ring-2 focus:ring-violet-500 focus:outline-none shadow-sm"
+              className="px-5 py-3.5 border border-white/40 rounded-xl bg-white/30 backdrop-blur-md text-slate-800 font-bold focus:ring-2 focus:ring-violet-500 focus:outline-none shadow-sm"
             >
               <option value="newest">⭐ Newest First</option>
               <option value="popular">🔥 Most Popular</option>
@@ -438,7 +438,7 @@ export default function QuizList() {
         {/* Featured Quiz or Empty State */}
         {filteredQuizzes.length === 0 ? (
           <motion.div
-            className="bg-white/40 backdrop-blur-xl rounded-2xl border border-white/60 p-16 shadow-xl text-center"
+            className="bg-white/20 backdrop-blur-xl rounded-2xl border border-white/30 p-16 shadow-lg text-center"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}

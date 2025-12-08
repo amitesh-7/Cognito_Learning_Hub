@@ -115,12 +115,12 @@ function App() {
               {/* Modern Glassmorphism Navbar with Scroll Behavior */}
               {!isFullScreen && <Navbar />}
 
-              {/* Main Content with top padding for fixed navbar */}
+              {/* Main Content */}
               <main
                 className={
                   isFullScreen
                     ? ""
-                  : "container mx-auto px-6 lg:px-8 pt-32 lg:pt-36 relative z-10"
+                  : "relative z-10"
               }
             >
               <Suspense
