@@ -11,6 +11,14 @@ const { queueAchievementCheck } = require('../config/queue');
 router.post('/quiz-completed', async (req, res, next) => {
   try {
     const { userId, quizId, resultData } = req.body;
+    
+    console.log('📊 Quiz completion event received:', {
+      userId,
+      quizId,
+      pointsEarned: resultData?.pointsEarned,
+      experienceGained: resultData?.experienceGained,
+      passed: resultData?.passed
+    });
 
     if (!userId || !resultData) {
       return res.status(400).json({
@@ -36,12 +44,33 @@ router.post('/quiz-completed', async (req, res, next) => {
     });
 
     // Wait for all operations
-    await Promise.all([
+    const results = await Promise.all([
       statsPromise,
       avgScorePromise,
       activityPromise,
       achievementPromise,
     ]);
+
+    // If queue failed (null returned), check achievements synchronously
+    if (achievementPromise === null) {
+      console.log('⚠️ Bull queue unavailable, checking achievements synchronously');
+      const achievementProcessor = require('../services/achievementProcessor');
+      try {
+        const unlockedAchievements = await achievementProcessor.checkAchievements(userId, {
+          type: 'quiz_completed',
+          quizId,
+          ...resultData,
+        });
+        
+        if (unlockedAchievements.length > 0) {
+          console.log(`🎉 Unlocked ${unlockedAchievements.length} achievement(s) synchronously`);
+        }
+      } catch (error) {
+        console.error('Synchronous achievement check failed:', error);
+      }
+    }
+    
+    console.log('✅ Quiz completion event processed successfully for user:', userId);
 
     res.json({
       success: true,

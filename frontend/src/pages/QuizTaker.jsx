@@ -122,19 +122,22 @@ export default function QuizTaker() {
           const percentage = Math.round((score / quiz.questions.length) * 100);
           const totalTimeTaken = questionResults.reduce((acc, q) => acc + (q.timeTaken || 0), 0);
           
-          // Calculate XP: base 10 per question + bonus for correct answers
-          const xpEarned = score * 15 + quiz.questions.length * 5;
+          // XP calculation now handled by backend with proper difficulty multipliers
           
           // Build answers array in the format expected by result-service
           // Schema expects: questionId, selectedAnswer, isCorrect, points, timeSpent
           const answers = questionResults.length > 0 
-            ? questionResults.map((qr, index) => ({
-                questionId: quiz.questions[index]?._id || `q-${index}`,
-                selectedAnswer: qr.userAnswer,
-                isCorrect: qr.isCorrect,
-                points: qr.isCorrect ? 10 : 0,
-                timeSpent: Math.round((qr.timeTaken || 0) * 1000), // Convert to milliseconds
-              }))
+            ? questionResults.map((qr, index) => {
+                const question = quiz.questions[index];
+                const questionPoints = question?.points || 1; // Use actual question points
+                return {
+                  questionId: question?._id || `q-${index}`,
+                  selectedAnswer: qr.userAnswer,
+                  isCorrect: qr.isCorrect,
+                  points: qr.isCorrect ? questionPoints : 0,
+                  timeSpent: Math.round((qr.timeTaken || 0) * 1000), // Convert to milliseconds
+                };
+              })
             : quiz.questions.map((q, index) => ({
                 questionId: q._id || `q-${index}`,
                 selectedAnswer: "not_answered",

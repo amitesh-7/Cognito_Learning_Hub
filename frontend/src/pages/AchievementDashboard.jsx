@@ -254,13 +254,28 @@ export default function AchievementDashboard() {
   // Sync achievements from context
   useEffect(() => {
     if (!gamificationLoading) {
-      // Combine all achievements with user unlock status
+      console.log('🎯 Processing achievements:', {
+        allAchievements: allAchievements.length,
+        userAchievements: userAchievements.length,
+        userStats
+      });
+      
+      // Get default achievements as base
+      const defaultAchievements = getDefaultAchievementDefinitions(userStats || {});
       const achievementMap = new Map();
       
-      // Add all available achievements
+      // Start with defaults
+      defaultAchievements.forEach((a) => {
+        achievementMap.set(a.id || a.name, a);
+      });
+      
+      // Add/override with API achievements
       allAchievements.forEach((a) => {
-        achievementMap.set(a._id || a.id, {
-          id: a._id || a.id,
+        const id = a._id || a.id || a.name;
+        const progress = calculateProgress(a, userStats);
+        
+        achievementMap.set(id, {
+          id,
           name: a.name,
           description: a.description,
           icon: a.icon || "🏆",
@@ -268,130 +283,219 @@ export default function AchievementDashboard() {
           rarity: a.rarity || "common",
           points: a.points || 10,
           isUnlocked: false,
-          progress: 0,
+          progress: progress,
+          criteria: a.criteria,
         });
       });
       
-      // Mark unlocked achievements
+      // Mark unlocked achievements from user data
       userAchievements.forEach((ua) => {
         const achievement = ua.achievement || ua;
-        const id = achievement._id || achievement.id || ua._id;
+        const id = achievement._id || achievement.id || achievement.name || ua._id;
         
         if (achievementMap.has(id)) {
           const existing = achievementMap.get(id);
           achievementMap.set(id, {
             ...existing,
             isUnlocked: ua.isCompleted ?? true,
-            progress: ua.progress || 100,
+            progress: ua.isCompleted ? 100 : (ua.progress || existing.progress || 0),
             unlockedAt: ua.unlockedAt,
           });
         } else {
-          // Achievement from user but not in all list
+          // Achievement from user but not in map
           achievementMap.set(id, {
             id,
-            name: achievement.name,
-            description: achievement.description,
+            name: achievement.name || 'Unknown',
+            description: achievement.description || '',
             icon: achievement.icon || "🏆",
             type: achievement.type || "general",
             rarity: achievement.rarity || "common",
             points: achievement.points || 10,
             isUnlocked: ua.isCompleted ?? true,
-            progress: ua.progress || 100,
+            progress: ua.isCompleted ? 100 : (ua.progress || 0),
             unlockedAt: ua.unlockedAt,
           });
         }
       });
       
-      // If no achievements from API, use default definitions
       let finalAchievements = Array.from(achievementMap.values());
-      if (finalAchievements.length === 0) {
-        finalAchievements = getDefaultAchievementDefinitions(userStats);
-      }
+      console.log('✅ Final achievements:', finalAchievements.length, finalAchievements.filter(a => a.isUnlocked).length + ' unlocked');
       
       setAchievements(finalAchievements);
       
-      // Recent unlocks
+      // Recent unlocks - properly formatted
       const recent = recentUnlocks.length > 0 
-        ? recentUnlocks.slice(0, 5).map(a => ({
-            ...a,
+        ? recentUnlocks.slice(0, 5).map(unlock => ({
+            _id: unlock._id || unlock.achievement?._id,
+            achievement: unlock.achievement || {},
+            unlockedAt: unlock.unlockedAt,
             isUnlocked: true,
           }))
         : finalAchievements
-            .filter(a => a.isUnlocked)
+            .filter(a => a.isUnlocked && a.unlockedAt)
             .sort((a, b) => new Date(b.unlockedAt || 0) - new Date(a.unlockedAt || 0))
-            .slice(0, 5);
+            .slice(0, 5)
+            .map(a => ({
+              _id: a.id,
+              achievement: a,
+              unlockedAt: a.unlockedAt,
+            }));
       
       setRecentAchievements(recent);
       setLoading(false);
     }
   }, [gamificationLoading, allAchievements, userAchievements, recentUnlocks, userStats]);
 
+  // Calculate progress for an achievement
+  const calculateProgress = (achievement, stats) => {
+    if (!stats || !achievement.criteria) return 0;
+    
+    const { type, criteria } = achievement;
+    const s = stats;
+    
+    switch (type) {
+      case 'quiz_completion':
+        if (criteria.target) {
+          return Math.min((s.totalQuizzesTaken || 0) / criteria.target * 100, 100);
+        }
+        break;
+      case 'score_achievement':
+        if (criteria.score) {
+          return s.averageScore >= criteria.score ? 100 : (s.averageScore || 0) / criteria.score * 100;
+        }
+        break;
+      case 'streak':
+        if (criteria.target) {
+          return Math.min((s.currentStreak || 0) / criteria.target * 100, 100);
+        }
+        break;
+      case 'special':
+        if (criteria.target) {
+          return Math.min((s.totalPoints || 0) / criteria.target * 100, 100);
+        }
+        break;
+      default:
+        return 0;
+    }
+    return 0;
+  };
+
   // Default achievement definitions based on user stats
   const getDefaultAchievementDefinitions = (stats) => {
     const s = stats || {};
+    const quizzesTaken = s.totalQuizzesTaken || 0;
+    const avgScore = s.averageScore || 0;
+    const currentStreak = s.currentStreak || 0;
+    const totalPoints = s.totalPoints || 0;
+    
     return [
       {
-        id: 1,
+        id: 'first-steps',
         name: "First Steps",
         description: "Complete your first quiz",
         icon: "🎯",
         type: "quiz_completion",
         rarity: "common",
         points: 10,
-        isUnlocked: (s.totalQuizzesTaken || 0) >= 1,
+        criteria: { target: 1 },
+        isUnlocked: quizzesTaken >= 1,
+        progress: quizzesTaken >= 1 ? 100 : 0,
       },
       {
-        id: 2,
+        id: 'quiz-enthusiast',
         name: "Quiz Enthusiast",
         description: "Complete 10 quizzes",
         icon: "📚",
         type: "quiz_completion",
-        rarity: "rare",
-        points: 25,
-        isUnlocked: (s.totalQuizzesTaken || 0) >= 10,
-        progress: Math.min(((s.totalQuizzesTaken || 0) / 10) * 100, 100),
+        rarity: "common",
+        points: 50,
+        criteria: { target: 10 },
+        isUnlocked: quizzesTaken >= 10,
+        progress: Math.min((quizzesTaken / 10) * 100, 100),
       },
       {
-        id: 3,
+        id: 'quiz-master',
+        name: "Quiz Master",
+        description: "Complete 50 quizzes",
+        icon: "🎓",
+        type: "quiz_completion",
+        rarity: "rare",
+        points: 200,
+        criteria: { target: 50 },
+        isUnlocked: quizzesTaken >= 50,
+        progress: Math.min((quizzesTaken / 50) * 100, 100),
+      },
+      {
+        id: 'perfect-score',
         name: "Perfect Score",
-        description: "Get 100% on any quiz",
-        icon: "🏆",
+        description: "Score 100% on a quiz",
+        icon: "💯",
         type: "score_achievement",
         rarity: "epic",
-        points: 50,
-        isUnlocked: (s.averageScore || 0) >= 100,
+        points: 100,
+        criteria: { score: 100 },
+        isUnlocked: avgScore >= 100,
+        progress: Math.min((avgScore / 100) * 100, 100),
       },
       {
-        id: 4,
-        name: "Speed Demon",
-        description: "Answer 5 questions in under 10 seconds each",
-        icon: "⚡",
-        type: "speed",
+        id: 'excellence',
+        name: "Excellence",
+        description: "Score 90% or higher",
+        icon: "⭐",
+        type: "score_achievement",
         rarity: "rare",
-        points: 30,
-        isUnlocked: false,
+        points: 50,
+        criteria: { score: 90 },
+        isUnlocked: avgScore >= 90,
+        progress: Math.min((avgScore / 90) * 100, 100),
       },
       {
-        id: 5,
-        name: "Streak Master",
-        description: "Maintain a 7-day learning streak",
+        id: 'on-fire',
+        name: "On Fire",
+        description: "Achieve a 5-day learning streak",
         icon: "🔥",
         type: "streak",
-        rarity: "epic",
-        points: 40,
-        isUnlocked: (s.longestStreak || 0) >= 7,
-        progress: Math.min(((s.currentStreak || 0) / 7) * 100, 100),
+        rarity: "rare",
+        points: 75,
+        criteria: { target: 5 },
+        isUnlocked: currentStreak >= 5,
+        progress: Math.min((currentStreak / 5) * 100, 100),
       },
       {
-        id: 6,
+        id: 'unstoppable',
+        name: "Unstoppable",
+        description: "Achieve a 10-day streak",
+        icon: "🚀",
+        type: "streak",
+        rarity: "epic",
+        points: 150,
+        criteria: { target: 10 },
+        isUnlocked: currentStreak >= 10,
+        progress: Math.min((currentStreak / 10) * 100, 100),
+      },
+      {
+        id: 'knowledge-seeker',
         name: "Knowledge Seeker",
         description: "Earn 1000 total points",
-        icon: "⭐",
+        icon: "💎",
         type: "special",
         rarity: "legendary",
         points: 100,
-        isUnlocked: (s.totalPoints || 0) >= 1000,
-        progress: Math.min(((s.totalPoints || 0) / 1000) * 100, 100),
+        criteria: { target: 1000 },
+        isUnlocked: totalPoints >= 1000,
+        progress: Math.min((totalPoints / 1000) * 100, 100),
+      },
+      {
+        id: 'point-collector',
+        name: "Point Collector",
+        description: "Earn 500 total points",
+        icon: "💰",
+        type: "special",
+        rarity: "rare",
+        points: 50,
+        criteria: { target: 500 },
+        isUnlocked: totalPoints >= 500,
+        progress: Math.min((totalPoints / 500) * 100, 100),
       },
     ];
   };

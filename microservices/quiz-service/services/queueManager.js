@@ -65,49 +65,69 @@ if (
   };
 }
 
-// Create quiz generation queue
-const quizGenerationQueue = new Queue("quiz-generation", {
-  redis: redisConfig,
-  defaultJobOptions: {
-    attempts: parseInt(process.env.QUEUE_MAX_ATTEMPTS) || 3,
-    backoff: {
-      type: "exponential",
-      delay: parseInt(process.env.QUEUE_BACKOFF_DELAY) || 5000,
+// Create quiz generation queue with error handling
+let quizGenerationQueue;
+let useQueueFallback = false;
+
+try {
+  quizGenerationQueue = new Queue("quiz-generation", {
+    redis: redisConfig,
+    defaultJobOptions: {
+      attempts: parseInt(process.env.QUEUE_MAX_ATTEMPTS) || 3,
+      backoff: {
+        type: "exponential",
+        delay: parseInt(process.env.QUEUE_BACKOFF_DELAY) || 5000,
+      },
+      removeOnComplete: 100, // Keep last 100 completed jobs
+      removeOnFail: 500, // Keep last 500 failed jobs
+      timeout: 30000, // 30 seconds max per job
     },
-    removeOnComplete: 100, // Keep last 100 completed jobs
-    removeOnFail: 500, // Keep last 500 failed jobs
-    timeout: 30000, // 30 seconds max per job
-  },
-});
-
-// Queue event listeners for monitoring
-quizGenerationQueue.on("active", (job) => {
-  logger.info(`Job ${job.id} started: ${job.data.method}`);
-});
-
-quizGenerationQueue.on("completed", (job, result) => {
-  logger.info(`Job ${job.id} completed successfully`, {
-    method: job.data.method,
-    quizId: result.quizId,
-    duration: Date.now() - job.timestamp,
   });
-});
 
-quizGenerationQueue.on("failed", (job, error) => {
-  logger.error(`Job ${job.id} failed:`, {
-    method: job.data.method,
-    error: error.message,
-    attempts: job.attemptsMade,
+  // Queue event listeners for monitoring
+  quizGenerationQueue.on("active", (job) => {
+    logger.info(`Job ${job.id} started: ${job.data.method}`);
   });
-});
 
-quizGenerationQueue.on("stalled", (job) => {
-  logger.warn(`Job ${job.id} stalled:`, job.data.method);
-});
+  quizGenerationQueue.on("completed", (job, result) => {
+    logger.info(`Job ${job.id} completed successfully`, {
+      method: job.data.method,
+      quizId: result.quizId,
+      duration: Date.now() - job.timestamp,
+    });
+  });
 
-quizGenerationQueue.on("error", (error) => {
-  logger.error("Queue error:", error);
-});
+  quizGenerationQueue.on("failed", (job, error) => {
+    logger.error(`Job ${job.id} failed:`, {
+      method: job.data.method,
+      error: error.message,
+      attempts: job.attemptsMade,
+    });
+  });
+
+  quizGenerationQueue.on("stalled", (job) => {
+    logger.warn(`Job ${job.id} stalled:`, job.data.method);
+  });
+
+  quizGenerationQueue.on("error", (error) => {
+    // Only log non-connection errors
+    if (error.code !== "ECONNREFUSED" && error.code !== "ENOTFOUND") {
+      logger.error("Queue error:", error);
+    }
+  });
+} catch (error) {
+  logger.warn("⚠️ Failed to initialize Bull queue, using synchronous fallback:", error.message);
+  useQueueFallback = true;
+  
+  // Create a mock queue object for fallback
+  quizGenerationQueue = {
+    on: () => {},
+    add: async () => ({ id: 'sync-' + Date.now() }),
+    getJob: async () => null,
+    close: async () => {},
+    getJobCounts: async () => ({ waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0 }),
+  };
+}
 
 /**
  * Add quiz generation job to queue
