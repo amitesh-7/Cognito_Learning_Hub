@@ -18,10 +18,56 @@ class RedisClient {
 
   connect(redisUrl = process.env.REDIS_URL || "redis://localhost:6379") {
     try {
-      // Check if Upstash Redis is configured
       let redisConfig;
 
-      if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
+      // Priority 1: Redis Cloud (Redis Labs) - RECOMMENDED FREE TIER
+      if (process.env.REDIS_CLOUD_URL) {
+        this.logger.info(
+          "Attempting to connect to Redis Cloud (Redis Labs)..."
+        );
+
+        try {
+          const url = new URL(process.env.REDIS_CLOUD_URL);
+
+          redisConfig = {
+            host: url.hostname,
+            port: parseInt(url.port) || 6379,
+            password: url.password || process.env.REDIS_CLOUD_PASSWORD,
+            tls:
+              url.protocol === "rediss:"
+                ? {
+                    rejectUnauthorized: false,
+                  }
+                : undefined,
+            maxRetriesPerRequest: 3,
+            enableReadyCheck: false,
+            connectTimeout: 10000,
+            lazyConnect: true,
+            retryStrategy: (times) => {
+              if (times > 3) {
+                this.logger.warn(
+                  "Max Redis retries reached, switching to in-memory"
+                );
+                this.switchToInMemory();
+                return null;
+              }
+              const delay = Math.min(times * 100, 2000);
+              return delay;
+            },
+          };
+
+          this.client = new Redis(redisConfig);
+        } catch (urlError) {
+          this.logger.warn("Invalid Redis Cloud URL, trying next option");
+        }
+      }
+
+      // Priority 2: Upstash Redis (has limits)
+      if (
+        !this.client &&
+        process.env.UPSTASH_REDIS_URL &&
+        process.env.UPSTASH_REDIS_TOKEN
+      ) {
         this.logger.info("Attempting to connect to Upstash Redis (cloud)...");
 
         try {
@@ -40,7 +86,9 @@ class RedisClient {
             lazyConnect: true,
             retryStrategy: (times) => {
               if (times > 3) {
-                this.logger.warn("Max Redis retries reached, switching to in-memory");
+                this.logger.warn(
+                  "Max Redis retries reached, switching to in-memory"
+                );
                 this.switchToInMemory();
                 return null;
               }
@@ -55,7 +103,7 @@ class RedisClient {
         }
       }
 
-      // Fallback to local Redis if Upstash not configured or failed
+      // Priority 3: Fallback to local Redis
       if (!this.client) {
         this.logger.info("Attempting to connect to local Redis...");
 
@@ -66,7 +114,9 @@ class RedisClient {
           lazyConnect: true,
           retryStrategy: (times) => {
             if (times > 2) {
-              this.logger.warn("Local Redis unavailable, switching to in-memory");
+              this.logger.warn(
+                "Local Redis unavailable, switching to in-memory"
+              );
               this.switchToInMemory();
               return null;
             }
@@ -89,9 +139,15 @@ class RedisClient {
 
       this.client.on("error", (err) => {
         // Handle specific errors that indicate Redis is unavailable
-        if (err.code === "ENOTFOUND" || err.code === "ECONNREFUSED" || err.code === "ETIMEDOUT") {
+        if (
+          err.code === "ENOTFOUND" ||
+          err.code === "ECONNREFUSED" ||
+          err.code === "ETIMEDOUT"
+        ) {
           if (!this.useInMemory) {
-            this.logger.warn(`Redis unavailable (${err.code}), switching to in-memory mode`);
+            this.logger.warn(
+              `Redis unavailable (${err.code}), switching to in-memory mode`
+            );
             this.switchToInMemory();
           }
         } else if (err.code !== "ECONNRESET") {
@@ -127,10 +183,14 @@ class RedisClient {
     this.useInMemory = true;
     this.isConnected = false;
     if (this.client) {
-      try { this.client.disconnect(); } catch (e) {}
+      try {
+        this.client.disconnect();
+      } catch (e) {}
       this.client = null;
     }
-    this.logger.info("⚠️ Running in IN-MEMORY mode (cache will not persist across restarts)");
+    this.logger.info(
+      "⚠️ Running in IN-MEMORY mode (cache will not persist across restarts)"
+    );
   }
 
   async get(key) {
@@ -156,8 +216,8 @@ class RedisClient {
     try {
       if (this.useInMemory) {
         this.memoryStore.set(key, {
-          value: typeof value === 'string' ? JSON.parse(value) : value,
-          expiry: ttl ? Date.now() + (ttl * 1000) : null
+          value: typeof value === "string" ? JSON.parse(value) : value,
+          expiry: ttl ? Date.now() + ttl * 1000 : null,
         });
         return true;
       }
@@ -213,9 +273,16 @@ class RedisClient {
     try {
       if (this.useInMemory) {
         const item = this.memoryStore.get(key);
-        const currentValue = item ? (typeof item.value === 'number' ? item.value : 0) : 0;
+        const currentValue = item
+          ? typeof item.value === "number"
+            ? item.value
+            : 0
+          : 0;
         const newValue = currentValue + amount;
-        this.memoryStore.set(key, { value: newValue, expiry: item?.expiry || null });
+        this.memoryStore.set(key, {
+          value: newValue,
+          expiry: item?.expiry || null,
+        });
         return newValue;
       }
 
@@ -231,7 +298,7 @@ class RedisClient {
       if (this.useInMemory) {
         const item = this.memoryStore.get(key);
         if (item) {
-          item.expiry = Date.now() + (seconds * 1000);
+          item.expiry = Date.now() + seconds * 1000;
         }
         return true;
       }
@@ -247,7 +314,7 @@ class RedisClient {
   async flushPattern(pattern) {
     try {
       if (this.useInMemory) {
-        const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+        const regex = new RegExp(pattern.replace(/\*/g, ".*"));
         let count = 0;
         for (const key of this.memoryStore.keys()) {
           if (regex.test(key)) {
@@ -264,7 +331,10 @@ class RedisClient {
       }
       return keys.length;
     } catch (error) {
-      this.logger.error(`Redis FLUSH PATTERN error for ${pattern}:`, error.message);
+      this.logger.error(
+        `Redis FLUSH PATTERN error for ${pattern}:`,
+        error.message
+      );
       return 0;
     }
   }
@@ -289,7 +359,7 @@ class RedisClient {
       mode: this.useInMemory ? "in-memory" : "redis",
       connected: this.isConnected,
       healthy: this.isHealthy(),
-      memorySize: this.useInMemory ? this.memoryStore.size : null
+      memorySize: this.useInMemory ? this.memoryStore.size : null,
     };
   }
 }
