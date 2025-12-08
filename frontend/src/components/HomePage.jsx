@@ -433,17 +433,17 @@ export default function HomePage() {
                 className="flex flex-wrap gap-4 pt-8 border-t border-gray-200 dark:border-gray-700"
                 variants={fadeInUp}
               >
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700">
-                  <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">AI Quiz Generation</span>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/20 dark:to-purple-500/20 border-2 border-indigo-300 dark:border-indigo-600">
+                  <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-300 flex-shrink-0" />
+                  <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-200">AI Quiz Generation</span>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700">
-                  <Gamepad2 className="w-5 h-5 text-green-600 dark:text-green-400" />
-                  <span className="text-sm font-medium text-green-700 dark:text-green-300">1v1 Duel Battles</span>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 dark:from-green-500/20 dark:to-emerald-500/20 border-2 border-green-300 dark:border-green-600">
+                  <Gamepad2 className="w-5 h-5 text-green-600 dark:text-green-300 flex-shrink-0" />
+                  <span className="text-sm font-semibold text-green-700 dark:text-green-200">1v1 Duel Battles</span>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700">
-                  <Trophy className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  <span className="text-sm font-medium text-purple-700 dark:text-purple-300">Live Leaderboards</span>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 dark:from-purple-500/20 dark:to-pink-500/20 border-2 border-purple-300 dark:border-purple-600">
+                  <Trophy className="w-5 h-5 text-purple-600 dark:text-purple-300 flex-shrink-0" />
+                  <span className="text-sm font-semibold text-purple-700 dark:text-purple-200">Live Leaderboards</span>
                 </div>
               </motion.div>
             </motion.div>
@@ -859,6 +859,273 @@ export default function HomePage() {
                   </CardContent>
                 </Card>
               </motion.div>
+            </motion.div>
+
+            {/* Cognito vs Kahoot Comparison */}
+            <motion.div
+              className="mt-16"
+              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ type: "spring", stiffness: 120, damping: 16 }}
+            >
+              <motion.div
+                className="text-center space-y-4 mb-12"
+                initial={{ opacity: 0, y: -20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+              >
+                <Badge variant="gradient" size="lg" className="mb-2">
+                  <Target className="w-4 h-4 mr-2" />
+                  Why Choose Us
+                </Badge>
+                <h2 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">
+                  Cognito vs Kahoot
+                </h2>
+                <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                  See how we stack up against the competition
+                </p>
+              </motion.div>
+
+              <Card className="border-0 shadow-2xl overflow-hidden bg-white/90 dark:bg-gray-900/80 backdrop-blur-lg relative group">
+                {/* Animated glow effect */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 blur-xl"
+                  animate={{
+                    scale: [1, 1.05, 1],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+                
+                <CardContent className="p-0 relative z-10">
+                  <motion.div 
+                    className="grid grid-cols-3"
+                    initial={{ opacity: 0, y: -20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <motion.div 
+                      className="bg-gray-100 dark:bg-gray-800 px-6 py-5 text-left text-lg font-bold text-gray-900 dark:text-white"
+                      whileHover={{ backgroundColor: "rgba(99, 102, 241, 0.1)" }}
+                    >
+                      Features
+                    </motion.div>
+                    <motion.div 
+                      className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 text-center text-lg font-bold text-white flex items-center justify-center gap-2 relative overflow-hidden"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                    >
+                      {/* Shimmer effect */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                        animate={{
+                          x: ['-100%', '100%']
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear"
+                        }}
+                      />
+                      <span className="relative z-10">Cognito</span>
+                      <motion.div
+                        animate={{ 
+                          rotate: [0, 10, -10, 0],
+                          y: [0, -3, 0]
+                        }}
+                        transition={{ 
+                          duration: 2, 
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        <Sparkles className="w-5 h-5 relative z-10" />
+                      </motion.div>
+                    </motion.div>
+                    <motion.div 
+                      className="bg-gray-100 dark:bg-gray-800 px-6 py-5 text-center text-lg font-bold text-gray-900 dark:text-white"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.35 }}
+                      whileHover={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}
+                    >
+                      Kahoot
+                    </motion.div>
+                  </motion.div>
+
+                  <div className="divide-y divide-gray-200 dark:divide-gray-800">
+                    {[
+                      { label: "AI Quiz Generation", cognito: true, kahoot: false },
+                      { label: "1v1 Duel Mode", cognito: true, kahoot: false },
+                      { label: "24/7 AI Tutor", cognito: true, kahoot: false },
+                      { label: "Video Meetings", cognito: true, kahoot: false },
+                      { label: "Progress Analytics", cognito: true, kahoot: true },
+                      { label: "Custom Avatars", cognito: true, kahoot: false },
+                      { label: "Social Features", cognito: true, kahoot: false },
+                      { label: "Achievement System", cognito: true, kahoot: false },
+                    ].map((row, idx) => (
+                      <motion.div
+                        key={row.label}
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ 
+                          delay: 0.4 + idx * 0.05,
+                          type: "spring",
+                          stiffness: 120
+                        }}
+                        whileHover={{ 
+                          backgroundColor: idx % 2 === 0 
+                            ? "rgba(99, 102, 241, 0.05)" 
+                            : "rgba(168, 85, 247, 0.05)",
+                          x: 5,
+                          transition: { duration: 0.2 }
+                        }}
+                        className={`grid grid-cols-3 items-center px-6 py-4 cursor-default ${
+                          idx % 2 === 0
+                            ? "bg-white/70 dark:bg-gray-900/40"
+                            : "bg-gray-50/70 dark:bg-gray-800/40"
+                        }`}
+                      >
+                        <motion.div 
+                          className="text-base font-medium text-gray-800 dark:text-gray-100"
+                          initial={{ opacity: 0 }}
+                          whileInView={{ opacity: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.5 + idx * 0.05 }}
+                        >
+                          {row.label}
+                        </motion.div>
+                        <div className="flex items-center justify-center">
+                          {row.cognito ? (
+                            <motion.div
+                              initial={{ scale: 0, rotate: -180 }}
+                              whileInView={{ scale: 1, rotate: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ 
+                                delay: 0.6 + idx * 0.05,
+                                type: "spring",
+                                stiffness: 200
+                              }}
+                              whileHover={{ 
+                                scale: 1.3,
+                                rotate: 360,
+                                transition: { duration: 0.4 }
+                              }}
+                            >
+                              <CheckCircle className="w-7 h-7 text-emerald-500 drop-shadow-lg" />
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              initial={{ scale: 0, rotate: 180 }}
+                              whileInView={{ scale: 1, rotate: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ 
+                                delay: 0.6 + idx * 0.05,
+                                type: "spring",
+                                stiffness: 200
+                              }}
+                              whileHover={{ 
+                                scale: 1.3,
+                                rotate: 90,
+                                transition: { duration: 0.3 }
+                              }}
+                            >
+                              <span className="text-3xl text-red-500 dark:text-red-400 font-bold">✕</span>
+                            </motion.div>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-center">
+                          {row.kahoot ? (
+                            <motion.div
+                              initial={{ scale: 0, rotate: -180 }}
+                              whileInView={{ scale: 1, rotate: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ 
+                                delay: 0.65 + idx * 0.05,
+                                type: "spring",
+                                stiffness: 200
+                              }}
+                              whileHover={{ 
+                                scale: 1.3,
+                                rotate: 360,
+                                transition: { duration: 0.4 }
+                              }}
+                            >
+                              <CheckCircle className="w-7 h-7 text-emerald-500 drop-shadow-lg" />
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              initial={{ scale: 0, rotate: 180 }}
+                              whileInView={{ scale: 1, rotate: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ 
+                                delay: 0.65 + idx * 0.05,
+                                type: "spring",
+                                stiffness: 200
+                              }}
+                              whileHover={{ 
+                                scale: 1.3,
+                                rotate: 90,
+                                transition: { duration: 0.3 }
+                              }}
+                            >
+                              <span className="text-3xl text-red-500 dark:text-red-400 font-bold">✕</span>
+                            </motion.div>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <motion.div 
+                    className="grid grid-cols-3 items-center px-6 py-5 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border-t border-indigo-100/60 dark:border-indigo-800/60"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 1, type: "spring" }}
+                  >
+                    <motion.div 
+                      className="text-lg font-bold text-gray-900 dark:text-white"
+                      whileHover={{ scale: 1.05, x: 5 }}
+                    >
+                      Price
+                    </motion.div>
+                    <motion.div 
+                      className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 text-center"
+                      animate={{ 
+                        scale: [1, 1.05, 1],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      whileHover={{ 
+                        scale: 1.15,
+                        textShadow: "0 0 20px rgba(16, 185, 129, 0.5)"
+                      }}
+                    >
+                      FREE
+                    </motion.div>
+                    <motion.div 
+                      className="text-lg font-bold text-red-600 dark:text-red-400 text-center"
+                      whileHover={{ scale: 1.1 }}
+                    >
+                      $15-50/month
+                    </motion.div>
+                  </motion.div>
+                </CardContent>
+              </Card>
             </motion.div>
           </motion.section>
 
@@ -1859,7 +2126,7 @@ export default function HomePage() {
                       <th className="px-6 py-4 text-left font-semibold">Feature</th>
                       <th className="px-6 py-4 text-center font-semibold">
                         <div className="flex items-center justify-center gap-2">
-                          <Sparkles className="w-4 h-4" />
+                          <Sparkles className="w-5 h-5 flex-shrink-0" />
                           Cognito (FREE)
                         </div>
                       </th>
@@ -1867,35 +2134,55 @@ export default function HomePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-6 py-4 text-gray-900 dark:text-white">AI Quiz Generation</td>
-                      <td className="px-6 py-4 text-center"><CheckCircle className="w-6 h-6 text-green-500 mx-auto" /></td>
-                      <td className="px-6 py-4 text-center"><span className="text-red-500">✕</span></td>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">AI Quiz Generation</td>
+                      <td className="px-6 py-4 text-center">
+                        <CheckCircle className="w-7 h-7 text-green-500 dark:text-green-400 mx-auto" />
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="text-3xl text-red-500 dark:text-red-400 font-bold">✕</span>
+                      </td>
                     </tr>
-                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-6 py-4 text-gray-900 dark:text-white">1v1 Duel Battles</td>
-                      <td className="px-6 py-4 text-center"><CheckCircle className="w-6 h-6 text-green-500 mx-auto" /></td>
-                      <td className="px-6 py-4 text-center"><span className="text-red-500">✕</span></td>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">1v1 Duel Battles</td>
+                      <td className="px-6 py-4 text-center">
+                        <CheckCircle className="w-7 h-7 text-green-500 dark:text-green-400 mx-auto" />
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="text-3xl text-red-500 dark:text-red-400 font-bold">✕</span>
+                      </td>
                     </tr>
-                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-6 py-4 text-gray-900 dark:text-white">AI Doubt Solver</td>
-                      <td className="px-6 py-4 text-center"><CheckCircle className="w-6 h-6 text-green-500 mx-auto" /></td>
-                      <td className="px-6 py-4 text-center"><span className="text-red-500">✕</span></td>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">AI Doubt Solver</td>
+                      <td className="px-6 py-4 text-center">
+                        <CheckCircle className="w-7 h-7 text-green-500 dark:text-green-400 mx-auto" />
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="text-3xl text-red-500 dark:text-red-400 font-bold">✕</span>
+                      </td>
                     </tr>
-                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-6 py-4 text-gray-900 dark:text-white">Unlimited Quizzes</td>
-                      <td className="px-6 py-4 text-center"><CheckCircle className="w-6 h-6 text-green-500 mx-auto" /></td>
-                      <td className="px-6 py-4 text-center"><span className="text-yellow-500">Paid only</span></td>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">Unlimited Quizzes</td>
+                      <td className="px-6 py-4 text-center">
+                        <CheckCircle className="w-7 h-7 text-green-500 dark:text-green-400 mx-auto" />
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="text-yellow-600 dark:text-yellow-400 font-semibold">Paid only</span>
+                      </td>
                     </tr>
-                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-6 py-4 text-gray-900 dark:text-white">PDF/YouTube Import</td>
-                      <td className="px-6 py-4 text-center"><CheckCircle className="w-6 h-6 text-green-500 mx-auto" /></td>
-                      <td className="px-6 py-4 text-center"><span className="text-red-500">✕</span></td>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">PDF/YouTube Import</td>
+                      <td className="px-6 py-4 text-center">
+                        <CheckCircle className="w-7 h-7 text-green-500 dark:text-green-400 mx-auto" />
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="text-3xl text-red-500 dark:text-red-400 font-bold">✕</span>
+                      </td>
                     </tr>
-                    <tr className="bg-indigo-50 dark:bg-indigo-900/30">
-                      <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">Price</td>
-                      <td className="px-6 py-4 text-center font-bold text-green-600 text-xl">FREE</td>
-                      <td className="px-6 py-4 text-center text-red-600 font-semibold">$15-50/month</td>
+                    <tr className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30">
+                      <td className="px-6 py-4 font-bold text-gray-900 dark:text-white text-lg">Price</td>
+                      <td className="px-6 py-4 text-center font-extrabold text-green-600 dark:text-green-400 text-2xl">FREE</td>
+                      <td className="px-6 py-4 text-center text-red-600 dark:text-red-400 font-bold text-lg">$15-50/month</td>
                     </tr>
                   </tbody>
                 </table>

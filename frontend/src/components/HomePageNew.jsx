@@ -995,6 +995,355 @@ export default function HomePageNew() {
         {/* Product Demo Section */}
         <ProductDemo />
 
+        {/* Interactive Demo Section - Experience the Magic */}
+        <section className="py-24 px-6 lg:px-8 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              className="text-center space-y-4 mb-16"
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                whileInView={{ scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ type: "spring", stiffness: 200, damping: 15 }}
+              >
+                <Badge variant="gradient" size="lg" className="mb-4">
+                  <Zap className="w-4 h-4 mr-2" />
+                  🎮 Try It Live
+                </Badge>
+              </motion.div>
+              
+              <motion.h2 
+                className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+              >
+                {"Experience the Magic in Action".split(" ").map((word, index) => (
+                  <motion.span
+                    key={index}
+                    className="inline-block mr-3"
+                    initial={{ opacity: 0, y: 50, rotateX: -90 }}
+                    whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+                    viewport={{ once: true }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 15,
+                      delay: 0.1 + index * 0.08,
+                    }}
+                  >
+                    {word}
+                  </motion.span>
+                ))}
+              </motion.h2>
+              
+              <motion.p 
+                className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5 }}
+              >
+                See how Cognito Learning Hub transforms learning with real-time demos and interactive previews.
+              </motion.p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* AI Quiz Generator Card */}
+              <motion.div
+                initial={{ opacity: 0, x: -50, rotateY: -15 }}
+                whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
+                viewport={{ once: true }}
+                transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                whileHover={{ y: -10, transition: { duration: 0.3 } }}
+              >
+                <Card className="h-full overflow-hidden border-0 shadow-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg relative group">
+                  {/* Animated gradient border */}
+                  <motion.div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"
+                    style={{
+                      background: "linear-gradient(135deg, #3b82f6, #6366f1)",
+                      padding: "2px",
+                    }}
+                  >
+                    <div className="h-full w-full bg-white dark:bg-gray-800 rounded-[14px]" />
+                  </motion.div>
+
+                  <CardContent className="p-8 relative z-10">
+                    <motion.div
+                      className="flex items-center gap-3 mb-6"
+                      initial={{ opacity: 0, y: -10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <motion.div
+                        className="p-3 bg-blue-500 rounded-xl text-white shadow-lg"
+                        whileHover={{ rotate: 360, scale: 1.1 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <Brain className="w-6 h-6" />
+                      </motion.div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                          AI Quiz Generator
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Watch AI create a quiz in real-time
+                        </p>
+                      </div>
+                    </motion.div>
+
+                    <div className="space-y-4">
+                      {/* Feature Item 1 */}
+                      <motion.div
+                        className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border border-blue-200/50 dark:border-blue-700/50"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.3 }}
+                        whileHover={{ x: 5, transition: { duration: 0.2 } }}
+                      >
+                        <motion.div
+                          className="w-2 h-2 bg-blue-500 rounded-full"
+                          animate={{ scale: [1, 1.5, 1] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        />
+                        <span className="text-base font-medium text-gray-800 dark:text-gray-200">
+                          ✨ Enter any topic to generate quizzes
+                        </span>
+                      </motion.div>
+
+                      {/* Feature Item 2 */}
+                      <motion.div
+                        className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-xl border border-green-200/50 dark:border-green-700/50"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.4 }}
+                        whileHover={{ x: 5, transition: { duration: 0.2 } }}
+                      >
+                        <motion.div
+                          className="w-2 h-2 bg-green-500 rounded-full"
+                          animate={{ scale: [1, 1.5, 1] }}
+                          transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                        />
+                        <span className="text-base font-medium text-gray-800 dark:text-gray-200">
+                          📄 Or upload PDF / YouTube links
+                        </span>
+                      </motion.div>
+
+                      {/* AI Generated Questions Badge Section */}
+                      <motion.div
+                        className="mt-6 p-5 border-2 border-dashed border-indigo-300 dark:border-indigo-700 rounded-xl bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/20 dark:to-purple-900/20"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.5 }}
+                        whileHover={{ borderColor: "rgba(99, 102, 241, 0.6)" }}
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <Target className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">
+                            AI-Generated Questions Include:
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {["Multiple Choice", "Explanations", "Difficulty Levels", "Instant Feedback"].map(
+                            (feature, idx) => (
+                              <motion.span
+                                key={idx}
+                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-600"
+                                initial={{ scale: 0, rotate: -10 }}
+                                whileInView={{ scale: 1, rotate: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ 
+                                  delay: 0.6 + idx * 0.1,
+                                  type: "spring",
+                                  stiffness: 200
+                                }}
+                                whileHover={{ scale: 1.1, y: -2 }}
+                              >
+                                {feature}
+                              </motion.span>
+                            )
+                          )}
+                        </div>
+                      </motion.div>
+
+                      {/* CTA Button */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.8 }}
+                      >
+                        <Link to="/quiz-maker">
+                          <Button
+                            className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all group"
+                            size="lg"
+                          >
+                            <motion.span
+                              className="flex items-center justify-center gap-2"
+                              whileHover={{ scale: 1.05 }}
+                            >
+                              🚀 Try AI Generator
+                              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            </motion.span>
+                          </Button>
+                        </Link>
+                      </motion.div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Why Choose Us Card */}
+              <motion.div
+                initial={{ opacity: 0, x: 50, rotateY: 15 }}
+                whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
+                viewport={{ once: true }}
+                transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.2 }}
+                whileHover={{ y: -10, transition: { duration: 0.3 } }}
+              >
+                <Card className="h-full overflow-hidden border-0 shadow-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg relative group">
+                  {/* Animated gradient border */}
+                  <motion.div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"
+                    style={{
+                      background: "linear-gradient(135deg, #10b981, #059669)",
+                      padding: "2px",
+                    }}
+                  >
+                    <div className="h-full w-full bg-white dark:bg-gray-800 rounded-[14px]" />
+                  </motion.div>
+
+                  <CardContent className="p-8 relative z-10">
+                    <motion.div
+                      className="flex items-center gap-3 mb-6"
+                      initial={{ opacity: 0, y: -10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <motion.div
+                        className="p-3 bg-green-500 rounded-xl text-white shadow-lg"
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Award className="w-6 h-6" />
+                      </motion.div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                          Why Choose Us
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Built for modern learning
+                        </p>
+                      </div>
+                    </motion.div>
+
+                    <div className="space-y-4">
+                      {[
+                        {
+                          icon: Brain,
+                          emoji: "🎯",
+                          title: "AI-Powered",
+                          description: "Smart quiz generation from any topic",
+                          color: "from-red-500 to-orange-500",
+                          bgColor: "from-red-50 to-orange-50 dark:from-red-900/30 dark:to-orange-900/30",
+                          borderColor: "border-red-200 dark:border-red-700"
+                        },
+                        {
+                          icon: Zap,
+                          emoji: "⚡",
+                          title: "Instant Results",
+                          description: "Real-time feedback and analytics",
+                          color: "from-yellow-500 to-amber-500",
+                          bgColor: "from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30",
+                          borderColor: "border-yellow-200 dark:border-yellow-700"
+                        },
+                        {
+                          icon: Gamepad2,
+                          emoji: "🎮",
+                          title: "Gamified Learning",
+                          description: "Earn badges, climb leaderboards",
+                          color: "from-purple-500 to-pink-500",
+                          bgColor: "from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30",
+                          borderColor: "border-purple-200 dark:border-purple-700"
+                        },
+                        {
+                          icon: Users,
+                          emoji: "👥",
+                          title: "Social Features",
+                          description: "Challenge friends, share progress",
+                          color: "from-blue-500 to-cyan-500",
+                          bgColor: "from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30",
+                          borderColor: "border-blue-200 dark:border-blue-700"
+                        },
+                      ].map((feature, idx) => {
+                        const Icon = feature.icon;
+                        return (
+                          <motion.div
+                            key={idx}
+                            className={`flex items-center gap-4 p-4 bg-gradient-to-r ${feature.bgColor} rounded-xl border ${feature.borderColor}`}
+                            initial={{ opacity: 0, x: 20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.4 + idx * 0.1 }}
+                            whileHover={{ x: 5, scale: 1.02, transition: { duration: 0.2 } }}
+                          >
+                            <motion.div
+                              className="text-3xl"
+                              animate={{ rotate: [0, 10, -10, 0] }}
+                              transition={{ duration: 2, repeat: Infinity, delay: idx * 0.3 }}
+                            >
+                              {feature.emoji}
+                            </motion.div>
+                            <div className="flex-1">
+                              <div className="text-base font-bold text-gray-900 dark:text-white">
+                                {feature.title}
+                              </div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400">
+                                {feature.description}
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+
+                      <motion.div
+                        className="text-center pt-4"
+                        initial={{ opacity: 0, scale: 0 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 1, type: "spring", stiffness: 200 }}
+                      >
+                        <Badge 
+                          variant="success" 
+                          className="px-6 py-2 text-base font-bold shadow-lg"
+                        >
+                          <motion.span
+                            animate={{ scale: [1, 1.1, 1] }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                          >
+                            🚀 Start learning for free!
+                          </motion.span>
+                        </Badge>
+                      </motion.div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
         {/* Features Grid */}
         <section className="py-24 px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
@@ -1070,6 +1419,7 @@ export default function HomePageNew() {
                     "Upload PDFs, YouTube links, or topics and watch AI create perfect quizzes in seconds",
                   color: "from-blue-500 to-cyan-500",
                   bgColor: "bg-blue-100 dark:bg-blue-900/30",
+                  iconColor: "text-blue-600 dark:text-blue-300",
                 },
                 {
                   icon: Swords,
@@ -1078,6 +1428,7 @@ export default function HomePageNew() {
                     "Challenge friends in real-time quiz battles and climb the leaderboard",
                   color: "from-orange-500 to-red-500",
                   bgColor: "bg-orange-100 dark:bg-orange-900/30",
+                  iconColor: "text-orange-500 dark:text-orange-300",
                 },
                 {
                   icon: Video,
@@ -1086,6 +1437,7 @@ export default function HomePageNew() {
                     "Join interactive sessions with video, chat, and real-time collaboration",
                   color: "from-green-500 to-emerald-500",
                   bgColor: "bg-green-100 dark:bg-green-900/30",
+                  iconColor: "text-emerald-600 dark:text-emerald-300",
                 },
                 {
                   icon: Sparkles,
@@ -1094,6 +1446,7 @@ export default function HomePageNew() {
                     "Get instant answers to any question from your personal AI assistant",
                   color: "from-purple-500 to-pink-500",
                   bgColor: "bg-purple-100 dark:bg-purple-900/30",
+                  iconColor: "text-purple-600 dark:text-purple-300",
                 },
                 {
                   icon: Award,
@@ -1102,6 +1455,7 @@ export default function HomePageNew() {
                     "Earn XP, unlock achievements, and level up as you learn",
                   color: "from-yellow-500 to-orange-500",
                   bgColor: "bg-yellow-100 dark:bg-yellow-900/30",
+                  iconColor: "text-amber-500 dark:text-amber-300",
                 },
                 {
                   icon: BarChart3,
@@ -1110,6 +1464,7 @@ export default function HomePageNew() {
                     "Track your performance with detailed insights and recommendations",
                   color: "from-indigo-500 to-purple-500",
                   bgColor: "bg-indigo-100 dark:bg-indigo-900/30",
+                  iconColor: "text-indigo-600 dark:text-indigo-300",
                 },
               ].map((feature, index) => (
                 <motion.div
@@ -1162,7 +1517,7 @@ export default function HomePageNew() {
                           transition={{ duration: 2, repeat: Infinity }}
                           className="absolute inset-0 rounded-2xl"
                         />
-                        <feature.icon className={`w-8 h-8 bg-gradient-to-r ${feature.color} bg-clip-text text-transparent relative z-10`} />
+                          <feature.icon className={`w-8 h-8 ${feature.iconColor} relative z-10 drop-shadow-sm`} />
                       </motion.div>
                       
                       <motion.h3 
@@ -1262,151 +1617,252 @@ export default function HomePageNew() {
               </motion.p>
             </motion.div>
 
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Feature comparison */}
-              <motion.div
-                initial={{ opacity: 0, x: -50, rotateY: -30 }}
-                whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
-                viewport={{ once: true }}
-                transition={{ type: "spring", stiffness: 100, damping: 15 }}
-              >
-                <Card className="border-0 shadow-xl backdrop-blur-sm bg-white/80 dark:bg-gray-800/80">
-                  <CardContent className="p-0">
-                    <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-t-xl">
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                        Features
-                      </h3>
-                    </div>
-                  <div className="p-6 space-y-4">
-                    {[
-                      "AI Quiz Generation",
-                      "1v1 Duel Mode",
-                      "24/7 AI Tutor",
-                      "Video Meetings",
-                      "Progress Analytics",
-                      "Custom Avatars",
-                      "Social Features",
-                      "Achievement System",
-                    ].map((feature, i) => (
-                      <div key={i} className="text-gray-700 dark:text-gray-300 font-medium">
-                        {feature}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1.05 }}
-                viewport={{ once: true }}
-                transition={{ 
-                  type: "spring", 
-                  stiffness: 100, 
-                  damping: 15,
-                  delay: 0.2 
-                }}
-                whileHover={{ 
-                  scale: 1.08,
-                  rotateY: 5,
-                  transition: { duration: 0.3 }
-                }}
-              >
-                <Card className="border-2 border-indigo-500 shadow-2xl relative overflow-hidden backdrop-blur-sm bg-white/90 dark:bg-gray-800/90">
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20"
-                    animate={{
-                      x: ['-100%', '100%'],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "linear"
-                    }}
-                  />
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ type: "spring", stiffness: 120, damping: 16 }}
+              whileHover={{ scale: 1.02 }}
+            >
+              <Card className="border-0 shadow-2xl overflow-hidden bg-white/90 dark:bg-gray-900/80 backdrop-blur-lg relative group">
+                {/* Animated glow effect */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 blur-xl"
+                  animate={{
+                    scale: [1, 1.05, 1],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+                
+                <CardContent className="p-0 relative z-10">
                   <motion.div 
-                    className="absolute -top-4 left-1/2 -translate-x-1/2 z-10"
-                    initial={{ opacity: 0, y: -20, scale: 0 }}
-                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                    className="grid grid-cols-3"
+                    initial={{ opacity: 0, y: -20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ 
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 10,
-                      delay: 0.4
-                    }}
-                    animate={{ 
-                      y: [-5, 5]
-                    }}
-                    whileHover={{
-                      scale: 1.1,
-                      transition: { duration: 0.3 }
-                    }}
+                    transition={{ delay: 0.2 }}
                   >
-                    <Badge variant="gradient" className="px-6 py-2 shadow-xl">
+                    <motion.div 
+                      className="bg-gray-100 dark:bg-gray-800 px-6 py-5 text-left text-lg font-bold text-gray-900 dark:text-white"
+                      whileHover={{ backgroundColor: "rgba(99, 102, 241, 0.1)" }}
+                    >
+                      Features
+                    </motion.div>
+                    <motion.div 
+                      className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 text-center text-lg font-bold text-white flex items-center justify-center gap-2 relative overflow-hidden"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                    >
+                      {/* Shimmer effect */}
                       <motion.div
-                        animate={{ rotate: [0, 360] }}
-                        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                        animate={{
+                          x: ['-100%', '100%']
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear"
+                        }}
+                      />
+                      <span className="relative z-10">Cognito</span>
+                      <motion.div
+                        animate={{ 
+                          rotate: [0, 10, -10, 0],
+                          y: [0, -3, 0]
+                        }}
+                        transition={{ 
+                          duration: 2, 
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
                       >
-                        <Star className="w-4 h-4 mr-1" />
+                        <Rocket className="w-5 h-5 relative z-10" />
                       </motion.div>
-                      Best Choice
-                    </Badge>
+                    </motion.div>
+                    <motion.div 
+                      className="bg-gray-100 dark:bg-gray-800 px-6 py-5 text-center text-lg font-bold text-gray-900 dark:text-white"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.35 }}
+                      whileHover={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}
+                    >
+                      Kahoot
+                    </motion.div>
                   </motion.div>
-                <CardContent className="p-0">
-                  <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 rounded-t-xl">
-                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                      Cognito
-                      <Rocket className="w-5 h-5" />
-                    </h3>
-                  </div>
-                  <div className="p-6 space-y-4">
-                    {[true, true, true, true, true, true, true, true].map((has, i) => (
-                      <div key={i} className="flex items-center justify-center">
-                        <Check className="w-6 h-6 text-green-500" />
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-              </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, x: 50, rotateY: 30 }}
-                whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
-                viewport={{ once: true }}
-                transition={{ 
-                  type: "spring", 
-                  stiffness: 100, 
-                  damping: 15,
-                  delay: 0.4
-                }}
-              >
-                <Card className="border-0 shadow-xl backdrop-blur-sm bg-white/80 dark:bg-gray-800/80">
-                  <CardContent className="p-0">
-                    <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-t-xl">
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                        Kahoot
-                      </h3>
-                    </div>
-                  <div className="p-6 space-y-4">
-                    {[false, false, false, false, true, false, false, false].map(
-                      (has, i) => (
-                        <div key={i} className="flex items-center justify-center">
-                          {has ? (
-                            <Check className="w-6 h-6 text-green-500" />
+                  <div className="divide-y divide-gray-200 dark:divide-gray-800">
+                    {[
+                      { label: "AI Quiz Generation", cognito: true, kahoot: false },
+                      { label: "1v1 Duel Mode", cognito: true, kahoot: false },
+                      { label: "24/7 AI Tutor", cognito: true, kahoot: false },
+                      { label: "Video Meetings", cognito: true, kahoot: false },
+                      { label: "Progress Analytics", cognito: true, kahoot: true },
+                      { label: "Custom Avatars", cognito: true, kahoot: false },
+                      { label: "Social Features", cognito: true, kahoot: false },
+                      { label: "Achievement System", cognito: true, kahoot: false },
+                    ].map((row, idx) => (
+                      <motion.div
+                        key={row.label}
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ 
+                          delay: 0.4 + idx * 0.05,
+                          type: "spring",
+                          stiffness: 120
+                        }}
+                        whileHover={{ 
+                          backgroundColor: idx % 2 === 0 
+                            ? "rgba(99, 102, 241, 0.05)" 
+                            : "rgba(168, 85, 247, 0.05)",
+                          x: 5,
+                          transition: { duration: 0.2 }
+                        }}
+                        className={`grid grid-cols-3 items-center px-6 py-4 cursor-default ${
+                          idx % 2 === 0
+                            ? "bg-white/70 dark:bg-gray-900/40"
+                            : "bg-gray-50/70 dark:bg-gray-800/40"
+                        }`}
+                      >
+                        <motion.div 
+                          className="text-base font-medium text-gray-800 dark:text-gray-100"
+                          initial={{ opacity: 0 }}
+                          whileInView={{ opacity: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.5 + idx * 0.05 }}
+                        >
+                          {row.label}
+                        </motion.div>
+                        <div className="flex items-center justify-center">
+                          {row.cognito ? (
+                            <motion.div
+                              initial={{ scale: 0, rotate: -180 }}
+                              whileInView={{ scale: 1, rotate: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ 
+                                delay: 0.6 + idx * 0.05,
+                                type: "spring",
+                                stiffness: 200
+                              }}
+                              whileHover={{ 
+                                scale: 1.3,
+                                rotate: 360,
+                                transition: { duration: 0.4 }
+                              }}
+                            >
+                              <Check className="w-7 h-7 text-emerald-500 drop-shadow-lg" />
+                            </motion.div>
                           ) : (
-                            <X className="w-6 h-6 text-red-500" />
+                            <motion.div
+                              initial={{ scale: 0, rotate: 180 }}
+                              whileInView={{ scale: 1, rotate: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ 
+                                delay: 0.6 + idx * 0.05,
+                                type: "spring",
+                                stiffness: 200
+                              }}
+                              whileHover={{ 
+                                scale: 1.3,
+                                rotate: 90,
+                                transition: { duration: 0.3 }
+                              }}
+                            >
+                              <X className="w-7 h-7 text-red-500 drop-shadow-lg" />
+                            </motion.div>
                           )}
                         </div>
-                      )
-                    )}
+                        <div className="flex items-center justify-center">
+                          {row.kahoot ? (
+                            <motion.div
+                              initial={{ scale: 0, rotate: -180 }}
+                              whileInView={{ scale: 1, rotate: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ 
+                                delay: 0.65 + idx * 0.05,
+                                type: "spring",
+                                stiffness: 200
+                              }}
+                              whileHover={{ 
+                                scale: 1.3,
+                                rotate: 360,
+                                transition: { duration: 0.4 }
+                              }}
+                            >
+                              <Check className="w-7 h-7 text-emerald-500 drop-shadow-lg" />
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              initial={{ scale: 0, rotate: 180 }}
+                              whileInView={{ scale: 1, rotate: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ 
+                                delay: 0.65 + idx * 0.05,
+                                type: "spring",
+                                stiffness: 200
+                              }}
+                              whileHover={{ 
+                                scale: 1.3,
+                                rotate: 90,
+                                transition: { duration: 0.3 }
+                              }}
+                            >
+                              <X className="w-7 h-7 text-red-500 drop-shadow-lg" />
+                            </motion.div>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
+
+                  <motion.div 
+                    className="grid grid-cols-3 items-center px-6 py-5 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border-t border-indigo-100/60 dark:border-indigo-800/60"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 1, type: "spring" }}
+                  >
+                    <motion.div 
+                      className="text-lg font-bold text-gray-900 dark:text-white"
+                      whileHover={{ scale: 1.05, x: 5 }}
+                    >
+                      Price
+                    </motion.div>
+                    <motion.div 
+                      className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 text-center"
+                      animate={{ 
+                        scale: [1, 1.05, 1],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      whileHover={{ 
+                        scale: 1.15,
+                        textShadow: "0 0 20px rgba(16, 185, 129, 0.5)"
+                      }}
+                    >
+                      FREE
+                    </motion.div>
+                    <motion.div 
+                      className="text-lg font-bold text-red-600 dark:text-red-400 text-center"
+                      whileHover={{ scale: 1.1 }}
+                    >
+                      $15-50/month
+                    </motion.div>
+                  </motion.div>
                 </CardContent>
               </Card>
-              </motion.div>
-            </div>
+            </motion.div>
           </div>
         </section>
 
