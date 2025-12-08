@@ -37,12 +37,18 @@ import {
   History,
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
+import { useGamification } from "../context/GamificationContext";
 import { useTheme } from "../hooks/useTheme";
 import { useReducedMotion, useIsMobile } from "../hooks/useReducedMotion";
 import Button from "./ui/Button";
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
+  const {
+    currentLevel,
+    totalXP,
+    currentStreak: gamificationStreak,
+  } = useGamification();
   const [theme, toggleTheme] = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -56,37 +62,52 @@ const Navbar = () => {
   // Product demos for mega menu
   const productDemos = [
     {
-      id: 'quiz',
-      title: 'AI Quiz Generator',
-      description: 'Create quizzes from PDFs, topics, or YouTube videos',
+      id: "quiz",
+      title: "AI Quiz Generator",
+      description: "Create quizzes from PDFs, topics, or YouTube videos",
       icon: Brain,
-      color: 'from-blue-500 to-cyan-500',
-      features: ['PDF Upload', 'Topic Input', 'YouTube Links', 'MCQ, T/F, Descriptive']
+      color: "from-blue-500 to-cyan-500",
+      features: [
+        "PDF Upload",
+        "Topic Input",
+        "YouTube Links",
+        "MCQ, T/F, Descriptive",
+      ],
     },
     {
-      id: 'battle',
-      title: '1v1 Duel Battles',
-      description: 'Challenge friends in real-time quiz battles',
+      id: "battle",
+      title: "1v1 Duel Battles",
+      description: "Challenge friends in real-time quiz battles",
       icon: Swords,
-      color: 'from-red-500 to-orange-500',
-      features: ['Real-time Scoring', 'Leaderboards', 'Matchmaking', 'XP Rewards']
+      color: "from-red-500 to-orange-500",
+      features: [
+        "Real-time Scoring",
+        "Leaderboards",
+        "Matchmaking",
+        "XP Rewards",
+      ],
     },
     {
-      id: 'multiplayer',
-      title: 'Live Sessions',
-      description: 'Teachers host, students join and compete live',
+      id: "multiplayer",
+      title: "Live Sessions",
+      description: "Teachers host, students join and compete live",
       icon: Users,
-      color: 'from-purple-500 to-pink-500',
-      features: ['Live Lobbies', 'Real-time Progress', 'Session Controls', 'Analytics']
+      color: "from-purple-500 to-pink-500",
+      features: [
+        "Live Lobbies",
+        "Real-time Progress",
+        "Session Controls",
+        "Analytics",
+      ],
     },
     {
-      id: 'meeting',
-      title: 'Video Meetings',
-      description: 'Built-in video conferencing for classes',
+      id: "meeting",
+      title: "Video Meetings",
+      description: "Built-in video conferencing for classes",
       icon: Video,
-      color: 'from-green-500 to-teal-500',
-      features: ['HD Video', 'Screen Share', 'Chat', 'Scheduling']
-    }
+      color: "from-green-500 to-teal-500",
+      features: ["HD Video", "Screen Share", "Chat", "Scheduling"],
+    },
   ];
 
   // Navigation links - Dashboard always goes to student dashboard for everyone
@@ -204,15 +225,19 @@ const Navbar = () => {
             : "bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl md:backdrop-blur-2xl border-b border-white/40 dark:border-indigo-500/20 shadow-lg md:shadow-xl shadow-indigo-500/10"
         }`}
         style={{
-          WebkitBackdropFilter: isScrolled ? "blur(24px) saturate(180%)" : "blur(16px) saturate(150%)",
-          backdropFilter: isScrolled ? "blur(24px) saturate(180%)" : "blur(16px) saturate(150%)",
+          WebkitBackdropFilter: isScrolled
+            ? "blur(24px) saturate(180%)"
+            : "blur(16px) saturate(150%)",
+          backdropFilter: isScrolled
+            ? "blur(24px) saturate(180%)"
+            : "blur(16px) saturate(150%)",
         }}
       >
         {/* Ultra-modern multi-layer gradient overlays */}
         {!isMobile && (
           <>
             {/* Primary gradient overlay */}
-            <motion.div 
+            <motion.div
               className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/8 to-pink-500/10 pointer-events-none"
               animate={{
                 backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
@@ -246,7 +271,11 @@ const Navbar = () => {
             {/* Frosted glass texture */}
             <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]" />
             {/* Iridescent border glow */}
-            <div className={`absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent transition-opacity duration-700 ${isScrolled ? 'opacity-100' : 'opacity-50'}`} />
+            <div
+              className={`absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent transition-opacity duration-700 ${
+                isScrolled ? "opacity-100" : "opacity-50"
+              }`}
+            />
           </>
         )}
 
@@ -293,7 +322,7 @@ const Navbar = () => {
                   {/* Enhanced multi-layer glow effect */}
                   {!isMobile && (
                     <>
-                      <motion.div 
+                      <motion.div
                         className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400 via-purple-500 to-indigo-600 blur-2xl opacity-60 group-hover:opacity-90 transition-all duration-500"
                         animate={{
                           scale: [1, 1.2, 1],
@@ -340,7 +369,7 @@ const Navbar = () => {
                 </motion.div>
 
                 <div className="overflow-hidden">
-                  <motion.h1 
+                  <motion.h1
                     className="text-base sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-indigo-600 group-hover:to-blue-600 transition-all duration-700 tracking-tight"
                     style={{
                       backgroundSize: "200% 200%",
@@ -348,7 +377,7 @@ const Navbar = () => {
                   >
                     Cognito Learning Hub
                   </motion.h1>
-                  <motion.p 
+                  <motion.p
                     className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium hidden sm:block"
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -369,7 +398,7 @@ const Navbar = () => {
             >
               {user ? (
                 <>
-                  {/* Gamification Badges */}
+                  {/* Gamification Badges - Real-time data */}
                   <div className="flex items-center gap-2 mr-3">
                     {/* Level Badge */}
                     <motion.div
@@ -394,34 +423,36 @@ const Navbar = () => {
                           Lvl
                         </p>
                         <p className="text-sm font-black text-white leading-none">
-                          12
+                          {currentLevel || 1}
                         </p>
                       </div>
                     </motion.div>
 
                     {/* Streak Badge */}
-                    <motion.div
-                      variants={staggerItem}
-                      whileHover={{ scale: 1.05, rotate: [0, -3, 3, 0] }}
-                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-orange-50 to-red-50 backdrop-blur-xl rounded-xl border border-orange-200/60 shadow-lg hover:shadow-xl transition-all duration-300"
-                    >
+                    {gamificationStreak > 0 && (
                       <motion.div
-                        animate={{ scale: [1, 1.15, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-md relative"
+                        variants={staggerItem}
+                        whileHover={{ scale: 1.05, rotate: [0, -3, 3, 0] }}
+                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-orange-50 to-red-50 backdrop-blur-xl rounded-xl border border-orange-200/60 shadow-lg hover:shadow-xl transition-all duration-300"
                       >
-                        <Flame className="w-4 h-4 text-white" />
-                        <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
+                        <motion.div
+                          animate={{ scale: [1, 1.15, 1] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-md relative"
+                        >
+                          <Flame className="w-4 h-4 text-white" />
+                          <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
+                        </motion.div>
+                        <div>
+                          <p className="text-[10px] font-black text-orange-600 uppercase leading-none">
+                            Streak
+                          </p>
+                          <p className="text-sm font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent leading-none">
+                            {gamificationStreak}
+                          </p>
+                        </div>
                       </motion.div>
-                      <div>
-                        <p className="text-[10px] font-black text-orange-600 uppercase leading-none">
-                          Streak
-                        </p>
-                        <p className="text-sm font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent leading-none">
-                          7
-                        </p>
-                      </div>
-                    </motion.div>
+                    )}
 
                     {/* XP Badge */}
                     <motion.div
@@ -435,7 +466,7 @@ const Navbar = () => {
                           XP
                         </p>
                         <p className="text-sm font-black bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent leading-none">
-                          2340
+                          {totalXP || 0}
                         </p>
                       </div>
                     </motion.div>
@@ -546,15 +577,13 @@ const Navbar = () => {
               ) : (
                 <>
                   {/* Products Mega Menu */}
-                  <motion.div 
+                  <motion.div
                     variants={staggerItem}
                     className="relative"
                     onMouseEnter={() => setIsMegaMenuOpen(true)}
                     onMouseLeave={() => setIsMegaMenuOpen(false)}
                   >
-                    <button
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 relative group"
-                    >
+                    <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 relative group">
                       <Sparkles className="w-4 h-4" />
                       Products
                       <motion.div
@@ -576,12 +605,13 @@ const Navbar = () => {
                           transition={{ duration: 0.2, ease: "easeOut" }}
                           className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[700px] p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/50 dark:border-indigo-500/30 z-50"
                           style={{
-                            boxShadow: '0 25px 50px -12px rgba(99, 102, 241, 0.25), 0 0 0 1px rgba(255,255,255,0.1)'
+                            boxShadow:
+                              "0 25px 50px -12px rgba(99, 102, 241, 0.25), 0 0 0 1px rgba(255,255,255,0.1)",
                           }}
                         >
                           {/* Mega Menu Glow Effect */}
                           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-2xl pointer-events-none" />
-                          
+
                           <div className="relative z-10">
                             {/* Header */}
                             <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200/50 dark:border-indigo-500/20">
@@ -614,15 +644,21 @@ const Navbar = () => {
                                   onClick={() => {
                                     setIsMegaMenuOpen(false);
                                     // Scroll to demo section on homepage
-                                    if (location.pathname === '/') {
-                                      document.getElementById('product-demo')?.scrollIntoView({ behavior: 'smooth' });
+                                    if (location.pathname === "/") {
+                                      document
+                                        .getElementById("product-demo")
+                                        ?.scrollIntoView({
+                                          behavior: "smooth",
+                                        });
                                     } else {
-                                      navigate('/#product-demo');
+                                      navigate("/#product-demo");
                                     }
                                   }}
                                 >
                                   <div className="flex items-start gap-4">
-                                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${product.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                    <div
+                                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${product.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                                    >
                                       <product.icon className="w-6 h-6 text-white" />
                                     </div>
                                     <div className="flex-1">
@@ -633,14 +669,16 @@ const Navbar = () => {
                                         {product.description}
                                       </p>
                                       <div className="flex flex-wrap gap-1 mt-2">
-                                        {product.features.slice(0, 3).map((feature, i) => (
-                                          <span
-                                            key={i}
-                                            className="text-[10px] px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 rounded-full"
-                                          >
-                                            {feature}
-                                          </span>
-                                        ))}
+                                        {product.features
+                                          .slice(0, 3)
+                                          .map((feature, i) => (
+                                            <span
+                                              key={i}
+                                              className="text-[10px] px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 rounded-full"
+                                            >
+                                              {feature}
+                                            </span>
+                                          ))}
                                       </div>
                                     </div>
                                   </div>
@@ -655,8 +693,12 @@ const Navbar = () => {
                                   <Zap className="w-4 h-4 text-white" />
                                 </div>
                                 <div>
-                                  <p className="text-sm font-semibold text-gray-900 dark:text-white">100% Free Forever</p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">No credit card required</p>
+                                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    100% Free Forever
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    No credit card required
+                                  </p>
                                 </div>
                               </div>
                               <Link
@@ -746,11 +788,11 @@ const Navbar = () => {
                         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
                         initial={{ x: "-150%" }}
                         animate={{ x: ["150%", "-150%"] }}
-                        transition={{ 
+                        transition={{
                           duration: 2,
                           repeat: Infinity,
                           repeatDelay: 3,
-                          ease: "easeInOut"
+                          ease: "easeInOut",
                         }}
                       />
                       {/* Glow pulse */}

@@ -78,7 +78,12 @@ const itemVariants = {
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useContext(AuthContext);
-  const { userStats, currentLevel, totalXP, currentStreak: gamificationStreak } = useGamification();
+  const {
+    userStats,
+    currentLevel,
+    totalXP,
+    currentStreak: gamificationStreak,
+  } = useGamification();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -101,8 +106,12 @@ export default function Dashboard() {
       setInsightsLoading(true);
       const token = localStorage.getItem("quizwise-token");
       const endpoint = forceRefresh
-        ? `${import.meta.env.VITE_API_URL}/api/analytics/user/${user?._id}/refresh-insights`
-        : `${import.meta.env.VITE_API_URL}/api/analytics/user/${user?._id}/insights`;
+        ? `${import.meta.env.VITE_API_URL}/api/analytics/user/${
+            user?._id
+          }/refresh-insights`
+        : `${import.meta.env.VITE_API_URL}/api/analytics/user/${
+            user?._id
+          }/insights`;
 
       const response = await fetch(endpoint, {
         method: forceRefresh ? "POST" : "GET",
@@ -209,15 +218,19 @@ export default function Dashboard() {
     (r) => r.score / r.totalQuestions < 0.7
   ).length;
 
-  // --- Chart Data ---
+  // --- Chart Data with proper dates ---
   const chartData = results
     .slice(0, 10)
     .reverse()
-    .map((r, index) => ({
-      name: `Quiz ${index + 1}`,
-      score: parseFloat(((r.score / r.totalQuestions) * 100).toFixed(1)),
-      quizTitle: r.quiz?.title || "Deleted Quiz",
-    }));
+    .map((r) => {
+      const date = new Date(r.createdAt);
+      return {
+        name: `${date.getMonth() + 1}/${date.getDate()}`,
+        score: parseFloat(((r.score / r.totalQuestions) * 100).toFixed(1)),
+        quizTitle: r.quiz?.title || "Deleted Quiz",
+        date: date.toLocaleDateString(),
+      };
+    });
 
   // Performance distribution for pie chart
   const performanceData = [
@@ -320,17 +333,84 @@ export default function Dashboard() {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-indigo-900/20 relative overflow-hidden py-8">
-      {/* Enhanced animated background elements */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/50 to-purple-50/50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950/50 relative overflow-hidden py-8">
+      {/* Animated floating particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-20 w-96 h-96 bg-gradient-to-br from-violet-400/20 to-purple-600/20 rounded-full blur-3xl animate-pulse" />
-        <div
-          className="absolute bottom-20 left-20 w-96 h-96 bg-gradient-to-br from-fuchsia-400/20 to-pink-600/20 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "1s" }}
+        {/* Large floating orbs */}
+        <motion.div
+          className="absolute top-10 right-[10%] w-72 h-72 bg-gradient-to-br from-violet-500/30 to-purple-600/30 rounded-full blur-3xl"
+          animate={{
+            y: [0, -30, 0],
+            x: [0, 20, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-indigo-400/10 to-blue-600/10 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "2s" }}
+        <motion.div
+          className="absolute bottom-20 left-[5%] w-80 h-80 bg-gradient-to-br from-pink-500/25 to-rose-600/25 rounded-full blur-3xl"
+          animate={{
+            y: [0, 40, 0],
+            x: [0, -30, 0],
+            scale: [1, 1.15, 1],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
+          }}
+        />
+        <motion.div
+          className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-full blur-3xl"
+          animate={{
+            y: [0, 25, 0],
+            x: [0, -15, 0],
+          }}
+          transition={{
+            duration: 7,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2,
+          }}
+        />
+        <motion.div
+          className="absolute bottom-1/3 right-1/4 w-56 h-56 bg-gradient-to-br from-emerald-500/20 to-teal-600/20 rounded-full blur-3xl"
+          animate={{
+            y: [0, -20, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 9,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 3,
+          }}
+        />
+        {/* Small floating particles */}
+        <motion.div
+          className="absolute top-1/4 right-1/3 w-4 h-4 bg-indigo-400/60 rounded-full"
+          animate={{ y: [0, -100, 0], opacity: [0.6, 1, 0.6] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute top-2/3 left-1/3 w-3 h-3 bg-purple-400/60 rounded-full"
+          animate={{ y: [0, -80, 0], opacity: [0.5, 1, 0.5] }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
+          }}
+        />
+        <motion.div
+          className="absolute bottom-1/4 right-1/2 w-2 h-2 bg-pink-400/70 rounded-full"
+          animate={{ y: [0, -60, 0], opacity: [0.7, 1, 0.7] }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2,
+          }}
         />
       </div>
 
@@ -341,17 +421,17 @@ export default function Dashboard() {
         isRefreshing={isRefreshing}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-10">
         {/* Header Section */}
         <motion.div
-          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-2"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           <div>
             <motion.h1
-              className="text-5xl md:text-6xl font-black bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent drop-shadow-lg"
+              className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -359,13 +439,13 @@ export default function Dashboard() {
               Welcome back, {user?.name?.split(" ")[0] || "Student"}! 👋
             </motion.h1>
             <motion.p
-              className="text-slate-700 dark:text-slate-300 font-semibold mt-3 text-xl"
+              className="text-slate-600 dark:text-slate-400 font-medium mt-2 text-base sm:text-lg"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               Here's your{" "}
-              <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent font-bold">
+              <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent font-semibold">
                 learning progress
               </span>{" "}
               overview ✨
@@ -426,16 +506,16 @@ export default function Dashboard() {
               exit="hidden"
             >
               {/* Left Column: User Profile & Quick Stats */}
-              <motion.div className="space-y-6" variants={itemVariants}>
+              <motion.div className="space-y-5" variants={itemVariants}>
                 {/* Enhanced Profile Card with Level System */}
-                <Card className="text-center p-8 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-2xl relative overflow-hidden">
-                  {/* Decorative background gradient */}
+                <Card className="text-center p-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 shadow-lg rounded-2xl relative overflow-hidden">
+                  {/* Subtle decorative gradient */}
                   <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5"></div>
 
                   <div className="relative">
                     {/* Avatar with level ring */}
-                    <div className="relative inline-block mb-6">
-                      <div className="w-28 h-28 rounded-full bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white text-4xl font-bold flex items-center justify-center shadow-2xl transform hover:scale-110 hover:rotate-6 transition-all duration-300 relative z-10">
+                    <div className="relative inline-block mb-4">
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white text-3xl font-bold flex items-center justify-center shadow-xl transform hover:scale-105 transition-all duration-300 relative z-10">
                         {user?.name?.[0] || "U"}
                       </div>
                       {/* Level ring animation */}
@@ -482,65 +562,46 @@ export default function Dashboard() {
                       {/* Level badge */}
                       <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-20">
                         <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border-2 border-white dark:border-gray-800">
-                          Lv. {Math.floor(quizzesCompleted / 5) + 1}
+                          Lv. {currentLevel || 1}
                         </div>
                       </div>
-                      {streakCount > 0 && (
+                      {(gamificationStreak || streakCount) > 0 && (
                         <Badge className="absolute -top-2 -right-2 flex items-center gap-1 bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 shadow-lg animate-pulse z-20">
                           <Flame className="w-3 h-3" />
-                          {streakCount}
+                          {gamificationStreak || streakCount}
                         </Badge>
                       )}
                     </div>
 
-                    <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                       {user?.name}
                     </h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                       {user?.email}
                     </p>
 
-                    {/* XP Progress bar */}
-                    <div className="mt-4 mb-6">
-                      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                        <span>
-                          Level {Math.floor(quizzesCompleted / 5) + 1}
-                        </span>
-                        <span>{quizzesCompleted % 5}/5 XP</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    {/* Quick Stats - Only quiz-related stats */}
+                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                      <div className="grid grid-cols-2 gap-2 text-center">
                         <motion.div
-                          className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{
-                            width: `${((quizzesCompleted % 5) / 5) * 100}%`,
-                          }}
-                          transition={{ duration: 1, delay: 0.5 }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                      <div className="grid grid-cols-2 gap-6 text-center">
-                        <motion.div
-                          className="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 hover:scale-105 transition-transform duration-300"
-                          whileHover={{ y: -5 }}
+                          className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors duration-200"
+                          whileHover={{ scale: 1.02 }}
                         >
-                          <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                          <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
                             {quizzesCompleted}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                            Quizzes Taken
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">
+                            Quizzes
                           </p>
                         </motion.div>
                         <motion.div
-                          className="p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 hover:scale-105 transition-transform duration-300"
-                          whileHover={{ y: -5 }}
+                          className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors duration-200"
+                          whileHover={{ scale: 1.02 }}
                         >
-                          <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
                             {averageScore.toFixed(0)}%
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">
                             Avg Score
                           </p>
                         </motion.div>
@@ -549,103 +610,143 @@ export default function Dashboard() {
                   </div>
                 </Card>
 
-                {/* Real-Time Gamification Stats */}
-                <RealTimeStats 
-                  showDetailed={true} 
-                  className="shadow-2xl"
+                {/* Gamification Hub - All gamification stats in one place */}
+                <RealTimeStats
+                  variant="full"
+                  className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-lg rounded-2xl p-5"
                 />
 
                 {/* Learning Toolkit */}
                 <Link to="/quick-actions">
-                  <Card className="p-4 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 backdrop-blur-xl border border-yellow-200/50 dark:border-yellow-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.01] cursor-pointer group">
+                  <Card className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/60 dark:border-amber-700/40 shadow-md hover:shadow-lg transition-all duration-200 hover:border-amber-300 dark:hover:border-amber-600 cursor-pointer group rounded-xl">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                          <Zap className="w-6 h-6 text-white" />
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                          <Zap className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <h3 className="text-base font-semibold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent flex items-center gap-2">
-                            Learning Toolkit 🚀
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                            Learning Toolkit{" "}
+                            <span className="text-base">🚀</span>
                           </h3>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             Access all your learning tools
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
-                        <span className="text-xs font-semibold">View All</span>
+                      <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                        <span className="text-xs font-medium">View All</span>
                         <ArrowLeft className="w-4 h-4 rotate-180 group-hover:translate-x-1 transition-transform" />
                       </div>
                     </div>
                   </Card>
                 </Link>
 
-                {/* Achievements */}
-                <Card className="p-6 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-2xl">
-                  <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-6 flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-yellow-500" />
-                    Achievements
-                  </h3>
+                {/* Quick Actions Card */}
+                <Link to="/live-quiz">
+                  <Card className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200/60 dark:border-purple-700/40 shadow-md hover:shadow-lg transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-600 cursor-pointer group rounded-xl">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                          <Video className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+                            Join Live Quiz <span className="text-base">🎮</span>
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Compete in real-time
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
+                        <span className="text-xs font-medium">Join</span>
+                        <ArrowLeft className="w-4 h-4 rotate-180 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+
+                {/* Achievements - Compact Version */}
+                <Card className="p-5 bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-lg rounded-2xl">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-amber-500" />
+                      Achievements
+                    </h3>
+                    {achievements.length > 4 && (
+                      <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                        {achievements.length} total
+                      </span>
+                    )}
+                  </div>
                   {achievements.length > 0 ? (
-                    <div className="space-y-3">
-                      {achievements.slice(0, 3).map((ach, index) => {
+                    <div className="space-y-2">
+                      {achievements.slice(0, 4).map((ach, index) => {
                         const Icon = ach.icon;
                         return (
                           <motion.div
                             key={index}
-                            className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-gray-50/80 to-gray-100/80 dark:from-gray-800/80 dark:to-gray-700/80 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-300 border border-gray-200/50 dark:border-gray-600/50 backdrop-blur-sm"
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
+                            className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.1 }}
-                            whileHover={{ scale: 1.02, x: 5 }}
                           >
                             <div
-                              className={`p-3 rounded-xl ${
+                              className={`w-9 h-9 rounded-lg flex items-center justify-center ${
                                 ach.color === "yellow"
-                                  ? "bg-gradient-to-br from-yellow-400 to-orange-500"
+                                  ? "bg-amber-100 dark:bg-amber-900/40"
                                   : ach.color === "blue"
-                                  ? "bg-gradient-to-br from-blue-400 to-indigo-500"
+                                  ? "bg-blue-100 dark:bg-blue-900/40"
                                   : ach.color === "green"
-                                  ? "bg-gradient-to-br from-green-400 to-emerald-500"
+                                  ? "bg-emerald-100 dark:bg-emerald-900/40"
                                   : ach.color === "red"
-                                  ? "bg-gradient-to-br from-red-400 to-pink-500"
-                                  : "bg-gradient-to-br from-purple-400 to-violet-500"
-                              } shadow-lg transform hover:scale-110 hover:rotate-12 transition-transform duration-300`}
+                                  ? "bg-rose-100 dark:bg-rose-900/40"
+                                  : "bg-violet-100 dark:bg-violet-900/40"
+                              }`}
                             >
-                              <Icon className="w-5 h-5 text-white" />
+                              <Icon
+                                className={`w-4 h-4 ${
+                                  ach.color === "yellow"
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : ach.color === "blue"
+                                    ? "text-blue-600 dark:text-blue-400"
+                                    : ach.color === "green"
+                                    ? "text-emerald-600 dark:text-emerald-400"
+                                    : ach.color === "red"
+                                    ? "text-rose-600 dark:text-rose-400"
+                                    : "text-violet-600 dark:text-violet-400"
+                                }`}
+                              />
                             </div>
-                            <div className="flex-1">
-                              <p className="font-semibold text-gray-900 dark:text-white text-sm">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 dark:text-white text-sm">
                                 {ach.title}
                               </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                 {ach.description}
                               </p>
                             </div>
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
-                              <CheckCircle className="w-5 h-5 text-white" />
+                            <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                              <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                             </div>
                           </motion.div>
                         );
                       })}
-                      {achievements.length > 3 && (
-                        <motion.div
-                          className="text-center py-3 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.4 }}
-                        >
-                          <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-                            🎉 +{achievements.length - 3} more achievements
-                            unlocked!
-                          </p>
-                        </motion.div>
+                      {achievements.length > 4 && (
+                        <Link to="/achievements" className="block">
+                          <div className="text-center py-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors cursor-pointer">
+                            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                              +{achievements.length - 4} more • View All
+                            </p>
+                          </div>
+                        </Link>
                       )}
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <Award className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4 animate-pulse" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                    <div className="text-center py-6">
+                      <Award className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Complete quizzes to unlock achievements!
                       </p>
                     </div>
@@ -654,88 +755,87 @@ export default function Dashboard() {
               </motion.div>
 
               {/* Right Column: Main Content */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Enhanced Stat Cards with better glassmorphism */}
+              <div className="lg:col-span-2 space-y-5">
+                {/* Stat Cards - Clean and Modern */}
                 <motion.div
-                  className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"
+                  className="grid grid-cols-2 lg:grid-cols-4 gap-3"
                   variants={itemVariants}
                 >
-                  <Card className="relative overflow-hidden bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full opacity-20 blur-xl"></div>
-                    <div className="flex items-center gap-4 relative z-10">
-                      <div className="bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 p-3 rounded-xl shadow-lg">
-                        <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  <Card className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-md hover:shadow-lg transition-all duration-200 p-4 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           Completed
                         </p>
-                        <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                        <p className="text-xl font-bold text-gray-900 dark:text-white">
                           {quizzesCompleted}
                         </p>
                       </div>
                     </div>
                   </Card>
 
-                  <Card className="relative overflow-hidden bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full opacity-20 blur-xl"></div>
-                    <div className="flex items-center gap-4 relative z-10">
-                      <div className="bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 p-3 rounded-xl shadow-lg">
-                        <Target className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <Card className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-md hover:shadow-lg transition-all duration-200 p-4 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
+                        <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           Avg Score
                         </p>
-                        <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                        <p className="text-xl font-bold text-gray-900 dark:text-white">
                           {averageScore.toFixed(1)}%
                         </p>
                       </div>
                     </div>
                   </Card>
 
-                  <Card className="relative overflow-hidden bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full opacity-20 blur-xl"></div>
-                    <div className="flex items-center gap-4 relative z-10">
-                      <div className="bg-gradient-to-br from-purple-100 to-violet-100 dark:from-purple-900/50 dark:to-violet-900/50 p-3 rounded-xl shadow-lg">
-                        <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  <Card className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-md hover:shadow-lg transition-all duration-200 p-4 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/40 rounded-lg flex items-center justify-center">
+                        <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           Total Points
                         </p>
-                        <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+                        <p className="text-xl font-bold text-gray-900 dark:text-white">
                           {totalCorrect}
                         </p>
                       </div>
                     </div>
                   </Card>
 
-                  <Card className="relative overflow-hidden bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-20 h-20 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full opacity-20 blur-xl"></div>
-                    <div className="flex items-center gap-4 relative z-10">
-                      <div className="bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/50 dark:to-red-900/50 p-3 rounded-xl shadow-lg">
-                        <Flame className="w-6 h-6 text-orange-600 dark:text-orange-400 animate-pulse" />
+                  <Card className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-md hover:shadow-lg transition-all duration-200 p-4 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/40 rounded-lg flex items-center justify-center relative">
+                        <Flame className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                        {(gamificationStreak || streakCount) > 0 && (
+                          <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                        )}
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           Streak
                         </p>
-                        <p className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                          {streakCount} 🔥
+                        <p className="text-xl font-bold text-gray-900 dark:text-white">
+                          {gamificationStreak || streakCount} 🔥
                         </p>
                       </div>
                     </div>
                   </Card>
                 </motion.div>
 
-                {/* Charts Row with enhanced glassmorphism */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {/* Charts Row */}
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                   {/* Score Progression Chart */}
                   <motion.div variants={itemVariants}>
-                    <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-xl">
-                      <h3 className="text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    <Card className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-md rounded-2xl p-5">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-indigo-500" />
                         Score Progression
                       </h3>
                       {chartData.length > 0 ? (
@@ -770,6 +870,10 @@ export default function Dashboard() {
                                   fontSize: "12px",
                                 }}
                                 labelStyle={{ color: "#d1d5db" }}
+                                formatter={(value, name, props) => [
+                                  `${value}%`,
+                                  props.payload.quizTitle,
+                                ]}
                               />
                               <Line
                                 type="monotone"
@@ -795,54 +899,61 @@ export default function Dashboard() {
 
                   {/* Performance Distribution */}
                   <motion.div variants={itemVariants}>
-                    <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-xl">
-                      <h3 className="text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-4 flex items-center gap-2">
-                        <Target className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    <Card className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-md rounded-2xl p-5">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Target className="w-4 h-4 text-emerald-500" />
                         Performance Distribution
                       </h3>
                       {performanceData.length > 0 ? (
-                        <div className="h-64">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={performanceData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={40}
-                                outerRadius={80}
-                                dataKey="value"
-                                label={({ name, percent }) =>
-                                  `${(percent * 100).toFixed(0)}%`
-                                }
-                              >
-                                {performanceData.map((entry, index) => (
-                                  <Cell
-                                    key={`cell-${index}`}
-                                    fill={entry.color}
-                                  />
-                                ))}
-                              </Pie>
-                              <Tooltip
-                                contentStyle={{
-                                  backgroundColor: "#1f2937",
-                                  border: "1px solid #4b5563",
-                                  borderRadius: "8px",
-                                }}
-                              />
-                            </PieChart>
-                          </ResponsiveContainer>
-                          <div className="mt-4 space-y-2">
+                        <div>
+                          <div className="h-52">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={performanceData}
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={40}
+                                  outerRadius={70}
+                                  dataKey="value"
+                                  label={({ name, percent }) =>
+                                    `${(percent * 100).toFixed(0)}%`
+                                  }
+                                >
+                                  {performanceData.map((entry, index) => (
+                                    <Cell
+                                      key={`cell-${index}`}
+                                      fill={entry.color}
+                                    />
+                                  ))}
+                                </Pie>
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: "#1f2937",
+                                    border: "1px solid #4b5563",
+                                    borderRadius: "8px",
+                                  }}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <div className="mt-6 space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
                             {performanceData.map((item, index) => (
                               <div
                                 key={index}
-                                className="flex items-center gap-2 text-sm"
+                                className="flex items-center justify-between text-sm"
                               >
-                                <div
-                                  className="w-3 h-3 rounded-full"
-                                  style={{ backgroundColor: item.color }}
-                                ></div>
-                                <span className="text-gray-600 dark:text-gray-400">
-                                  {item.name}: {item.value}
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-3 h-3 rounded-full"
+                                    style={{ backgroundColor: item.color }}
+                                  ></div>
+                                  <span className="text-gray-600 dark:text-gray-400 text-xs">
+                                    {item.name}
+                                  </span>
+                                </div>
+                                <span className="font-semibold text-gray-900 dark:text-white text-sm">
+                                  {item.value}
                                 </span>
                               </div>
                             ))}
@@ -860,19 +971,19 @@ export default function Dashboard() {
                   </motion.div>
                 </div>
 
-                {/* Recent Results with enhanced design */}
+                {/* Recent Results */}
                 <motion.div variants={itemVariants}>
-                  <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-xl">
+                  <Card className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-md rounded-2xl p-5">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent flex items-center gap-2">
-                        <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-blue-500" />
                         Recent Results
                       </h3>
                       <Link to="/quiz-history">
                         <Button
                           size="sm"
                           variant="outline"
-                          className="hover:scale-105 transition-transform"
+                          className="text-xs h-8"
                         >
                           View All History
                         </Button>
@@ -893,63 +1004,98 @@ export default function Dashboard() {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {recentResults.map((result, index) => (
-                          <motion.div
-                            key={result._id}
-                            className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-gray-50/80 to-gray-100/80 dark:from-gray-800/80 dark:to-gray-700/80 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-300 border border-gray-200/50 dark:border-gray-600/50 hover:shadow-lg hover:scale-[1.01] backdrop-blur-sm"
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 flex items-center justify-center shadow-lg">
-                                <ClipboardList className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                        {recentResults.map((result, index) => {
+                          const scorePercentage =
+                            (result.score / result.totalQuestions) * 100;
+                          const isExcellent = scorePercentage >= 90;
+                          const isGood = scorePercentage >= 70;
+
+                          return (
+                            <motion.div
+                              key={result._id}
+                              className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.05 }}
+                            >
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div
+                                  className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                    isExcellent
+                                      ? "bg-emerald-100 dark:bg-emerald-900/40"
+                                      : isGood
+                                      ? "bg-blue-100 dark:bg-blue-900/40"
+                                      : "bg-orange-100 dark:bg-orange-900/40"
+                                  }`}
+                                >
+                                  {isExcellent ? (
+                                    <Trophy
+                                      className={`w-5 h-5 ${
+                                        isExcellent
+                                          ? "text-emerald-600 dark:text-emerald-400"
+                                          : ""
+                                      }`}
+                                    />
+                                  ) : isGood ? (
+                                    <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                  ) : (
+                                    <TrendingUp className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <h4 className="font-medium text-gray-900 dark:text-white text-sm truncate">
+                                    {result.quiz?.title || "Quiz Unavailable"}
+                                  </h4>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" />
+                                    {new Date(
+                                      result.createdAt
+                                    ).toLocaleDateString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                    })}
+                                    <span className="mx-1">•</span>
+                                    {result.totalQuestions} Qs
+                                  </p>
+                                </div>
                               </div>
-                              <div>
-                                <h4 className="font-semibold text-gray-900 dark:text-white">
-                                  {result.quiz?.title || "Deleted Quiz"}
-                                </h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
-                                  {new Date(
-                                    result.createdAt
-                                  ).toLocaleDateString()}
-                                </p>
+
+                              <div className="flex items-center gap-3 flex-shrink-0">
+                                <div className="text-right">
+                                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                                    {result.score}/{result.totalQuestions}
+                                  </p>
+                                  <p
+                                    className={`text-xs font-semibold ${
+                                      isExcellent
+                                        ? "text-emerald-600 dark:text-emerald-400"
+                                        : isGood
+                                        ? "text-blue-600 dark:text-blue-400"
+                                        : "text-orange-600 dark:text-orange-400"
+                                    }`}
+                                  >
+                                    {scorePercentage.toFixed(0)}%
+                                  </p>
+                                </div>
+                                <Badge
+                                  className={`text-xs font-medium px-2 py-0.5 ${
+                                    isExcellent
+                                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                                      : isGood
+                                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
+                                      : "bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300"
+                                  }`}
+                                >
+                                  {isExcellent
+                                    ? "Excellent"
+                                    : isGood
+                                    ? "Good"
+                                    : "Keep Going"}
+                                </Badge>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <div className="text-right">
-                                <p className="font-bold text-gray-900 dark:text-white text-lg">
-                                  {result.score}/{result.totalQuestions}
-                                </p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 font-semibold">
-                                  {(
-                                    (result.score / result.totalQuestions) *
-                                    100
-                                  ).toFixed(0)}
-                                  %
-                                </p>
-                              </div>
-                              <Badge
-                                className="shadow-md"
-                                variant={
-                                  result.score / result.totalQuestions >= 0.9
-                                    ? "default"
-                                    : result.score / result.totalQuestions >=
-                                      0.7
-                                    ? "secondary"
-                                    : "destructive"
-                                }
-                              >
-                                {result.score / result.totalQuestions >= 0.9
-                                  ? "🏆 Excellent"
-                                  : result.score / result.totalQuestions >= 0.7
-                                  ? "👍 Good"
-                                  : "💪 Needs Work"}
-                              </Badge>
-                            </div>
-                          </motion.div>
-                        ))}
+                            </motion.div>
+                          );
+                        })}
                       </div>
                     )}
                   </Card>
