@@ -154,12 +154,10 @@ router.post(
     cacheManager.invalidateResultCaches(req.user.userId, quizId)
       .catch(err => logger.error('Cache invalidation error:', err));
 
-    res.status(201).json(
-      ApiResponse.created({
-        result: result.getSummary(),
-        analysis: result.getDetailedAnalysis(),
-      })
-    );
+    return ApiResponse.created(res, {
+      result: result.getSummary(),
+      analysis: result.getDetailedAnalysis(),
+    });
   } catch (error) {
     logger.error('Submit result error:', error);
     return ApiResponse.error(res, 'Failed to submit result', 500);

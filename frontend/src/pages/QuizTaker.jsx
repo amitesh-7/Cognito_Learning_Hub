@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -44,6 +44,7 @@ export default function QuizTaker() {
   const { user } = useContext(AuthContext);
   const { success, error: showError } = useToast();
   const { refreshData } = useGamification();
+  const navigate = useNavigate();
 
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -188,8 +189,15 @@ export default function QuizTaker() {
             
             success(`Quiz completed! +${xpEarned} XP earned!`);
           } else {
-            const errorText = await submitRes.text();
-            console.error("❌ Failed to submit quiz result:", submitRes.status, errorText);
+            let errorText;
+            try {
+              const errorData = await submitRes.json();
+              errorText = JSON.stringify(errorData);
+              console.error("❌ Failed to submit quiz result:", submitRes.status, errorData);
+            } catch (e) {
+              errorText = await submitRes.text();
+              console.error("❌ Failed to submit quiz result:", submitRes.status, errorText);
+            }
             // Still show completion even if submission failed
             success(`Quiz completed! (Score: ${score}/${quiz.questions.length})`);
           }
@@ -458,16 +466,18 @@ export default function QuizTaker() {
                   </Button>
                   <Button
                     variant="outline"
+                    onClick={() => navigate('/leaderboard')}
                     className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     <Trophy className="w-4 h-4 mr-2" />
                     View Leaderboard
                   </Button>
-                  <Button asChild variant="secondary">
-                    <Link to="/quizzes" className="flex items-center">
-                      <Home className="w-4 h-4 mr-2" />
-                      Back to Quizzes
-                    </Link>
+                  <Button 
+                    variant="secondary"
+                    onClick={() => navigate('/quizzes')}
+                  >
+                    <Home className="w-4 h-4 mr-2" />
+                    Back to Quizzes
                   </Button>
                 </motion.div>
               </CardContent>

@@ -368,7 +368,7 @@ export default function Dashboard() {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/50 to-purple-50/50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950/50 relative overflow-hidden py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-gray-950 dark:via-slate-900 dark:to-indigo-950/30 relative overflow-hidden py-8 px-2 sm:px-4">
       {/* Animated floating particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Large floating orbs */}
@@ -465,26 +465,26 @@ export default function Dashboard() {
           animate="visible"
         >
           <div>
-            <motion.h1
-              className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight"
+            <motion.div
+              className="space-y-2"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              Welcome back, {user?.name?.split(" ")[0] || "Student"}! 👋
-            </motion.h1>
-            <motion.p
-              className="text-slate-600 dark:text-slate-400 font-medium mt-2 text-base sm:text-lg"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              Here's your{" "}
-              <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent font-semibold">
-                learning progress
-              </span>{" "}
-              overview ✨
-            </motion.p>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">
+                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent leading-tight">
+                  Welcome back, {user?.name?.split(" ")[0] || "Student"}!
+                </span>{" "}
+                <span className="inline-block animate-wave">👋</span>
+              </h1>
+              <p className="text-slate-600 dark:text-slate-300 font-medium text-base sm:text-lg">
+                Here's your{" "}
+                <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent font-semibold">
+                  learning progress
+                </span>{" "}
+                overview ✨
+              </p>
+            </motion.div>
           </div>
 
           <div className="flex gap-3">
@@ -543,8 +543,20 @@ export default function Dashboard() {
               {/* Left Column: User Profile & Quick Stats */}
               <motion.div className="space-y-5" variants={itemVariants}>
                 {/* Enhanced Profile Card with Level System */}
-                <Card className="text-center p-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 shadow-lg rounded-2xl relative overflow-hidden">
-                  {/* Subtle decorative gradient */}
+                <Card className="text-center p-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-2xl border border-indigo-200/50 dark:border-indigo-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl relative overflow-hidden group">
+                  {/* Animated decorative gradient */}
+                  <motion.div 
+                    className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    animate={{
+                      backgroundPosition: ['0% 0%', '100% 100%', '0% 0%'],
+                    }}
+                    transition={{
+                      duration: 10,
+                      repeat: Infinity,
+                      ease: 'linear',
+                    }}
+                    style={{ backgroundSize: '200% 200%' }}
+                  />
                   <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5"></div>
 
                   <div className="relative">
@@ -805,67 +817,91 @@ export default function Dashboard() {
                   className="grid grid-cols-2 lg:grid-cols-4 gap-3"
                   variants={itemVariants}
                 >
-                  <Card className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-md hover:shadow-lg transition-all duration-200 p-4 rounded-xl">
+                  <Card className="bg-gradient-to-br from-white to-emerald-50/30 dark:from-gray-800 dark:to-emerald-900/20 border border-emerald-200/60 dark:border-emerald-700/40 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 p-4 rounded-xl group">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                      </div>
+                      <motion.div 
+                        className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center shadow-md"
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        transition={{ type: 'spring', stiffness: 300 }}
+                      >
+                        <CheckCircle className="w-5 h-5 text-white" />
+                      </motion.div>
                       <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold uppercase tracking-wide">
                           Completed
                         </p>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white">
+                        <p className="text-2xl font-extrabold bg-gradient-to-r from-emerald-600 to-emerald-700 dark:from-emerald-400 dark:to-emerald-500 bg-clip-text text-transparent">
                           {quizzesCompleted}
                         </p>
                       </div>
                     </div>
                   </Card>
 
-                  <Card className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-md hover:shadow-lg transition-all duration-200 p-4 rounded-xl">
+                  <Card className="bg-gradient-to-br from-white to-blue-50/30 dark:from-gray-800 dark:to-blue-900/20 border border-blue-200/60 dark:border-blue-700/40 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 p-4 rounded-xl group">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
-                        <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      </div>
+                      <motion.div 
+                        className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center shadow-md"
+                        whileHover={{ scale: 1.1, rotate: -5 }}
+                        transition={{ type: 'spring', stiffness: 300 }}
+                      >
+                        <Target className="w-5 h-5 text-white" />
+                      </motion.div>
                       <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold uppercase tracking-wide">
                           Avg Score
                         </p>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white">
+                        <p className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500 bg-clip-text text-transparent">
                           {averageScore.toFixed(1)}%
                         </p>
                       </div>
                     </div>
                   </Card>
 
-                  <Card className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-md hover:shadow-lg transition-all duration-200 p-4 rounded-xl">
+                  <Card className="bg-gradient-to-br from-white to-violet-50/30 dark:from-gray-800 dark:to-violet-900/20 border border-violet-200/60 dark:border-violet-700/40 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 p-4 rounded-xl group">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/40 rounded-lg flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-                      </div>
+                      <motion.div 
+                        className="w-10 h-10 bg-gradient-to-br from-violet-400 to-violet-600 rounded-lg flex items-center justify-center shadow-md"
+                        whileHover={{ scale: 1.1, y: -2 }}
+                        transition={{ type: 'spring', stiffness: 300 }}
+                      >
+                        <TrendingUp className="w-5 h-5 text-white" />
+                      </motion.div>
                       <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold uppercase tracking-wide">
                           Total Points
                         </p>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white">
+                        <p className="text-2xl font-extrabold bg-gradient-to-r from-violet-600 to-violet-700 dark:from-violet-400 dark:to-violet-500 bg-clip-text text-transparent">
                           {totalPoints}
                         </p>
                       </div>
                     </div>
                   </Card>
 
-                  <Card className="bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-md hover:shadow-lg transition-all duration-200 p-4 rounded-xl">
+                  <Card className="bg-gradient-to-br from-white to-orange-50/30 dark:from-gray-800 dark:to-orange-900/20 border border-orange-200/60 dark:border-orange-700/40 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 p-4 rounded-xl group">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/40 rounded-lg flex items-center justify-center relative">
-                        <Flame className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                      <motion.div 
+                        className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center shadow-md relative"
+                        whileHover={{ scale: 1.1 }}
+                        animate={{ rotate: [0, -3, 3, -3, 0] }}
+                        transition={{ 
+                          rotate: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+                          scale: { type: 'spring', stiffness: 300 }
+                        }}
+                      >
+                        <Flame className="w-5 h-5 text-white" />
                         {(gamificationStreak || streakCount) > 0 && (
-                          <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                          <motion.span 
+                            className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full"
+                            animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                          />
                         )}
-                      </div>
+                      </motion.div>
                       <div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 font-semibold uppercase tracking-wide">
                           Streak
                         </p>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white">
+                        <p className="text-2xl font-extrabold bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-500 bg-clip-text text-transparent">
                           {gamificationStreak || streakCount} 🔥
                         </p>
                       </div>

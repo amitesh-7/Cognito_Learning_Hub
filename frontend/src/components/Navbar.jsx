@@ -219,10 +219,10 @@ const Navbar = () => {
                 duration: 0.6,
               }
         }
-        className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-700 ${
+        className={`sticky top-0 left-0 right-0 w-full z-50 transition-all duration-500 ${
           isScrolled
-            ? "bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl md:backdrop-blur-3xl shadow-2xl md:shadow-[0_8px_32px_rgba(99,102,241,0.15)] border-b border-white/50 dark:border-indigo-400/30"
-            : "bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl md:backdrop-blur-2xl border-b border-white/40 dark:border-indigo-500/20 shadow-lg md:shadow-xl shadow-indigo-500/10"
+            ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl shadow-2xl shadow-indigo-500/10 border-b border-indigo-200/40 dark:border-indigo-400/30"
+            : "bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-b border-indigo-100/30 dark:border-indigo-500/20 shadow-lg"
         }`}
         style={{
           WebkitBackdropFilter: isScrolled
@@ -291,7 +291,7 @@ const Navbar = () => {
             damping: 20,
           }}
         >
-          <div className="flex justify-between items-center h-16 lg:h-18">
+          <div className="flex justify-between items-center h-16">
             {/* Logo with Ultra-Modern Effects */}
             <motion.div
               initial={
@@ -399,12 +399,12 @@ const Navbar = () => {
               {user ? (
                 <>
                   {/* Gamification Badges - Real-time data */}
-                  <div className="flex items-center gap-2 mr-3">
+                  <div className="flex items-center gap-2 mr-4">
                     {/* Level Badge */}
                     <motion.div
                       variants={staggerItem}
                       whileHover={{ scale: 1.05, y: -2 }}
-                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 rounded-xl shadow-lg hover:shadow-violet-500/50 transition-all duration-300 border border-white/30 relative overflow-hidden"
+                      className="flex items-center gap-2 px-3 py-2 h-10 bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 rounded-xl shadow-lg hover:shadow-violet-500/50 transition-all duration-300 border border-white/30 relative overflow-hidden"
                     >
                       <motion.div
                         animate={{ x: [-50, 150] }}
@@ -433,7 +433,7 @@ const Navbar = () => {
                       <motion.div
                         variants={staggerItem}
                         whileHover={{ scale: 1.05, rotate: [0, -3, 3, 0] }}
-                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-orange-50 to-red-50 backdrop-blur-xl rounded-xl border border-orange-200/60 shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="flex items-center gap-2 px-3 py-2 h-10 bg-gradient-to-br from-orange-50 to-red-50 backdrop-blur-xl rounded-xl border border-orange-200/60 shadow-lg hover:shadow-xl transition-all duration-300"
                       >
                         <motion.div
                           animate={{ scale: [1, 1.15, 1] }}
@@ -458,7 +458,7 @@ const Navbar = () => {
                     <motion.div
                       variants={staggerItem}
                       whileHover={{ scale: 1.05 }}
-                      className="flex items-center gap-2 px-3 py-2 bg-white/60 backdrop-blur-xl rounded-xl border border-white/80 shadow-lg hover:shadow-xl transition-all duration-300"
+                      className="flex items-center gap-2 px-3 py-2 h-10 bg-white/60 backdrop-blur-xl rounded-xl border border-white/80 shadow-lg hover:shadow-xl transition-all duration-300"
                     >
                       <Star className="w-4 h-4 text-violet-600 fill-violet-600" />
                       <div>
@@ -477,7 +477,7 @@ const Navbar = () => {
                     <motion.div key={link.to} variants={staggerItem}>
                       <Link
                         to={link.to}
-                        className={`relative px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 group flex items-center gap-2 ${
+                        className={`relative px-4 h-10 text-sm font-semibold rounded-xl transition-all duration-300 group flex items-center justify-center gap-2 ${
                           location.pathname === link.to
                             ? "text-blue-700 dark:text-blue-300"
                             : "text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
@@ -519,7 +519,7 @@ const Navbar = () => {
                     >
                       <Link
                         to="/teaching-hub"
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-300 border border-indigo-200/60 dark:border-indigo-400/30"
+                        className="flex items-center justify-center gap-2 px-4 h-10 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-300 border border-indigo-200/60 dark:border-indigo-400/30"
                       >
                         <GraduationCap className="w-4 h-4" />
                         Teaching Hub
@@ -531,7 +531,7 @@ const Navbar = () => {
                     <motion.div variants={staggerItem}>
                       <Link
                         to="/moderator"
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
+                        className="flex items-center justify-center gap-2 px-4 h-10 text-sm font-semibold text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
                       >
                         <Shield className="w-4 h-4" />
                         Moderator
@@ -544,7 +544,7 @@ const Navbar = () => {
                       <motion.div variants={staggerItem}>
                         <Link
                           to="/admin"
-                          className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
+                          className="flex items-center justify-center gap-2 px-4 h-10 text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
                         >
                           <UserCog className="w-4 h-4" />
                           Admin
@@ -553,7 +553,7 @@ const Navbar = () => {
                       <motion.div variants={staggerItem}>
                         <Link
                           to="/admin-broadcast"
-                          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
+                          className="flex items-center justify-center gap-2 px-4 h-10 text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
                         >
                           <Radio className="w-4 h-4" />
                           Broadcast
@@ -568,7 +568,7 @@ const Navbar = () => {
                       onClick={handleLogout}
                       variant="default"
                       size="sm"
-                      className="ml-2"
+                      className="ml-2 h-10 px-4 flex items-center justify-center"
                     >
                       Logout
                     </Button>
