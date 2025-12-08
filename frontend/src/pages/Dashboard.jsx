@@ -83,6 +83,7 @@ export default function Dashboard() {
     currentLevel,
     totalXP,
     currentStreak: gamificationStreak,
+    userAchievements,
   } = useGamification();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -193,33 +194,43 @@ export default function Dashboard() {
       enabled: !loading,
     });
 
-  // --- Calculated Stats ---
-  const quizzesCompleted = results.length;
+  // --- Calculated Stats - Use gamification stats as primary source ---
+  const quizzesCompleted = userStats?.totalQuizzesTaken || results.length;
   const averageScore =
-    quizzesCompleted > 0
+    userStats?.averageScore ||
+    (results.length > 0
       ? results.reduce(
           (acc, r) => acc + (r.score / r.totalQuestions) * 100,
           0
-        ) / quizzesCompleted
-      : 0;
+        ) / results.length
+      : 0);
 
-  const totalQuestions = results.reduce((acc, r) => acc + r.totalQuestions, 0);
-  const totalCorrect = results.reduce((acc, r) => acc + r.score, 0);
-  const recentResults = results.slice(0, 5);
+  // Only show results that match gamification count (real-time data)
+  const actualResultsCount = userStats?.totalQuizzesTaken || results.length;
+  const trackedResults = results.slice(0, actualResultsCount);
 
-  // Performance categories
-  const excellent = results.filter(
+  const totalQuestions = trackedResults.reduce(
+    (acc, r) => acc + r.totalQuestions,
+    0
+  );
+  const totalCorrect = trackedResults.reduce((acc, r) => acc + r.score, 0);
+  // Use gamification points as primary source for consistency
+  const totalPoints = userStats?.totalPoints || totalCorrect;
+  const recentResults = trackedResults.slice(0, 5);
+
+  // Performance categories - only count tracked quizzes
+  const excellent = trackedResults.filter(
     (r) => r.score / r.totalQuestions >= 0.9
   ).length;
-  const good = results.filter(
+  const good = trackedResults.filter(
     (r) => r.score / r.totalQuestions >= 0.7 && r.score / r.totalQuestions < 0.9
   ).length;
-  const needsWork = results.filter(
+  const needsWork = trackedResults.filter(
     (r) => r.score / r.totalQuestions < 0.7
   ).length;
 
-  // --- Chart Data with proper dates ---
-  const chartData = results
+  // --- Chart Data with proper dates - only tracked quizzes ---
+  const chartData = trackedResults
     .slice(0, 10)
     .reverse()
     .map((r) => {
@@ -239,48 +250,72 @@ export default function Dashboard() {
     { name: "Needs Work (<70%)", value: needsWork, color: "#ef4444" },
   ].filter((item) => item.value > 0);
 
-  // --- Achievements Logic ---
+  // --- Achievements Logic - Use gamification context for consistency ---
   const achievements = [];
-  if (quizzesCompleted > 0)
-    achievements.push({
-      icon: Award,
-      title: "First Quiz!",
-      description: "You completed your first quiz.",
-      color: "yellow",
-      progress: 100,
+
+  // Use gamification userAchievements if available, otherwise calculate from results
+  if (userAchievements && userAchievements.length > 0) {
+    // Map gamification achievements to display format
+    userAchievements.slice(0, 5).forEach((ua) => {
+      const ach = ua.achievement || ua;
+      achievements.push({
+        icon: Award, // Can map icon based on type later
+        title: ach.name || "Achievement",
+        description: ach.description || "Unlocked!",
+        color:
+          ach.rarity === "legendary"
+            ? "yellow"
+            : ach.rarity === "epic"
+            ? "purple"
+            : ach.rarity === "rare"
+            ? "blue"
+            : "green",
+        progress: 100,
+      });
     });
-  if (quizzesCompleted >= 5)
-    achievements.push({
-      icon: Target,
-      title: "Quiz Novice",
-      description: "Completed 5 quizzes.",
-      color: "blue",
-      progress: 100,
-    });
-  if (quizzesCompleted >= 10)
-    achievements.push({
-      icon: CheckCircle,
-      title: "Quiz Expert",
-      description: "Completed 10 quizzes.",
-      color: "green",
-      progress: 100,
-    });
-  if (results.some((r) => r.score === r.totalQuestions))
-    achievements.push({
-      icon: Flame,
-      title: "Perfectionist",
-      description: "Achieved a perfect score!",
-      color: "red",
-      progress: 100,
-    });
-  if (streakCount >= 3)
-    achievements.push({
-      icon: Calendar,
-      title: "Consistent Learner",
-      description: `${streakCount} day learning streak!`,
-      color: "purple",
-      progress: 100,
-    });
+  } else {
+    // Fallback to local calculation
+    if (quizzesCompleted > 0)
+      achievements.push({
+        icon: Award,
+        title: "First Quiz!",
+        description: "You completed your first quiz.",
+        color: "yellow",
+        progress: 100,
+      });
+    if (quizzesCompleted >= 5)
+      achievements.push({
+        icon: Target,
+        title: "Quiz Novice",
+        description: "Completed 5 quizzes.",
+        color: "blue",
+        progress: 100,
+      });
+    if (quizzesCompleted >= 10)
+      achievements.push({
+        icon: CheckCircle,
+        title: "Quiz Expert",
+        description: "Completed 10 quizzes.",
+        color: "green",
+        progress: 100,
+      });
+    if (results.some((r) => r.score === r.totalQuestions))
+      achievements.push({
+        icon: Flame,
+        title: "Perfectionist",
+        description: "Achieved a perfect score!",
+        color: "red",
+        progress: 100,
+      });
+    if (streakCount >= 3)
+      achievements.push({
+        icon: Calendar,
+        title: "Consistent Learner",
+        description: `${streakCount} day learning streak!`,
+        color: "purple",
+        progress: 100,
+      });
+  }
 
   if (loading)
     return (
@@ -606,6 +641,15 @@ export default function Dashboard() {
                           </p>
                         </motion.div>
                       </div>
+                      {userStats?.totalQuizzesTaken === 0 &&
+                        results.length > 0 && (
+                          <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                            <p className="text-xs text-amber-700 dark:text-amber-400 text-center">
+                              ℹ️ Showing {results.length} historical quizzes.
+                              Take new quizzes to update gamification stats.
+                            </p>
+                          </div>
+                        )}
                     </div>
                   </div>
                 </Card>
@@ -803,7 +847,7 @@ export default function Dashboard() {
                           Total Points
                         </p>
                         <p className="text-xl font-bold text-gray-900 dark:text-white">
-                          {totalCorrect}
+                          {totalPoints}
                         </p>
                       </div>
                     </div>
@@ -978,6 +1022,9 @@ export default function Dashboard() {
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <Clock className="w-4 h-4 text-blue-500" />
                         Recent Results
+                        <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                          ({trackedResults.length})
+                        </span>
                       </h3>
                       <Link to="/quiz-history">
                         <Button
@@ -989,7 +1036,7 @@ export default function Dashboard() {
                         </Button>
                       </Link>
                     </div>
-                    {results.length === 0 ? (
+                    {trackedResults.length === 0 ? (
                       <div className="text-center py-12">
                         <ClipboardList className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                         <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">

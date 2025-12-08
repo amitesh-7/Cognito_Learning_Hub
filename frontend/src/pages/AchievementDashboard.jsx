@@ -245,7 +245,7 @@ export default function AchievementDashboard() {
     unlockedCount,
     totalAchievements,
   } = useGamification();
-  
+
   const [achievements, setAchievements] = useState([]);
   const [recentAchievements, setRecentAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -256,7 +256,7 @@ export default function AchievementDashboard() {
     if (!gamificationLoading) {
       // Combine all achievements with user unlock status
       const achievementMap = new Map();
-      
+
       // Add all available achievements
       allAchievements.forEach((a) => {
         achievementMap.set(a._id || a.id, {
@@ -271,12 +271,12 @@ export default function AchievementDashboard() {
           progress: 0,
         });
       });
-      
+
       // Mark unlocked achievements
       userAchievements.forEach((ua) => {
         const achievement = ua.achievement || ua;
         const id = achievement._id || achievement.id || ua._id;
-        
+
         if (achievementMap.has(id)) {
           const existing = achievementMap.get(id);
           achievementMap.set(id, {
@@ -301,35 +301,46 @@ export default function AchievementDashboard() {
           });
         }
       });
-      
+
       // If no achievements from API, use default definitions
       let finalAchievements = Array.from(achievementMap.values());
       if (finalAchievements.length === 0) {
         finalAchievements = getDefaultAchievementDefinitions(userStats);
       }
-      
+
       setAchievements(finalAchievements);
-      
+
       // Recent unlocks
-      const recent = recentUnlocks.length > 0 
-        ? recentUnlocks.slice(0, 5).map(a => ({
-            ...a,
-            isUnlocked: true,
-          }))
-        : finalAchievements
-            .filter(a => a.isUnlocked)
-            .sort((a, b) => new Date(b.unlockedAt || 0) - new Date(a.unlockedAt || 0))
-            .slice(0, 5);
-      
+      const recent =
+        recentUnlocks.length > 0
+          ? recentUnlocks.slice(0, 5).map((a) => ({
+              ...a,
+              isUnlocked: true,
+            }))
+          : finalAchievements
+              .filter((a) => a.isUnlocked)
+              .sort(
+                (a, b) =>
+                  new Date(b.unlockedAt || 0) - new Date(a.unlockedAt || 0)
+              )
+              .slice(0, 5);
+
       setRecentAchievements(recent);
       setLoading(false);
     }
-  }, [gamificationLoading, allAchievements, userAchievements, recentUnlocks, userStats]);
+  }, [
+    gamificationLoading,
+    allAchievements,
+    userAchievements,
+    recentUnlocks,
+    userStats,
+  ]);
 
   // Default achievement definitions based on user stats
   const getDefaultAchievementDefinitions = (stats) => {
     const s = stats || {};
     return [
+      // Quiz Completion Achievements
       {
         id: 1,
         name: "First Steps",
@@ -342,6 +353,17 @@ export default function AchievementDashboard() {
       },
       {
         id: 2,
+        name: "Quiz Novice",
+        description: "Complete 5 quizzes",
+        icon: "📝",
+        type: "quiz_completion",
+        rarity: "common",
+        points: 15,
+        isUnlocked: (s.totalQuizzesTaken || 0) >= 5,
+        progress: Math.min(((s.totalQuizzesTaken || 0) / 5) * 100, 100),
+      },
+      {
+        id: 3,
         name: "Quiz Enthusiast",
         description: "Complete 10 quizzes",
         icon: "📚",
@@ -352,46 +374,357 @@ export default function AchievementDashboard() {
         progress: Math.min(((s.totalQuizzesTaken || 0) / 10) * 100, 100),
       },
       {
-        id: 3,
+        id: 4,
+        name: "Quiz Master",
+        description: "Complete 25 quizzes",
+        icon: "🎓",
+        type: "quiz_completion",
+        rarity: "epic",
+        points: 50,
+        isUnlocked: (s.totalQuizzesTaken || 0) >= 25,
+        progress: Math.min(((s.totalQuizzesTaken || 0) / 25) * 100, 100),
+      },
+      {
+        id: 5,
+        name: "Quiz Legend",
+        description: "Complete 50 quizzes",
+        icon: "👑",
+        type: "quiz_completion",
+        rarity: "legendary",
+        points: 100,
+        isUnlocked: (s.totalQuizzesTaken || 0) >= 50,
+        progress: Math.min(((s.totalQuizzesTaken || 0) / 50) * 100, 100),
+      },
+
+      // Score Achievements
+      {
+        id: 6,
         name: "Perfect Score",
         description: "Get 100% on any quiz",
         icon: "🏆",
         type: "score_achievement",
         rarity: "epic",
         points: 50,
-        isUnlocked: (s.averageScore || 0) >= 100,
+        isUnlocked:
+          (s.averageScore || 0) === 100 || (s.highestScore || 0) === 100,
       },
       {
-        id: 4,
-        name: "Speed Demon",
-        description: "Answer 5 questions in under 10 seconds each",
-        icon: "⚡",
-        type: "speed",
+        id: 7,
+        name: "High Achiever",
+        description: "Maintain 90% average score",
+        icon: "⭐",
+        type: "score_achievement",
         rarity: "rare",
-        points: 30,
-        isUnlocked: false,
+        points: 40,
+        isUnlocked: (s.averageScore || 0) >= 90,
+        progress: Math.min(((s.averageScore || 0) / 90) * 100, 100),
       },
       {
-        id: 5,
-        name: "Streak Master",
+        id: 8,
+        name: "Consistent Excellence",
+        description: "Maintain 80% average score",
+        icon: "💎",
+        type: "score_achievement",
+        rarity: "common",
+        points: 20,
+        isUnlocked: (s.averageScore || 0) >= 80,
+        progress: Math.min(((s.averageScore || 0) / 80) * 100, 100),
+      },
+      {
+        id: 9,
+        name: "Flawless Victory",
+        description: "Get 3 perfect scores in a row",
+        icon: "🔥",
+        type: "score_achievement",
+        rarity: "legendary",
+        points: 150,
+        isUnlocked: false, // Requires streak tracking
+      },
+
+      // Streak Achievements
+      {
+        id: 10,
+        name: "Getting Started",
+        description: "Maintain a 3-day learning streak",
+        icon: "🌟",
+        type: "streak",
+        rarity: "common",
+        points: 15,
+        isUnlocked: (s.longestStreak || s.currentStreak || 0) >= 3,
+        progress: Math.min(((s.currentStreak || 0) / 3) * 100, 100),
+      },
+      {
+        id: 11,
+        name: "Week Warrior",
         description: "Maintain a 7-day learning streak",
         icon: "🔥",
         type: "streak",
-        rarity: "epic",
+        rarity: "rare",
         points: 40,
-        isUnlocked: (s.longestStreak || 0) >= 7,
+        isUnlocked: (s.longestStreak || s.currentStreak || 0) >= 7,
         progress: Math.min(((s.currentStreak || 0) / 7) * 100, 100),
       },
       {
-        id: 6,
+        id: 12,
+        name: "Unstoppable",
+        description: "Maintain a 14-day learning streak",
+        icon: "🚀",
+        type: "streak",
+        rarity: "epic",
+        points: 75,
+        isUnlocked: (s.longestStreak || s.currentStreak || 0) >= 14,
+        progress: Math.min(((s.currentStreak || 0) / 14) * 100, 100),
+      },
+      {
+        id: 13,
+        name: "Dedication Master",
+        description: "Maintain a 30-day learning streak",
+        icon: "💪",
+        type: "streak",
+        rarity: "legendary",
+        points: 200,
+        isUnlocked: (s.longestStreak || s.currentStreak || 0) >= 30,
+        progress: Math.min(((s.currentStreak || 0) / 30) * 100, 100),
+      },
+
+      // Points Achievements
+      {
+        id: 14,
+        name: "Point Collector",
+        description: "Earn 100 total points",
+        icon: "💰",
+        type: "special",
+        rarity: "common",
+        points: 10,
+        isUnlocked: (s.totalPoints || s.experience || 0) >= 100,
+        progress: Math.min(
+          ((s.totalPoints || s.experience || 0) / 100) * 100,
+          100
+        ),
+      },
+      {
+        id: 15,
+        name: "Rising Star",
+        description: "Earn 500 total points",
+        icon: "🌠",
+        type: "special",
+        rarity: "rare",
+        points: 30,
+        isUnlocked: (s.totalPoints || s.experience || 0) >= 500,
+        progress: Math.min(
+          ((s.totalPoints || s.experience || 0) / 500) * 100,
+          100
+        ),
+      },
+      {
+        id: 16,
         name: "Knowledge Seeker",
         description: "Earn 1000 total points",
         icon: "⭐",
         type: "special",
-        rarity: "legendary",
+        rarity: "epic",
         points: 100,
-        isUnlocked: (s.totalPoints || 0) >= 1000,
-        progress: Math.min(((s.totalPoints || 0) / 1000) * 100, 100),
+        isUnlocked: (s.totalPoints || s.experience || 0) >= 1000,
+        progress: Math.min(
+          ((s.totalPoints || s.experience || 0) / 1000) * 100,
+          100
+        ),
+      },
+      {
+        id: 17,
+        name: "XP Millionaire",
+        description: "Earn 5000 total points",
+        icon: "💎",
+        type: "special",
+        rarity: "legendary",
+        points: 500,
+        isUnlocked: (s.totalPoints || s.experience || 0) >= 5000,
+        progress: Math.min(
+          ((s.totalPoints || s.experience || 0) / 5000) * 100,
+          100
+        ),
+      },
+
+      // Speed Achievements
+      {
+        id: 18,
+        name: "Quick Thinker",
+        description: "Complete a quiz in under 60 seconds",
+        icon: "⚡",
+        type: "speed",
+        rarity: "rare",
+        points: 30,
+        isUnlocked: false, // Requires time tracking
+      },
+      {
+        id: 19,
+        name: "Speed Demon",
+        description: "Answer 5 questions in under 10 seconds each",
+        icon: "⏱️",
+        type: "speed",
+        rarity: "epic",
+        points: 50,
+        isUnlocked: false,
+      },
+      {
+        id: 20,
+        name: "Lightning Fast",
+        description: "Complete 10 quizzes with perfect speed scores",
+        icon: "⚡",
+        type: "speed",
+        rarity: "legendary",
+        points: 150,
+        isUnlocked: false,
+      },
+
+      // Level Achievements
+      {
+        id: 21,
+        name: "Level Up!",
+        description: "Reach Level 5",
+        icon: "🆙",
+        type: "special",
+        rarity: "common",
+        points: 25,
+        isUnlocked: (s.level || 0) >= 5,
+        progress: Math.min(((s.level || 0) / 5) * 100, 100),
+      },
+      {
+        id: 22,
+        name: "Rising Champion",
+        description: "Reach Level 10",
+        icon: "🏅",
+        type: "special",
+        rarity: "rare",
+        points: 50,
+        isUnlocked: (s.level || 0) >= 10,
+        progress: Math.min(((s.level || 0) / 10) * 100, 100),
+      },
+      {
+        id: 23,
+        name: "Elite Scholar",
+        description: "Reach Level 20",
+        icon: "🎖️",
+        type: "special",
+        rarity: "epic",
+        points: 100,
+        isUnlocked: (s.level || 0) >= 20,
+        progress: Math.min(((s.level || 0) / 20) * 100, 100),
+      },
+      {
+        id: 24,
+        name: "Grand Master",
+        description: "Reach Level 50",
+        icon: "👑",
+        type: "special",
+        rarity: "legendary",
+        points: 300,
+        isUnlocked: (s.level || 0) >= 50,
+        progress: Math.min(((s.level || 0) / 50) * 100, 100),
+      },
+
+      // Category Master Achievements
+      {
+        id: 25,
+        name: "Math Wizard",
+        description: "Excel in Mathematics category",
+        icon: "🔢",
+        type: "category_master",
+        rarity: "rare",
+        points: 35,
+        isUnlocked: false, // Requires category tracking
+      },
+      {
+        id: 26,
+        name: "Science Guru",
+        description: "Excel in Science category",
+        icon: "🔬",
+        type: "category_master",
+        rarity: "rare",
+        points: 35,
+        isUnlocked: false,
+      },
+      {
+        id: 27,
+        name: "History Buff",
+        description: "Excel in History category",
+        icon: "📜",
+        type: "category_master",
+        rarity: "rare",
+        points: 35,
+        isUnlocked: false,
+      },
+      {
+        id: 28,
+        name: "Language Expert",
+        description: "Excel in Language category",
+        icon: "📖",
+        type: "category_master",
+        rarity: "rare",
+        points: 35,
+        isUnlocked: false,
+      },
+
+      // Special Achievements
+      {
+        id: 29,
+        name: "Early Bird",
+        description: "Complete a quiz before 8 AM",
+        icon: "🌅",
+        type: "special",
+        rarity: "common",
+        points: 15,
+        isUnlocked: false, // Requires time tracking
+      },
+      {
+        id: 30,
+        name: "Night Owl",
+        description: "Complete a quiz after 10 PM",
+        icon: "🦉",
+        type: "special",
+        rarity: "common",
+        points: 15,
+        isUnlocked: false,
+      },
+      {
+        id: 31,
+        name: "Weekend Warrior",
+        description: "Complete 10 quizzes on weekends",
+        icon: "🎮",
+        type: "special",
+        rarity: "rare",
+        points: 40,
+        isUnlocked: false,
+      },
+      {
+        id: 32,
+        name: "Social Learner",
+        description: "Participate in 5 live quiz sessions",
+        icon: "👥",
+        type: "special",
+        rarity: "epic",
+        points: 60,
+        isUnlocked: false,
+      },
+      {
+        id: 33,
+        name: "Comeback Kid",
+        description: "Return after 30 days of inactivity",
+        icon: "🎯",
+        type: "special",
+        rarity: "rare",
+        points: 25,
+        isUnlocked: false,
+      },
+      {
+        id: 34,
+        name: "Ultimate Champion",
+        description: "Unlock all other achievements",
+        icon: "🏆",
+        type: "special",
+        rarity: "legendary",
+        points: 1000,
+        isUnlocked: false,
       },
     ];
   };
@@ -437,7 +770,11 @@ export default function AchievementDashboard() {
               whileTap={{ scale: 0.9 }}
               title="Refresh real-time stats"
             >
-              <RefreshCw className={`w-6 h-6 text-violet-600 ${gamificationLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`w-6 h-6 text-violet-600 ${
+                  gamificationLoading ? "animate-spin" : ""
+                }`}
+              />
             </motion.button>
           </div>
           <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-slate-900 via-violet-700 to-fuchsia-600 bg-clip-text text-transparent drop-shadow-lg mb-4">
@@ -451,14 +788,16 @@ export default function AchievementDashboard() {
             and unlock rewards ✨
           </p>
           {/* Real-time indicator */}
-          <motion.div 
+          <motion.div
             className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100/80 rounded-full border border-green-200"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-sm font-medium text-green-700">Real-time updates active</span>
+            <span className="text-sm font-medium text-green-700">
+              Real-time updates active
+            </span>
           </motion.div>
         </motion.div>
 
@@ -614,28 +953,42 @@ export default function AchievementDashboard() {
                       Recent Achievements
                     </h3>
                     <div className="space-y-3">
-                      {recentAchievements.map((achievement) => (
-                        <div
-                          key={achievement._id}
-                          className="flex items-center gap-4 p-4 bg-gradient-to-r from-yellow-50/80 to-orange-50/80 backdrop-blur-md rounded-xl border-2 border-yellow-200/50 shadow-md"
-                        >
-                          <span className="text-3xl">🏆</span>
-                          <div className="flex-1">
-                            <h4 className="font-black text-slate-900">
-                              {achievement.achievement.name}
-                            </h4>
-                            <p className="text-sm font-semibold text-slate-600">
-                              Unlocked{" "}
-                              {new Date(
-                                achievement.unlockedAt
-                              ).toLocaleDateString()}
-                            </p>
+                      {recentAchievements.map((achievement) => {
+                        // Handle both nested and flat structure
+                        const achData = achievement.achievement || achievement;
+                        const achId =
+                          achievement._id ||
+                          achievement.id ||
+                          achData._id ||
+                          achData.id;
+
+                        return (
+                          <div
+                            key={achId}
+                            className="flex items-center gap-4 p-4 bg-gradient-to-r from-yellow-50/80 to-orange-50/80 backdrop-blur-md rounded-xl border-2 border-yellow-200/50 shadow-md"
+                          >
+                            <span className="text-3xl">
+                              {achData.icon || "🏆"}
+                            </span>
+                            <div className="flex-1">
+                              <h4 className="font-black text-slate-900">
+                                {achData.name || "Achievement"}
+                              </h4>
+                              <p className="text-sm font-semibold text-slate-600">
+                                Unlocked{" "}
+                                {achievement.unlockedAt
+                                  ? new Date(
+                                      achievement.unlockedAt
+                                    ).toLocaleDateString()
+                                  : "Recently"}
+                              </p>
+                            </div>
+                            <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 font-black">
+                              +{achData.points || 10} XP
+                            </Badge>
                           </div>
-                          <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 font-black">
-                            +{achievement.achievement.points} XP
-                          </Badge>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </motion.div>
