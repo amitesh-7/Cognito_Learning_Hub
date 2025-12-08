@@ -26,8 +26,40 @@ class FeedManager {
     try {
       let redisConfig;
 
-      // Check if Upstash Redis is configured
-      if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
+      // Check if REDIS_URL is configured (Redis Cloud or remote Redis)
+      if (
+        process.env.REDIS_URL &&
+        process.env.REDIS_URL !== "redis://localhost:6379"
+      ) {
+        logger.info("Connecting to Redis Cloud...");
+
+        const url = new URL(process.env.REDIS_URL);
+
+        redisConfig = {
+          host: url.hostname,
+          port: parseInt(url.port) || 6379,
+          password: url.password || undefined,
+          username: url.username !== "default" ? url.username : undefined,
+          tls:
+            url.protocol === "rediss:"
+              ? {
+                  rejectUnauthorized: false,
+                }
+              : undefined,
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
+          retryStrategy(times) {
+            const delay = Math.min(times * 50, 2000);
+            return delay;
+          },
+        };
+
+        this.redis = new Redis(redisConfig);
+        this.subscriber = new Redis(redisConfig);
+      } else if (
+        process.env.UPSTASH_REDIS_URL &&
+        process.env.UPSTASH_REDIS_TOKEN
+      ) {
         logger.info("Connecting to Upstash Redis (cloud)...");
 
         const url = new URL(process.env.UPSTASH_REDIS_URL);

@@ -3,38 +3,70 @@
  * Redis-based notification system with batching
  */
 
-const Redis = require('ioredis');
-const { nanoid } = require('nanoid');
-const createLogger = require('../../shared/utils/logger');
+const Redis = require("ioredis");
+const { nanoid } = require("nanoid");
+const createLogger = require("../../shared/utils/logger");
 
-const logger = createLogger('notification-manager');
+const logger = createLogger("notification-manager");
 
 class NotificationManager {
   constructor() {
     this.redis = null;
     this.connected = false;
-    
-    this.keyPrefix = process.env.REDIS_KEY_PREFIX || 'social:';
-    this.notificationCacheTTL = parseInt(process.env.NOTIFICATION_CACHE_TTL) || 600; // 10 minutes
+
+    this.keyPrefix = process.env.REDIS_KEY_PREFIX || "social:";
+    this.notificationCacheTTL =
+      parseInt(process.env.NOTIFICATION_CACHE_TTL) || 600; // 10 minutes
     this.batchSize = parseInt(process.env.NOTIFICATION_BATCH_SIZE) || 50;
   }
 
   async connect() {
     try {
       let redisConfig;
-      
-      // Check if Upstash Redis is configured
-      if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
-        logger.info('Connecting to Upstash Redis (cloud)...');
-        
+
+      // Check if REDIS_URL is configured (Redis Cloud or remote Redis)
+      if (
+        process.env.REDIS_URL &&
+        process.env.REDIS_URL !== "redis://localhost:6379"
+      ) {
+        logger.info("Connecting to Redis Cloud...");
+
+        const url = new URL(process.env.REDIS_URL);
+
+        redisConfig = {
+          host: url.hostname,
+          port: parseInt(url.port) || 6379,
+          password: url.password || undefined,
+          username: url.username !== "default" ? url.username : undefined,
+          tls:
+            url.protocol === "rediss:"
+              ? {
+                  rejectUnauthorized: false,
+                }
+              : undefined,
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
+          retryStrategy(times) {
+            const delay = Math.min(times * 50, 2000);
+            return delay;
+          },
+        };
+
+        this.redis = new Redis(redisConfig);
+      } else if (
+        process.env.UPSTASH_REDIS_URL &&
+        process.env.UPSTASH_REDIS_TOKEN
+      ) {
+        logger.info("Connecting to Upstash Redis (cloud)...");
+
         const url = new URL(process.env.UPSTASH_REDIS_URL);
-        
+
         redisConfig = {
           host: url.hostname,
           port: parseInt(url.port) || 6379,
           password: process.env.UPSTASH_REDIS_TOKEN,
           tls: {
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
           },
           maxRetriesPerRequest: null,
           enableReadyCheck: false,
@@ -43,14 +75,14 @@ class NotificationManager {
             return delay;
           },
         };
-        
+
         this.redis = new Redis(redisConfig);
       } else {
         // Fallback to local Redis
-        logger.info('Connecting to local Redis...');
-        
-        const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-        
+        logger.info("Connecting to local Redis...");
+
+        const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
+
         this.redis = new Redis(redisUrl, {
           maxRetriesPerRequest: null,
           enableReadyCheck: false,
@@ -61,20 +93,20 @@ class NotificationManager {
         });
       }
 
-      this.redis.on('connect', () => {
+      this.redis.on("connect", () => {
         this.connected = true;
-        logger.info('Redis connected');
+        logger.info("Redis connected");
       });
 
-      this.redis.on('error', (err) => {
-        logger.error('Redis error:', err);
+      this.redis.on("error", (err) => {
+        logger.error("Redis error:", err);
         this.connected = false;
       });
 
       await this.redis.ping();
       return true;
     } catch (error) {
-      logger.error('Failed to connect to Redis:', error);
+      logger.error("Failed to connect to Redis:", error);
       throw error;
     }
   }
@@ -82,7 +114,7 @@ class NotificationManager {
   async disconnect() {
     if (this.redis) await this.redis.quit();
     this.connected = false;
-    logger.info('Redis disconnected');
+    logger.info("Redis disconnected");
   }
 
   isConnected() {
@@ -116,7 +148,7 @@ class NotificationManager {
   async createNotification(notificationData) {
     try {
       const notificationId = nanoid(12);
-      
+
       const notification = {
         notificationId,
         userId: notificationData.userId,
@@ -124,39 +156,45 @@ class NotificationManager {
         actorId: notificationData.actorId || null,
         actorName: notificationData.actorName || null,
         actorPicture: notificationData.actorPicture || null,
-        title: notificationData.title || '',
+        title: notificationData.title || "",
         message: notificationData.message,
         relatedPostId: notificationData.relatedPostId || null,
         relatedCommentId: notificationData.relatedCommentId || null,
         relatedQuizId: notificationData.relatedQuizId || null,
         actionUrl: notificationData.actionUrl || null,
         isRead: false,
-        priority: notificationData.priority || 'normal',
+        priority: notificationData.priority || "normal",
         createdAt: new Date().toISOString(),
       };
 
       // Store in Redis list (most recent first)
       const listKey = this.getNotificationListKey(notification.userId);
       await this.redis.lpush(listKey, JSON.stringify(notification));
-      
+
       // Keep only last 100 notifications in Redis
       await this.redis.ltrim(listKey, 0, 99);
-      
+
       // Set TTL
       await this.redis.expire(listKey, this.notificationCacheTTL);
-      
+
       // Cache individual notification
       const notificationKey = this.getNotificationKey(notificationId);
-      await this.redis.setex(notificationKey, this.notificationCacheTTL, JSON.stringify(notification));
-      
+      await this.redis.setex(
+        notificationKey,
+        this.notificationCacheTTL,
+        JSON.stringify(notification)
+      );
+
       // Increment unread count
       await this.incrementUnreadCount(notification.userId);
-      
-      logger.debug(`Created notification ${notificationId} for user ${notification.userId}`);
-      
+
+      logger.debug(
+        `Created notification ${notificationId} for user ${notification.userId}`
+      );
+
       return notification;
     } catch (error) {
-      logger.error('Error creating notification:', error);
+      logger.error("Error creating notification:", error);
       throw error;
     }
   }
@@ -169,14 +207,14 @@ class NotificationManager {
       const key = this.getNotificationListKey(userId);
       const start = (page - 1) * limit;
       const end = start + limit - 1;
-      
+
       const items = await this.redis.lrange(key, start, end);
-      
-      const notifications = items.map(item => JSON.parse(item));
-      
+
+      const notifications = items.map((item) => JSON.parse(item));
+
       return notifications;
     } catch (error) {
-      logger.error('Error getting notifications:', error);
+      logger.error("Error getting notifications:", error);
       return [];
     }
   }
@@ -190,7 +228,7 @@ class NotificationManager {
       const count = await this.redis.get(key);
       return count ? parseInt(count) : 0;
     } catch (error) {
-      logger.error('Error getting unread count:', error);
+      logger.error("Error getting unread count:", error);
       return 0;
     }
   }
@@ -205,7 +243,7 @@ class NotificationManager {
       await this.redis.expire(key, this.notificationCacheTTL);
       return true;
     } catch (error) {
-      logger.error('Error incrementing unread count:', error);
+      logger.error("Error incrementing unread count:", error);
       return false;
     }
   }
@@ -217,23 +255,27 @@ class NotificationManager {
     try {
       const key = this.getNotificationKey(notificationId);
       const data = await this.redis.get(key);
-      
+
       if (!data) return false;
-      
+
       const notification = JSON.parse(data);
-      
+
       if (!notification.isRead) {
         notification.isRead = true;
-        await this.redis.setex(key, this.notificationCacheTTL, JSON.stringify(notification));
-        
+        await this.redis.setex(
+          key,
+          this.notificationCacheTTL,
+          JSON.stringify(notification)
+        );
+
         // Decrement unread count
         const countKey = this.getUnreadCountKey(notification.userId);
         await this.redis.decr(countKey);
       }
-      
+
       return true;
     } catch (error) {
-      logger.error('Error marking as read:', error);
+      logger.error("Error marking as read:", error);
       return false;
     }
   }
@@ -248,7 +290,7 @@ class NotificationManager {
       await this.redis.expire(key, this.notificationCacheTTL);
       return true;
     } catch (error) {
-      logger.error('Error marking all as read:', error);
+      logger.error("Error marking all as read:", error);
       return false;
     }
   }
@@ -262,7 +304,7 @@ class NotificationManager {
       await this.redis.del(key);
       return true;
     } catch (error) {
-      logger.error('Error deleting notification:', error);
+      logger.error("Error deleting notification:", error);
       return false;
     }
   }
@@ -278,36 +320,40 @@ class NotificationManager {
   async batchCreateNotifications(notifications) {
     try {
       const pipeline = this.redis.pipeline();
-      
+
       for (const notificationData of notifications) {
         const notificationId = nanoid(12);
-        
+
         const notification = {
           notificationId,
           ...notificationData,
           isRead: false,
           createdAt: new Date().toISOString(),
         };
-        
+
         const listKey = this.getNotificationListKey(notification.userId);
         pipeline.lpush(listKey, JSON.stringify(notification));
         pipeline.ltrim(listKey, 0, 99);
         pipeline.expire(listKey, this.notificationCacheTTL);
-        
+
         const notificationKey = this.getNotificationKey(notificationId);
-        pipeline.setex(notificationKey, this.notificationCacheTTL, JSON.stringify(notification));
-        
+        pipeline.setex(
+          notificationKey,
+          this.notificationCacheTTL,
+          JSON.stringify(notification)
+        );
+
         const countKey = this.getUnreadCountKey(notification.userId);
         pipeline.incr(countKey);
         pipeline.expire(countKey, this.notificationCacheTTL);
       }
-      
+
       await pipeline.exec();
-      
+
       logger.info(`Batch created ${notifications.length} notifications`);
       return true;
     } catch (error) {
-      logger.error('Error batch creating notifications:', error);
+      logger.error("Error batch creating notifications:", error);
       return false;
     }
   }
@@ -322,24 +368,31 @@ class NotificationManager {
   async notifyLike(userId, actorId, actorName, actorPicture, postId) {
     return this.createNotification({
       userId,
-      type: 'like',
+      type: "like",
       actorId,
       actorName,
       actorPicture,
       message: `${actorName} liked your post`,
       relatedPostId: postId,
       actionUrl: `/posts/${postId}`,
-      priority: 'normal',
+      priority: "normal",
     });
   }
 
   /**
    * Create comment notification
    */
-  async notifyComment(userId, actorId, actorName, actorPicture, postId, commentId) {
+  async notifyComment(
+    userId,
+    actorId,
+    actorName,
+    actorPicture,
+    postId,
+    commentId
+  ) {
     return this.createNotification({
       userId,
-      type: 'comment',
+      type: "comment",
       actorId,
       actorName,
       actorPicture,
@@ -347,7 +400,7 @@ class NotificationManager {
       relatedPostId: postId,
       relatedCommentId: commentId,
       actionUrl: `/posts/${postId}#comment-${commentId}`,
-      priority: 'high',
+      priority: "high",
     });
   }
 
@@ -357,13 +410,13 @@ class NotificationManager {
   async notifyFollow(userId, actorId, actorName, actorPicture) {
     return this.createNotification({
       userId,
-      type: 'follow',
+      type: "follow",
       actorId,
       actorName,
       actorPicture,
       message: `${actorName} started following you`,
       actionUrl: `/profile/${actorId}`,
-      priority: 'high',
+      priority: "high",
     });
   }
 
@@ -373,14 +426,14 @@ class NotificationManager {
   async notifyMention(userId, actorId, actorName, actorPicture, postId) {
     return this.createNotification({
       userId,
-      type: 'mention',
+      type: "mention",
       actorId,
       actorName,
       actorPicture,
       message: `${actorName} mentioned you in a post`,
       relatedPostId: postId,
       actionUrl: `/posts/${postId}`,
-      priority: 'high',
+      priority: "high",
     });
   }
 
@@ -390,11 +443,11 @@ class NotificationManager {
   async notifyAchievement(userId, title, message, achievementId) {
     return this.createNotification({
       userId,
-      type: 'achievement',
+      type: "achievement",
       title,
       message,
       actionUrl: `/achievements/${achievementId}`,
-      priority: 'high',
+      priority: "high",
     });
   }
 }

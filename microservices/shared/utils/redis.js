@@ -20,19 +20,21 @@ class RedisClient {
     try {
       let redisConfig;
 
-      // Priority 1: Redis Cloud (Redis Labs) - RECOMMENDED FREE TIER
-      if (process.env.REDIS_CLOUD_URL) {
-        this.logger.info(
-          "Attempting to connect to Redis Cloud (Redis Labs)..."
-        );
+      // Priority 1: REDIS_URL (Standard Redis Cloud/Remote connection)
+      if (
+        process.env.REDIS_URL &&
+        process.env.REDIS_URL !== "redis://localhost:6379"
+      ) {
+        this.logger.info("Attempting to connect to Redis Cloud...");
 
         try {
-          const url = new URL(process.env.REDIS_CLOUD_URL);
+          const url = new URL(process.env.REDIS_URL);
 
           redisConfig = {
             host: url.hostname,
             port: parseInt(url.port) || 6379,
-            password: url.password || process.env.REDIS_CLOUD_PASSWORD,
+            password: url.password || undefined,
+            username: url.username !== "default" ? url.username : undefined,
             tls:
               url.protocol === "rediss:"
                 ? {
@@ -58,7 +60,7 @@ class RedisClient {
 
           this.client = new Redis(redisConfig);
         } catch (urlError) {
-          this.logger.warn("Invalid Redis Cloud URL, trying next option");
+          this.logger.warn("Invalid Redis URL, trying next option");
         }
       }
 

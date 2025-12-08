@@ -1,4 +1,4 @@
-const Redis = require('ioredis');
+const Redis = require("ioredis");
 
 let redisClient = null;
 
@@ -8,64 +8,95 @@ let redisClient = null;
  */
 function initializeRedis() {
   return new Promise((resolve, reject) => {
-    // Check if Upstash Redis is configured (recommended for production)
-    if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
-      console.log('🔄 Connecting to Upstash Redis (cloud)...');
-      
+    // Check if REDIS_URL is configured (Redis Cloud or remote Redis)
+    if (
+      process.env.REDIS_URL &&
+      process.env.REDIS_URL !== "redis://localhost:6379"
+    ) {
+      console.log("🔄 Connecting to Redis Cloud...");
+
+      // Parse Redis URL
+      const url = new URL(process.env.REDIS_URL);
+
+      redisClient = new Redis({
+        host: url.hostname,
+        port: parseInt(url.port) || 6379,
+        password: url.password || undefined,
+        username: url.username !== "default" ? url.username : undefined,
+        tls:
+          url.protocol === "rediss:"
+            ? {
+                rejectUnauthorized: false,
+              }
+            : undefined,
+        retryStrategy: (times) => {
+          const delay = Math.min(times * 50, 2000);
+          return delay;
+        },
+        maxRetriesPerRequest: null, // Required for Bull queue compatibility
+        enableReadyCheck: false, // Required for Bull queue compatibility
+        lazyConnect: false,
+      });
+    } else if (
+      process.env.UPSTASH_REDIS_URL &&
+      process.env.UPSTASH_REDIS_TOKEN
+    ) {
+      console.log("🔄 Connecting to Upstash Redis (cloud)...");
+
       // Parse Upstash URL
       const url = new URL(process.env.UPSTASH_REDIS_URL);
-      
+
       redisClient = new Redis({
         host: url.hostname,
         port: parseInt(url.port) || 6379,
         password: process.env.UPSTASH_REDIS_TOKEN,
         tls: {
-          rejectUnauthorized: false
+          rejectUnauthorized: false,
         },
         retryStrategy: (times) => {
           const delay = Math.min(times * 50, 2000);
           return delay;
         },
-        maxRetriesPerRequest: null,  // Required for Bull queue compatibility
-        enableReadyCheck: false,      // Required for Bull queue compatibility
+        maxRetriesPerRequest: null, // Required for Bull queue compatibility
+        enableReadyCheck: false, // Required for Bull queue compatibility
         lazyConnect: false,
       });
     } else {
       // Fallback to local Redis
-      console.log('🔄 Connecting to local Redis...');
-      
+      console.log("🔄 Connecting to local Redis...");
+
       redisClient = new Redis({
-        host: process.env.REDIS_HOST || 'localhost',
+        host: process.env.REDIS_HOST || "localhost",
         port: process.env.REDIS_PORT || 6379,
         password: process.env.REDIS_PASSWORD || undefined,
         retryStrategy: (times) => {
           const delay = Math.min(times * 50, 2000);
           return delay;
         },
-        maxRetriesPerRequest: null,  // Required for Bull queue compatibility
-        enableReadyCheck: false,      // Required for Bull queue compatibility
+        maxRetriesPerRequest: null, // Required for Bull queue compatibility
+        enableReadyCheck: false, // Required for Bull queue compatibility
         lazyConnect: false,
       });
     }
 
-    redisClient.on('connect', () => {
-      console.log('Redis client connected');
+    redisClient.on("connect", () => {
+      console.log("Redis client connected");
     });
 
-    redisClient.on('ready', () => {
-      console.log('Redis client ready');
+    redisClient.on("ready", () => {
+      console.log("Redis client ready");
       resolve();
     });
 
-    redisClient.on('error', (err) => {
-      console.error('Redis Client Error:', err);
-      if (!redisClient.status || redisClient.status === 'end') {
+    redisClient.on("error", (err) => {
+      console.error("Redis Client Error:", err);
+      if (!redisClient.status || redisClient.status === "end") {
         reject(err);
       }
     });
 
-    redisClient.on('close', () => {
-      console.log('Redis connection closed');
+    redisClient.on("close", () => {
+      console.log("Redis connection closed");
     });
   });
 }
@@ -75,7 +106,9 @@ function initializeRedis() {
  */
 function getRedisClient() {
   if (!redisClient) {
-    throw new Error('Redis client not initialized. Call initializeRedis() first.');
+    throw new Error(
+      "Redis client not initialized. Call initializeRedis() first."
+    );
   }
   return redisClient;
 }
@@ -86,21 +119,22 @@ function getRedisClient() {
 const REDIS_KEYS = {
   // User stats cache: userstats:{userId}
   USER_STATS: (userId) => `userstats:${userId}`,
-  
+
   // Leaderboards (Sorted Sets)
-  LEADERBOARD_GLOBAL: 'leaderboard:global',
+  LEADERBOARD_GLOBAL: "leaderboard:global",
   LEADERBOARD_CATEGORY: (category) => `leaderboard:category:${category}`,
-  LEADERBOARD_WEEKLY: 'leaderboard:weekly',
-  LEADERBOARD_MONTHLY: 'leaderboard:monthly',
-  
+  LEADERBOARD_WEEKLY: "leaderboard:weekly",
+  LEADERBOARD_MONTHLY: "leaderboard:monthly",
+
   // Achievement tracking
   USER_ACHIEVEMENTS: (userId) => `achievements:${userId}`,
-  ACHIEVEMENT_PROGRESS: (userId, achievementId) => `progress:${userId}:${achievementId}`,
-  
+  ACHIEVEMENT_PROGRESS: (userId, achievementId) =>
+    `progress:${userId}:${achievementId}`,
+
   // Streak tracking
   USER_STREAK: (userId) => `streak:${userId}`,
   LAST_ACTIVITY: (userId) => `lastactivity:${userId}`,
-  
+
   // Stats aggregation locks
   STATS_LOCK: (userId) => `lock:stats:${userId}`,
 };
@@ -113,22 +147,22 @@ async function incrementUserStats(userId, updates) {
   const pipeline = redisClient.pipeline();
 
   if (updates.totalQuizzesTaken) {
-    pipeline.hincrby(key, 'totalQuizzesTaken', updates.totalQuizzesTaken);
+    pipeline.hincrby(key, "totalQuizzesTaken", updates.totalQuizzesTaken);
   }
   if (updates.totalPoints) {
-    pipeline.hincrbyfloat(key, 'totalPoints', updates.totalPoints);
+    pipeline.hincrbyfloat(key, "totalPoints", updates.totalPoints);
   }
   if (updates.totalTimeSpent) {
-    pipeline.hincrby(key, 'totalTimeSpent', updates.totalTimeSpent);
+    pipeline.hincrby(key, "totalTimeSpent", updates.totalTimeSpent);
   }
   if (updates.currentStreak !== undefined) {
-    pipeline.hset(key, 'currentStreak', updates.currentStreak);
+    pipeline.hset(key, "currentStreak", updates.currentStreak);
   }
   if (updates.longestStreak !== undefined) {
-    pipeline.hset(key, 'longestStreak', updates.longestStreak);
+    pipeline.hset(key, "longestStreak", updates.longestStreak);
   }
   if (updates.experience) {
-    pipeline.hincrbyfloat(key, 'experience', updates.experience);
+    pipeline.hincrbyfloat(key, "experience", updates.experience);
   }
 
   // Set expiry to 1 hour (will be synced to DB before expiry)
@@ -143,7 +177,7 @@ async function incrementUserStats(userId, updates) {
 async function getUserStatsFromCache(userId) {
   const key = REDIS_KEYS.USER_STATS(userId);
   const stats = await redisClient.hgetall(key);
-  
+
   if (!stats || Object.keys(stats).length === 0) {
     return null;
   }
@@ -194,17 +228,22 @@ async function updateLeaderboard(leaderboardKey, userId, score) {
  * Get leaderboard rankings
  */
 async function getLeaderboard(leaderboardKey, start = 0, end = 99) {
-  const results = await redisClient.zrevrange(leaderboardKey, start, end, 'WITHSCORES');
-  
+  const results = await redisClient.zrevrange(
+    leaderboardKey,
+    start,
+    end,
+    "WITHSCORES"
+  );
+
   const leaderboard = [];
   for (let i = 0; i < results.length; i += 2) {
     leaderboard.push({
       userId: results[i],
       score: parseFloat(results[i + 1]),
-      rank: start + (i / 2) + 1,
+      rank: start + i / 2 + 1,
     });
   }
-  
+
   return leaderboard;
 }
 
@@ -214,7 +253,7 @@ async function getLeaderboard(leaderboardKey, start = 0, end = 99) {
 async function getUserRank(leaderboardKey, userId) {
   const rank = await redisClient.zrevrank(leaderboardKey, userId);
   const score = await redisClient.zscore(leaderboardKey, userId);
-  
+
   return {
     rank: rank !== null ? rank + 1 : null,
     score: score !== null ? parseFloat(score) : null,

@@ -39,8 +39,100 @@ class SessionManager {
     try {
       let redisConfig;
 
+      // Check if REDIS_URL is configured (Redis Cloud or remote Redis)
+      if (
+        process.env.REDIS_URL &&
+        process.env.REDIS_URL !== "redis://localhost:6379"
+      ) {
+        logger.info("Attempting to connect to Redis Cloud...");
+
+        try {
+          const url = new URL(process.env.REDIS_URL);
+
+          redisConfig = {
+            host: url.hostname,
+            port: parseInt(url.port) || 6379,
+            password: url.password || undefined,
+            username: url.username !== "default" ? url.username : undefined,
+            tls:
+              url.protocol === "rediss:"
+                ? {
+                    rejectUnauthorized: false,
+                  }
+                : undefined,
+            maxRetriesPerRequest: 3,
+            enableReadyCheck: false,
+            connectTimeout: 10000,
+            retryStrategy(times) {
+              if (times > 3) {
+                return null;
+              }
+              const delay = Math.min(times * 100, 2000);
+              return delay;
+            },
+            lazyConnect: true,
+          };
+
+          // Main Redis client
+          this.redis = new Redis(redisConfig);
+
+          // Handle connection errors gracefully
+          this.redis.on("error", (err) => {
+            if (!this.useInMemory) {
+              logger.warn(
+                "Redis connection error, switching to in-memory mode:",
+                err.message
+              );
+              this.switchToInMemory();
+            }
+          });
+
+          this.redis.on("connect", () => {
+            this.connected = true;
+            this.useInMemory = false;
+            logger.info("Redis connected successfully");
+          });
+
+          // Try to connect with timeout
+          await Promise.race([
+            this.redis.connect(),
+            new Promise((_, reject) =>
+              setTimeout(
+                () => reject(new Error("Redis connection timeout")),
+                10000
+              )
+            ),
+          ]);
+
+          await this.redis.ping();
+
+          // Create subscriber only if main connection succeeded
+          this.subscriber = new Redis(redisConfig);
+          await this.subscriber.connect();
+
+          this.connected = true;
+          logger.info("Redis Cloud connected");
+          return true;
+        } catch (cloudError) {
+          logger.warn("Redis Cloud connection failed:", cloudError.message);
+          logger.info("Trying next option...");
+
+          // Clean up failed connections
+          if (this.redis) {
+            try {
+              this.redis.disconnect();
+            } catch (e) {}
+            this.redis = null;
+          }
+        }
+      }
+
       // Check if Upstash Redis is configured
-      if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
+      if (
+        !this.connected &&
+        process.env.UPSTASH_REDIS_URL &&
+        process.env.UPSTASH_REDIS_TOKEN
+      ) {
         logger.info("Attempting to connect to Upstash Redis (cloud)...");
 
         try {
@@ -72,7 +164,10 @@ class SessionManager {
           // Handle connection errors gracefully
           this.redis.on("error", (err) => {
             if (!this.useInMemory) {
-              logger.warn("Redis connection error, switching to in-memory mode:", err.message);
+              logger.warn(
+                "Redis connection error, switching to in-memory mode:",
+                err.message
+              );
               this.switchToInMemory();
             }
           });
@@ -86,27 +181,32 @@ class SessionManager {
           // Try to connect with timeout
           await Promise.race([
             this.redis.connect(),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error("Redis connection timeout")), 10000)
-            )
+            new Promise((_, reject) =>
+              setTimeout(
+                () => reject(new Error("Redis connection timeout")),
+                10000
+              )
+            ),
           ]);
 
           await this.redis.ping();
-          
+
           // Create subscriber only if main connection succeeded
           this.subscriber = new Redis(redisConfig);
           await this.subscriber.connect();
-          
+
           this.connected = true;
           logger.info("Redis connected (Upstash)");
           return true;
         } catch (upstashError) {
           logger.warn("Upstash Redis connection failed:", upstashError.message);
           logger.info("Falling back to local Redis or in-memory mode...");
-          
+
           // Clean up failed connections
           if (this.redis) {
-            try { this.redis.disconnect(); } catch (e) {}
+            try {
+              this.redis.disconnect();
+            } catch (e) {}
             this.redis = null;
           }
         }
@@ -115,7 +215,9 @@ class SessionManager {
       // Try local Redis
       if (!this.connected) {
         const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
-        logger.info(`Attempting to connect to local Redis: ${redisUrl}`);
+        logger.info(
+          `Attempting to connect to fallback local Redis: ${redisUrl}`
+        );
 
         try {
           this.redis = new Redis(redisUrl, {
@@ -133,25 +235,28 @@ class SessionManager {
 
           this.redis.on("error", (err) => {
             if (!this.useInMemory) {
-              logger.warn("Local Redis error, switching to in-memory:", err.message);
+              logger.warn(
+                "Local Redis error, switching to in-memory:",
+                err.message
+              );
               this.switchToInMemory();
             }
           });
 
           await Promise.race([
             this.redis.connect(),
-            new Promise((_, reject) => 
+            new Promise((_, reject) =>
               setTimeout(() => reject(new Error("Local Redis timeout")), 5000)
-            )
+            ),
           ]);
 
           await this.redis.ping();
-          
+
           this.subscriber = new Redis(redisUrl, {
             maxRetriesPerRequest: 3,
             enableReadyCheck: false,
           });
-          
+
           this.connected = true;
           logger.info("Local Redis connected");
           return true;
@@ -176,18 +281,24 @@ class SessionManager {
   switchToInMemory() {
     this.useInMemory = true;
     this.connected = false;
-    
+
     // Clean up Redis connections
     if (this.redis) {
-      try { this.redis.disconnect(); } catch (e) {}
+      try {
+        this.redis.disconnect();
+      } catch (e) {}
       this.redis = null;
     }
     if (this.subscriber) {
-      try { this.subscriber.disconnect(); } catch (e) {}
+      try {
+        this.subscriber.disconnect();
+      } catch (e) {}
       this.subscriber = null;
     }
-    
-    logger.info("⚠️ Running in IN-MEMORY mode (sessions will not persist across restarts)");
+
+    logger.info(
+      "⚠️ Running in IN-MEMORY mode (sessions will not persist across restarts)"
+    );
   }
 
   /**
@@ -280,7 +391,11 @@ class SessionManager {
         await this.redis.setex(key, this.sessionTTL, JSON.stringify(session));
       }
 
-      logger.info(`Created session: ${sessionData.sessionCode} (${this.useInMemory ? 'in-memory' : 'Redis'})`);
+      logger.info(
+        `Created session: ${sessionData.sessionCode} (${
+          this.useInMemory ? "in-memory" : "Redis"
+        })`
+      );
       return session;
     } catch (error) {
       logger.error("Error creating session:", error);
@@ -370,7 +485,7 @@ class SessionManager {
 
         await pipeline.exec();
       }
-      
+
       logger.info(`Deleted session: ${sessionCode}`);
 
       return true;
@@ -424,8 +539,10 @@ class SessionManager {
         if (!this.memoryStore.participants.has(sessionCode)) {
           this.memoryStore.participants.set(sessionCode, new Map());
         }
-        this.memoryStore.participants.get(sessionCode).set(participant.userId, participantData);
-        
+        this.memoryStore.participants
+          .get(sessionCode)
+          .set(participant.userId, participantData);
+
         // Initialize in leaderboard
         await this.updateLeaderboard(sessionCode, participant.userId, 0);
       } else {
@@ -517,7 +634,9 @@ class SessionManager {
       };
 
       if (this.useInMemory) {
-        this.memoryStore.participants.get(sessionCode).set(userId, updatedParticipant);
+        this.memoryStore.participants
+          .get(sessionCode)
+          .set(userId, updatedParticipant);
       } else {
         const key = this.getParticipantsKey(sessionCode);
         await this.redis.hset(key, userId, JSON.stringify(updatedParticipant));
@@ -646,7 +765,9 @@ class SessionManager {
               accuracy:
                 participant.correctAnswers + participant.incorrectAnswers > 0
                   ? (participant.correctAnswers /
-                      (participant.correctAnswers + participant.incorrectAnswers)) * 100
+                      (participant.correctAnswers +
+                        participant.incorrectAnswers)) *
+                    100
                   : 0,
             });
           }
@@ -710,9 +831,10 @@ class SessionManager {
         const leaderboard = this.memoryStore.leaderboards.get(sessionCode);
         if (!leaderboard) return null;
 
-        const sorted = Array.from(leaderboard.entries())
-          .sort((a, b) => b[1] - a[1]);
-        
+        const sorted = Array.from(leaderboard.entries()).sort(
+          (a, b) => b[1] - a[1]
+        );
+
         const index = sorted.findIndex(([id]) => id === userId);
         return index >= 0 ? index + 1 : null;
       }

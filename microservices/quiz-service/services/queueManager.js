@@ -3,52 +3,75 @@
  * Addresses: Blocking AI calls issue from optimization analysis
  */
 
-const Queue = require('bull');
-const createLogger = require('../../shared/utils/logger');
+const Queue = require("bull");
+const createLogger = require("../../shared/utils/logger");
 
-const logger = createLogger('quiz-queue');
+const logger = createLogger("quiz-queue");
 
 // Initialize Redis connection for Bull
 let redisConfig;
 
-// Check if Upstash Redis is configured (recommended for production)
-if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
-  logger.info('Configuring queue with Upstash Redis');
-  
+// Check if REDIS_URL is configured (Redis Cloud or remote Redis)
+if (
+  process.env.REDIS_URL &&
+  process.env.REDIS_URL !== "redis://localhost:6379"
+) {
+  logger.info("Configuring queue with Redis Cloud");
+
+  // Parse Redis URL
+  const url = new URL(process.env.REDIS_URL);
+
+  redisConfig = {
+    host: url.hostname,
+    port: parseInt(url.port) || 6379,
+    password: url.password || undefined,
+    username: url.username !== "default" ? url.username : undefined,
+    tls:
+      url.protocol === "rediss:"
+        ? {
+            rejectUnauthorized: false,
+          }
+        : undefined,
+    maxRetriesPerRequest: null, // Required for Bull queue compatibility
+    enableReadyCheck: false, // Required for Bull queue compatibility
+  };
+} else if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
+  logger.info("Configuring queue with Upstash Redis");
+
   // Parse Upstash URL
   const url = new URL(process.env.UPSTASH_REDIS_URL);
-  
+
   redisConfig = {
     host: url.hostname,
     port: parseInt(url.port) || 6379,
     password: process.env.UPSTASH_REDIS_TOKEN,
     tls: {
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
     },
-    maxRetriesPerRequest: null,  // Required for Bull queue compatibility
-    enableReadyCheck: false,      // Required for Bull queue compatibility
+    maxRetriesPerRequest: null, // Required for Bull queue compatibility
+    enableReadyCheck: false, // Required for Bull queue compatibility
   };
 } else {
   // Fallback to local Redis
-  logger.info('Configuring queue with local Redis');
-  
+  logger.info("Configuring queue with local Redis");
+
   redisConfig = {
-    host: process.env.REDIS_HOST || 'localhost',
+    host: process.env.REDIS_HOST || "localhost",
     port: process.env.REDIS_PORT || 6379,
     password: process.env.REDIS_PASSWORD || undefined,
     db: process.env.REDIS_DB || 0,
-    maxRetriesPerRequest: null,  // Required for Bull queue compatibility
-    enableReadyCheck: false,      // Required for Bull queue compatibility
+    maxRetriesPerRequest: null, // Required for Bull queue compatibility
+    enableReadyCheck: false, // Required for Bull queue compatibility
   };
 }
 
 // Create quiz generation queue
-const quizGenerationQueue = new Queue('quiz-generation', {
+const quizGenerationQueue = new Queue("quiz-generation", {
   redis: redisConfig,
   defaultJobOptions: {
     attempts: parseInt(process.env.QUEUE_MAX_ATTEMPTS) || 3,
     backoff: {
-      type: 'exponential',
+      type: "exponential",
       delay: parseInt(process.env.QUEUE_BACKOFF_DELAY) || 5000,
     },
     removeOnComplete: 100, // Keep last 100 completed jobs
@@ -58,11 +81,11 @@ const quizGenerationQueue = new Queue('quiz-generation', {
 });
 
 // Queue event listeners for monitoring
-quizGenerationQueue.on('active', (job) => {
+quizGenerationQueue.on("active", (job) => {
   logger.info(`Job ${job.id} started: ${job.data.method}`);
 });
 
-quizGenerationQueue.on('completed', (job, result) => {
+quizGenerationQueue.on("completed", (job, result) => {
   logger.info(`Job ${job.id} completed successfully`, {
     method: job.data.method,
     quizId: result.quizId,
@@ -70,7 +93,7 @@ quizGenerationQueue.on('completed', (job, result) => {
   });
 });
 
-quizGenerationQueue.on('failed', (job, error) => {
+quizGenerationQueue.on("failed", (job, error) => {
   logger.error(`Job ${job.id} failed:`, {
     method: job.data.method,
     error: error.message,
@@ -78,12 +101,12 @@ quizGenerationQueue.on('failed', (job, error) => {
   });
 });
 
-quizGenerationQueue.on('stalled', (job) => {
+quizGenerationQueue.on("stalled", (job) => {
   logger.warn(`Job ${job.id} stalled:`, job.data.method);
 });
 
-quizGenerationQueue.on('error', (error) => {
-  logger.error('Queue error:', error);
+quizGenerationQueue.on("error", (error) => {
+  logger.error("Queue error:", error);
 });
 
 /**
@@ -95,15 +118,15 @@ async function addQuizGenerationJob(jobData, options = {}) {
       ...options,
       jobId: jobData.jobId || undefined, // Allow custom job ID for deduplication
     });
-    
+
     logger.info(`Quiz generation job added: ${job.id}`, {
       method: jobData.method,
       userId: jobData.userId,
     });
-    
+
     return job;
   } catch (error) {
-    logger.error('Failed to add quiz generation job:', error);
+    logger.error("Failed to add quiz generation job:", error);
     throw error;
   }
 }
@@ -114,27 +137,30 @@ async function addQuizGenerationJob(jobData, options = {}) {
 async function getJobStatus(jobId) {
   try {
     const job = await quizGenerationQueue.getJob(jobId);
-    
+
     if (!job) {
-      return { status: 'not-found' };
+      return { status: "not-found" };
     }
-    
+
     const state = await job.getState();
     const progress = job.progress();
-    
+
     let result = null;
-    if (state === 'completed') {
+    if (state === "completed") {
       // Bull stores return value in job.returnvalue (lowercase 'v')
       // Access it directly from the Redis data
       result = await job.finished();
-      logger.info(`Job ${jobId} completed - result:`, result ? 'Found' : 'NULL');
+      logger.info(
+        `Job ${jobId} completed - result:`,
+        result ? "Found" : "NULL"
+      );
     }
-    
+
     let error = null;
-    if (state === 'failed') {
+    if (state === "failed") {
       error = job.failedReason;
     }
-    
+
     return {
       status: state,
       progress,
@@ -181,7 +207,7 @@ async function getQueueStats() {
       quizGenerationQueue.getFailedCount(),
       quizGenerationQueue.getDelayedCount(),
     ]);
-    
+
     return {
       waiting,
       active,
@@ -191,7 +217,7 @@ async function getQueueStats() {
       total: waiting + active + completed + failed + delayed,
     };
   } catch (error) {
-    logger.error('Failed to get queue stats:', error);
+    logger.error("Failed to get queue stats:", error);
     return null;
   }
 }
@@ -202,12 +228,12 @@ async function getQueueStats() {
 async function cleanQueue(grace = 86400000) {
   try {
     // Remove completed jobs older than grace period (default 24 hours)
-    await quizGenerationQueue.clean(grace, 'completed');
-    await quizGenerationQueue.clean(grace, 'failed');
-    
+    await quizGenerationQueue.clean(grace, "completed");
+    await quizGenerationQueue.clean(grace, "failed");
+
     logger.info(`Queue cleaned: removed jobs older than ${grace}ms`);
   } catch (error) {
-    logger.error('Failed to clean queue:', error);
+    logger.error("Failed to clean queue:", error);
   }
 }
 
@@ -217,9 +243,9 @@ async function cleanQueue(grace = 86400000) {
 async function closeQueue() {
   try {
     await quizGenerationQueue.close();
-    logger.info('Quiz generation queue closed');
+    logger.info("Quiz generation queue closed");
   } catch (error) {
-    logger.error('Failed to close queue:', error);
+    logger.error("Failed to close queue:", error);
   }
 }
 
