@@ -1,11 +1,12 @@
-const { UserStats } = require('../models/Achievement');
+const { UserStats } = require("../models/Achievement");
+const User = require("../models/User");
 const {
   getLeaderboard,
   getUserRank,
   updateLeaderboard,
   REDIS_KEYS,
   getRedisClient,
-} = require('../config/redis');
+} = require("../config/redis");
 
 /**
  * Leaderboard Manager - Manages global and category leaderboards using Redis Sorted Sets
@@ -29,15 +30,15 @@ class LeaderboardManager {
       }
 
       // Populate user details
-      const userIds = leaderboard.map(entry => entry.userId);
+      const userIds = leaderboard.map((entry) => entry.userId);
       const users = await this.getUserDetailsBatch(userIds);
 
-      return leaderboard.map(entry => ({
+      return leaderboard.map((entry) => ({
         ...entry,
-        user: users.get(entry.userId) || { name: 'Unknown User' },
+        user: users.get(entry.userId) || { name: "Unknown User" },
       }));
     } catch (error) {
-      console.error('Error getting global leaderboard:', error);
+      console.error("Error getting global leaderboard:", error);
       throw error;
     }
   }
@@ -54,15 +55,15 @@ class LeaderboardManager {
         return await this.rebuildCategoryLeaderboard(category, start, limit);
       }
 
-      const userIds = leaderboard.map(entry => entry.userId);
+      const userIds = leaderboard.map((entry) => entry.userId);
       const users = await this.getUserDetailsBatch(userIds);
 
-      return leaderboard.map(entry => ({
+      return leaderboard.map((entry) => ({
         ...entry,
         user: users.get(entry.userId),
       }));
     } catch (error) {
-      console.error('Error getting category leaderboard:', error);
+      console.error("Error getting category leaderboard:", error);
       throw error;
     }
   }
@@ -78,15 +79,15 @@ class LeaderboardManager {
         start + limit - 1
       );
 
-      const userIds = leaderboard.map(entry => entry.userId);
+      const userIds = leaderboard.map((entry) => entry.userId);
       const users = await this.getUserDetailsBatch(userIds);
 
-      return leaderboard.map(entry => ({
+      return leaderboard.map((entry) => ({
         ...entry,
         user: users.get(entry.userId),
       }));
     } catch (error) {
-      console.error('Error getting weekly leaderboard:', error);
+      console.error("Error getting weekly leaderboard:", error);
       throw error;
     }
   }
@@ -102,15 +103,15 @@ class LeaderboardManager {
         start + limit - 1
       );
 
-      const userIds = leaderboard.map(entry => entry.userId);
+      const userIds = leaderboard.map((entry) => entry.userId);
       const users = await this.getUserDetailsBatch(userIds);
 
-      return leaderboard.map(entry => ({
+      return leaderboard.map((entry) => ({
         ...entry,
         user: users.get(entry.userId),
       }));
     } catch (error) {
-      console.error('Error getting monthly leaderboard:', error);
+      console.error("Error getting monthly leaderboard:", error);
       throw error;
     }
   }
@@ -121,12 +122,16 @@ class LeaderboardManager {
   async getUserGlobalRank(userId) {
     try {
       const rankData = await getUserRank(REDIS_KEYS.LEADERBOARD_GLOBAL, userId);
-      
+
       if (rankData.rank === null) {
         // User not in cache, check database
         const stats = await UserStats.findOne({ user: userId }).lean();
         if (stats && stats.totalPoints > 0) {
-          await updateLeaderboard(REDIS_KEYS.LEADERBOARD_GLOBAL, userId, stats.totalPoints);
+          await updateLeaderboard(
+            REDIS_KEYS.LEADERBOARD_GLOBAL,
+            userId,
+            stats.totalPoints
+          );
           return await getUserRank(REDIS_KEYS.LEADERBOARD_GLOBAL, userId);
         }
         return { rank: null, score: 0 };
@@ -134,7 +139,7 @@ class LeaderboardManager {
 
       return rankData;
     } catch (error) {
-      console.error('Error getting user global rank:', error);
+      console.error("Error getting user global rank:", error);
       throw error;
     }
   }
@@ -147,7 +152,7 @@ class LeaderboardManager {
       const key = REDIS_KEYS.LEADERBOARD_CATEGORY(category);
       return await getUserRank(key, userId);
     } catch (error) {
-      console.error('Error getting user category rank:', error);
+      console.error("Error getting user category rank:", error);
       throw error;
     }
   }
@@ -174,7 +179,7 @@ class LeaderboardManager {
 
       console.log(`Updated leaderboard scores for user ${userId}`);
     } catch (error) {
-      console.error('Error updating user score:', error);
+      console.error("Error updating user score:", error);
       throw error;
     }
   }
@@ -184,13 +189,13 @@ class LeaderboardManager {
    */
   async rebuildGlobalLeaderboard(start = 0, limit = 100) {
     try {
-      console.log('Rebuilding global leaderboard from database...');
-      
+      console.log("Rebuilding global leaderboard from database...");
+
       const users = await UserStats.find()
         .sort({ totalPoints: -1 })
         .skip(start)
         .limit(limit)
-        .populate('user', 'name email')
+        .populate("user", "name email")
         .lean();
 
       const redis = getRedisClient();
@@ -217,7 +222,7 @@ class LeaderboardManager {
         },
       }));
     } catch (error) {
-      console.error('Error rebuilding global leaderboard:', error);
+      console.error("Error rebuilding global leaderboard:", error);
       throw error;
     }
   }
@@ -228,12 +233,12 @@ class LeaderboardManager {
   async rebuildCategoryLeaderboard(category, start = 0, limit = 100) {
     try {
       console.log(`Rebuilding ${category} leaderboard from database...`);
-      
+
       const users = await UserStats.find({ favoriteCategories: category })
         .sort({ totalPoints: -1 })
         .skip(start)
         .limit(limit)
-        .populate('user', 'name email')
+        .populate("user", "name email")
         .lean();
 
       const redis = getRedisClient();
@@ -256,7 +261,7 @@ class LeaderboardManager {
         },
       }));
     } catch (error) {
-      console.error('Error rebuilding category leaderboard:', error);
+      console.error("Error rebuilding category leaderboard:", error);
       throw error;
     }
   }
@@ -266,21 +271,21 @@ class LeaderboardManager {
    */
   async getUserDetailsBatch(userIds) {
     try {
-      const mongoose = require('mongoose');
-      const User = mongoose.model('User');
-      
+      const mongoose = require("mongoose");
+      const User = mongoose.model("User");
+
       const users = await User.find({ _id: { $in: userIds } })
-        .select('name email')
+        .select("name email")
         .lean();
 
       const userMap = new Map();
-      users.forEach(user => {
+      users.forEach((user) => {
         userMap.set(user._id.toString(), user);
       });
 
       return userMap;
     } catch (error) {
-      console.error('Error getting user details batch:', error);
+      console.error("Error getting user details batch:", error);
       return new Map();
     }
   }
@@ -292,9 +297,9 @@ class LeaderboardManager {
     try {
       const redis = getRedisClient();
       await redis.del(REDIS_KEYS.LEADERBOARD_WEEKLY);
-      console.log('✅ Weekly leaderboard reset');
+      console.log("✅ Weekly leaderboard reset");
     } catch (error) {
-      console.error('Error resetting weekly leaderboard:', error);
+      console.error("Error resetting weekly leaderboard:", error);
     }
   }
 
@@ -305,9 +310,9 @@ class LeaderboardManager {
     try {
       const redis = getRedisClient();
       await redis.del(REDIS_KEYS.LEADERBOARD_MONTHLY);
-      console.log('✅ Monthly leaderboard reset');
+      console.log("✅ Monthly leaderboard reset");
     } catch (error) {
-      console.error('Error resetting monthly leaderboard:', error);
+      console.error("Error resetting monthly leaderboard:", error);
     }
   }
 
@@ -317,7 +322,7 @@ class LeaderboardManager {
   async getSurroundingUsers(userId, range = 5) {
     try {
       const rankData = await this.getUserGlobalRank(userId);
-      
+
       if (rankData.rank === null) {
         return [];
       }
@@ -327,7 +332,7 @@ class LeaderboardManager {
 
       return await this.getGlobalLeaderboard(start, range * 2 + 1);
     } catch (error) {
-      console.error('Error getting surrounding users:', error);
+      console.error("Error getting surrounding users:", error);
       throw error;
     }
   }

@@ -1,12 +1,13 @@
-const { UserStats } = require('../models/Achievement');
-const { 
-  incrementUserStats, 
-  getUserStatsFromCache, 
+const { UserStats } = require("../models/Achievement");
+const User = require("../models/User");
+const {
+  incrementUserStats,
+  getUserStatsFromCache,
   cacheUserStats,
   updateLeaderboard,
   REDIS_KEYS,
-} = require('../config/redis');
-const { queueStatsSync } = require('../config/queue');
+} = require("../config/redis");
+const { queueStatsSync } = require("../config/queue");
 
 /**
  * Stats Manager - Handles user stats with Redis caching and DB sync
@@ -21,7 +22,8 @@ class StatsManager {
       // Calculate updates
       const updates = {
         totalQuizzesTaken: 1,
-        totalPoints: (resultData.pointsEarned || 0) + (resultData.bonusPoints || 0),
+        totalPoints:
+          (resultData.pointsEarned || 0) + (resultData.bonusPoints || 0),
         totalTimeSpent: Math.round((resultData.totalTimeTaken || 0) / 60), // Convert to minutes
         experience: resultData.experienceGained || 0,
       };
@@ -30,7 +32,7 @@ class StatsManager {
       if (resultData.passed) {
         const currentStreak = await this.getCurrentStreak(userId);
         updates.currentStreak = currentStreak + 1;
-        
+
         const longestStreak = await this.getLongestStreak(userId);
         if (updates.currentStreak > longestStreak) {
           updates.longestStreak = updates.currentStreak;
@@ -45,8 +47,12 @@ class StatsManager {
       // Update leaderboards
       const cachedStats = await getUserStatsFromCache(userId);
       if (cachedStats) {
-        await updateLeaderboard(REDIS_KEYS.LEADERBOARD_GLOBAL, userId, cachedStats.totalPoints);
-        
+        await updateLeaderboard(
+          REDIS_KEYS.LEADERBOARD_GLOBAL,
+          userId,
+          cachedStats.totalPoints
+        );
+
         // Calculate and update level
         const level = Math.floor(cachedStats.experience / 100) + 1;
         if (level !== cachedStats.level) {
@@ -59,7 +65,7 @@ class StatsManager {
 
       return cachedStats;
     } catch (error) {
-      console.error('Error updating stats:', error);
+      console.error("Error updating stats:", error);
       throw error;
     }
   }
@@ -71,13 +77,13 @@ class StatsManager {
     try {
       // Try Redis first
       let stats = await getUserStatsFromCache(userId);
-      
+
       if (!stats) {
         // Fallback to MongoDB
         const dbStats = await UserStats.findOne({ user: userId })
-          .populate('achievements')
+          .populate("achievements")
           .lean();
-        
+
         if (dbStats) {
           // Cache to Redis
           await cacheUserStats(userId, dbStats);
@@ -93,7 +99,7 @@ class StatsManager {
 
       return stats;
     } catch (error) {
-      console.error('Error getting stats:', error);
+      console.error("Error getting stats:", error);
       throw error;
     }
   }
@@ -109,7 +115,7 @@ class StatsManager {
       }
 
       let userStats = await UserStats.findOne({ user: userId });
-      
+
       if (!userStats) {
         userStats = new UserStats({ user: userId });
       }
@@ -127,10 +133,10 @@ class StatsManager {
 
       await userStats.save();
       console.log(`✅ Synced stats to DB for user ${userId}`);
-      
+
       return userStats;
     } catch (error) {
-      console.error('Error syncing stats to DB:', error);
+      console.error("Error syncing stats to DB:", error);
       throw error;
     }
   }
@@ -143,18 +149,22 @@ class StatsManager {
       const stats = await this.getStats(userId);
       const totalQuizzes = stats.totalQuizzesTaken || 1;
       const currentAvg = stats.averageScore || 0;
-      
+
       const newAverage = Math.round(
         (currentAvg * (totalQuizzes - 1) + newScore) / totalQuizzes
       );
 
-      const { getRedisClient, REDIS_KEYS } = require('../config/redis');
+      const { getRedisClient, REDIS_KEYS } = require("../config/redis");
       const redis = getRedisClient();
-      await redis.hset(REDIS_KEYS.USER_STATS(userId), 'averageScore', newAverage);
-      
+      await redis.hset(
+        REDIS_KEYS.USER_STATS(userId),
+        "averageScore",
+        newAverage
+      );
+
       return newAverage;
     } catch (error) {
-      console.error('Error updating average score:', error);
+      console.error("Error updating average score:", error);
       throw error;
     }
   }
@@ -163,9 +173,12 @@ class StatsManager {
    * Get current streak from Redis
    */
   async getCurrentStreak(userId) {
-    const { getRedisClient, REDIS_KEYS } = require('../config/redis');
+    const { getRedisClient, REDIS_KEYS } = require("../config/redis");
     const redis = getRedisClient();
-    const streak = await redis.hget(REDIS_KEYS.USER_STATS(userId), 'currentStreak');
+    const streak = await redis.hget(
+      REDIS_KEYS.USER_STATS(userId),
+      "currentStreak"
+    );
     return parseInt(streak) || 0;
   }
 
@@ -173,9 +186,12 @@ class StatsManager {
    * Get longest streak from Redis
    */
   async getLongestStreak(userId) {
-    const { getRedisClient, REDIS_KEYS } = require('../config/redis');
+    const { getRedisClient, REDIS_KEYS } = require("../config/redis");
     const redis = getRedisClient();
-    const streak = await redis.hget(REDIS_KEYS.USER_STATS(userId), 'longestStreak');
+    const streak = await redis.hget(
+      REDIS_KEYS.USER_STATS(userId),
+      "longestStreak"
+    );
     return parseInt(streak) || 0;
   }
 
@@ -183,31 +199,37 @@ class StatsManager {
    * Update user level
    */
   async updateLevel(userId, newLevel) {
-    const { getRedisClient, REDIS_KEYS } = require('../config/redis');
+    const { getRedisClient, REDIS_KEYS } = require("../config/redis");
     const redis = getRedisClient();
-    await redis.hset(REDIS_KEYS.USER_STATS(userId), 'level', newLevel);
+    await redis.hset(REDIS_KEYS.USER_STATS(userId), "level", newLevel);
   }
 
   /**
    * Record last activity timestamp
    */
   async recordActivity(userId) {
-    const { getRedisClient, REDIS_KEYS } = require('../config/redis');
+    const { getRedisClient, REDIS_KEYS } = require("../config/redis");
     const redis = getRedisClient();
-    await redis.set(REDIS_KEYS.LAST_ACTIVITY(userId), Date.now(), 'EX', 86400 * 7); // 7 days TTL
+    await redis.set(
+      REDIS_KEYS.LAST_ACTIVITY(userId),
+      Date.now(),
+      "EX",
+      86400 * 7
+    ); // 7 days TTL
   }
 
   /**
    * Check if user was active in last 24 hours
    */
   async wasActiveRecently(userId) {
-    const { getRedisClient, REDIS_KEYS } = require('../config/redis');
+    const { getRedisClient, REDIS_KEYS } = require("../config/redis");
     const redis = getRedisClient();
     const lastActivity = await redis.get(REDIS_KEYS.LAST_ACTIVITY(userId));
-    
+
     if (!lastActivity) return false;
-    
-    const hoursSinceActivity = (Date.now() - parseInt(lastActivity)) / (1000 * 60 * 60);
+
+    const hoursSinceActivity =
+      (Date.now() - parseInt(lastActivity)) / (1000 * 60 * 60);
     return hoursSinceActivity < 24;
   }
 
@@ -216,35 +238,35 @@ class StatsManager {
    */
   async checkAndResetStreak(userId) {
     const wasActive = await this.wasActiveRecently(userId);
-    
+
     if (!wasActive) {
-      const { getRedisClient, REDIS_KEYS } = require('../config/redis');
+      const { getRedisClient, REDIS_KEYS } = require("../config/redis");
       const redis = getRedisClient();
-      await redis.hset(REDIS_KEYS.USER_STATS(userId), 'currentStreak', 0);
+      await redis.hset(REDIS_KEYS.USER_STATS(userId), "currentStreak", 0);
       console.log(`Reset streak for user ${userId} due to inactivity`);
       return true;
     }
-    
+
     return false;
   }
 
   /**
    * Get top users by stat
    */
-  async getTopUsers(statField = 'totalPoints', limit = 10) {
+  async getTopUsers(statField = "totalPoints", limit = 10) {
     try {
       const users = await UserStats.find()
         .sort({ [statField]: -1 })
         .limit(limit)
-        .populate('user', 'name email')
+        .populate("user", "name email")
         .lean();
-      
+
       return users.map((user, index) => ({
         rank: index + 1,
         ...user,
       }));
     } catch (error) {
-      console.error('Error getting top users:', error);
+      console.error("Error getting top users:", error);
       throw error;
     }
   }
@@ -266,7 +288,7 @@ class StatsManager {
       console.log(`Bulk updated ${result.modifiedCount} user stats`);
       return result;
     } catch (error) {
-      console.error('Error bulk updating stats:', error);
+      console.error("Error bulk updating stats:", error);
       throw error;
     }
   }
