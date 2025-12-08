@@ -144,7 +144,9 @@ class RedisClient {
         if (
           err.code === "ENOTFOUND" ||
           err.code === "ECONNREFUSED" ||
-          err.code === "ETIMEDOUT"
+          err.code === "ETIMEDOUT" ||
+          err.code === "ECONNRESET" ||
+          err.message?.includes("ECONNREFUSED")
         ) {
           if (!this.useInMemory) {
             this.logger.warn(
@@ -152,8 +154,8 @@ class RedisClient {
             );
             this.switchToInMemory();
           }
-        } else if (err.code !== "ECONNRESET") {
-          // Don't log ECONNRESET as they're normal with cloud Redis
+          // Suppress further error logging in in-memory mode
+        } else if (!this.useInMemory) {
           this.logger.error("Redis connection error:", err.message);
         }
       });
@@ -186,8 +188,13 @@ class RedisClient {
     this.isConnected = false;
     if (this.client) {
       try {
-        this.client.disconnect();
-      } catch (e) {}
+        // Remove all listeners to stop error logging
+        this.client.removeAllListeners();
+        // Disconnect immediately without retry
+        this.client.disconnect(false);
+      } catch (e) {
+        // Ignore disconnect errors
+      }
       this.client = null;
     }
     this.logger.info(

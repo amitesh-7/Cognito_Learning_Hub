@@ -92,6 +92,43 @@ router.post(
     await result.save();
     logger.info(`Result submitted: ${result._id} by user ${req.user.userId} for quiz ${quizId}`);
 
+    // Calculate XP with proper hierarchy (percentage already calculated above)
+    
+    // Difficulty multiplier: Easy=1.0x, Medium=1.5x, Hard=2.0x, Expert=2.5x
+    const difficultyMultipliers = {
+      'Easy': 1.0,
+      'Medium': 1.5,
+      'Hard': 2.0,
+      'Expert': 2.5
+    };
+    const difficultyLevel = quizMetadata?.difficulty || 'Medium';
+    const difficultyMultiplier = difficultyMultipliers[difficultyLevel] || 1.5;
+    
+    // Base XP: 1 point = 1 XP
+    let experienceGained = score;
+    
+    // Apply difficulty multiplier
+    experienceGained = Math.round(experienceGained * difficultyMultiplier);
+    
+    // Performance bonus: +50% for >80%, +25% for >60%
+    let bonusPoints = 0;
+    if (percentage >= 80) {
+      bonusPoints = Math.round(experienceGained * 0.5);
+      experienceGained += bonusPoints;
+    } else if (percentage >= 60) {
+      bonusPoints = Math.round(experienceGained * 0.25);
+      experienceGained += bonusPoints;
+    }
+    
+    // Time bonus: Fast completion (< 50% of time limit) gets +10%
+    const avgTimePerQuestion = totalTimeSpent / totalQuestions / 1000; // in seconds
+    const avgTimeLimit = 30; // default time limit
+    if (avgTimePerQuestion < avgTimeLimit * 0.5) {
+      const timeBonus = Math.round(experienceGained * 0.1);
+      bonusPoints += timeBonus;
+      experienceGained += timeBonus;
+    }
+
     // Notify gamification service (non-blocking)
     const axios = require('axios');
     const GAMIFICATION_URL = process.env.GAMIFICATION_SERVICE_URL || 'http://localhost:3007';
@@ -99,13 +136,15 @@ router.post(
       userId: req.user.userId,
       quizId,
       resultData: {
-        percentage: (correctAnswers / totalQuestions) * 100,
+        percentage: percentage,
         pointsEarned: score,
-        bonusPoints: 0,
+        bonusPoints: bonusPoints,
         totalTimeTaken: totalTimeSpent / 1000, // Convert to seconds
-        passed: correctAnswers / totalQuestions >= 0.6, // 60% passing
-        experienceGained: Math.round(score / 10),
-        category: quizMetadata?.category || 'General'
+        passed: percentage >= 60, // 60% passing
+        experienceGained: experienceGained,
+        category: quizMetadata?.category || 'General',
+        difficulty: difficultyLevel,
+        difficultyMultiplier: difficultyMultiplier
       }
     }).catch(err => {
       logger.error('Gamification notification failed:', err.message);
@@ -223,15 +262,15 @@ router.get('/my-results', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const mongoose = require('mongoose');
 
-    // Query database directly using monolith field names 'user' and 'quiz'
+    // Query database using microservice field names 'userId' and 'quizId'
     const results = await mongoose.connection.db.collection('results')
       .aggregate([
-        { $match: { user: new mongoose.Types.ObjectId(userId) } },
+        { $match: { userId: new mongoose.Types.ObjectId(userId) } },
         { $sort: { createdAt: -1 } },
         {
           $lookup: {
             from: 'quizzes',
-            localField: 'quiz',
+            localField: 'quizId',
             foreignField: '_id',
             as: 'quiz'
           }

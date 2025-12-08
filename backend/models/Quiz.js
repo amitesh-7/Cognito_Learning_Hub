@@ -11,7 +11,7 @@ const QuestionSchema = new mongoose.Schema(
     options: [{ type: String }], // Optional for non-multiple choice questions
     correct_answer: { type: String, required: true },
     explanation: { type: String }, // Optional explanation for answers
-    points: { type: Number, default: 1 }, // Points for gamification
+    points: { type: Number, default: 10 }, // Points for gamification (Easy=5, Medium=10, Hard=15, Expert=20)
     timeLimit: { type: Number, default: 30 }, // Time limit in seconds
     difficulty: {
       type: String,

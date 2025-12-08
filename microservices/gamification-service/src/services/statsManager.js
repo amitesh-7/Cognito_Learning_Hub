@@ -19,6 +19,12 @@ class StatsManager {
    */
   async updateStats(userId, resultData) {
     try {
+      console.log('📈 Updating stats for user:', userId, {
+        pointsEarned: resultData.pointsEarned,
+        experienceGained: resultData.experienceGained,
+        passed: resultData.passed
+      });
+      
       // Calculate updates
       const updates = {
         totalQuizzesTaken: 1,
@@ -27,6 +33,8 @@ class StatsManager {
         totalTimeSpent: Math.round((resultData.totalTimeTaken || 0) / 60), // Convert to minutes
         experience: resultData.experienceGained || 0,
       };
+      
+      console.log('📊 Calculated updates:', updates);
 
       // Handle streak logic
       if (resultData.passed) {
@@ -41,31 +49,66 @@ class StatsManager {
         updates.currentStreak = 0;
       }
 
-      // Atomic increment in Redis
-      await incrementUserStats(userId, updates);
+      // Try Redis first
+      let cachedStats = null;
+      try {
+        await incrementUserStats(userId, updates);
+        cachedStats = await getUserStatsFromCache(userId);
+        
+        // Update leaderboards
+        if (cachedStats) {
+          await updateLeaderboard(
+            REDIS_KEYS.LEADERBOARD_GLOBAL,
+            userId,
+            cachedStats.totalPoints
+          );
 
-      // Update leaderboards
-      const cachedStats = await getUserStatsFromCache(userId);
-      if (cachedStats) {
-        await updateLeaderboard(
-          REDIS_KEYS.LEADERBOARD_GLOBAL,
-          userId,
-          cachedStats.totalPoints
-        );
-
-        // Calculate and update level
-        const level = Math.floor(cachedStats.experience / 100) + 1;
-        if (level !== cachedStats.level) {
-          await this.updateLevel(userId, level);
+          // Calculate and update level
+          const level = Math.floor(cachedStats.experience / 100) + 1;
+          if (level !== cachedStats.level) {
+            await this.updateLevel(userId, level);
+          }
         }
-      }
 
-      // Queue stats sync to MongoDB (non-blocking)
-      await queueStatsSync(userId);
+        // Queue stats sync to MongoDB (non-blocking)
+        await queueStatsSync(userId);
+        
+        console.log('✅ Stats updated in Redis for user:', userId);
+      } catch (redisError) {
+        console.warn('⚠️ Redis unavailable, updating MongoDB directly:', redisError.message);
+        
+        // Direct MongoDB update as fallback
+        const mongoUpdates = {
+          $inc: {
+            totalQuizzesTaken: updates.totalQuizzesTaken || 0,
+            totalPoints: updates.totalPoints || 0,
+            totalTimeSpent: updates.totalTimeSpent || 0,
+            experience: updates.experience || 0,
+          }
+        };
+        
+        if (updates.currentStreak !== undefined) {
+          mongoUpdates.$set = mongoUpdates.$set || {};
+          mongoUpdates.$set.currentStreak = updates.currentStreak;
+        }
+        
+        if (updates.longestStreak !== undefined) {
+          mongoUpdates.$set = mongoUpdates.$set || {};
+          mongoUpdates.$set.longestStreak = updates.longestStreak;
+        }
+        
+        cachedStats = await UserStats.findOneAndUpdate(
+          { user: userId },
+          mongoUpdates,
+          { new: true, upsert: true }
+        ).lean();
+        
+        console.log('✅ Stats updated in MongoDB directly for user:', userId, cachedStats);
+      }
 
       return cachedStats;
     } catch (error) {
-      console.error("Error updating stats:", error);
+      console.error("❌ Error updating stats:", error);
       throw error;
     }
   }

@@ -148,14 +148,14 @@ const connectDB = async () => {
   }
 };
 
-// Redis connection
+// Redis connection (optional - continues without cache if fails)
 const connectRedis = async () => {
   try {
     await cacheManager.connect();
     logger.info("Redis connected");
   } catch (error) {
-    logger.error("Redis connection error:", error);
-    process.exit(1);
+    logger.warn("⚠️ Redis connection failed (continuing without cache):", error.message);
+    logger.warn("⚠️ Quiz caching and job queue will use fallback mode");
   }
 };
 
