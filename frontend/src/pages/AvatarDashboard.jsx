@@ -416,7 +416,16 @@ const AvatarDashboard = () => {
             )}
 
             {/* Customize Tab */}
-            {activeTab === "customize" && <AvatarCustomizer />}
+            {activeTab === "customize" && (
+              <AvatarCustomizer
+                onClose={() => setActiveTab("overview")}
+                onSave={async (avatarData) => {
+                  // Avatar data is automatically saved through the context
+                  // Just switch back to overview tab
+                  setActiveTab("overview");
+                }}
+              />
+            )}
 
             {/* Evolution Tab */}
             {activeTab === "evolution" && <AvatarEvolution />}

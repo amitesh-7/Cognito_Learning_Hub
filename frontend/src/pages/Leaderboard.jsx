@@ -114,8 +114,8 @@ export default function Leaderboard() {
     }
   }, [quizId]);
 
-  const topThree = leaderboard.slice(0, 3);
-  const restOfBoard = leaderboard.slice(3); // Show remaining students (up to 5 total)
+  const topThree = (leaderboard || []).slice(0, 3);
+  const restOfBoard = (leaderboard || []).slice(3); // Show remaining students (up to 5 total)
   const rankColors = ["text-yellow-400", "text-gray-400", "text-yellow-600"];
 
   if (loading) {
@@ -269,10 +269,10 @@ export default function Leaderboard() {
                 className="flex justify-center items-end gap-4 mb-12"
                 variants={itemVariants}
               >
-                {topThree[1] && (
+                {topThree[1] && topThree[1].userName && (
                   <div className="text-center">
                     <div className="w-24 h-24 rounded-full bg-gray-400 dark:bg-gray-600 text-white text-3xl font-bold mx-auto flex items-center justify-center mb-2 border-4 border-gray-300 dark:border-gray-500">
-                      {topThree[1].userName[0]}
+                      {topThree[1].userName[0]?.toUpperCase() || '?'}
                     </div>
                     <p className="font-bold text-gray-800 dark:text-white">
                       {topThree[1].userName}
@@ -287,10 +287,10 @@ export default function Leaderboard() {
                     </div>
                   </div>
                 )}
-                {topThree[0] && (
+                {topThree[0] && topThree[0].userName && (
                   <div className="text-center">
                     <div className="w-32 h-32 rounded-full bg-yellow-400 dark:bg-yellow-500 text-white text-4xl font-bold mx-auto flex items-center justify-center mb-2 border-4 border-yellow-300 dark:border-yellow-400">
-                      {topThree[0].userName[0]}
+                      {topThree[0].userName[0]?.toUpperCase() || '?'}
                     </div>
                     <p className="font-bold text-gray-800 dark:text-white text-lg">
                       {topThree[0].userName}
@@ -305,10 +305,10 @@ export default function Leaderboard() {
                     </div>
                   </div>
                 )}
-                {topThree[2] && (
+                {topThree[2] && topThree[2].userName && (
                   <div className="text-center">
                     <div className="w-24 h-24 rounded-full bg-yellow-600 dark:bg-yellow-800 text-white text-3xl font-bold mx-auto flex items-center justify-center mb-2 border-4 border-yellow-700 dark:border-yellow-900">
-                      {topThree[2].userName[0]}
+                      {topThree[2].userName[0]?.toUpperCase() || '?'}
                     </div>
                     <p className="font-bold text-gray-800 dark:text-white">
                       {topThree[2].userName}
@@ -332,27 +332,29 @@ export default function Leaderboard() {
               >
                 <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                   {restOfBoard.map((entry, index) => (
-                    <li
-                      key={index}
-                      className="p-4 flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-4">
-                        <span className="text-lg font-bold text-gray-400 dark:text-gray-500 w-8 text-center">
-                          {index + 4}
-                        </span>
-                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold flex items-center justify-center">
-                          {entry.userName[0]}
+                    entry && entry.userName ? (
+                      <li
+                        key={index}
+                        className="p-4 flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-4">
+                          <span className="text-lg font-bold text-gray-400 dark:text-gray-500 w-8 text-center">
+                            {index + 4}
+                          </span>
+                          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold flex items-center justify-center">
+                            {entry.userName[0]?.toUpperCase() || '?'}
+                          </div>
+                          <div className="text-md font-semibold text-gray-800 dark:text-white">
+                            {entry.userName}
+                          </div>
                         </div>
-                        <div className="text-md font-semibold text-gray-800 dark:text-white">
-                          {entry.userName}
+                        <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                          {quizId
+                            ? `${entry.score} / ${entry.totalQuestions}`
+                            : `${entry.score} pts`}
                         </div>
-                      </div>
-                      <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                        {quizId
-                          ? `${entry.score} / ${entry.totalQuestions}`
-                          : `${entry.score} pts`}
-                      </div>
-                    </li>
+                      </li>
+                    ) : null
                   ))}
                 </ul>
               </motion.div>
