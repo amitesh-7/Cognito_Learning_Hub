@@ -547,6 +547,11 @@ export default function HomePage() {
             </motion.div>
           </motion.section>
 
+          {/* Interactive Product Demo Section */}
+          <div id="product-demo">
+            <ProductDemo />
+          </div>
+
           {/* Features Section */}
           <motion.section
             variants={staggerContainer}
@@ -1004,11 +1009,6 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
           </motion.section>
-
-          {/* Interactive Product Demo Section */}
-          <div id="product-demo">
-            <ProductDemo />
-          </div>
 
           {/* Why Choose Our AI Tutor - 2x2 Feature Grid */}
           <motion.section
