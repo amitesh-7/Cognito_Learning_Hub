@@ -30,21 +30,30 @@ import Progress from "../components/ui/Progress";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RealTimeStats } from "../components/Gamification";
 
-const AchievementCard = ({ achievement, isUnlocked = false, progress = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    whileHover={{ scale: 1.02, y: -4 }}
-    transition={{ duration: 0.3 }}
-    className="group relative"
-  >
-    <div
-      className={`absolute inset-0 rounded-2xl blur-lg transition-all duration-500 ${
-        isUnlocked
-          ? "bg-gradient-to-br from-yellow-400/30 to-orange-500/30 group-hover:blur-xl"
-          : "bg-gradient-to-br from-violet-500/10 to-purple-500/10 group-hover:blur-md"
-      }`}
-    />
+const AchievementCard = ({ achievement, isUnlocked = false, progress = 0 }) => {
+  // Determine glow color based on rarity
+  const rarityGlow = {
+    legendary: "from-yellow-400/40 via-orange-500/40 to-red-500/40",
+    epic: "from-purple-400/30 via-pink-500/30 to-fuchsia-500/30",
+    rare: "from-blue-400/25 via-cyan-500/25 to-teal-500/25",
+    common: "from-gray-300/20 to-slate-400/20",
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: 1.02, y: -4 }}
+      transition={{ duration: 0.3 }}
+      className="group relative"
+    >
+      <div
+        className={`absolute inset-0 rounded-2xl blur-lg transition-all duration-500 ${
+          isUnlocked
+            ? `bg-gradient-to-br ${rarityGlow[achievement.rarity]} group-hover:blur-xl`
+            : "bg-gradient-to-br from-violet-500/10 to-purple-500/10 group-hover:blur-md"
+        }`}
+      />
     <div
       className={`relative overflow-hidden p-6 rounded-2xl border-2 transition-all duration-300 backdrop-blur-2xl shadow-lg hover:shadow-2xl ${
         isUnlocked
@@ -156,7 +165,8 @@ const AchievementCard = ({ achievement, isUnlocked = false, progress = 0 }) => (
       </div>
     </div>
   </motion.div>
-);
+  );
+};
 
 const StatCard = ({ icon, label, value, change, color = "blue" }) => {
   const colorClasses = {
@@ -250,6 +260,8 @@ export default function AchievementDashboard() {
   const [recentAchievements, setRecentAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [sortBy, setSortBy] = useState("rarity"); // rarity, points, name
 
   // Sync achievements from context
   useEffect(() => {
@@ -665,7 +677,7 @@ export default function AchievementDashboard() {
         isUnlocked: false,
       },
 
-      // Special Achievements
+      // Time-Based Special Achievements
       {
         id: 29,
         name: "Early Bird",
@@ -674,7 +686,7 @@ export default function AchievementDashboard() {
         type: "special",
         rarity: "common",
         points: 15,
-        isUnlocked: false, // Requires time tracking
+        isUnlocked: false,
       },
       {
         id: 30,
@@ -698,6 +710,28 @@ export default function AchievementDashboard() {
       },
       {
         id: 32,
+        name: "Marathon Runner",
+        description: "Complete 5 quizzes in a single day",
+        icon: "🏃",
+        type: "special",
+        rarity: "rare",
+        points: 50,
+        isUnlocked: false,
+      },
+      {
+        id: 33,
+        name: "Midnight Scholar",
+        description: "Complete quizzes at midnight 3 times",
+        icon: "🌙",
+        type: "special",
+        rarity: "epic",
+        points: 75,
+        isUnlocked: false,
+      },
+
+      // Social & Collaboration
+      {
+        id: 34,
         name: "Social Learner",
         description: "Participate in 5 live quiz sessions",
         icon: "👥",
@@ -707,7 +741,39 @@ export default function AchievementDashboard() {
         isUnlocked: false,
       },
       {
-        id: 33,
+        id: 35,
+        name: "Team Player",
+        description: "Complete 10 multiplayer quiz sessions",
+        icon: "🤝",
+        type: "special",
+        rarity: "rare",
+        points: 45,
+        isUnlocked: false,
+      },
+      {
+        id: 36,
+        name: "Quiz Creator",
+        description: "Create your first quiz",
+        icon: "✍️",
+        type: "special",
+        rarity: "common",
+        points: 20,
+        isUnlocked: false,
+      },
+      {
+        id: 37,
+        name: "Popular Creator",
+        description: "Your quiz gets 100+ attempts",
+        icon: "🌟",
+        type: "special",
+        rarity: "epic",
+        points: 100,
+        isUnlocked: false,
+      },
+
+      // Comeback & Persistence
+      {
+        id: 38,
         name: "Comeback Kid",
         description: "Return after 30 days of inactivity",
         icon: "🎯",
@@ -717,22 +783,353 @@ export default function AchievementDashboard() {
         isUnlocked: false,
       },
       {
-        id: 34,
+        id: 39,
+        name: "Never Give Up",
+        description: "Retry a failed quiz and pass with 80%+",
+        icon: "💪",
+        type: "special",
+        rarity: "common",
+        points: 20,
+        isUnlocked: false,
+      },
+      {
+        id: 40,
+        name: "Persistent Learner",
+        description: "Complete the same quiz 5 times",
+        icon: "🔁",
+        type: "special",
+        rarity: "rare",
+        points: 35,
+        isUnlocked: false,
+      },
+
+      // Mastery & Excellence
+      {
+        id: 41,
+        name: "Hat Trick",
+        description: "Get 3 perfect scores in a row",
+        icon: "🎩",
+        type: "score_achievement",
+        rarity: "epic",
+        points: 100,
+        isUnlocked: false,
+      },
+      {
+        id: 42,
+        name: "Perfectionist",
+        description: "Get 10 perfect scores total",
+        icon: "💎",
+        type: "score_achievement",
+        rarity: "legendary",
+        points: 200,
+        isUnlocked: false,
+      },
+      {
+        id: 43,
+        name: "Ace Student",
+        description: "Score 95%+ on 20 quizzes",
+        icon: "🎓",
+        type: "score_achievement",
+        rarity: "epic",
+        points: 150,
+        isUnlocked: false,
+      },
+      {
+        id: 44,
+        name: "Genius Mind",
+        description: "Complete 5 Expert-level quizzes with 90%+",
+        icon: "🧠",
+        type: "score_achievement",
+        rarity: "legendary",
+        points: 250,
+        isUnlocked: false,
+      },
+
+      // Speed Challenges
+      {
+        id: 45,
+        name: "Flash",
+        description: "Complete a 10-question quiz in under 60s",
+        icon: "⚡",
+        type: "speed",
+        rarity: "epic",
+        points: 80,
+        isUnlocked: false,
+      },
+      {
+        id: 46,
+        name: "Time Master",
+        description: "Beat time limit on 25 quizzes",
+        icon: "⏰",
+        type: "speed",
+        rarity: "rare",
+        points: 60,
+        isUnlocked: false,
+      },
+      {
+        id: 47,
+        name: "Speed Reader",
+        description: "Answer correctly in first 5 seconds 20 times",
+        icon: "👀",
+        type: "speed",
+        rarity: "epic",
+        points: 90,
+        isUnlocked: false,
+      },
+
+      // Exploration & Discovery
+      {
+        id: 48,
+        name: "Explorer",
+        description: "Try quizzes from 5 different categories",
+        icon: "🗺️",
+        type: "special",
+        rarity: "common",
+        points: 25,
+        isUnlocked: false,
+      },
+      {
+        id: 49,
+        name: "Renaissance Mind",
+        description: "Try quizzes from 10 different categories",
+        icon: "🎨",
+        type: "special",
+        rarity: "rare",
+        points: 50,
+        isUnlocked: false,
+      },
+      {
+        id: 50,
+        name: "Polymath",
+        description: "Score 80%+ in 5 different categories",
+        icon: "📚",
+        type: "category_master",
+        rarity: "epic",
+        points: 120,
+        isUnlocked: false,
+      },
+
+      // Improvement & Growth
+      {
+        id: 51,
+        name: "Rising Star",
+        description: "Improve your score by 20% on retry",
+        icon: "📈",
+        type: "special",
+        rarity: "common",
+        points: 20,
+        isUnlocked: false,
+      },
+      {
+        id: 52,
+        name: "Rapid Learner",
+        description: "Go from 50% to 100% on same quiz",
+        icon: "🚀",
+        type: "special",
+        rarity: "epic",
+        points: 75,
+        isUnlocked: false,
+      },
+      {
+        id: 53,
+        name: "Consistent Performer",
+        description: "Score between 85-95% on 10 quizzes",
+        icon: "📊",
+        type: "score_achievement",
+        rarity: "rare",
+        points: 55,
+        isUnlocked: false,
+      },
+
+      // Milestones & Special
+      {
+        id: 54,
+        name: "Century Club",
+        description: "Complete 100 quizzes",
+        icon: "💯",
+        type: "quiz_completion",
+        rarity: "legendary",
+        points: 300,
+        isUnlocked: (s.totalQuizzesTaken || 0) >= 100,
+        progress: Math.min(((s.totalQuizzesTaken || 0) / 100) * 100, 100),
+      },
+      {
+        id: 55,
+        name: "Answer Machine",
+        description: "Answer 1000 questions correctly",
+        icon: "🤖",
+        type: "special",
+        rarity: "epic",
+        points: 100,
+        isUnlocked: false,
+      },
+      {
+        id: 56,
+        name: "Time Traveler",
+        description: "Active for 90 consecutive days",
+        icon: "⏳",
+        type: "streak",
+        rarity: "legendary",
+        points: 500,
+        isUnlocked: (s.longestStreak || s.currentStreak || 0) >= 90,
+        progress: Math.min(((s.currentStreak || 0) / 90) * 100, 100),
+      },
+      {
+        id: 57,
+        name: "Year One",
+        description: "Complete quizzes for 365 days",
+        icon: "📅",
+        type: "streak",
+        rarity: "legendary",
+        points: 1000,
+        isUnlocked: (s.longestStreak || s.currentStreak || 0) >= 365,
+        progress: Math.min(((s.currentStreak || 0) / 365) * 100, 100),
+      },
+
+      // Fun & Creative
+      {
+        id: 58,
+        name: "Lucky Number",
+        description: "Score exactly 77% on any quiz",
+        icon: "🍀",
+        type: "special",
+        rarity: "rare",
+        points: 30,
+        isUnlocked: false,
+      },
+      {
+        id: 59,
+        name: "Half Century",
+        description: "Score exactly 50% on any quiz",
+        icon: "⚖️",
+        type: "special",
+        rarity: "common",
+        points: 10,
+        isUnlocked: false,
+      },
+      {
+        id: 60,
+        name: "Clutch Player",
+        description: "Pass a quiz with exactly 60%",
+        icon: "🎲",
+        type: "special",
+        rarity: "common",
+        points: 15,
+        isUnlocked: false,
+      },
+      {
+        id: 61,
+        name: "First Blood",
+        description: "Be first to complete a new quiz",
+        icon: "🥇",
+        type: "special",
+        rarity: "epic",
+        points: 50,
+        isUnlocked: false,
+      },
+      {
+        id: 62,
+        name: "Against All Odds",
+        description: "Pass a quiz with 60% after scoring 20% first",
+        icon: "🎯",
+        type: "special",
+        rarity: "rare",
+        points: 40,
+        isUnlocked: false,
+      },
+
+      // Legendary Ultimate Achievements
+      {
+        id: 63,
+        name: "Quiz God",
+        description: "Reach Level 100",
+        icon: "⚡👑",
+        type: "special",
+        rarity: "legendary",
+        points: 2000,
+        isUnlocked: (s.level || 0) >= 100,
+        progress: Math.min(((s.level || 0) / 100) * 100, 100),
+      },
+      {
+        id: 64,
+        name: "Point Billionaire",
+        description: "Earn 100,000 total points",
+        icon: "💰",
+        type: "special",
+        rarity: "legendary",
+        points: 5000,
+        isUnlocked: (s.totalPoints || s.experience || 0) >= 100000,
+        progress: Math.min(
+          ((s.totalPoints || s.experience || 0) / 100000) * 100,
+          100
+        ),
+      },
+      {
+        id: 65,
         name: "Ultimate Champion",
-        description: "Unlock all other achievements",
-        icon: "🏆",
+        description: "Unlock 50 achievements",
+        icon: "🏆👑",
         type: "special",
         rarity: "legendary",
         points: 1000,
         isUnlocked: false,
+      },
+      {
+        id: 66,
+        name: "Living Legend",
+        description: "Complete 1000 quizzes",
+        icon: "🌟",
+        type: "quiz_completion",
+        rarity: "legendary",
+        points: 10000,
+        isUnlocked: (s.totalQuizzesTaken || 0) >= 1000,
+        progress: Math.min(((s.totalQuizzesTaken || 0) / 1000) * 100, 100),
       },
     ];
   };
 
   if (loading) return <LoadingSpinner />;
 
-  const unlockedAchievements = achievements.filter((a) => a.isUnlocked);
-  const lockedAchievements = achievements.filter((a) => !a.isUnlocked);
+  // Sort achievements
+  const sortAchievements = (achievementList) => {
+    const sorted = [...achievementList];
+    if (sortBy === "rarity") {
+      const rarityOrder = { legendary: 0, epic: 1, rare: 2, common: 3 };
+      sorted.sort((a, b) => rarityOrder[a.rarity] - rarityOrder[b.rarity]);
+    } else if (sortBy === "points") {
+      sorted.sort((a, b) => b.points - a.points);
+    } else if (sortBy === "name") {
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return sorted;
+  };
+
+  // Filter achievements by category
+  const filterByCategory = (achievementList) => {
+    if (selectedCategory === "all") return achievementList;
+    return achievementList.filter((a) => a.type === selectedCategory);
+  };
+
+  const unlockedAchievements = sortAchievements(
+    filterByCategory(achievements.filter((a) => a.isUnlocked))
+  );
+  const lockedAchievements = sortAchievements(
+    filterByCategory(achievements.filter((a) => !a.isUnlocked))
+  );
+
+  // Get category counts
+  const categoryCounts = {
+    all: achievements.length,
+    quiz_completion: achievements.filter((a) => a.type === "quiz_completion")
+      .length,
+    score_achievement: achievements.filter((a) => a.type === "score_achievement")
+      .length,
+    streak: achievements.filter((a) => a.type === "streak").length,
+    speed: achievements.filter((a) => a.type === "speed").length,
+    special: achievements.filter((a) => a.type === "special").length,
+    category_master: achievements.filter((a) => a.type === "category_master")
+      .length,
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 relative overflow-hidden py-8 px-6">
@@ -920,7 +1317,7 @@ export default function AchievementDashboard() {
                       variant="secondary"
                       className="ml-1 bg-white/80 text-violet-700 font-bold"
                     >
-                      {unlockedAchievements.length}
+                      {achievements.filter((a) => a.isUnlocked).length}
                     </Badge>
                   )}
                 </button>
@@ -928,6 +1325,67 @@ export default function AchievementDashboard() {
             </nav>
           </div>
         </div>
+
+        {/* Category Filter - Only show on unlocked/locked tabs */}
+        {(activeTab === "unlocked" || activeTab === "locked") && (
+          <motion.div
+            className="mb-6"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="bg-white/70 backdrop-blur-2xl border-2 border-white/80 rounded-2xl p-4 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Target className="w-5 h-5 text-violet-600" />
+                  <h3 className="font-bold text-slate-900">Filter & Sort</h3>
+                </div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-4 py-2 bg-white/60 border-2 border-white/60 rounded-lg font-semibold text-sm text-slate-700 focus:outline-none focus:border-violet-400 transition-all"
+                >
+                  <option value="rarity">Sort by Rarity</option>
+                  <option value="points">Sort by Points</option>
+                  <option value="name">Sort by Name</option>
+                </select>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: "all", label: "All", icon: "🎯", count: categoryCounts.all },
+                  { id: "quiz_completion", label: "Quiz Master", icon: "📚", count: categoryCounts.quiz_completion },
+                  { id: "score_achievement", label: "High Scores", icon: "⭐", count: categoryCounts.score_achievement },
+                  { id: "streak", label: "Streaks", icon: "🔥", count: categoryCounts.streak },
+                  { id: "speed", label: "Speed", icon: "⚡", count: categoryCounts.speed },
+                  { id: "special", label: "Special", icon: "✨", count: categoryCounts.special },
+                  { id: "category_master", label: "Categories", icon: "🎓", count: categoryCounts.category_master },
+                ].map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                      selectedCategory === category.id
+                        ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg scale-105"
+                        : "bg-white/60 text-slate-700 hover:bg-white hover:scale-105"
+                    }`}
+                  >
+                    <span>{category.icon}</span>
+                    <span>{category.label}</span>
+                    <Badge
+                      variant="secondary"
+                      className={`${
+                        selectedCategory === category.id
+                          ? "bg-white/20 text-white"
+                          : "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {category.count}
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Content */}
         <AnimatePresence mode="wait">
@@ -1012,6 +1470,112 @@ export default function AchievementDashboard() {
                   </div>
                 </motion.div>
               )}
+
+              {/* Category Breakdown */}
+              <motion.div
+                className="group relative mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-500" />
+                <div className="relative bg-white/70 backdrop-blur-2xl border-2 border-white/80 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500">
+                  <h3 className="text-2xl font-black bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-6 flex items-center gap-2">
+                    <Target className="w-6 h-6 text-blue-500" />
+                    Achievement Categories
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {[
+                      { type: "quiz_completion", label: "Quiz Master", icon: "📚", color: "from-blue-500 to-cyan-600" },
+                      { type: "score_achievement", label: "High Scores", icon: "⭐", color: "from-yellow-500 to-orange-600" },
+                      { type: "streak", label: "Streaks", icon: "🔥", color: "from-orange-500 to-red-600" },
+                      { type: "speed", label: "Speed", icon: "⚡", color: "from-purple-500 to-pink-600" },
+                      { type: "special", label: "Special", icon: "✨", color: "from-violet-500 to-fuchsia-600" },
+                      { type: "category_master", label: "Categories", icon: "🎓", color: "from-emerald-500 to-teal-600" },
+                    ].map((cat) => {
+                      const total = achievements.filter((a) => a.type === cat.type).length;
+                      const unlocked = achievements.filter((a) => a.type === cat.type && a.isUnlocked).length;
+                      const percentage = total > 0 ? (unlocked / total) * 100 : 0;
+                      
+                      return (
+                        <div
+                          key={cat.type}
+                          className="bg-white/60 backdrop-blur-md rounded-xl p-4 border-2 border-white/60 hover:border-violet-300/60 transition-all hover:scale-105"
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-2xl">{cat.icon}</span>
+                            <span className="font-bold text-sm text-slate-700">{cat.label}</span>
+                          </div>
+                          <div className="mb-2">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-xs font-semibold text-slate-600">{unlocked}/{total}</span>
+                              <span className="text-xs font-bold text-slate-700">{Math.round(percentage)}%</span>
+                            </div>
+                            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full bg-gradient-to-r ${cat.color} rounded-full transition-all duration-500`}
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Next Goals */}
+              {(() => {
+                const nextAchievements = achievements
+                  .filter((a) => !a.isUnlocked && (a.progress || 0) > 0)
+                  .sort((a, b) => (b.progress || 0) - (a.progress || 0))
+                  .slice(0, 3);
+                
+                return nextAchievements.length > 0 ? (
+                  <motion.div
+                    className="group relative mb-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-500" />
+                    <div className="relative bg-white/70 backdrop-blur-2xl border-2 border-white/80 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-500">
+                      <h3 className="text-2xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-6 flex items-center gap-2">
+                        <Zap className="w-6 h-6 text-emerald-500" />
+                        Next Goals - Almost There!
+                      </h3>
+                      <div className="space-y-3">
+                        {nextAchievements.map((ach) => (
+                          <motion.div
+                            key={ach.id}
+                            className="bg-gradient-to-r from-emerald-50/80 to-teal-50/80 backdrop-blur-md rounded-xl p-4 border-2 border-emerald-200/50 shadow-md hover:scale-102 transition-all"
+                            whileHover={{ x: 5 }}
+                          >
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="text-2xl">{ach.icon}</span>
+                              <div className="flex-1">
+                                <h4 className="font-bold text-slate-900">{ach.name}</h4>
+                                <p className="text-xs text-slate-600">{ach.description}</p>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-2xl font-black text-emerald-600">
+                                  {Math.round(ach.progress || 0)}%
+                                </div>
+                                <div className="text-xs font-semibold text-slate-500">
+                                  +{ach.points} XP
+                                </div>
+                              </div>
+                            </div>
+                            <Progress
+                              value={ach.progress || 0}
+                              className="h-2 bg-emerald-100"
+                            />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : null;
+              })()}
 
               {/* Quick Stats */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -213,20 +213,20 @@ export default function Dashboard() {
     (acc, r) => acc + r.totalQuestions,
     0
   );
-  const totalCorrect = trackedResults.reduce((acc, r) => acc + r.score, 0);
+  const totalCorrect = trackedResults.reduce((acc, r) => acc + (r.correctAnswers || 0), 0);
   // Use gamification points as primary source for consistency
   const totalPoints = userStats?.totalPoints || totalCorrect;
   const recentResults = trackedResults.slice(0, 5);
 
   // Performance categories - only count tracked quizzes
   const excellent = trackedResults.filter(
-    (r) => r.score / r.totalQuestions >= 0.9
+    (r) => (r.percentage || 0) >= 90
   ).length;
   const good = trackedResults.filter(
-    (r) => r.score / r.totalQuestions >= 0.7 && r.score / r.totalQuestions < 0.9
+    (r) => (r.percentage || 0) >= 70 && (r.percentage || 0) < 90
   ).length;
   const needsWork = trackedResults.filter(
-    (r) => r.score / r.totalQuestions < 0.7
+    (r) => (r.percentage || 0) < 70
   ).length;
 
   // --- Chart Data with proper dates - only tracked quizzes ---
@@ -237,7 +237,7 @@ export default function Dashboard() {
       const date = new Date(r.createdAt);
       return {
         name: `${date.getMonth() + 1}/${date.getDate()}`,
-        score: parseFloat(((r.score / r.totalQuestions) * 100).toFixed(1)),
+        score: parseFloat((r.percentage || 0).toFixed(1)),
         quizTitle: r.quiz?.title || "Deleted Quiz",
         date: date.toLocaleDateString(),
       };
@@ -1052,8 +1052,8 @@ export default function Dashboard() {
                     ) : (
                       <div className="space-y-3">
                         {recentResults.map((result, index) => {
-                          const scorePercentage =
-                            (result.score / result.totalQuestions) * 100;
+                          // Use percentage from database (correctAnswers/totalQuestions), not score/questions
+                          const scorePercentage = result.percentage || 0;
                           const isExcellent = scorePercentage >= 90;
                           const isGood = scorePercentage >= 70;
 
@@ -1110,7 +1110,7 @@ export default function Dashboard() {
                               <div className="flex items-center gap-3 flex-shrink-0">
                                 <div className="text-right">
                                   <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                    {result.score}/{result.totalQuestions}
+                                    {result.correctAnswers || result.score}/{result.totalQuestions}
                                   </p>
                                   <p
                                     className={`text-xs font-semibold ${
@@ -1122,6 +1122,9 @@ export default function Dashboard() {
                                     }`}
                                   >
                                     {scorePercentage.toFixed(0)}%
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {result.score} pts
                                   </p>
                                 </div>
                                 <Badge
@@ -1317,30 +1320,28 @@ export default function Dashboard() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900 dark:text-white">
-                                {result.score} / {result.totalQuestions}
+                                {result.correctAnswers || 0} / {result.totalQuestions}
                               </div>
                               <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {(
-                                  (result.score / result.totalQuestions) *
-                                  100
-                                ).toFixed(0)}
-                                %
+                                {(result.percentage || 0).toFixed(0)}%
+                              </div>
+                              <div className="text-xs text-gray-400 dark:text-gray-500">
+                                {result.score} pts
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <Badge
                                 variant={
-                                  result.score / result.totalQuestions >= 0.9
+                                  (result.percentage || 0) >= 90
                                     ? "default"
-                                    : result.score / result.totalQuestions >=
-                                      0.7
+                                    : (result.percentage || 0) >= 70
                                     ? "secondary"
                                     : "destructive"
                                 }
                               >
-                                {result.score / result.totalQuestions >= 0.9
+                                {(result.percentage || 0) >= 90
                                   ? "Excellent"
-                                  : result.score / result.totalQuestions >= 0.7
+                                  : (result.percentage || 0) >= 70
                                   ? "Good"
                                   : "Needs Work"}
                               </Badge>
