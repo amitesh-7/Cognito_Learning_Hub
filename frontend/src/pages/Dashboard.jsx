@@ -223,7 +223,10 @@ export default function Dashboard() {
     (acc, r) => acc + r.totalQuestions,
     0
   );
-  const totalCorrect = trackedResults.reduce((acc, r) => acc + (r.correctAnswers || 0), 0);
+  const totalCorrect = trackedResults.reduce(
+    (acc, r) => acc + (r.correctAnswers || 0),
+    0
+  );
   // Use gamification points as primary source for consistency
   const totalPoints = userStats?.totalPoints || totalCorrect;
   const recentResults = trackedResults.slice(0, 5);
@@ -516,7 +519,7 @@ export default function Dashboard() {
                   </p>
                 </div>
               </div>
-              
+
               {/* Motivational badge based on activity */}
               {quizzesCompleted > 0 && (
                 <motion.div
@@ -619,7 +622,7 @@ export default function Dashboard() {
                 <Card className="p-5 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200/60 dark:border-amber-700/40 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group rounded-2xl relative overflow-hidden h-full">
                   <div className="absolute inset-0 bg-gradient-to-r from-amber-100/0 via-amber-100/50 to-amber-100/0 dark:from-amber-500/0 dark:via-amber-500/10 dark:to-amber-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                   <div className="relative text-center">
-                    <motion.div 
+                    <motion.div
                       className="w-16 h-16 mx-auto bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg mb-4"
                       whileHover={{ rotate: [0, -10, 10, -10, 0] }}
                       transition={{ duration: 0.5 }}
@@ -638,7 +641,7 @@ export default function Dashboard() {
             </Link>
 
             {/* Live Quiz */}
-            <Link to="/live-quiz">
+            <Link to="/live/join">
               <motion.div
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.98 }}
@@ -654,7 +657,7 @@ export default function Dashboard() {
                     LIVE
                   </motion.div>
                   <div className="relative text-center">
-                    <motion.div 
+                    <motion.div
                       className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg mb-4"
                       animate={{ scale: [1, 1.05, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
@@ -673,7 +676,7 @@ export default function Dashboard() {
             </Link>
 
             {/* 1v1 Duel Battle */}
-            <Link to="/duel-mode">
+            <Link to="/duel">
               <motion.div
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.98 }}
@@ -681,7 +684,7 @@ export default function Dashboard() {
                 <Card className="p-5 bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20 border border-rose-200/60 dark:border-rose-700/40 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group rounded-2xl relative overflow-hidden h-full">
                   <div className="absolute inset-0 bg-gradient-to-r from-rose-100/0 via-rose-100/50 to-rose-100/0 dark:from-rose-500/0 dark:via-rose-500/10 dark:to-rose-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                   <div className="relative text-center">
-                    <motion.div 
+                    <motion.div
                       className="w-16 h-16 mx-auto bg-gradient-to-br from-rose-400 to-red-500 rounded-2xl flex items-center justify-center shadow-lg mb-4"
                       whileHover={{ rotate: [0, -15, 15, -15, 0] }}
                       transition={{ duration: 0.6 }}
@@ -700,7 +703,7 @@ export default function Dashboard() {
             </Link>
 
             {/* AI Doubt Solver */}
-            <Link to="/ai-tutor">
+            <Link to="/doubt-solver">
               <motion.div
                 whileHover={{ scale: 1.05, y: -4 }}
                 whileTap={{ scale: 0.98 }}
@@ -708,7 +711,7 @@ export default function Dashboard() {
                 <Card className="p-5 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 border border-cyan-200/60 dark:border-cyan-700/40 shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group rounded-2xl relative overflow-hidden h-full">
                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-100/0 via-cyan-100/50 to-cyan-100/0 dark:from-cyan-500/0 dark:via-cyan-500/10 dark:to-cyan-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                   <div className="relative text-center">
-                    <motion.div 
+                    <motion.div
                       className="w-16 h-16 mx-auto bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg mb-4"
                       animate={{ y: [0, -3, 0] }}
                       transition={{ duration: 2, repeat: Infinity }}
@@ -743,17 +746,17 @@ export default function Dashboard() {
                 {/* Enhanced Profile Card with Level System */}
                 <Card className="text-center p-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-2xl border border-indigo-200/50 dark:border-indigo-700/50 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl relative overflow-hidden group">
                   {/* Animated decorative gradient */}
-                  <motion.div 
+                  <motion.div
                     className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     animate={{
-                      backgroundPosition: ['0% 0%', '100% 100%', '0% 0%'],
+                      backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"],
                     }}
                     transition={{
                       duration: 10,
                       repeat: Infinity,
-                      ease: 'linear',
+                      ease: "linear",
                     }}
-                    style={{ backgroundSize: '200% 200%' }}
+                    style={{ backgroundSize: "200% 200%" }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5"></div>
 
@@ -874,13 +877,17 @@ export default function Dashboard() {
                 <Card className="p-5 bg-white/90 dark:bg-gray-800/90 border border-gray-200/60 dark:border-gray-700/60 shadow-lg rounded-2xl overflow-hidden relative">
                   {/* Decorative background */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-yellow-200/20 to-amber-300/20 dark:from-yellow-600/10 dark:to-amber-700/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                  
+
                   <div className="relative">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <motion.div
                           animate={{ rotate: [0, -10, 10, -10, 0] }}
-                          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            repeatDelay: 3,
+                          }}
                         >
                           <Trophy className="w-5 h-5 text-amber-500" />
                         </motion.div>
@@ -902,7 +909,7 @@ export default function Dashboard() {
                         </Link>
                       )}
                     </div>
-                    
+
                     {achievements.length > 0 ? (
                       <div className="space-y-2.5">
                         {achievements.slice(0, 3).map((ach, index) => {
@@ -928,15 +935,22 @@ export default function Dashboard() {
                                     ? "bg-gradient-to-br from-rose-400 to-rose-500"
                                     : "bg-gradient-to-br from-violet-400 to-violet-500"
                                 }`}
-                                whileHover={{ rotate: [0, -5, 5, -5, 0], scale: 1.1 }}
+                                whileHover={{
+                                  rotate: [0, -5, 5, -5, 0],
+                                  scale: 1.1,
+                                }}
                                 transition={{ duration: 0.5 }}
                               >
                                 <Icon className="w-5 h-5 text-white" />
                                 {/* Shine effect */}
                                 <motion.div
                                   className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/40 to-white/0 rounded-xl"
-                                  animate={{ x: ['-100%', '100%'] }}
-                                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                                  animate={{ x: ["-100%", "100%"] }}
+                                  transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    repeatDelay: 3,
+                                  }}
                                 />
                               </motion.div>
                               <div className="flex-1 min-w-0">
@@ -951,14 +965,18 @@ export default function Dashboard() {
                                 className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center shadow-md"
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                transition={{ delay: index * 0.1 + 0.3, type: "spring", stiffness: 200 }}
+                                transition={{
+                                  delay: index * 0.1 + 0.3,
+                                  type: "spring",
+                                  stiffness: 200,
+                                }}
                               >
                                 <CheckCircle className="w-4 h-4 text-white" />
                               </motion.div>
                             </motion.div>
                           );
                         })}
-                        
+
                         {/* View All Button */}
                         {achievements.length > 3 && (
                           <Link to="/achievements" className="block">
@@ -976,7 +994,10 @@ export default function Dashboard() {
                                 </div>
                                 <motion.div
                                   animate={{ x: [0, 4, 0] }}
-                                  transition={{ duration: 1.5, repeat: Infinity }}
+                                  transition={{
+                                    duration: 1.5,
+                                    repeat: Infinity,
+                                  }}
                                 >
                                   <ChevronRight className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                                 </motion.div>
@@ -986,7 +1007,7 @@ export default function Dashboard() {
                         )}
                       </div>
                     ) : (
-                      <motion.div 
+                      <motion.div
                         className="text-center py-8"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -1004,7 +1025,10 @@ export default function Dashboard() {
                           Complete quizzes to unlock rewards!
                         </p>
                         <Link to="/quizzes">
-                          <Button size="sm" className="bg-gradient-to-r from-indigo-500 to-purple-600">
+                          <Button
+                            size="sm"
+                            className="bg-gradient-to-r from-indigo-500 to-purple-600"
+                          >
                             Start Learning
                           </Button>
                         </Link>
@@ -1022,19 +1046,28 @@ export default function Dashboard() {
                   variants={itemVariants}
                 >
                   {/* Quizzes Completed Card */}
-                  <motion.div whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 300 }}>
+                  <motion.div
+                    whileHover={{ y: -4 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
                     <Card className="bg-gradient-to-br from-white via-emerald-50/50 to-emerald-100/30 dark:from-gray-800 dark:via-emerald-900/20 dark:to-emerald-900/30 border border-emerald-200/60 dark:border-emerald-700/40 shadow-xl hover:shadow-2xl transition-all duration-300 p-5 rounded-2xl group relative overflow-hidden">
                       {/* Animated background particles */}
                       <motion.div
                         className="absolute top-0 right-0 w-20 h-20 bg-emerald-400/20 rounded-full blur-2xl"
-                        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+                        animate={{
+                          scale: [1, 1.2, 1],
+                          opacity: [0.3, 0.5, 0.3],
+                        }}
                         transition={{ duration: 3, repeat: Infinity }}
                       />
                       <div className="relative">
                         <div className="flex items-start justify-between mb-3">
-                          <motion.div 
+                          <motion.div
                             className="w-14 h-14 bg-gradient-to-br from-emerald-400 via-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg relative"
-                            whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
+                            whileHover={{
+                              rotate: [0, -10, 10, -10, 0],
+                              scale: 1.1,
+                            }}
                             transition={{ duration: 0.5 }}
                           >
                             <CheckCircle className="w-7 h-7 text-white relative z-10" />
@@ -1061,16 +1094,16 @@ export default function Dashboard() {
                             Quizzes Done
                           </p>
                           <div className="flex items-end gap-2">
-                            <motion.p 
+                            <motion.p
                               className="text-4xl font-black bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 dark:from-emerald-400 dark:via-emerald-500 dark:to-emerald-600 bg-clip-text text-transparent"
                               key={quizzesCompleted}
                               initial={{ scale: 1.5, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
-                              transition={{ type: 'spring', stiffness: 200 }}
+                              transition={{ type: "spring", stiffness: 200 }}
                             >
                               {quizzesCompleted}
                             </motion.p>
-                            <motion.span 
+                            <motion.span
                               className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mb-1.5"
                               initial={{ x: -10, opacity: 0 }}
                               animate={{ x: 0, opacity: 1 }}
@@ -1085,16 +1118,26 @@ export default function Dashboard() {
                   </motion.div>
 
                   {/* Average Score Card */}
-                  <motion.div whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 300 }}>
+                  <motion.div
+                    whileHover={{ y: -4 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
                     <Card className="bg-gradient-to-br from-white via-blue-50/50 to-blue-100/30 dark:from-gray-800 dark:via-blue-900/20 dark:to-blue-900/30 border border-blue-200/60 dark:border-blue-700/40 shadow-xl hover:shadow-2xl transition-all duration-300 p-5 rounded-2xl group relative overflow-hidden">
                       <motion.div
                         className="absolute top-0 right-0 w-20 h-20 bg-blue-400/20 rounded-full blur-2xl"
-                        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-                        transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+                        animate={{
+                          scale: [1, 1.2, 1],
+                          opacity: [0.3, 0.5, 0.3],
+                        }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          delay: 0.5,
+                        }}
                       />
                       <div className="relative">
                         <div className="flex items-start justify-between mb-3">
-                          <motion.div 
+                          <motion.div
                             className="w-14 h-14 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg relative"
                             whileHover={{ rotate: 360, scale: 1.1 }}
                             transition={{ duration: 0.6 }}
@@ -1122,12 +1165,12 @@ export default function Dashboard() {
                             Avg Score
                           </p>
                           <div className="flex items-end gap-1">
-                            <motion.p 
+                            <motion.p
                               className="text-4xl font-black bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 dark:from-blue-400 dark:via-blue-500 dark:to-blue-600 bg-clip-text text-transparent"
                               key={averageScore}
                               initial={{ scale: 1.5, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
-                              transition={{ type: 'spring', stiffness: 200 }}
+                              transition={{ type: "spring", stiffness: 200 }}
                             >
                               {averageScore.toFixed(0)}
                             </motion.p>
@@ -1141,16 +1184,22 @@ export default function Dashboard() {
                   </motion.div>
 
                   {/* Total Points Card */}
-                  <motion.div whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 300 }}>
+                  <motion.div
+                    whileHover={{ y: -4 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
                     <Card className="bg-gradient-to-br from-white via-violet-50/50 to-violet-100/30 dark:from-gray-800 dark:via-violet-900/20 dark:to-violet-900/30 border border-violet-200/60 dark:border-violet-700/40 shadow-xl hover:shadow-2xl transition-all duration-300 p-5 rounded-2xl group relative overflow-hidden">
                       <motion.div
                         className="absolute top-0 right-0 w-20 h-20 bg-violet-400/20 rounded-full blur-2xl"
-                        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+                        animate={{
+                          scale: [1, 1.2, 1],
+                          opacity: [0.3, 0.5, 0.3],
+                        }}
                         transition={{ duration: 3, repeat: Infinity, delay: 1 }}
                       />
                       <div className="relative">
                         <div className="flex items-start justify-between mb-3">
-                          <motion.div 
+                          <motion.div
                             className="w-14 h-14 bg-gradient-to-br from-violet-400 via-violet-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg relative"
                             animate={{ y: [-2, 2, -2] }}
                             transition={{ duration: 2, repeat: Infinity }}
@@ -1179,16 +1228,16 @@ export default function Dashboard() {
                             Total Points
                           </p>
                           <div className="flex items-end gap-2">
-                            <motion.p 
+                            <motion.p
                               className="text-4xl font-black bg-gradient-to-r from-violet-600 via-violet-700 to-violet-800 dark:from-violet-400 dark:via-violet-500 dark:to-violet-600 bg-clip-text text-transparent"
                               key={totalPoints}
                               initial={{ scale: 1.5, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
-                              transition={{ type: 'spring', stiffness: 200 }}
+                              transition={{ type: "spring", stiffness: 200 }}
                             >
                               {totalPoints.toLocaleString()}
                             </motion.p>
-                            <motion.span 
+                            <motion.span
                               className="text-xs text-violet-600 dark:text-violet-400 font-semibold mb-1.5"
                               initial={{ x: -10, opacity: 0 }}
                               animate={{ x: 0, opacity: 1 }}
@@ -1203,16 +1252,26 @@ export default function Dashboard() {
                   </motion.div>
 
                   {/* Streak Card */}
-                  <motion.div whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 300 }}>
+                  <motion.div
+                    whileHover={{ y: -4 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
                     <Card className="bg-gradient-to-br from-white via-orange-50/50 to-red-100/30 dark:from-gray-800 dark:via-orange-900/20 dark:to-red-900/30 border border-orange-200/60 dark:border-orange-700/40 shadow-xl hover:shadow-2xl transition-all duration-300 p-5 rounded-2xl group relative overflow-hidden">
                       <motion.div
                         className="absolute top-0 right-0 w-20 h-20 bg-orange-400/20 rounded-full blur-2xl"
-                        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-                        transition={{ duration: 3, repeat: Infinity, delay: 1.5 }}
+                        animate={{
+                          scale: [1, 1.2, 1],
+                          opacity: [0.3, 0.5, 0.3],
+                        }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          delay: 1.5,
+                        }}
                       />
                       <div className="relative">
                         <div className="flex items-start justify-between mb-3">
-                          <motion.div 
+                          <motion.div
                             className="w-14 h-14 bg-gradient-to-br from-orange-400 via-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg relative"
                             animate={{ rotate: [0, -5, 5, -5, 0] }}
                             transition={{ duration: 2, repeat: Infinity }}
@@ -1221,15 +1280,24 @@ export default function Dashboard() {
                             <Flame className="w-7 h-7 text-white" />
                             {(gamificationStreak || streakCount) > 0 && (
                               <>
-                                <motion.span 
+                                <motion.span
                                   className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-white dark:border-gray-800"
-                                  animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
-                                  transition={{ duration: 1.5, repeat: Infinity }}
+                                  animate={{
+                                    scale: [1, 1.4, 1],
+                                    opacity: [1, 0.6, 1],
+                                  }}
+                                  transition={{
+                                    duration: 1.5,
+                                    repeat: Infinity,
+                                  }}
                                 />
                                 <motion.div
                                   className="absolute inset-0 bg-orange-300 rounded-xl blur-md opacity-0 group-hover:opacity-60"
                                   animate={{ scale: [0.8, 1.3, 0.8] }}
-                                  transition={{ duration: 1.5, repeat: Infinity }}
+                                  transition={{
+                                    duration: 1.5,
+                                    repeat: Infinity,
+                                  }}
                                 />
                               </>
                             )}
@@ -1250,16 +1318,16 @@ export default function Dashboard() {
                             Daily Streak
                           </p>
                           <div className="flex items-end gap-2">
-                            <motion.p 
+                            <motion.p
                               className="text-4xl font-black bg-gradient-to-r from-orange-600 via-red-600 to-red-700 dark:from-orange-400 dark:via-red-500 dark:to-red-600 bg-clip-text text-transparent"
                               key={gamificationStreak || streakCount}
                               initial={{ scale: 1.5, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
-                              transition={{ type: 'spring', stiffness: 200 }}
+                              transition={{ type: "spring", stiffness: 200 }}
                             >
                               {gamificationStreak || streakCount}
                             </motion.p>
-                            <motion.span 
+                            <motion.span
                               className="text-xs text-orange-600 dark:text-orange-400 font-semibold mb-1.5"
                               initial={{ x: -10, opacity: 0 }}
                               animate={{ x: 0, opacity: 1 }}
@@ -1511,7 +1579,8 @@ export default function Dashboard() {
                               <div className="flex items-center gap-3 flex-shrink-0">
                                 <div className="text-right">
                                   <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                    {result.correctAnswers || result.score}/{result.totalQuestions}
+                                    {result.correctAnswers || result.score}/
+                                    {result.totalQuestions}
                                   </p>
                                   <p
                                     className={`text-xs font-semibold ${
@@ -1721,7 +1790,8 @@ export default function Dashboard() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900 dark:text-white">
-                                {result.correctAnswers || 0} / {result.totalQuestions}
+                                {result.correctAnswers || 0} /{" "}
+                                {result.totalQuestions}
                               </div>
                               <div className="text-sm text-gray-500 dark:text-gray-400">
                                 {(result.percentage || 0).toFixed(0)}%
