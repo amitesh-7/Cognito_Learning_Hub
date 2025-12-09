@@ -401,12 +401,13 @@ const Navbar = () => {
 
                 <div className="overflow-hidden">
                   <motion.h1
-                    className="text-base sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-indigo-600 group-hover:to-blue-600 transition-all duration-700 tracking-tight"
+                    className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-indigo-600 group-hover:to-blue-600 transition-all duration-700 tracking-tight whitespace-nowrap"
                     style={{
                       backgroundSize: "200% 200%",
                     }}
                   >
-                    Cognito Learning Hub
+                    <span className="hidden sm:inline">Cognito Learning Hub</span>
+                    <span className="sm:hidden">Cognito</span>
                   </motion.h1>
                   <motion.p
                     className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium hidden sm:block"
@@ -430,7 +431,7 @@ const Navbar = () => {
               {user ? (
                 <>
                   {/* Enhanced Gamification Badges - Real-time data */}
-                  <div className="flex items-center gap-1.5 mr-3">
+                  <div className="hidden xl:flex items-center gap-1.5 mr-3">
                     {/* Level Badge - Enhanced */}
                     <motion.div
                       variants={staggerItem}
@@ -543,7 +544,7 @@ const Navbar = () => {
                         // Direct Link
                         <Link
                           to={group.to}
-                          className={`relative px-3 h-9 text-sm font-semibold rounded-xl transition-all duration-300 group flex items-center justify-center gap-2 ${
+                          className={`relative px-2 lg:px-3 h-9 text-xs lg:text-sm font-semibold rounded-xl transition-all duration-300 group flex items-center justify-center gap-1.5 lg:gap-2 ${
                             location.pathname === group.to
                               ? "text-blue-700 dark:text-blue-300"
                               : "text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
@@ -570,7 +571,7 @@ const Navbar = () => {
                               />
                             )}
                           </motion.div>
-                          <span className="relative z-10 drop-shadow-sm">{group.label}</span>
+                          <span className="relative z-10 drop-shadow-sm hidden lg:inline">{group.label}</span>
                         </Link>
                       ) : (
                         // Dropdown
@@ -580,14 +581,14 @@ const Navbar = () => {
                           onMouseLeave={() => setActiveDropdown(null)}
                         >
                           <button
-                            className={`relative px-3 h-9 text-sm font-semibold rounded-xl transition-all duration-300 group flex items-center justify-center gap-1.5 ${
+                            className={`relative px-2 lg:px-3 h-9 text-xs lg:text-sm font-semibold rounded-xl transition-all duration-300 group flex items-center justify-center gap-1 lg:gap-1.5 ${
                               activeDropdown === index
                                 ? "text-blue-700 dark:text-blue-300 bg-blue-50/50 dark:bg-blue-900/20"
                                 : "text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
                             }`}
                           >
                             <group.icon className="w-4 h-4" />
-                            <span className="drop-shadow-sm">{group.label}</span>
+                            <span className="drop-shadow-sm hidden lg:inline">{group.label}</span>
                             <ChevronDown
                               className={`w-3 h-3 transition-transform duration-300 ${
                                 activeDropdown === index ? "rotate-180" : ""
@@ -698,7 +699,7 @@ const Navbar = () => {
                       onClick={handleLogout}
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
-                      className="ml-2 h-9 px-4 flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold text-sm rounded-xl shadow-lg hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 border border-white/20 relative overflow-hidden group"
+                      className="ml-1 lg:ml-2 h-8 lg:h-9 px-2 lg:px-4 flex items-center justify-center gap-1 lg:gap-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold text-xs lg:text-sm rounded-xl shadow-lg hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 border border-white/20 relative overflow-hidden group"
                     >
                       <motion.div
                         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
