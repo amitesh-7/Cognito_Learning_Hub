@@ -136,13 +136,23 @@ export default function Dashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("📊 AI Insights Full Response:", data);
+        console.log(
+          "📊 AI Insights Full Response:",
+          JSON.stringify(data, null, 2)
+        );
         console.log("📊 Response data.data:", data.data);
-        console.log("📊 Response data.insights:", data.insights);
+        console.log("📊 Response data.data.insights:", data.data?.insights);
 
-        // Handle both response formats
-        const insightsData = data.data || data;
-        console.log("📊 Final insights data:", insightsData);
+        // API returns: { success, message, data: { insights: {...}, cached: bool } }
+        // We need the insights object
+        const insightsData =
+          data.data?.insights || data.insights || data.data || data;
+        console.log(
+          "📊 Final insights data:",
+          JSON.stringify(insightsData, null, 2)
+        );
+        console.log("📊 Has insights data?", insightsData.hasData);
+        console.log("📊 Insights object?", insightsData.insights);
         setAiInsights(insightsData);
       } else {
         console.error(
@@ -150,8 +160,17 @@ export default function Dashboard() {
           response.status,
           response.statusText
         );
-        const errorText = await response.text();
-        console.error("❌ Error response:", errorText);
+        try {
+          const errorText = await response.text();
+          console.error("❌ Error response body:", errorText);
+        } catch (e) {
+          console.error("❌ Could not read error response");
+        }
+        // Set empty insights to show "no data" state
+        setAiInsights({
+          hasData: false,
+          message: "Failed to load insights. Please try again.",
+        });
       }
     } catch (err) {
       console.error("❌ Failed to fetch AI insights:", err);
@@ -904,10 +923,10 @@ export default function Dashboard() {
                           Lv. {currentLevel || 1}
                         </div>
                       </div>
-                      {(gamificationStreak || streakCount) > 0 && (
+                      {streakCount > 0 && (
                         <Badge className="absolute -top-2 -right-2 flex items-center gap-1 bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 shadow-lg animate-pulse z-20">
                           <Flame className="w-3 h-3" />
-                          {gamificationStreak || streakCount}
+                          {streakCount}
                         </Badge>
                       )}
                     </div>
@@ -1369,7 +1388,7 @@ export default function Dashboard() {
                             whileHover={{ scale: 1.1 }}
                           >
                             <Flame className="w-7 h-7 text-white" />
-                            {(gamificationStreak || streakCount) > 0 && (
+                            {streakCount > 0 && (
                               <>
                                 <motion.span
                                   className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-white dark:border-gray-800"
@@ -1393,7 +1412,7 @@ export default function Dashboard() {
                               </>
                             )}
                           </motion.div>
-                          {(gamificationStreak || streakCount) >= 7 && (
+                          {streakCount >= 7 && (
                             <motion.div
                               initial={{ scale: 0 }}
                               animate={{ scale: 1, rotate: [0, 20, -20, 0] }}
@@ -1411,12 +1430,12 @@ export default function Dashboard() {
                           <div className="flex items-end gap-2">
                             <motion.p
                               className="text-4xl font-black bg-gradient-to-r from-orange-600 via-red-600 to-red-700 dark:from-orange-400 dark:via-red-500 dark:to-red-600 bg-clip-text text-transparent"
-                              key={gamificationStreak || streakCount}
+                              key={streakCount}
                               initial={{ scale: 1.5, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
                               transition={{ type: "spring", stiffness: 200 }}
                             >
-                              {gamificationStreak || streakCount}
+                              {streakCount}
                             </motion.p>
                             <motion.span
                               className="text-xs text-orange-600 dark:text-orange-400 font-semibold mb-1.5"
@@ -1854,9 +1873,14 @@ export default function Dashboard() {
                       </thead>
                       <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                         {results.map((result) => {
-                          // Use correctAnswers if available (microservice), otherwise fall back to score
+                          // Calculate correct answers from percentage if correctAnswers is 0 or missing
                           const correctCount =
-                            result.correctAnswers ?? result.score;
+                            result.correctAnswers > 0
+                              ? result.correctAnswers
+                              : Math.round(
+                                  (result.percentage / 100) *
+                                    result.totalQuestions
+                                );
                           const pointsEarned =
                             result.pointsEarned || result.score || 0;
 
