@@ -280,12 +280,12 @@ export default function QuizList() {
               <BookOpen className="w-10 h-10 text-violet-400" />
             </div>
             <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-3">
-              {searchTerm ? "No quizzes found" : "No quizzes available"}
+              {searchTerm || selectedCategory ? "No quizzes found" : "No quizzes available"}
             </h3>
             <p className="text-slate-600 dark:text-slate-300 font-medium">
-              {searchTerm
-                ? "Try searching for something else"
-                : "Ask a teacher to create the first quiz"}
+              {searchTerm || selectedCategory
+                ? "Try adjusting your filters or search to find what you're looking for"
+                : "Be the first to create a quiz or check back soon for new content"}
             </p>
           </motion.div>
         ) : (

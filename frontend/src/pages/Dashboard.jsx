@@ -664,10 +664,15 @@ export default function Dashboard() {
           </div>
 
           {/* Enhanced view mode selector with better visuals */}
-          <div className="flex gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-1.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-lg">
+          <div className="flex gap-1 sm:gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-1.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-lg overflow-x-auto scrollbar-hide">
             <motion.button
-              onClick={() => setViewMode("overview")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+              onClick={() => {
+                setViewMode("overview");
+                console.log("✅ Switched to overview mode");
+              }}
+              aria-label="Overview"
+              aria-pressed={viewMode === "overview"}
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "overview"
                   ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
@@ -681,6 +686,7 @@ export default function Dashboard() {
             <motion.button
               onClick={() => {
                 setViewMode("insights");
+                console.log("✅ Switched to insights mode");
                 // Refresh insights when switching to insights view
                 if (user?._id) {
                   console.log(
@@ -689,7 +695,9 @@ export default function Dashboard() {
                   fetchAIInsights();
                 }
               }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+              aria-label="View AI Insights"
+              aria-pressed={viewMode === "insights"}
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "insights"
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md"
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
@@ -701,8 +709,11 @@ export default function Dashboard() {
               <span className="hidden sm:inline">AI Insights</span>
             </motion.button>
             <motion.button
-              onClick={() => setViewMode("detailed")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+              onClick={() => {
+                setViewMode("detailed");
+                console.log("✅ Switched to detailed mode");
+              }}
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "detailed"
                   ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
@@ -714,8 +725,11 @@ export default function Dashboard() {
               <span className="hidden sm:inline">Details</span>
             </motion.button>
             <motion.button
-              onClick={() => setViewMode("study-buddy")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+              onClick={() => {
+                setViewMode("study-buddy");
+                console.log("✅ Switched to study-buddy mode");
+              }}
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "study-buddy"
                   ? "bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-md"
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
@@ -727,8 +741,11 @@ export default function Dashboard() {
               <span className="hidden sm:inline">Study Buddy</span>
             </motion.button>
             <motion.button
-              onClick={() => setViewMode("goals")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+              onClick={() => {
+                setViewMode("goals");
+                console.log("✅ Switched to goals mode");
+              }}
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "goals"
                   ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md"
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
@@ -740,8 +757,11 @@ export default function Dashboard() {
               <span className="hidden sm:inline">Goals</span>
             </motion.button>
             <motion.button
-              onClick={() => setViewMode("quests")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+              onClick={() => {
+                setViewMode("quests");
+                console.log("✅ Switched to quests mode");
+              }}
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "quests"
                   ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md"
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
@@ -753,8 +773,11 @@ export default function Dashboard() {
               <span className="hidden sm:inline">Quests</span>
             </motion.button>
             <motion.button
-              onClick={() => setViewMode("world-events")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+              onClick={() => {
+                setViewMode("world-events");
+                console.log("✅ Switched to world-events mode");
+              }}
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "world-events"
                   ? "bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-md"
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
@@ -766,8 +789,11 @@ export default function Dashboard() {
               <span className="hidden sm:inline">World Events</span>
             </motion.button>
             <motion.button
-              onClick={() => setViewMode("time-travel")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+              onClick={() => {
+                setViewMode("time-travel");
+                console.log("✅ Switched to time-travel mode");
+              }}
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "time-travel"
                   ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md"
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
