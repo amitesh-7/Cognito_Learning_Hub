@@ -21,7 +21,7 @@ if (!apiKey) {
 // Initialize Google Gemini AI
 const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({
-  model: process.env.GEMINI_MODEL || "gemini-3-pro-preview",
+  model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
 });
 
 /**

@@ -124,7 +124,7 @@ async function processTopicGeneration(job, data) {
     generationMetadata: {
       method: "ai-topic",
       prompt: topic,
-      model: process.env.GEMINI_MODEL || "gemini-3-pro-preview",
+      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
       wasAdaptive: useAdaptive,
       generatedAt: new Date(),
       generationTime: aiResult.generationTime,
@@ -191,7 +191,7 @@ async function processFileGeneration(job, data) {
     generationMetadata: {
       method: "ai-file",
       sourceFile: fileName,
-      model: process.env.GEMINI_MODEL || "gemini-3-pro-preview",
+      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
       wasAdaptive: useAdaptive,
       generatedAt: new Date(),
       generationTime: aiResult.generationTime,

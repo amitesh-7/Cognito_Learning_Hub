@@ -7,7 +7,7 @@ class AIStudyBuddyService {
   constructor() {
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     this.model = this.genAI.getGenerativeModel({
-      model: process.env.AI_MODEL || "gemini-3-pro-preview",
+      model: process.env.AI_MODEL || "gemini-2.5-flash",
     });
     this.conversationCache = new Map();
   }
