@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const AdvancedQuestion = require("../models/AdvancedQuestion");
 const reasoningEvaluator = require("../services/reasoningEvaluator");
-const codeExecutor = require("../services/codeExecutor");
+const codeExecutor = require("../services/secureCodeExecutor");
 
 /**
  * @route   POST /api/advanced-questions

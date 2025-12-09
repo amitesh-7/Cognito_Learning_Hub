@@ -1653,12 +1653,12 @@ export default function AchievementDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 relative overflow-hidden py-8 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 dark:from-slate-900 dark:via-violet-950/30 dark:to-fuchsia-950/30 relative overflow-hidden py-8 px-4 sm:px-6">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-20 w-96 h-96 bg-violet-400/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-20 right-20 w-96 h-96 bg-violet-400/10 dark:bg-violet-500/5 rounded-full blur-3xl animate-pulse" />
         <div
-          className="absolute bottom-20 left-20 w-96 h-96 bg-fuchsia-400/10 rounded-full blur-3xl animate-pulse"
+          className="absolute bottom-20 left-20 w-96 h-96 bg-fuchsia-400/10 dark:bg-fuchsia-500/5 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "1s" }}
         />
       </div>
@@ -1683,37 +1683,37 @@ export default function AchievementDashboard() {
             <motion.button
               onClick={refreshData}
               disabled={gamificationLoading}
-              className="p-3 bg-white/70 backdrop-blur-xl border-2 border-white/80 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50"
+              className="p-3 bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl border-2 border-white/80 dark:border-slate-700/80 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-50"
               whileHover={{ rotate: 180 }}
               whileTap={{ scale: 0.9 }}
               title="Refresh real-time stats"
             >
               <RefreshCw
-                className={`w-6 h-6 text-violet-600 ${
+                className={`w-6 h-6 text-violet-600 dark:text-violet-400 ${
                   gamificationLoading ? "animate-spin" : ""
                 }`}
               />
             </motion.button>
           </div>
-          <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-slate-900 via-violet-700 to-fuchsia-600 bg-clip-text text-transparent drop-shadow-lg mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-slate-900 via-violet-700 to-fuchsia-600 dark:from-white dark:via-violet-300 dark:to-fuchsia-400 bg-clip-text text-transparent drop-shadow-lg mb-4">
             Achievements & Stats
           </h1>
-          <p className="text-xl font-bold text-slate-700 tracking-wide">
+          <p className="text-base sm:text-xl font-bold text-slate-700 dark:text-slate-300 tracking-wide">
             Track your{" "}
-            <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
               learning journey
             </span>{" "}
             and unlock rewards ✨
           </p>
           {/* Real-time indicator */}
           <motion.div
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100/80 rounded-full border border-green-200"
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100/80 dark:bg-green-900/50 rounded-full border border-green-200 dark:border-green-700"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-sm font-medium text-green-700">
+            <span className="text-sm font-medium text-green-700 dark:text-green-400">
               Real-time updates active
             </span>
           </motion.div>
@@ -1726,10 +1726,10 @@ export default function AchievementDashboard() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500" />
-          <div className="relative bg-white/70 backdrop-blur-2xl border-2 border-white/80 rounded-3xl p-8 shadow-xl hover:shadow-2xl hover:shadow-violet-500/30 transition-all duration-500 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/20 to-purple-500/20 dark:from-violet-500/10 dark:to-purple-500/10 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500" />
+          <div className="relative bg-white/70 dark:bg-slate-800/70 backdrop-blur-2xl border-2 border-white/80 dark:border-slate-700/80 rounded-3xl p-4 sm:p-8 shadow-xl hover:shadow-2xl hover:shadow-violet-500/30 transition-all duration-500 overflow-hidden">
             {/* Animated orb */}
-            <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-violet-400/30 to-purple-500/30 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-violet-400/30 to-purple-500/30 dark:from-violet-500/20 dark:to-purple-600/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
 
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
