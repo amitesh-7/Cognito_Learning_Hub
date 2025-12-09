@@ -137,7 +137,9 @@ class AchievementProcessor {
    * Check special achievements
    */
   checkSpecialAchievement(criteria, userStats) {
-    if (criteria.target) {
+    if (!criteria || !criteria.target) {
+      return false;
+    }
       // Could be points, level, or other special metrics
       if (criteria.type === 'points') {
         return userStats.totalPoints >= criteria.target;

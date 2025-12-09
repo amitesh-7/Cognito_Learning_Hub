@@ -39,7 +39,7 @@ const AvatarCustomizationSchema = new mongoose.Schema({
   // Accessories (unlockable through achievements)
   glasses: {
     type: String,
-    enum: ["none", "round", "square", "aviator", "cat-eye", "sports", "nerd", "futuristic"],
+    enum: ["none", "true", "round", "square", "aviator", "cat-eye", "sports", "nerd", "futuristic"],
     default: "none",
   },
   hat: {
