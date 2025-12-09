@@ -38,6 +38,9 @@ import { cn, fadeInUp, staggerContainer, staggerItem } from "../lib/utils";
 import ReportModal from "../components/ReportModal";
 import TextToSpeech from "../components/TextToSpeech";
 import { useGamification } from "../context/GamificationContext";
+import CodeQuestion from "../components/AdvancedQuestions/CodeQuestion";
+import ReasoningQuestion from "../components/AdvancedQuestions/ReasoningQuestion";
+import ScenarioQuestion from "../components/AdvancedQuestions/ScenarioQuestion";
 
 export default function QuizTaker() {
   const { quizId } = useParams();
@@ -64,6 +67,10 @@ export default function QuizTaker() {
   const hasSubmittedRef = useRef(false);
 
   const [showReportModal, setShowReportModal] = useState(false);
+
+  // Advanced question states
+  const [advancedAnswerData, setAdvancedAnswerData] = useState(null);
+  const [isSubmittingAdvanced, setIsSubmittingAdvanced] = useState(false);
 
   // Sound effects
   const correctSound = new Audio("/sounds/correct.mp3");
@@ -227,9 +234,14 @@ export default function QuizTaker() {
     }
   }, [isFinished, quiz, score, questionResults, refreshData, success]);
 
-  // Timer logic
+  // Timer logic - skip for advanced questions
   useEffect(() => {
-    if (!selectedAnswer && !isFinished && quiz) {
+    const currentQuestion = quiz?.questions[currentQuestionIndex];
+    const isAdvanced =
+      currentQuestion?.type &&
+      ["code", "reasoning", "scenario"].includes(currentQuestion.type);
+
+    if (!selectedAnswer && !isFinished && quiz && !isAdvanced) {
       const timer = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
@@ -243,6 +255,65 @@ export default function QuizTaker() {
       return () => clearInterval(timer);
     }
   }, [currentQuestionIndex, selectedAnswer, isFinished, quiz]);
+
+  // Handle advanced question submission
+  const handleAdvancedSubmit = async (answerData) => {
+    setIsSubmittingAdvanced(true);
+    const currentQuestion = quiz.questions[currentQuestionIndex];
+    const timeTaken = (Date.now() - questionStartTime) / 1000;
+
+    try {
+      // For code questions, check if tests passed
+      let isCorrect = false;
+      if (currentQuestion.type === "code") {
+        const testResults = answerData.testResults || [];
+        isCorrect =
+          testResults.length > 0 && testResults.every((r) => r.passed);
+      } else if (currentQuestion.type === "reasoning") {
+        // Reasoning questions get partial credit based on AI evaluation
+        isCorrect = answerData.answer === currentQuestion.correctAnswer;
+      } else if (currentQuestion.type === "scenario") {
+        // Scenario questions are evaluated based on completion
+        isCorrect =
+          answerData.decisionHistory.length >=
+          (currentQuestion.scenarioConfig?.minPhases || 1);
+      }
+
+      // Track this question result
+      setQuestionResults((prev) => [
+        ...prev,
+        {
+          questionId: currentQuestion._id,
+          questionText: currentQuestion.question,
+          userAnswer: answerData,
+          correctAnswer: currentQuestion.correctAnswer,
+          isCorrect: isCorrect,
+          timeTaken: timeTaken,
+          type: currentQuestion.type,
+        },
+      ]);
+
+      setAdvancedAnswerData(answerData);
+      setSelectedAnswer(true); // Mark as answered
+
+      if (isCorrect) {
+        setScore((prev) => prev + 1);
+        correctSound.play();
+      } else {
+        incorrectSound.play();
+      }
+
+      // Auto-proceed after a short delay
+      setTimeout(() => {
+        handleNextQuestion();
+      }, 1500);
+    } catch (error) {
+      console.error("Error submitting advanced question:", error);
+      showError("Failed to submit answer. Please try again.");
+    } finally {
+      setIsSubmittingAdvanced(false);
+    }
+  };
 
   const handleAnswerSelect = (option) => {
     if (selectedAnswer) return;
@@ -279,6 +350,7 @@ export default function QuizTaker() {
     if (currentQuestionIndex < quiz.questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
       setSelectedAnswer(null);
+      setAdvancedAnswerData(null);
       setTimeLeft(30); // Reset timer
       setQuestionStartTime(Date.now()); // Reset question start time
     } else {
@@ -289,6 +361,7 @@ export default function QuizTaker() {
   const restartQuiz = () => {
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
+    setAdvancedAnswerData(null);
     setScore(0);
     setIsFinished(false);
     setTimeLeft(30);
@@ -626,90 +699,115 @@ export default function QuizTaker() {
                 </div>
               </CardHeader>
               <CardContent className="p-8">
-                <motion.div
-                  className="grid gap-4"
-                  variants={staggerContainer}
-                  initial="initial"
-                  animate="animate"
-                >
-                  {currentQuestion.options.map((option, index) => {
-                    const isCorrect = option === currentQuestion.correct_answer;
-                    const isSelected = option === selectedAnswer;
-                    const showResult = !!selectedAnswer;
+                {/* Render advanced question components if type is code, reasoning, or scenario */}
+                {currentQuestion.type === "code" ? (
+                  <CodeQuestion
+                    question={currentQuestion}
+                    onSubmit={handleAdvancedSubmit}
+                    isSubmitting={isSubmittingAdvanced}
+                  />
+                ) : currentQuestion.type === "reasoning" ? (
+                  <ReasoningQuestion
+                    question={currentQuestion}
+                    onSubmit={handleAdvancedSubmit}
+                    isSubmitting={isSubmittingAdvanced}
+                  />
+                ) : currentQuestion.type === "scenario" ? (
+                  <ScenarioQuestion
+                    question={currentQuestion}
+                    onSubmit={handleAdvancedSubmit}
+                    isSubmitting={isSubmittingAdvanced}
+                  />
+                ) : (
+                  /* Standard MCQ rendering */
+                  <>
+                    <motion.div
+                      className="grid gap-4"
+                      variants={staggerContainer}
+                      initial="initial"
+                      animate="animate"
+                    >
+                      {currentQuestion.options.map((option, index) => {
+                        const isCorrect =
+                          option === currentQuestion.correct_answer;
+                        const isSelected = option === selectedAnswer;
+                        const showResult = !!selectedAnswer;
 
-                    let buttonClass =
-                      "h-auto p-6 text-left justify-start text-lg font-medium transition-all duration-300 transform hover:scale-105";
+                        let buttonClass =
+                          "h-auto p-6 text-left justify-start text-lg font-medium transition-all duration-300 transform hover:scale-105";
 
-                    if (showResult) {
-                      if (isCorrect) {
-                        buttonClass +=
-                          " border-green-500 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 text-green-800 dark:text-green-200 shadow-lg";
-                      } else if (isSelected) {
-                        buttonClass +=
-                          " border-red-500 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900 dark:to-pink-900 text-red-800 dark:text-red-200 shadow-lg";
-                      } else {
-                        buttonClass +=
-                          " opacity-60 bg-gray-50 dark:bg-gray-700";
-                      }
-                    } else {
-                      buttonClass +=
-                        " border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900 hover:shadow-lg";
-                    }
+                        if (showResult) {
+                          if (isCorrect) {
+                            buttonClass +=
+                              " border-green-500 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 text-green-800 dark:text-green-200 shadow-lg";
+                          } else if (isSelected) {
+                            buttonClass +=
+                              " border-red-500 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900 dark:to-pink-900 text-red-800 dark:text-red-200 shadow-lg";
+                          } else {
+                            buttonClass +=
+                              " opacity-60 bg-gray-50 dark:bg-gray-700";
+                          }
+                        } else {
+                          buttonClass +=
+                            " border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900 hover:shadow-lg";
+                        }
 
-                    return (
-                      <motion.div key={index} variants={staggerItem}>
+                        return (
+                          <motion.div key={index} variants={staggerItem}>
+                            <Button
+                              variant="outline"
+                              onClick={() => handleAnswerSelect(option)}
+                              disabled={!!selectedAnswer}
+                              className={cn(buttonClass, "relative group")}
+                              size="lg"
+                            >
+                              <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center gap-3">
+                                  <span className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-sm font-bold">
+                                    {String.fromCharCode(65 + index)}
+                                  </span>
+                                  <span className="text-base">{option}</span>
+                                </div>
+                                {showResult && isCorrect && (
+                                  <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                )}
+                                {showResult && !isCorrect && isSelected && (
+                                  <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                                )}
+                              </div>
+                            </Button>
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
+
+                    {selectedAnswer && (
+                      <motion.div
+                        className="flex justify-center mt-8"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                      >
                         <Button
-                          variant="outline"
-                          onClick={() => handleAnswerSelect(option)}
-                          disabled={!!selectedAnswer}
-                          className={cn(buttonClass, "relative group")}
+                          onClick={handleNextQuestion}
                           size="lg"
+                          className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg group"
                         >
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-3">
-                              <span className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-sm font-bold">
-                                {String.fromCharCode(65 + index)}
-                              </span>
-                              <span className="text-base">{option}</span>
-                            </div>
-                            {showResult && isCorrect && (
-                              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-                            )}
-                            {showResult && !isCorrect && isSelected && (
-                              <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
-                            )}
-                          </div>
+                          {currentQuestionIndex < quiz.questions.length - 1 ? (
+                            <>
+                              Next Question
+                              <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                            </>
+                          ) : (
+                            <>
+                              Finish Quiz
+                              <Trophy className="w-5 h-5 ml-2" />
+                            </>
+                          )}
                         </Button>
                       </motion.div>
-                    );
-                  })}
-                </motion.div>
-
-                {selectedAnswer && (
-                  <motion.div
-                    className="flex justify-center mt-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <Button
-                      onClick={handleNextQuestion}
-                      size="lg"
-                      className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg group"
-                    >
-                      {currentQuestionIndex < quiz.questions.length - 1 ? (
-                        <>
-                          Next Question
-                          <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                        </>
-                      ) : (
-                        <>
-                          Finish Quiz
-                          <Trophy className="w-5 h-5 ml-2" />
-                        </>
-                      )}
-                    </Button>
-                  </motion.div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>

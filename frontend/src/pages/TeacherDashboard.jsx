@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useContext } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
+import AdvancedQuestionCreator from "../components/Teacher/AdvancedQuestionCreator";
 import {
   BarChart,
   Bar,
@@ -114,6 +115,7 @@ export default function TeacherDashboard() {
   const [sortBy, setSortBy] = useState("createdAt");
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState("overview"); // 'overview', 'detailed'
+  const [showAdvancedCreator, setShowAdvancedCreator] = useState(false);
 
   // Redirect non-teachers to student dashboard (only after auth is loaded)
   if (!authLoading && user && user.role !== "Teacher") {
@@ -385,16 +387,36 @@ export default function TeacherDashboard() {
                 </div>
 
                 {/* Primary CTA with animated gradient */}
-                <Link to="/quiz-maker">
+                <div className="flex gap-3">
+                  <Link to="/quiz-maker">
+                    <motion.button
+                      className="relative px-6 py-3 rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white font-semibold shadow-lg shadow-green-500/50 overflow-hidden group"
+                      whileHover={{ scale: 1.05, rotate: 1 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <span className="absolute inset-0 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <span className="relative flex items-center gap-2">
+                        <Plus className="w-5 h-5" />
+                        Create Quiz
+                      </span>
+                      <motion.div
+                        className="absolute inset-0 bg-white/20"
+                        initial={{ x: "-100%" }}
+                        whileHover={{ x: "100%" }}
+                        transition={{ duration: 0.6 }}
+                      />
+                    </motion.button>
+                  </Link>
                   <motion.button
-                    className="relative px-6 py-3 rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white font-semibold shadow-lg shadow-green-500/50 overflow-hidden group"
-                    whileHover={{ scale: 1.05, rotate: 1 }}
+                    onClick={() => setShowAdvancedCreator(true)}
+                    className="relative px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white font-semibold shadow-lg shadow-purple-500/50 overflow-hidden group"
+                    whileHover={{ scale: 1.05, rotate: -1 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <span className="absolute inset-0 bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <span className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <span className="relative flex items-center gap-2">
                       <Plus className="w-5 h-5" />
-                      Create Quiz
+                      Advanced Quiz
                     </span>
                     <motion.div
                       className="absolute inset-0 bg-white/20"
@@ -403,7 +425,7 @@ export default function TeacherDashboard() {
                       transition={{ duration: 0.6 }}
                     />
                   </motion.button>
-                </Link>
+                </div>
               </motion.div>
             </div>
           </div>
@@ -1281,6 +1303,83 @@ export default function TeacherDashboard() {
             exit={{ y: 20, opacity: 0 }}
           >
             Link Copied! ✅
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Advanced Question Creator Modal */}
+      <AnimatePresence>
+        {showAdvancedCreator && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowAdvancedCreator(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl"
+            >
+              <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white z-10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold">
+                      Create Advanced Question
+                    </h2>
+                    <p className="text-purple-100 mt-1">
+                      Code, Reasoning, or Scenario questions
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowAdvancedCreator(false)}
+                    className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+              <div className="p-6">
+                <AdvancedQuestionCreator
+                  onQuestionCreated={async (question) => {
+                    try {
+                      const token = localStorage.getItem("quizwise-token");
+                      const response = await fetch(
+                        `${
+                          import.meta.env.VITE_API_URL
+                        }/api/advanced-questions/create`,
+                        {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            "x-auth-token": token,
+                          },
+                          body: JSON.stringify(question),
+                        }
+                      );
+
+                      if (response.ok) {
+                        alert("Advanced question created successfully! 🎉");
+                        setShowAdvancedCreator(false);
+                      } else {
+                        const error = await response.json();
+                        alert(
+                          `Error: ${
+                            error.message || "Failed to create question"
+                          }`
+                        );
+                      }
+                    } catch (error) {
+                      console.error("Error creating question:", error);
+                      alert("Failed to create question. Please try again.");
+                    }
+                  }}
+                />
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

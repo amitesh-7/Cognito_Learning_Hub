@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthContext } from "../context/AuthContext";
 import {
@@ -19,6 +19,7 @@ import {
   Download,
   RotateCcw,
   Home,
+  MessageCircle,
 } from "lucide-react";
 import {
   Card,
@@ -138,10 +139,22 @@ export default function QuizResultDetail() {
     );
   }
 
-  const percentage = result.percentage || Math.round((result.score / result.totalQuestions) * 100);
+  const percentage =
+    result.percentage ||
+    Math.round((result.score / result.totalQuestions) * 100);
   const passed = percentage >= 60;
   const isPerfect = result.score === result.totalQuestions;
-  const rank = result.rank || (percentage >= 90 ? "A+" : percentage >= 80 ? "A" : percentage >= 70 ? "B+" : percentage >= 60 ? "B" : "C");
+  const rank =
+    result.rank ||
+    (percentage >= 90
+      ? "A+"
+      : percentage >= 80
+      ? "A"
+      : percentage >= 70
+      ? "B+"
+      : percentage >= 60
+      ? "B"
+      : "C");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-violet-950 p-6">
@@ -165,8 +178,18 @@ export default function QuizResultDetail() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <Card className={`mb-8 overflow-hidden border-2 ${passed ? "border-green-200" : "border-red-200"}`}>
-            <div className={`h-2 bg-gradient-to-r ${passed ? "from-green-400 to-emerald-500" : "from-red-400 to-rose-500"}`} />
+          <Card
+            className={`mb-8 overflow-hidden border-2 ${
+              passed ? "border-green-200" : "border-red-200"
+            }`}
+          >
+            <div
+              className={`h-2 bg-gradient-to-r ${
+                passed
+                  ? "from-green-400 to-emerald-500"
+                  : "from-red-400 to-rose-500"
+              }`}
+            />
             <CardContent className="p-8">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                 {/* Quiz Info */}
@@ -182,10 +205,16 @@ export default function QuizResultDetail() {
 
                 {/* Score Circle */}
                 <div className="relative">
-                  <div className={`w-32 h-32 rounded-full bg-gradient-to-br ${getRankColor(rank)} flex items-center justify-center shadow-2xl`}>
+                  <div
+                    className={`w-32 h-32 rounded-full bg-gradient-to-br ${getRankColor(
+                      rank
+                    )} flex items-center justify-center shadow-2xl`}
+                  >
                     <div className="text-center text-white">
                       <div className="text-4xl font-bold">{percentage}%</div>
-                      <div className="text-sm opacity-80">{getRankEmoji(rank)} {rank}</div>
+                      <div className="text-sm opacity-80">
+                        {getRankEmoji(rank)} {rank}
+                      </div>
                     </div>
                   </div>
                   {isPerfect && (
@@ -212,21 +241,27 @@ export default function QuizResultDetail() {
                   <div className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-xl">
                     <div className="flex items-center justify-center gap-1 text-red-600 mb-1">
                       <XCircle className="w-5 h-5" />
-                      <span className="text-2xl font-bold">{result.totalQuestions - result.score}</span>
+                      <span className="text-2xl font-bold">
+                        {result.totalQuestions - result.score}
+                      </span>
                     </div>
                     <p className="text-sm text-gray-500">Wrong</p>
                   </div>
                   <div className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-xl">
                     <div className="flex items-center justify-center gap-1 text-blue-600 mb-1">
                       <Timer className="w-5 h-5" />
-                      <span className="text-2xl font-bold">{formatTime(result.totalTimeTaken)}</span>
+                      <span className="text-2xl font-bold">
+                        {formatTime(result.totalTimeTaken)}
+                      </span>
                     </div>
                     <p className="text-sm text-gray-500">Total Time</p>
                   </div>
                   <div className="text-center p-4 bg-white/50 dark:bg-gray-800/50 rounded-xl">
                     <div className="flex items-center justify-center gap-1 text-amber-600 mb-1">
                       <Star className="w-5 h-5" />
-                      <span className="text-2xl font-bold">+{result.experienceGained || 0}</span>
+                      <span className="text-2xl font-bold">
+                        +{result.experienceGained || 0}
+                      </span>
                     </div>
                     <p className="text-sm text-gray-500">XP Earned</p>
                   </div>
@@ -246,7 +281,11 @@ export default function QuizResultDetail() {
           <Button
             variant={activeTab === "overview" ? "default" : "outline"}
             onClick={() => setActiveTab("overview")}
-            className={activeTab === "overview" ? "bg-violet-600 hover:bg-violet-700" : ""}
+            className={
+              activeTab === "overview"
+                ? "bg-violet-600 hover:bg-violet-700"
+                : ""
+            }
           >
             <BarChart3 className="w-4 h-4 mr-2" />
             Overview
@@ -254,7 +293,11 @@ export default function QuizResultDetail() {
           <Button
             variant={activeTab === "questions" ? "default" : "outline"}
             onClick={() => setActiveTab("questions")}
-            className={activeTab === "questions" ? "bg-violet-600 hover:bg-violet-700" : ""}
+            className={
+              activeTab === "questions"
+                ? "bg-violet-600 hover:bg-violet-700"
+                : ""
+            }
           >
             <Target className="w-4 h-4 mr-2" />
             All Questions ({result.totalQuestions})
@@ -282,7 +325,9 @@ export default function QuizResultDetail() {
                 <CardContent className="space-y-6">
                   <div>
                     <div className="flex justify-between mb-2">
-                      <span className="text-gray-600 dark:text-gray-400">Accuracy</span>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Accuracy
+                      </span>
                       <span className="font-semibold">{percentage}%</span>
                     </div>
                     <Progress value={percentage} className="h-3" />
@@ -296,7 +341,9 @@ export default function QuizResultDetail() {
                           <p className="text-2xl font-bold text-green-700 dark:text-green-400">
                             {result.score}
                           </p>
-                          <p className="text-sm text-green-600">Correct Answers</p>
+                          <p className="text-sm text-green-600">
+                            Correct Answers
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -308,7 +355,9 @@ export default function QuizResultDetail() {
                           <p className="text-2xl font-bold text-red-700 dark:text-red-400">
                             {result.totalQuestions - result.score}
                           </p>
-                          <p className="text-sm text-red-600">Incorrect Answers</p>
+                          <p className="text-sm text-red-600">
+                            Incorrect Answers
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -320,7 +369,9 @@ export default function QuizResultDetail() {
                           <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">
                             {formatTime(result.averageTimePerQuestion)}
                           </p>
-                          <p className="text-sm text-blue-600">Avg per Question</p>
+                          <p className="text-sm text-blue-600">
+                            Avg per Question
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -334,6 +385,23 @@ export default function QuizResultDetail() {
                   <Button className="gap-2 bg-violet-600 hover:bg-violet-700">
                     <RotateCcw className="w-4 h-4" />
                     Retry Quiz
+                  </Button>
+                </Link>
+                <Link
+                  to="/dashboard"
+                  state={{
+                    openStudyBuddy: true,
+                    quizContext: {
+                      quizTitle: result.quiz?.title,
+                      score: result.score,
+                      totalQuestions: result.totalQuestions,
+                      percentage,
+                    },
+                  }}
+                >
+                  <Button className="gap-2 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white">
+                    <MessageCircle className="w-4 h-4" />
+                    Ask Study Buddy
                   </Button>
                 </Link>
                 <Link to="/quizzes">
@@ -366,11 +434,21 @@ export default function QuizResultDetail() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <Card className={`border-2 ${qr.isCorrect ? "border-green-200 bg-green-50/50" : "border-red-200 bg-red-50/50"}`}>
+                    <Card
+                      className={`border-2 ${
+                        qr.isCorrect
+                          ? "border-green-200 bg-green-50/50"
+                          : "border-red-200 bg-red-50/50"
+                      }`}
+                    >
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
                           {/* Question Number */}
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${qr.isCorrect ? "bg-green-500" : "bg-red-500"}`}>
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
+                              qr.isCorrect ? "bg-green-500" : "bg-red-500"
+                            }`}
+                          >
                             {index + 1}
                           </div>
 
@@ -384,21 +462,34 @@ export default function QuizResultDetail() {
                             <div className="grid gap-2 mb-4">
                               {qr.options?.map((option, optIndex) => {
                                 const isUserAnswer = option === qr.userAnswer;
-                                const isCorrectAnswer = option === qr.correctAnswer;
-                                let optionClass = "p-3 rounded-lg border-2 transition-all ";
+                                const isCorrectAnswer =
+                                  option === qr.correctAnswer;
+                                let optionClass =
+                                  "p-3 rounded-lg border-2 transition-all ";
 
                                 if (isCorrectAnswer) {
-                                  optionClass += "border-green-400 bg-green-100 dark:bg-green-900/30";
+                                  optionClass +=
+                                    "border-green-400 bg-green-100 dark:bg-green-900/30";
                                 } else if (isUserAnswer && !qr.isCorrect) {
-                                  optionClass += "border-red-400 bg-red-100 dark:bg-red-900/30";
+                                  optionClass +=
+                                    "border-red-400 bg-red-100 dark:bg-red-900/30";
                                 } else {
-                                  optionClass += "border-gray-200 bg-white dark:bg-gray-800";
+                                  optionClass +=
+                                    "border-gray-200 bg-white dark:bg-gray-800";
                                 }
 
                                 return (
                                   <div key={optIndex} className={optionClass}>
                                     <div className="flex items-center justify-between">
-                                      <span className={isCorrectAnswer ? "font-semibold text-green-700 dark:text-green-400" : isUserAnswer && !qr.isCorrect ? "text-red-700 dark:text-red-400" : ""}>
+                                      <span
+                                        className={
+                                          isCorrectAnswer
+                                            ? "font-semibold text-green-700 dark:text-green-400"
+                                            : isUserAnswer && !qr.isCorrect
+                                            ? "text-red-700 dark:text-red-400"
+                                            : ""
+                                        }
+                                      >
                                         {option}
                                       </span>
                                       <div className="flex items-center gap-2">
@@ -409,7 +500,13 @@ export default function QuizResultDetail() {
                                           </Badge>
                                         )}
                                         {isUserAnswer && (
-                                          <Badge className={qr.isCorrect ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                                          <Badge
+                                            className={
+                                              qr.isCorrect
+                                                ? "bg-green-100 text-green-800"
+                                                : "bg-red-100 text-red-800"
+                                            }
+                                          >
                                             Your Answer
                                           </Badge>
                                         )}
@@ -426,7 +523,13 @@ export default function QuizResultDetail() {
                                 <Timer className="w-4 h-4" />
                                 Time: {formatTime(qr.timeTaken)}
                               </span>
-                              <span className={`flex items-center gap-1 ${qr.isCorrect ? "text-green-600" : "text-red-600"}`}>
+                              <span
+                                className={`flex items-center gap-1 ${
+                                  qr.isCorrect
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }`}
+                              >
                                 {qr.isCorrect ? (
                                   <>
                                     <CheckCircle className="w-4 h-4" />
@@ -453,7 +556,8 @@ export default function QuizResultDetail() {
                     Detailed Results Not Available
                   </h3>
                   <p className="text-gray-500">
-                    Question-by-question breakdown is only available for quizzes taken after the latest update.
+                    Question-by-question breakdown is only available for quizzes
+                    taken after the latest update.
                   </p>
                 </Card>
               )}

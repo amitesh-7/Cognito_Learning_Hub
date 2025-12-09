@@ -1,0 +1,41 @@
+# Multi-language Code Execution Container
+FROM ubuntu:22.04
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install all required languages and compilers
+RUN apt-get update && apt-get install -y \
+    # Node.js
+    nodejs npm \
+    # Python
+    python3 python3-pip \
+    # Java
+    openjdk-17-jdk \
+    # C/C++
+    gcc g++ \
+    # Utilities
+    time \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create execution directory
+WORKDIR /sandbox
+
+# Create non-root user for safer execution
+RUN useradd -m -u 1000 sandboxuser && \
+    chown -R sandboxuser:sandboxuser /sandbox
+
+# Switch to non-root user
+USER sandboxuser
+
+# Set resource limits via ulimit (will be overridden by docker run)
+# These are backup limits if docker run doesn't specify them
+
+# Disable network access (will be enforced at docker run level)
+# ENV NO_PROXY=*
+
+# Entry point script
+COPY --chown=sandboxuser:sandboxuser docker-entrypoint.sh /sandbox/
+RUN chmod +x /sandbox/docker-entrypoint.sh
+
+ENTRYPOINT ["/sandbox/docker-entrypoint.sh"]
