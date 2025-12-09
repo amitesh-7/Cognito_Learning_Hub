@@ -46,6 +46,18 @@ const AvatarDashboard = () => {
     fetchAvatar();
   }, []);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (showCreateModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCreateModal]);
+
   // Create new avatar
   const handleCreateAvatar = async () => {
     if (!newAvatarName.trim()) return;
@@ -214,53 +226,53 @@ const AvatarDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-indigo-900">
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-8 gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
               My Learning Avatar
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
               Customize, evolve, and learn with your AI companion
             </p>
           </div>
 
           {/* Avatar Toggle */}
-          <div className="mt-4 md:mt-0 flex items-center gap-3">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-2 sm:gap-3 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm px-3 py-2 rounded-xl">
+            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
               Avatar Active
             </span>
             <motion.button
               onClick={() => setIsAvatarEnabled(!isAvatarEnabled)}
-              className={`relative w-14 h-7 rounded-full transition-colors ${
+              className={`relative w-11 sm:w-14 h-6 sm:h-7 rounded-full transition-colors flex-shrink-0 ${
                 isAvatarEnabled ? "bg-indigo-500" : "bg-gray-300 dark:bg-gray-600"
               }`}
             >
               <motion.div
-                className="absolute top-1 w-5 h-5 bg-white rounded-full shadow-md"
-                animate={{ left: isAvatarEnabled ? "calc(100% - 24px)" : "4px" }}
+                className="absolute top-1 w-4 h-4 sm:w-5 sm:h-5 bg-white rounded-full shadow-md"
+                animate={{ left: isAvatarEnabled ? "calc(100% - 20px)" : "4px" }}
               />
             </motion.button>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex overflow-x-auto pb-2 mb-6 gap-2">
+        <div className="flex overflow-x-auto pb-2 mb-4 sm:mb-6 gap-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
           {tabs.map((tab) => (
             <motion.button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg whitespace-nowrap transition-colors text-sm sm:text-base flex-shrink-0 ${
                 activeTab === tab.id
-                  ? "bg-indigo-500 text-white"
+                  ? "bg-indigo-500 text-white shadow-lg"
                   : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
+              <tab.icon className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden xs:inline sm:inline">{tab.label}</span>
             </motion.button>
           ))}
         </div>
@@ -276,9 +288,9 @@ const AvatarDashboard = () => {
           >
             {/* Overview Tab */}
             {activeTab === "overview" && (
-              <div className="grid lg:grid-cols-2 gap-8">
+              <div className="grid lg:grid-cols-2 gap-4 sm:gap-8">
                 {/* Avatar Display */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-8">
                   <div className="flex flex-col items-center">
                     <LearningAvatar
                       size="large"
@@ -308,9 +320,9 @@ const AvatarDashboard = () => {
                 </div>
 
                 {/* Stats */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Quick Stats */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     {[
                       {
                         label: "Total XP",
@@ -339,15 +351,15 @@ const AvatarDashboard = () => {
                     ].map((stat) => (
                       <div
                         key={stat.label}
-                        className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg"
+                        className="bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 shadow-lg"
                       >
-                        <div className="flex items-center gap-3">
-                          <stat.icon className={`w-8 h-8 ${stat.color}`} />
-                          <div>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <stat.icon className={`w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 ${stat.color}`} />
+                          <div className="min-w-0">
+                            <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
                               {stat.value}
                             </p>
-                            <p className="text-sm text-gray-500">{stat.label}</p>
+                            <p className="text-xs sm:text-sm text-gray-500 truncate">{stat.label}</p>
                           </div>
                         </div>
                       </div>

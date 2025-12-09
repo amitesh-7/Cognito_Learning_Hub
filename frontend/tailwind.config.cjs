@@ -3,6 +3,9 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
+      screens: {
+        'xs': '475px', // Extra small devices
+      },
       fontSize: {
         // Mobile-first font sizes
         "xs-mobile": ["0.875rem", { lineHeight: "1.5" }], // 14px

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -46,6 +46,14 @@ const AvatarCustomizer = ({ onClose, onSave }) => {
   const unlockedItems = new Set(
     avatar?.evolution?.unlockedItems?.map((i) => i.itemId) || []
   );
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   // Check if item is unlocked
   const isUnlocked = (itemId, defaultUnlocked = false) => {
@@ -174,10 +182,55 @@ const AvatarCustomizer = ({ onClose, onSave }) => {
 
   // Update customization
   const handleCustomizationChange = useCallback((key, value) => {
-    setCustomization((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setCustomization((prev) => {
+      const newCustomization = { ...prev };
+      
+      // Handle accessories that need both boolean flag and style
+      if (key === 'hat') {
+        if (value === 'none') {
+          newCustomization.hat = false;
+          newCustomization.hatStyle = 'cap';
+        } else {
+          newCustomization.hat = true;
+          newCustomization.hatStyle = value;
+        }
+      } else if (key === 'glasses') {
+        if (value === 'none') {
+          newCustomization.glasses = false;
+          newCustomization.glassesStyle = 'round';
+        } else {
+          newCustomization.glasses = true;
+          newCustomization.glassesStyle = value;
+        }
+      } else if (key === 'outfit') {
+        newCustomization.outfit = value;
+        // Store outfit for future use
+      } else if (key === 'outfitColor') {
+        newCustomization.outfitColor = value;
+        // Map to shirtColor for compatibility with LearningAvatar
+        const colorMap = {
+          'blue': '#3498db',
+          'red': '#e74c3c',
+          'green': '#27ae60',
+          'purple': '#9b59b6',
+          'orange': '#f39c12',
+          'pink': '#e91e63',
+          'black': '#2c3e50',
+          'white': '#ecf0f1',
+          'gold': '#FFD700',
+        };
+        if (colorMap[value]) {
+          newCustomization.shirtColor = colorMap[value];
+        }
+      } else if (key === 'aura' || key === 'frame') {
+        newCustomization[key] = value;
+        // Store for effects
+      } else {
+        newCustomization[key] = value;
+      }
+      
+      return newCustomization;
+    });
     setHasChanges(true);
   }, []);
 
@@ -215,14 +268,29 @@ const AvatarCustomizer = ({ onClose, onSave }) => {
 
   // Render option selector
   const renderOptionSelector = (category, optionKey, optionList) => {
-    const currentValue = customization[optionKey];
+    let currentValue = customization[optionKey];
+    
+    // Map boolean+style properties back to ID for display
+    if (optionKey === 'hat') {
+      if (customization.hat === false || !customization.hat) {
+        currentValue = 'none';
+      } else {
+        currentValue = customization.hatStyle || 'cap';
+      }
+    } else if (optionKey === 'glasses') {
+      if (customization.glasses === false || !customization.glasses) {
+        currentValue = 'none';
+      } else {
+        currentValue = customization.glassesStyle || 'round';
+      }
+    }
     
     return (
-      <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 capitalize">
+      <div className="mb-4 sm:mb-6">
+        <h4 className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 sm:mb-3 capitalize">
           {optionKey.replace(/([A-Z])/g, " $1").trim()}
         </h4>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {optionList.map((option) => {
             const itemUnlocked = option.unlocked || isUnlocked(option.itemId);
             const isSelected = currentValue === option.id;
@@ -232,7 +300,7 @@ const AvatarCustomizer = ({ onClose, onSave }) => {
                 key={option.id}
                 onClick={() => itemUnlocked && handleCustomizationChange(optionKey, option.id)}
                 disabled={!itemUnlocked}
-                className={`relative flex items-center justify-center px-3 py-2 rounded-lg border-2 transition-all ${
+                className={`relative flex items-center justify-center px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border-2 transition-all min-h-[36px] ${
                   isSelected
                     ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900"
                     : itemUnlocked
@@ -244,25 +312,25 @@ const AvatarCustomizer = ({ onClose, onSave }) => {
               >
                 {option.color && (
                   <div
-                    className="w-6 h-6 rounded-full mr-2 border border-gray-300"
+                    className="w-5 h-5 sm:w-6 sm:h-6 rounded-full mr-1.5 sm:mr-2 border border-gray-300 flex-shrink-0"
                     style={{ backgroundColor: option.color }}
                   />
                 )}
                 {option.gradient && (
                   <div
-                    className="w-6 h-6 rounded-full mr-2 border border-gray-300"
+                    className="w-5 h-5 sm:w-6 sm:h-6 rounded-full mr-1.5 sm:mr-2 border border-gray-300 flex-shrink-0"
                     style={{
                       background: "linear-gradient(135deg, #FF6B6B, #4ECDC4, #FFE66D, #9B59B6)",
                     }}
                   />
                 )}
-                <span className="text-sm">{option.name}</span>
+                <span className="text-xs sm:text-sm">{option.name}</span>
                 
                 {!itemUnlocked && (
-                  <Lock className="w-3 h-3 ml-1 text-gray-400" />
+                  <Lock className="w-3 h-3 ml-0.5 sm:ml-1 text-gray-400 flex-shrink-0" />
                 )}
                 {isSelected && itemUnlocked && (
-                  <Check className="w-4 h-4 ml-1 text-indigo-500" />
+                  <Check className="w-3 h-3 sm:w-4 sm:h-4 ml-0.5 sm:ml-1 text-indigo-500 flex-shrink-0" />
                 )}
               </motion.button>
             );
@@ -273,42 +341,45 @@ const AvatarCustomizer = ({ onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-2 sm:p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] flex flex-col"
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Palette className="w-6 h-6" />
-            Customize Your Avatar
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between flex-shrink-0">
+          <h2 className="text-base sm:text-xl font-bold text-white flex items-center gap-2">
+            <Palette className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="hidden xs:inline">Customize Your Avatar</span>
+            <span className="xs:hidden">Customize</span>
           </h2>
           <button
             onClick={onClose}
-            className="text-white hover:text-gray-200 text-2xl"
+            className="text-white hover:text-gray-200 text-2xl w-8 h-8 flex items-center justify-center"
+            aria-label="Close"
           >
             ×
           </button>
         </div>
 
-        <div className="flex h-[600px]">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           {/* Left Panel - Avatar Preview */}
-          <div className="w-1/3 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-6 flex flex-col items-center justify-center">
-            {/* Avatar Preview */}
-            <div className="mb-6">
+          <div className="w-full md:w-1/3 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-3 sm:p-6 flex md:flex-col items-center justify-center md:justify-start gap-3 md:gap-0 flex-shrink-0">
+            {/* Avatar Preview - Real-time with customization */}
+            <div className="flex-shrink-0 md:mb-6">
               <LearningAvatar
-                size="xl"
+                size="medium"
                 showName={false}
                 showLevel={true}
                 interactive={false}
+                customConfig={customization}
               />
             </div>
 
             {/* Name Input */}
-            <div className="w-full">
+            <div className="hidden md:block w-full">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Avatar Name
               </label>
@@ -325,7 +396,7 @@ const AvatarCustomizer = ({ onClose, onSave }) => {
             </div>
 
             {/* Bio Input */}
-            <div className="w-full mt-4">
+            <div className="hidden md:block w-full mt-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Bio
               </label>
@@ -343,7 +414,7 @@ const AvatarCustomizer = ({ onClose, onSave }) => {
             </div>
 
             {/* Evolution Info */}
-            <div className="w-full mt-4 p-3 bg-white dark:bg-gray-800 rounded-lg">
+            <div className="hidden md:block w-full mt-4 p-3 bg-white dark:bg-gray-800 rounded-lg">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Level</span>
                 <span className="font-bold text-indigo-500">
@@ -362,25 +433,25 @@ const AvatarCustomizer = ({ onClose, onSave }) => {
           {/* Right Panel - Customization Options */}
           <div className="flex-1 flex flex-col">
             {/* Tabs */}
-            <div className="flex border-b border-gray-200 dark:border-gray-700">
+            <div className="flex border-b border-gray-200 dark:border-gray-700 flex-shrink-0 overflow-x-auto scrollbar-hide">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-colors min-w-0 ${
                     activeTab === tab.id
                       ? "text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
                       : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                   }`}
                 >
-                  <tab.icon className="w-4 h-4" />
-                  {tab.name}
+                  <tab.icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline truncate">{tab.name}</span>
                 </button>
               ))}
             </div>
 
             {/* Options Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-6 custom-scrollbar">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
@@ -397,26 +468,29 @@ const AvatarCustomizer = ({ onClose, onSave }) => {
             </div>
 
             {/* Footer Actions */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 flex-shrink-0">
               <Button
                 variant="outline"
                 onClick={handleReset}
                 disabled={!hasChanges}
+                className="w-full sm:w-auto"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Reset
               </Button>
               
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={onClose}>
+              <div className="flex gap-2 sm:gap-3">
+                <Button variant="outline" onClick={onClose} className="flex-1 sm:flex-initial">
                   Cancel
                 </Button>
                 <Button
                   onClick={handleSave}
                   disabled={!hasChanges || isSaving}
+                  className="flex-1 sm:flex-initial"
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  {isSaving ? "Saving..." : "Save Avatar"}
+                  <span className="hidden xs:inline">{isSaving ? "Saving..." : "Save Avatar"}</span>
+                  <span className="xs:hidden">{isSaving ? "Saving..." : "Save"}</span>
                 </Button>
               </div>
             </div>
