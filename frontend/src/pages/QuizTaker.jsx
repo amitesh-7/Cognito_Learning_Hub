@@ -57,7 +57,7 @@ export default function QuizTaker() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [answered, setAnswered] = useState(false);
   const [showResult, setShowResult] = useState(false);
-  
+
   // Track all answers for detailed results
   const [questionResults, setQuestionResults] = useState([]);
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
@@ -81,16 +81,16 @@ export default function QuizTaker() {
         );
         if (!response.ok) throw new Error("Quiz not found.");
         const data = await response.json();
-        
+
         // Normalize question data - ensure correct_answer exists (backend sends correctAnswer)
         if (data.questions) {
-          data.questions = data.questions.map(q => ({
+          data.questions = data.questions.map((q) => ({
             ...q,
             correct_answer: q.correct_answer || q.correctAnswer,
             correctAnswer: q.correctAnswer || q.correct_answer,
           }));
         }
-        
+
         setQuiz(data);
       } catch (err) {
         setError(err.message);
@@ -104,11 +104,11 @@ export default function QuizTaker() {
   useEffect(() => {
     if (isFinished && quiz && !hasSubmittedRef.current) {
       hasSubmittedRef.current = true; // Prevent double submission
-      
+
       console.log("🎮 Quiz finished! Preparing to submit...");
       console.log("Score:", score, "Questions:", quiz.questions.length);
       console.log("Question Results:", questionResults);
-      
+
       const submitScore = async () => {
         try {
           const token = localStorage.getItem("quizwise-token");
@@ -116,40 +116,44 @@ export default function QuizTaker() {
             console.error("No auth token found!");
             return;
           }
-          
+
           const API_URL = import.meta.env.VITE_API_URL;
           console.log("API URL:", API_URL);
-          
+
           const percentage = Math.round((score / quiz.questions.length) * 100);
-          const totalTimeTaken = questionResults.reduce((acc, q) => acc + (q.timeTaken || 0), 0);
-          
+          const totalTimeTaken = questionResults.reduce(
+            (acc, q) => acc + (q.timeTaken || 0),
+            0
+          );
+
           // XP calculation now handled by backend with proper difficulty multipliers
-          
+
           // Build answers array in the format expected by result-service
           // Schema expects: questionId, selectedAnswer, isCorrect, points, timeSpent
-          const answers = questionResults.length > 0 
-            ? questionResults.map((qr, index) => {
-                const question = quiz.questions[index];
-                const questionPoints = question?.points || 1; // Use actual question points
-                return {
-                  questionId: question?._id || `q-${index}`,
-                  selectedAnswer: qr.userAnswer,
-                  isCorrect: qr.isCorrect,
-                  points: qr.isCorrect ? questionPoints : 0,
-                  timeSpent: Math.round((qr.timeTaken || 0) * 1000), // Convert to milliseconds
-                };
-              })
-            : quiz.questions.map((q, index) => ({
-                questionId: q._id || `q-${index}`,
-                selectedAnswer: "not_answered",
-                isCorrect: false,
-                points: 0,
-                timeSpent: 0,
-              }));
-          
+          const answers =
+            questionResults.length > 0
+              ? questionResults.map((qr, index) => {
+                  const question = quiz.questions[index];
+                  const questionPoints = question?.points || 1; // Use actual question points
+                  return {
+                    questionId: question?._id || `q-${index}`,
+                    selectedAnswer: qr.userAnswer,
+                    isCorrect: qr.isCorrect,
+                    points: qr.isCorrect ? questionPoints : 0,
+                    timeSpent: Math.round((qr.timeTaken || 0) * 1000), // Convert to milliseconds
+                  };
+                })
+              : quiz.questions.map((q, index) => ({
+                  questionId: q._id || `q-${index}`,
+                  selectedAnswer: "not_answered",
+                  isCorrect: false,
+                  points: 0,
+                  timeSpent: 0,
+                }));
+
           const now = new Date();
           const startTime = new Date(now.getTime() - (totalTimeTaken || 60000));
-          
+
           const resultData = {
             quizId: quiz._id,
             answers: answers,
@@ -157,13 +161,13 @@ export default function QuizTaker() {
             completedAt: now.toISOString(),
             quizMetadata: {
               title: quiz.title,
-              category: quiz.category || 'General',
-              difficulty: quiz.difficulty || 'medium',
+              category: quiz.category || "General",
+              difficulty: quiz.difficulty || "medium",
             },
           };
-          
+
           console.log("📤 Submitting quiz result:", resultData);
-          
+
           // Submit quiz result to result-service
           const submitRes = await fetch(`${API_URL}/api/results/submit`, {
             method: "POST",
@@ -173,33 +177,45 @@ export default function QuizTaker() {
             },
             body: JSON.stringify(resultData),
           });
-          
+
           console.log("📥 Response status:", submitRes.status);
-          
+
           if (submitRes.ok) {
             const submitData = await submitRes.json();
             console.log("✅ Quiz result submitted successfully:", submitData);
-            
+
             // Result-service automatically notifies gamification-service
             // Just refresh UI and show success message
             if (refreshData) {
               // Delay refresh to allow gamification service to process
               setTimeout(() => refreshData(), 1000);
             }
-            
+
+            // Calculate XP earned (estimate based on score)
+            const xpEarned = submitData.experienceGained || score * 10;
             success(`Quiz completed! +${xpEarned} XP earned!`);
           } else {
             let errorText;
             try {
               const errorData = await submitRes.json();
               errorText = JSON.stringify(errorData);
-              console.error("❌ Failed to submit quiz result:", submitRes.status, errorData);
+              console.error(
+                "❌ Failed to submit quiz result:",
+                submitRes.status,
+                errorData
+              );
             } catch (e) {
               errorText = await submitRes.text();
-              console.error("❌ Failed to submit quiz result:", submitRes.status, errorText);
+              console.error(
+                "❌ Failed to submit quiz result:",
+                submitRes.status,
+                errorText
+              );
             }
             // Still show completion even if submission failed
-            success(`Quiz completed! (Score: ${score}/${quiz.questions.length})`);
+            success(
+              `Quiz completed! (Score: ${score}/${quiz.questions.length})`
+            );
           }
         } catch (err) {
           console.error("❌ Failed to submit score:", err);
@@ -230,23 +246,26 @@ export default function QuizTaker() {
 
   const handleAnswerSelect = (option) => {
     if (selectedAnswer) return;
-    
+
     const currentQuestion = quiz.questions[currentQuestionIndex];
     const correctAnswer = currentQuestion.correct_answer;
     const isCorrect = option === correctAnswer;
     const timeTaken = (Date.now() - questionStartTime) / 1000;
-    
+
     // Track this question result
-    setQuestionResults(prev => [...prev, {
-      questionId: currentQuestion._id,
-      questionText: currentQuestion.question,
-      userAnswer: option || "timeout",
-      correctAnswer: correctAnswer,
-      isCorrect: isCorrect,
-      timeTaken: timeTaken,
-      options: currentQuestion.options,
-    }]);
-    
+    setQuestionResults((prev) => [
+      ...prev,
+      {
+        questionId: currentQuestion._id,
+        questionText: currentQuestion.question,
+        userAnswer: option || "timeout",
+        correctAnswer: correctAnswer,
+        isCorrect: isCorrect,
+        timeTaken: timeTaken,
+        options: currentQuestion.options,
+      },
+    ]);
+
     setSelectedAnswer(option || "timeout"); // Mark as timeout if no option
     if (isCorrect) {
       setScore((prev) => prev + 1);
@@ -466,15 +485,15 @@ export default function QuizTaker() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => navigate('/leaderboard')}
+                    onClick={() => navigate("/leaderboard")}
                     className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     <Trophy className="w-4 h-4 mr-2" />
                     View Leaderboard
                   </Button>
-                  <Button 
+                  <Button
                     variant="secondary"
-                    onClick={() => navigate('/quizzes')}
+                    onClick={() => navigate("/quizzes")}
                   >
                     <Home className="w-4 h-4 mr-2" />
                     Back to Quizzes

@@ -330,30 +330,33 @@ export const RealTimeStats = ({ variant = "full", className = "" }) => {
     {
       id: 1,
       title: "Complete 3 Quizzes",
-      description: "Take any 3 quizzes today",
+      description: "Take any 3 quizzes total",
       xpReward: 50,
       target: 3,
     },
     {
       id: 2,
-      title: "Score 80%+",
-      description: "Get 80% or higher on a quiz",
+      title: "Reach 80% Average",
+      description: "Achieve 80% or higher average score",
       xpReward: 30,
-      target: 1,
+      target: 80,
     },
   ];
 
   // Calculate challenge progress based on user stats
   const getChallengeProgress = (challenge) => {
     if (challenge.id === 1) {
-      const dailyQuizzes = Math.min(
-        userStats?.dailyQuizCount || 0,
+      // Use total quizzes taken
+      const quizzesTaken = Math.min(
+        userStats?.totalQuizzesTaken || 0,
         challenge.target
       );
-      return Math.round((dailyQuizzes / challenge.target) * 100);
+      return Math.round((quizzesTaken / challenge.target) * 100);
     }
     if (challenge.id === 2) {
-      return userStats?.highScoreToday ? 100 : 0;
+      // Use average score
+      const avgScore = userStats?.averageScore || 0;
+      return Math.min(Math.round((avgScore / challenge.target) * 100), 100);
     }
     return 0;
   };

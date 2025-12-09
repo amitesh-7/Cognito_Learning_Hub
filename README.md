@@ -9,13 +9,12 @@
 [![Node.js](https://img.shields.io/badge/Node.js-20.19.4-green.svg)](https://nodejs.org)
 [![React](https://img.shields.io/badge/React-18.3.1-61dafb.svg)](https://reactjs.org)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green.svg)](https://mongodb.com)
-[![Test Coverage](https://img.shields.io/badge/Coverage-88--98%25-brightgreen.svg)](https://github.com/amitesh-7/Cognito_Learning_Hub)
 
-_An AI-powered educational platform revolutionizing the learning experience_
+_An AI-powered educational platform with microservices architecture_
 
 **Made by team OPTIMISTIC MUTANT CODERS** 🚀
 
-[Features](#-key-features) • [Competition Features](#-competition-features) • [Tech Stack](#️-tech-stack) • [Getting Started](#-getting-started) • [Project Structure](#-project-structure)
+[Features](#-key-features) • [Architecture](#-architecture) • [Tech Stack](#️-tech-stack) • [Getting Started](#-getting-started)
 
 </div>
 
@@ -23,409 +22,187 @@ _An AI-powered educational platform revolutionizing the learning experience_
 
 ## 📖 Overview
 
-Cognito Learning Hub is a modern, full-stack AI-powered educational platform designed to transform learning and teaching through artificial intelligence. Built with cutting-edge technologies, it provides a comprehensive suite of tools for creating, taking, and managing quizzes with real-time multiplayer capabilities, advanced UI/UX, and mobile-optimized features.
+Cognito Learning Hub is a scalable, microservices-based AI-powered educational platform that transforms learning through intelligent quiz generation, real-time multiplayer capabilities, gamification, and adaptive learning experiences.
 
 ### 🎯 Core Philosophy
 
-- **AI-First**: Leverage Google's Gemini AI for intelligent quiz generation and student tutoring
-- **Adaptive Learning**: Personalized difficulty based on individual performance
-- **Real-Time**: Live multiplayer quiz sessions and 1v1 duels with WebSocket technology
-- **Accessible**: Speech-based question reading for inclusive learning
-- **Gamified**: Engaging achievements, leaderboards, and social features
-- **Modern Design**: Glassmorphism UI with smooth animations and Lenis scrolling
-- **Mobile-First**: PWA features, pull-to-refresh, and responsive design
-- **Production-Ready**: Optimized performance, comprehensive testing, full documentation
+- **Microservices Architecture**: Scalable, independent services with API Gateway
+- **AI-First**: Google Gemini AI for quiz generation and intelligent tutoring
+- **Real-Time**: WebSocket-based live quiz sessions, duels, and video meetings
+- **Gamified**: Achievements, leaderboards, streaks, and social features
+- **Accessible**: Speech-based questions and inclusive design
+- **Modern UI**: Glassmorphism, smooth animations, and responsive design
+- **Production-Ready**: Redis caching, Bull queues, comprehensive testing
 
 ---
 
-## 🆕 Competition Features (IIT Bombay Techfest 2025)
+## 🏗️ Architecture
 
-### ⭐ Feature 1: Adaptive AI Difficulty System (15 points)
+### Microservices Overview
 
-**Status**: ✅ Complete
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Frontend (React)                        │
+│                    Port: 5173 (Vite)                        │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   API Gateway (Express)                      │
+│                      Port: 3000                              │
+│  • Request routing & proxying                               │
+│  • Rate limiting & CORS                                     │
+│  • Authentication middleware                                │
+└───┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────────────┘
+    │     │     │     │     │     │     │     │
+    ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼
+┌───────┐┌───────┐┌───────┐┌───────┐┌───────┐┌───────┐┌───────┐┌───────┐
+│ Auth  ││ Quiz  ││Result ││ Live  ││Meeting││Social ││ Gamif ││ Mod   │
+│Service││Service││Service││Service││Service││Service││Service││Service│
+│ 3001  ││ 3002  ││ 3003  ││ 3004  ││ 3009  ││ 3006  ││ 3007  ││ 3008  │
+└───┬───┘└───┬───┘└───┬───┘└───┬───┘└───┬───┘└───┬───┘└───┬───┘└───┬───┘
+    │        │        │        │        │        │        │        │
+    └────────┴────────┴────────┴────────┴────────┴────────┴────────┘
+                                    │
+                         ┌──────────┴──────────┐
+                         │                     │
+                    ┌────▼─────┐         ┌────▼─────┐
+                    │ MongoDB  │         │  Redis   │
+                    │  Atlas   │         │  Cloud   │
+                    └──────────┘         └──────────┘
+```
 
-Personalized quiz difficulty based on real-time performance analysis with intelligent recommendations.
+### Service Responsibilities
 
-### ⭐ Feature 2: Speech-Based Questions (10 points)
+| Service                  | Port | Responsibilities                                     |
+| ------------------------ | ---- | ---------------------------------------------------- |
+| **API Gateway**          | 3000 | Request routing, rate limiting, CORS, authentication |
+| **Auth Service**         | 3001 | User authentication, JWT tokens, role management     |
+| **Quiz Service**         | 3002 | Quiz CRUD, AI generation, file upload parsing        |
+| **Result Service**       | 3003 | Result submission, analytics, leaderboards           |
+| **Live Service**         | 3004 | Real-time quiz sessions, Socket.IO, duels            |
+| **Social Service**       | 3006 | Friends, chat, notifications, social features        |
+| **Gamification Service** | 3007 | XP, levels, achievements, streaks, badges            |
+| **Moderation Service**   | 3008 | Content moderation, reports, flagging                |
+| **Meeting Service**      | 3009 | WebRTC video meetings, peer connections              |
 
-**Status**: ✅ Complete
+### Shared Infrastructure
 
-Accessibility-first text-to-speech integration with Web Speech API for inclusive learning.
-
-### ⭐ Feature 3: Performance Optimizations (9-10 points)
-
-**Status**: ✅ Complete
-
-Production-grade optimizations achieving 60% faster load times and 13-18x database query improvements.
-
-### ⭐ Feature 4: Testing & Quality Assurance (8-9 points)
-
-**Status**: ✅ Complete
-
-Comprehensive testing suite with 98.5% frontend and 88.2% backend code coverage.
-
-### ⭐ Feature 5: Modern UI/UX Enhancements
-
-**Status**: ✅ Complete
-
-**UI Improvements**:
-
-- 🎨 **Glassmorphism Design**: Beautiful frosted-glass effects across all components
-- 🔄 **Lenis Smooth Scrolling**: Buttery-smooth scrolling experience globally
-- 📱 **Compact Mobile Menu**: Space-efficient dropdown menu instead of full-page overlay
-- 🎯 **Enhanced Navbar**: Icons on all navigation links (desktop + mobile)
-- 🎪 **Rounded Corners**: Soft, modern rounded-3xl corners throughout
-- ✨ **Enhanced Animations**: Smooth transitions and hover effects
-- 🌓 **Improved Dark Mode**: Better contrast and seamless theme switching
-
-**Features Page Enhancements**:
-
-- Glassmorphic section headers with gradient backgrounds
-- Rounded, soft-cornered stat cards with enhanced shadows
-- Compact feature navigation buttons with backdrop blur
-- Beautiful CTA sections with smooth animations
-- Mobile-optimized responsive design
-
-**Navbar Improvements**:
-
-- Compact dropdown menu (top-right corner, minimal space)
-- Icons on all links: Dashboard (LayoutDashboard), Quizzes (BookOpen), AI Tutor (Bot), etc.
-- Role-based icons: Teacher (GraduationCap), Moderator (Shield), Admin (UserCog), Broadcast (Radio)
-- Smooth slide-down animation with scale effect
-- Enhanced glassmorphism and rounded corners
-
-### ⭐ Feature 7: Advanced Multiplayer Features
-
-**Status**: ✅ Complete
-
-**Real-Time Quiz Duels (1v1)**:
-
-- 🎮 **Quick Match System**: Intelligent matchmaking with retry logic for finding opponents
-- ⚡ **Atomic Match Operations**: Race-condition free pairing with MongoDB atomic updates
-- 🎯 **Live Battle Interface**: Real-time score tracking with opponent progress visibility
-- ✅ **Instant Feedback**: Visual indicators for correct/incorrect answers
-- 🏆 **Winner Determination**: Automatic winner calculation based on score and speed
-
-**Video Meeting Integration**:
-
-- 📹 **WebRTC Peer-to-Peer**: High-quality video calling for teacher-student collaboration
-- 🎥 **Multi-Participant Support**: Group video sessions with multiple participants
-- 🔗 **Easy Room Sharing**: One-click copy for meeting room IDs
-- 🔊 **Audio/Video Controls**: Toggle camera and microphone during sessions
-- 📱 **Responsive Layout**: Adaptive grid layout for different participant counts
-
-**WebSocket Architecture**:
-
-- 🔄 **Persistent Connections**: Socket.IO for real-time bidirectional communication
-- 🎯 **Event-Driven System**: 20+ custom events for different game states
-- 🚀 **Low Latency**: Sub-100ms response times for live interactions
-- 🛡️ **Connection Recovery**: Automatic reconnection with state preservation
-
-### ⭐ Feature 6: Comprehensive Documentation (Full Marks)
-
-**Status**: ✅ Complete
-
-Professional-grade documentation suite with API docs, testing guides, and architectural diagrams.
+- **MongoDB Atlas**: Shared database with service-specific collections
+- **Redis Cloud**: Distributed caching, session management, Bull queues
+- **Bull Queues**: Background jobs (achievement checks, stats sync)
+- **Socket.IO**: Real-time events across services
 
 ---
 
 ## 🌟 Key Features
 
-### 👥 User Roles & Access Control
+### 👥 User Roles
 
-<table>
-<tr>
-<td width="25%">
+- **🎓 Student**: Take quizzes, track progress, earn achievements, social features
+- **👨‍🏫 Teacher**: Create quizzes, AI generation, analytics, live sessions
+- **🛡️ Moderator**: Content moderation, quiz review, safety management
+- **⚡ Admin**: Platform management, user administration, system analytics
 
-**🎓 Student**
+### 🤖 AI-Powered Features
 
-- Browse quiz library
-- Take quizzes
-- AI Tutor access
-- Personal dashboard
-- Achievements & badges
-- Social features
+1. **Quiz Generation**
 
-</td>
-<td width="25%">
+   - Topic-based generation with Google Gemini AI
+   - File upload parsing (PDF, TXT, DOCX)
+   - Customizable difficulty and question count
 
-**👨‍🏫 Teacher**
+2. **AI Tutor**
 
-- All student features
-- Quiz Maker Studio
-- AI quiz generation
-- Personal analytics
-- Live session hosting
-- Content management
+   - Real-time chat-based learning assistant
+   - Context-aware explanations
+   - Study guidance and tips
 
-</td>
-<td width="25%">
+3. **Adaptive Difficulty**
+   - Performance-based recommendations
+   - Dynamic question difficulty
+   - Personalized learning paths
 
-**🛡️ Moderator**
+### 🎮 Multiplayer & Live Features
 
-- Platform moderation
-- Quiz review/edit
-- Content flagging
-- Reports dashboard
-- Quality assurance
-- Safety management
+1. **Live Quiz Sessions**
 
-</td>
-<td width="25%">
+   - Real-time multiplayer quizzes
+   - Synchronized questions
+   - Live leaderboards
 
-**⚡ Admin**
+2. **1v1 Duels**
 
-- Full platform control
-- User management
-- System analytics
-- Broadcast messages
-- Role assignment
-- Platform settings
+   - Quick matchmaking system
+   - Real-time score tracking
+   - Winner determination
 
-</td>
-</tr>
-</table>
+3. **Video Meetings**
+   - WebRTC peer-to-peer video
+   - Multi-participant support
+   - Screen sharing capability
 
-### 🎨 Quiz Maker Studio (Teachers)
+### 🏆 Gamification
 
-Three powerful methods for quiz creation:
+- **XP System**: Earn experience points for activities
+- **Levels**: Progress through 50+ levels
+- **Achievements**: 15+ unlockable achievements
+- **Streaks**: Daily quiz streaks
+- **Leaderboards**: Global, weekly, category-based
+- **Badges**: Collect rare and milestone badges
 
-1. **🤖 AI Topic Generation**
+### 📊 Analytics & Dashboard
 
-   - Enter any topic (e.g., "Quantum Physics")
-   - Select difficulty and question count
-   - AI instantly generates complete quiz
-
-2. **📄 AI File Upload**
-
-   - Upload PDF/TXT documents
-   - AI extracts key concepts
-   - Generates contextual questions
-
-3. **✍️ Manual Creation**
-   - Intuitive step-by-step editor
-   - Complete creative control
-   - Custom question types
-
-### 🎮 Student Experience
-
-- **Interactive Quiz Taker**: Gamified interface with timer, instant feedback, and progress tracking
-- **Live Sessions**: Join real-time multiplayer quizzes with live leaderboards
-- **AI Tutor**: 24/7 AI-powered doubt solver for instant academic help
-- **Personal Dashboard**: Score analytics, progression charts, and achievement tracking
-- **Social Hub**: Connect with peers, share challenges, and compete
-- **Achievements**: Unlock badges and rewards for milestones
-
-### 🔴 Live Multiplayer Sessions
-
-**Real-Time Quiz Sessions**:
-
-- **Host Live Quizzes**: Teachers create real-time quiz sessions with unique codes
-- **Join with Code**: Students join via 6-digit session codes or QR codes
-- **Real-Time Leaderboards**: Live scoring with speed bonuses (0-5 points)
-- **Session Analytics**: Post-session performance insights and statistics
-- **Session History**: Review past live quiz sessions and results
-
-**1v1 Duel Battles**:
-
-- **Quick Match**: Automatic opponent matching with intelligent retry system
-- **Live Competition**: Real-time score updates and opponent progress tracking
-- **Speed Matters**: Faster correct answers earn higher scores
-- **Instant Results**: Winner determination with detailed battle statistics
-- **Fair Matching**: Race-condition free pairing system with atomic operations
-
-**Video Meetings**:
-
-- **WebRTC Integration**: Peer-to-peer video calls for collaboration
-- **Room System**: Create or join meeting rooms with shareable codes
-- **Multi-Participant**: Support for group video sessions
-- **Easy Sharing**: One-click copy for meeting room IDs
-- **Audio/Video Controls**: Toggle camera/microphone during calls
-
-### 🎨 Modern UI/UX
-
-- **Dark/Light Theme**: Toggle-able theme with smooth transitions
-- **Responsive Design**: Perfect on desktop, tablet, and mobile
-- **Fluid Animations**: Framer Motion powered micro-interactions
-- **Particle Effects**: Dynamic backgrounds with floating shapes
-- **Glass-morphism**: Modern UI design patterns
-
-### 🔒 Security & Authentication
-
-- **JWT Authentication**: Secure token-based sessions
-- **Password Hashing**: bcrypt encryption for user credentials
-- **Google OAuth**: One-click social login integration
-- **Protected Routes**: Role-based access control
-- **Content Moderation**: User-flagging system for inappropriate content
+- Personal performance tracking
+- Quiz history with detailed results
+- Strength/weakness analysis
+- Progress visualization
+- Time spent analytics
 
 ---
 
-## 🏗️ Tech Stack
+## 🛠️ Tech Stack
 
 ### Frontend
 
-```
-React 18.3.1         → UI Framework
-Vite 5.4.19          → Build Tool & Dev Server
-TailwindCSS 3.4.17   → Utility-First CSS
-Framer Motion        → Animation Library
-Lenis                → Smooth Scrolling
-Socket.IO Client     → Real-Time WebSocket
-React Router         → Client-Side Routing
-Recharts             → Data Visualization
-Lottie React         → Animation Player
-Lucide React         → Icon Library
-```
+- **React 18.3.1**: UI framework
+- **Vite**: Build tool
+- **TailwindCSS**: Utility-first CSS
+- **Framer Motion**: Animations
+- **Socket.IO Client**: Real-time communication
+- **Axios**: HTTP client
+- **React Router**: Navigation
 
-### Backend
+### Backend Services
 
-```
-Node.js 20.19.4      → Runtime Environment
-Express 5.1.0        → Web Framework
-Socket.IO 4.8.1      → Real-Time Communication
-MongoDB 6.18.0       → Database
-Mongoose 8.17.0      → ODM (Object Data Modeling)
-JWT                  → Authentication
-Google Gemini AI     → AI Integration
-Multer               → File Upload
-PDF-Parse            → PDF Processing
-QRCode               → QR Generation
-```
+- **Node.js 20.19.4**: Runtime
+- **Express.js**: Web framework
+- **Socket.IO**: WebSocket server
+- **JWT**: Authentication
+- **Bull**: Job queues
+- **Multer**: File uploads
+- **Winston**: Logging
 
-### Database Schema
+### Databases & Caching
 
-```
-Collections:
-├── users            → User profiles & authentication
-├── quizzes          → Quiz content & metadata
-├── results          → Quiz attempt records
-├── livesessions     → Real-time session data
-├── achievements     → User badges & milestones
-├── socialfeatures   → Social interactions
-└── reports          → Content moderation flags
-```
+- **MongoDB Atlas**: Primary database
+- **Mongoose**: ODM
+- **Redis Cloud**: Caching & sessions
+- **IORedis**: Redis client
 
----
+### AI & External Services
 
-## 📁 Project Structure
+- **Google Gemini AI**: Quiz generation & tutoring
+- **PDF.js**: PDF parsing
+- **Mammoth.js**: DOCX parsing
+- **Web Speech API**: Text-to-speech
 
-```
-Cognito-Learning-Hub/
-├── frontend/                          # React Frontend (Vite)
-│   ├── public/
-│   │   ├── animations/               # Lottie JSON files
-│   │   ├── sounds/                   # Audio effects
-│   │   ├── manifest.json             # PWA manifest
-│   │   ├── sw.js                     # Service Worker
-│   │   ├── robots.txt
-│   │   └── sitemap.xml
-│   ├── src/
-│   │   ├── assets/                   # Static assets
-│   │   ├── components/               # Reusable UI components
-│   │   │   └── ui/                   # Base UI elements
-│   │   ├── config/                   # App configuration
-│   │   ├── context/                  # React Context providers
-│   │   ├── hooks/                    # Custom React hooks
-│   │   ├── lib/                      # Utility functions
-│   │   ├── pages/                    # Route components (33+ pages)
-│   │   ├── styles/                   # Global styles
-│   │   ├── utils/                    # Helper utilities
-│   │   ├── App.jsx                   # Main app component
-│   │   └── main.jsx                  # Entry point
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── tailwind.config.cjs
-│   └── vercel.json
-│
-├── backend/                           # Monolith Backend (Legacy)
-│   ├── models/                       # Mongoose schemas
-│   ├── utils/                        # Utility functions
-│   ├── uploads/                      # File upload storage
-│   ├── index.js                      # Express server
-│   ├── authMiddleware.js
-│   ├── adminMiddleware.js
-│   ├── moderatorMiddleware.js
-│   └── package.json
-│
-├── microservices/                     # Microservices Architecture
-│   ├── api-gateway/                  # API Gateway (Port 3000)
-│   │   └── index.js                  # Request routing & CORS
-│   │
-│   ├── auth-service/                 # Authentication (Port 3001)
-│   │   ├── models/                   # User model
-│   │   ├── routes/                   # Auth routes
-│   │   └── index.js
-│   │
-│   ├── quiz-service/                 # Quiz Management (Port 3002)
-│   │   ├── models/                   # Quiz model
-│   │   ├── routes/                   # Quiz CRUD routes
-│   │   ├── services/                 # AI quiz generation
-│   │   ├── workers/                  # Background workers
-│   │   └── index.js
-│   │
-│   ├── result-service/               # Results & Analytics (Port 3003)
-│   │   ├── models/                   # Result model
-│   │   ├── routes/                   # Result routes
-│   │   ├── services/                 # Analytics services
-│   │   └── index.js
-│   │
-│   ├── live-service/                 # Live Quiz Sessions (Port 3004)
-│   │   ├── models/                   # LiveSession, DuelMatch models
-│   │   ├── routes/                   # Live session routes
-│   │   ├── services/                 # Session management
-│   │   ├── socket/                   # WebSocket handlers
-│   │   └── index.js
-│   │
-│   ├── social-service/               # Social Features (Port 3006)
-│   │   ├── models/                   # Social models
-│   │   ├── routes/                   # Social routes
-│   │   ├── services/                 # Social services
-│   │   ├── socket/                   # Real-time notifications
-│   │   ├── workers/                  # Background tasks
-│   │   └── index.js
-│   │
-│   ├── gamification-service/         # Achievements & XP (Port 3007)
-│   │   └── src/                      # Gamification logic
-│   │
-│   ├── moderation-service/           # Content Moderation (Port 3008)
-│   │   ├── models/                   # Report model
-│   │   ├── routes/                   # Moderation routes
-│   │   ├── middleware/               # Moderation checks
-│   │   ├── utils/                    # Moderation utilities
-│   │   └── index.js
-│   │
-│   ├── meeting-service/              # Video Meetings (Port 3009)
-│   │   ├── models/                   # Meeting model
-│   │   ├── routes/                   # Meeting routes
-│   │   ├── services/                 # Meeting management
-│   │   ├── socket/                   # WebRTC signaling
-│   │   └── index.js
-│   │
-│   └── shared/                       # Shared Utilities
-│       ├── config/                   # Shared configuration
-│       ├── middleware/               # Common middleware
-│       └── utils/                    # Shared utilities
-│
-├── logs/                              # Application logs
-├── .env.production                    # Production environment
-├── .gitignore
-└── README.md
-```
+### DevOps & Testing
 
-### Service Ports
-
-| Service              | Port | Description                    |
-| -------------------- | ---- | ------------------------------ |
-| API Gateway          | 3000 | Request routing & load balance |
-| Auth Service         | 3001 | Authentication & authorization |
-| Quiz Service         | 3002 | Quiz CRUD & AI generation      |
-| Result Service       | 3003 | Results & analytics            |
-| Live Service         | 3004 | Live sessions & 1v1 duels      |
-| Social Service       | 3006 | Social features & challenges   |
-| Gamification Service | 3007 | Achievements, XP & badges      |
-| Moderation Service   | 3008 | Content moderation             |
-| Meeting Service      | 3009 | WebRTC video meetings          |
-| Frontend             | 5173 | Vite dev server                |
+- **Vitest**: Testing framework
+- **Jest**: Backend testing
+- **Nodemon**: Development
+- **dotenv**: Environment variables
 
 ---
 
@@ -433,284 +210,301 @@ Cognito-Learning-Hub/
 
 ### Prerequisites
 
-- **Node.js** 20.19.4 or higher
-- **npm** or **yarn** package manager
-- **MongoDB Atlas** account (or local MongoDB)
-- **Upstash Redis** account (for caching & rate limiting)
-- **Google Gemini API** key
-- **Google OAuth** credentials (optional)
+- Node.js 20.19.4+
+- MongoDB Atlas account
+- Redis Cloud account
+- Google Gemini API key
 
 ### Installation
 
 1. **Clone the repository**
 
-   ```powershell
-   git clone https://github.com/amitesh-7/Cognito_Learning_Hub.git
-   cd Cognito_Learning_Hub
-   ```
+```bash
+git clone https://github.com/amitesh-7/Cognito_Learning_Hub.git
+cd Cognito_Learning_Hub
+```
 
-2. **Microservices Setup (Recommended)**
+2. **Install dependencies**
 
-   Each microservice requires its own `.env` file with the following common variables:
-
-   ```env
-   PORT=<service_port>
-   MONGO_URI=your_mongodb_atlas_connection_string
-   JWT_SECRET=your_super_secret_jwt_key
-   REDIS_URL=redis://your-redis-host:6379
-   REDIS_TOKEN=your_redis_token
-   ```
-
-   Install dependencies for all microservices:
-
-   ```powershell
-   cd microservices/api-gateway && npm install
-   cd ../auth-service && npm install
-   cd ../quiz-service && npm install
-   cd ../result-service && npm install
-   cd ../live-service && npm install
-   cd ../social-service && npm install
-   cd ../gamification-service && npm install
-   cd ../moderation-service && npm install
-   cd ../meeting-service && npm install
-   ```
-
-3. **Backend Setup (Legacy Monolith)**
-
-   ```powershell
-   cd backend
-   npm install
-   ```
-
-   Create `.env` file in `backend/`:
-
-   ```env
-   PORT=3001
-   MONGO_URI=your_mongodb_atlas_connection_string
-   JWT_SECRET=your_super_secret_jwt_key
-   GEMINI_API_KEY=your_google_gemini_api_key
-   GOOGLE_CLIENT_ID=your_google_oauth_client_id
-   GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
-   CLIENT_URL=http://localhost:5173
-   REDIS_URL=redis://your-redis-host:6379
-   REDIS_TOKEN=your_redis_token
-   ```
-
-4. **Frontend Setup**
-
-   ```powershell
-   cd ../frontend
-   npm install
-   ```
-
-   Create `.env` file in `frontend/`:
-
-   ```env
-   VITE_API_URL=http://localhost:3001
-   VITE_SOCKET_URL=http://localhost:3001
-   VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
-   ```
-
-5. **Run Development Servers**
-
-   **Option A: Microservices Mode (Recommended)**
-
-   Start each microservice in separate terminals:
-
-   ```powershell
-   # Terminal 1: API Gateway
-   cd microservices/api-gateway && npm run dev
-
-   # Terminal 2: Auth Service
-   cd microservices/auth-service && npm run dev
-
-   # Terminal 3: Quiz Service
-   cd microservices/quiz-service && npm run dev
-
-   # ... start other services as needed
-   ```
-
-   **Option B: Monolith Mode (Legacy)**
-
-   Terminal 1 (Backend):
-
-   ```powershell
-   cd backend
-   npm run dev
-   ```
-
-   Terminal 2 (Frontend):
-
-   ```powershell
-   cd frontend
-   npm run dev
-   ```
-
-6. **Access the Application**
-   - Frontend: `http://localhost:5173`
-   - API Gateway: `http://localhost:3000` (microservices mode)
-   - Backend API: `http://localhost:3001` (monolith mode)
-
----
-
-## 🎯 Core Features in Detail
-
-### Real-Time Architecture
-
-The platform uses **Socket.IO** for bidirectional real-time communication:
-
-**Live Quiz Sessions**:
-
-- **WebSocket Events**: 20+ custom events for different game states
-- **Room Management**: Isolated sessions with unique 6-digit codes
-- **Score Calculation**: Base points (10) + speed bonus (0-5 based on response time)
-- **Leaderboard Updates**: Broadcast to all participants in real-time
-- **Session State**: In-memory + MongoDB persistence for reliability
-
-**1v1 Duel System**:
-
-- **Matchmaking Queue**: Atomic MongoDB operations for race-condition free matching
-- **Retry Logic**: Intelligent stale match cleanup with 3-attempt retry system
-- **Answer Validation**: Normalized string comparison with trim and case handling
-- **Live Updates**: Real-time opponent progress and score synchronization
-- **State Management**: React refs to prevent duplicate requests from Strict Mode
-
-**Video Meetings**:
-
-- **WebRTC Signaling**: Socket.IO-based peer connection coordination
-- **ICE Candidates**: STUN server integration for NAT traversal
-- **Offer/Answer**: SDP exchange for establishing peer-to-peer connections
-- **Connection Recovery**: Automatic reconnection with state preservation
-- **Multi-Peer Support**: Dynamic peer connection management for group calls
-
-### AI Integration
-
-Powered by **Google Gemini AI**:
-
-- **Quiz Generation**: Intelligent question generation from topics/files
-- **AI Tutor**: Context-aware academic assistance
-- **Content Analysis**: PDF/TXT parsing and understanding
-- **Difficulty Scaling**: Adaptive question complexity
-
-### Gamification
-
-- **🏆 Achievements System**: 15+ unlockable badges
-- **📊 Performance Analytics**: Visual charts and statistics
-- **🎮 Score Multipliers**: Speed bonuses in live sessions
-- **🌟 Social Features**: Challenges, leaderboards, and social hub
-- **🎉 Celebrations**: Confetti effects for high scores
-
----
-
-## 🔐 Environment Variables
-
-### Backend Variables
-
-| Variable               | Description               | Required    |
-| ---------------------- | ------------------------- | ----------- |
-| `PORT`                 | Backend server port       | ✅          |
-| `MONGO_URI`            | MongoDB connection string | ✅          |
-| `JWT_SECRET`           | Secret for JWT signing    | ✅          |
-| `GEMINI_API_KEY`       | Google Gemini API key     | ✅          |
-| `GOOGLE_CLIENT_ID`     | Google OAuth client ID    | ⚠️ Optional |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth secret       | ⚠️ Optional |
-| `CLIENT_URL`           | Frontend URL for CORS     | ✅          |
-
-### Frontend Variables
-
-| Variable                | Description            | Required    |
-| ----------------------- | ---------------------- | ----------- |
-| `VITE_API_URL`          | Backend API endpoint   | ✅          |
-| `VITE_SOCKET_URL`       | Socket.IO server URL   | ✅          |
-| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID | ⚠️ Optional |
-
----
-
-## 🌐 Deployment
-
-The application is production-ready and deployed on **Vercel**:
-
-### Frontend Deployment
-
-```powershell
+```bash
+# Install frontend dependencies
 cd frontend
-vercel --prod
+npm install
+
+# Install backend dependencies
+cd ../backend
+npm install
+
+# Install microservices dependencies
+cd ../microservices
+npm install
+cd api-gateway && npm install && cd ..
+cd auth-service && npm install && cd ..
+cd quiz-service && npm install && cd ..
+cd result-service && npm install && cd ..
+cd live-service && npm install && cd ..
+cd social-service && npm install && cd ..
+cd gamification-service && npm install && cd ..
+cd moderation-service && npm install && cd ..
+cd meeting-service && npm install && cd ..
+cd shared && npm install && cd ..
 ```
 
-**Production URL**: [cognito-learning-hub-frontend.vercel.app](https://cognito-learning-hub-frontend.vercel.app)
+3. **Configure environment variables**
 
-**Vercel Configuration Highlights**:
+Create `.env` files in each service:
 
-- ✅ **SPA Rewrites**: Proper routing for React Router with asset exclusion
-- ✅ **Cache Headers**: Immutable caching for JS/CSS assets (1-year max-age)
-- ✅ **CORS Headers**: Cross-origin resource policy for WebRTC/media
-- ✅ **Build Optimization**: Vite production build with code splitting
+**Frontend** (`frontend/.env`):
 
-### Backend Deployment
+```env
+VITE_API_URL=http://localhost:3000
+VITE_SOCKET_URL=http://localhost:3000
+VITE_GEMINI_API_KEY=your_gemini_api_key
+```
 
-```powershell
+**API Gateway** (`microservices/api-gateway/.env`):
+
+```env
+GATEWAY_PORT=3000
+MONGO_URI=your_mongodb_atlas_uri
+REDIS_URL=your_redis_cloud_url
+JWT_SECRET=your_jwt_secret
+FRONTEND_URLS=http://localhost:5173
+AUTH_SERVICE_URL=http://localhost:3001
+QUIZ_SERVICE_URL=http://localhost:3002
+RESULT_SERVICE_URL=http://localhost:3003
+LIVE_SERVICE_URL=http://localhost:3004
+SOCIAL_SERVICE_URL=http://localhost:3006
+GAMIFICATION_SERVICE_URL=http://localhost:3007
+MODERATION_SERVICE_URL=http://localhost:3008
+MEETING_SERVICE_URL=http://localhost:3009
+```
+
+**Each Microservice** (`microservices/[service-name]/.env`):
+
+```env
+PORT=[service-port]
+MONGO_URI=your_mongodb_atlas_uri
+REDIS_URL=your_redis_cloud_url
+JWT_SECRET=your_jwt_secret
+```
+
+4. **Start the services**
+
+```bash
+# Terminal 1: Frontend
+cd frontend
+npm run dev
+
+# Terminal 2: API Gateway
+cd microservices/api-gateway
+node index.js
+
+# Terminal 3-10: Individual Services
+cd microservices/auth-service && node index.js
+cd microservices/quiz-service && node index.js
+cd microservices/result-service && node index.js
+cd microservices/live-service && node index.js
+cd microservices/social-service && node index.js
+cd microservices/gamification-service && node src/index.js
+cd microservices/moderation-service && node index.js
+cd microservices/meeting-service && node index.js
+```
+
+5. **Access the application**
+
+- Frontend: http://localhost:5173
+- API Gateway: http://localhost:3000
+- Individual services: http://localhost:[service-port]
+
+---
+
+## 📁 Project Structure
+
+```
+Cognito-Learning-Hub/
+├── frontend/                 # React frontend application
+│   ├── src/
+│   │   ├── components/      # Reusable UI components
+│   │   ├── pages/           # Page components
+│   │   ├── context/         # React context providers
+│   │   ├── services/        # API service functions
+│   │   ├── utils/           # Utility functions
+│   │   └── main.jsx         # Application entry point
+│   ├── public/              # Static assets
+│   └── package.json
+│
+├── backend/                 # Legacy monolithic backend (deprecated)
+│   ├── models/              # Mongoose models
+│   ├── utils/               # Utility functions
+│   └── index.js
+│
+├── microservices/           # Microservices architecture
+│   ├── api-gateway/         # API Gateway (Port 3000)
+│   │   ├── index.js         # Gateway server
+│   │   └── .env
+│   │
+│   ├── auth-service/        # Authentication Service (Port 3001)
+│   │   ├── index.js
+│   │   ├── models/          # User models
+│   │   └── routes/          # Auth routes
+│   │
+│   ├── quiz-service/        # Quiz Service (Port 3002)
+│   │   ├── index.js
+│   │   ├── models/          # Quiz models
+│   │   ├── routes/          # Quiz routes
+│   │   └── utils/           # AI generation, file parsing
+│   │
+│   ├── result-service/      # Result Service (Port 3003)
+│   │   ├── index.js
+│   │   ├── models/          # Result models
+│   │   ├── routes/          # Result routes
+│   │   └── services/        # Analytics, caching
+│   │
+│   ├── live-service/        # Live Quiz Service (Port 3004)
+│   │   ├── index.js
+│   │   ├── models/          # Session models
+│   │   └── sockets/         # Socket.IO handlers
+│   │
+│   ├── social-service/      # Social Service (Port 3006)
+│   │   ├── index.js
+│   │   ├── models/          # Friend, chat models
+│   │   └── routes/          # Social routes
+│   │
+│   ├── gamification-service/ # Gamification Service (Port 3007)
+│   │   ├── src/
+│   │   │   ├── index.js
+│   │   │   ├── models/      # Achievement, stats models
+│   │   │   ├── services/    # XP, achievement logic
+│   │   │   ├── routes/      # Gamification routes
+│   │   │   └── config/      # Redis, Bull queue config
+│   │   └── .env
+│   │
+│   ├── moderation-service/  # Moderation Service (Port 3008)
+│   │   ├── index.js
+│   │   ├── models/          # Report models
+│   │   └── routes/          # Moderation routes
+│   │
+│   ├── meeting-service/     # Meeting Service (Port 3009)
+│   │   ├── index.js
+│   │   ├── models/          # Meeting models
+│   │   └── sockets/         # WebRTC signaling
+│   │
+│   └── shared/              # Shared utilities across services
+│       ├── middleware/      # Auth, validation, error handling
+│       ├── utils/           # Logger, response formatter
+│       └── config/          # Common configurations
+│
+├── cognito_learning_hub_app/ # Flutter mobile app (optional)
+│   └── lib/
+│
+└── README.md                # This file
+```
+
+---
+
+## 🔐 Authentication Flow
+
+1. User registers/logs in via Auth Service (3001)
+2. Auth Service generates JWT token
+3. Frontend stores token in localStorage
+4. All requests include `x-auth-token` header
+5. API Gateway validates token before routing
+6. Services decode token to get user info
+
+---
+
+## 📊 Database Schema
+
+### Collections
+
+- **users**: User accounts and profiles
+- **quizzes**: Quiz definitions and questions
+- **results**: Quiz submission results
+- **livesessions**: Real-time quiz sessions
+- **userstats**: Gamification statistics
+- **achievements**: Achievement definitions
+- **userachievements**: User achievement unlocks
+- **friends**: Friend connections
+- **messages**: Chat messages
+- **reports**: Content moderation reports
+- **meetings**: Video meeting sessions
+
+---
+
+## 🎯 API Gateway Routes
+
+| Route                 | Service              | Description                    |
+| --------------------- | -------------------- | ------------------------------ |
+| `/api/auth/*`         | Auth Service         | Authentication endpoints       |
+| `/api/quizzes/*`      | Quiz Service         | Quiz CRUD operations           |
+| `/api/results/*`      | Result Service       | Result submission & analytics  |
+| `/api/live/*`         | Live Service         | Live quiz sessions             |
+| `/api/social/*`       | Social Service       | Friend & chat features         |
+| `/api/gamification/*` | Gamification Service | XP, achievements, leaderboards |
+| `/api/moderation/*`   | Moderation Service   | Content moderation             |
+| `/api/meetings/*`     | Meeting Service      | Video meetings                 |
+
+---
+
+## 🧪 Testing
+
+```bash
+# Frontend tests
+cd frontend
+npm test
+
+# Backend tests
 cd backend
-vercel --prod
+npm test
+
+# Microservice tests
+cd microservices/[service-name]
+npm test
 ```
-
-**API Endpoints**: Deployed as serverless functions on Vercel
-
-### Production Features
-
-- **Rate Limiting**: 300 requests per 15-minute window with success skipping
-- **Environment-Aware**: Automatic development mode detection
-- **WebSocket Support**: Socket.IO with fallback to HTTP polling
-- **Database**: MongoDB Atlas with connection pooling
-- **Cache**: Upstash Redis for rate limiting and session management
-- **CDN**: Static assets served via Vercel Edge Network
-- **SSL**: Automatic HTTPS with Let's Encrypt certificates
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Here's how:
-
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
 ---
 
-## 👥 Team OPTIMISTIC MUTANT CODERS
+## 📝 License
+
+This project is built for IIT Bombay Techfest 2025 by **OPTIMISTIC MUTANT CODERS**.
+
+---
+
+## 👥 Team
+
+**OPTIMISTIC MUTANT CODERS**
+
+- Lead Developer & Architect
+- Full-Stack Development
+- Microservices Design
+- AI Integration
+
+---
+
+## 📞 Contact
+
+For questions or support, please reach out through:
+
+- GitHub Issues
+- Project Repository: [Cognito Learning Hub](https://github.com/amitesh-7/Cognito_Learning_Hub)
+
+---
 
 <div align="center">
 
-**IIT Bombay Techfest 2025**
+**Made with ❤️ for IIT Bombay Techfest 2025**
 
-[LinkedIn](https://www.linkedin.com/company/optimistic-mutant-coders/) • [GitHub](https://github.com/amitesh-7)
-
-</div>
-
----
-
-## 📄 License
-
-This project is part of IIT Bombay Techfest 2025. All rights reserved.
-
----
-
-## 🙏 Acknowledgments
-
-- **IIT Bombay Techfest** for the opportunity
-- **Google Gemini AI** for AI capabilities
-- **MongoDB Atlas** for database hosting
-- **Vercel** for deployment platform
-- **Open Source Community** for amazing libraries
-
----
-
-<div align="center">
-
-**⭐ Star this repo if you find it helpful!**
-
-Made with ❤️ by team OPTIMISTIC MUTANT CODERS
+_Intelligence Meets Interaction_
 
 </div>

@@ -131,7 +131,15 @@ export default function Dashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        setAiInsights(data.data?.insights || data.insights);
+        console.log("AI Insights Response:", data); // Debug log
+        // Handle both response formats
+        setAiInsights(data.data || data);
+      } else {
+        console.error(
+          "AI Insights API error:",
+          response.status,
+          response.statusText
+        );
       }
     } catch (err) {
       console.error("Failed to fetch AI insights:", err);
@@ -1521,10 +1529,19 @@ export default function Dashboard() {
                     ) : (
                       <div className="space-y-3">
                         {recentResults.map((result, index) => {
-                          // Use percentage from database (correctAnswers/totalQuestions), not score/questions
-                          const scorePercentage = result.percentage || 0;
+                          // Use correctAnswers if available (microservice), otherwise fall back to score (main backend)
+                          const correctCount =
+                            result.correctAnswers ?? result.score;
+                          // Use percentage from database
+                          const scorePercentage =
+                            result.percentage ||
+                            (correctCount / result.totalQuestions) * 100 ||
+                            0;
                           const isExcellent = scorePercentage >= 90;
                           const isGood = scorePercentage >= 70;
+                          // Points earned (score from microservice, or pointsEarned from main backend)
+                          const pointsEarned =
+                            result.pointsEarned || result.score || 0;
 
                           return (
                             <motion.div
@@ -1579,8 +1596,7 @@ export default function Dashboard() {
                               <div className="flex items-center gap-3 flex-shrink-0">
                                 <div className="text-right">
                                   <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                    {result.correctAnswers || result.score}/
-                                    {result.totalQuestions}
+                                    {correctCount}/{result.totalQuestions}
                                   </p>
                                   <p
                                     className={`text-xs font-semibold ${
@@ -1594,7 +1610,7 @@ export default function Dashboard() {
                                     {scorePercentage.toFixed(0)}%
                                   </p>
                                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    {result.score} pts
+                                    {pointsEarned} pts
                                   </p>
                                 </div>
                                 <Badge
@@ -1647,7 +1663,7 @@ export default function Dashboard() {
                 {/* AI Insights Card */}
                 <motion.div variants={itemVariants}>
                   <AIInsightsCard
-                    insights={aiInsights?.insights}
+                    insights={aiInsights}
                     onRefresh={() => fetchAIInsights(true)}
                     isLoading={insightsLoading}
                   />
@@ -1702,27 +1718,32 @@ export default function Dashboard() {
               )}
 
               {/* No Data State */}
-              {!insightsLoading && !aiInsights?.hasData && (
-                <motion.div
-                  className="text-center py-20"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <Sparkles className="w-16 h-16 mx-auto mb-4 text-purple-400" />
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                    Unlock AI Insights
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                    {aiInsights?.message ||
-                      "Complete a few quizzes to unlock personalized AI-powered learning insights!"}
-                  </p>
-                  <Link to="/quizzes">
-                    <Button className="mt-4 bg-gradient-to-r from-purple-500 to-pink-600">
-                      Start a Quiz
-                    </Button>
-                  </Link>
-                </motion.div>
-              )}
+              {!insightsLoading &&
+                aiInsights &&
+                (aiInsights.hasData === false ||
+                  (!aiInsights.insights &&
+                    !aiInsights.analytics &&
+                    !aiInsights.patterns)) && (
+                  <motion.div
+                    className="text-center py-20"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <Sparkles className="w-16 h-16 mx-auto mb-4 text-purple-400" />
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                      Unlock AI Insights
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                      {aiInsights?.message ||
+                        "Complete a few quizzes to unlock personalized AI-powered learning insights!"}
+                    </p>
+                    <Link to="/quizzes">
+                      <Button className="mt-4 bg-gradient-to-r from-purple-500 to-pink-600">
+                        Start a Quiz
+                      </Button>
+                    </Link>
+                  </motion.div>
+                )}
             </motion.div>
           ) : (
             <motion.div
@@ -1771,64 +1792,73 @@ export default function Dashboard() {
                         </tr>
                       </thead>
                       <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                        {results.map((result) => (
-                          <tr
-                            key={result._id}
-                            className="hover:bg-gray-50 dark:hover:bg-gray-800"
-                          >
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-indigo-100 dark:bg-indigo-900 rounded-lg">
-                                  <ClipboardList className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                                </div>
-                                <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {result.quiz?.title || "Deleted Quiz"}
+                        {results.map((result) => {
+                          // Use correctAnswers if available (microservice), otherwise fall back to score
+                          const correctCount =
+                            result.correctAnswers ?? result.score;
+                          const pointsEarned =
+                            result.pointsEarned || result.score || 0;
+
+                          return (
+                            <tr
+                              key={result._id}
+                              className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                            >
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-indigo-100 dark:bg-indigo-900 rounded-lg">
+                                    <ClipboardList className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                  </div>
+                                  <div className="ml-4">
+                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                      {result.quiz?.title || "Deleted Quiz"}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900 dark:text-white">
-                                {result.correctAnswers || 0} /{" "}
-                                {result.totalQuestions}
-                              </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {(result.percentage || 0).toFixed(0)}%
-                              </div>
-                              <div className="text-xs text-gray-400 dark:text-gray-500">
-                                {result.score} pts
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge
-                                variant={
-                                  (result.percentage || 0) >= 90
-                                    ? "default"
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900 dark:text-white">
+                                  {correctCount} / {result.totalQuestions}
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  {(result.percentage || 0).toFixed(0)}%
+                                </div>
+                                <div className="text-xs text-gray-400 dark:text-gray-500">
+                                  {pointsEarned} pts
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <Badge
+                                  variant={
+                                    (result.percentage || 0) >= 90
+                                      ? "default"
+                                      : (result.percentage || 0) >= 70
+                                      ? "secondary"
+                                      : "destructive"
+                                  }
+                                >
+                                  {(result.percentage || 0) >= 90
+                                    ? "Excellent"
                                     : (result.percentage || 0) >= 70
-                                    ? "secondary"
-                                    : "destructive"
-                                }
-                              >
-                                {(result.percentage || 0) >= 90
-                                  ? "Excellent"
-                                  : (result.percentage || 0) >= 70
-                                  ? "Good"
-                                  : "Needs Work"}
-                              </Badge>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                              {new Date(result.createdAt).toLocaleDateString()}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                              <Link to={`/quiz/${result.quiz?._id}`}>
-                                <Button variant="outline" size="sm">
-                                  Play Again
-                                </Button>
-                              </Link>
-                            </td>
-                          </tr>
-                        ))}
+                                    ? "Good"
+                                    : "Needs Work"}
+                                </Badge>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                {new Date(
+                                  result.createdAt
+                                ).toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <Link to={`/quiz/${result.quiz?._id}`}>
+                                  <Button variant="outline" size="sm">
+                                    Play Again
+                                  </Button>
+                                </Link>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
