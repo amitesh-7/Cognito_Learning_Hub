@@ -12,228 +12,132 @@ import {
   Medal,
   Zap,
   TrendingUp,
-  Calendar,
-  Clock,
   BookOpen,
   BarChart3,
   Sparkles,
+  Lock,
+  CheckCircle2,
   RefreshCw,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
 import Progress from "../components/ui/Progress";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { RealTimeStats } from "../components/Gamification";
 
 const AchievementCard = ({ achievement, isUnlocked = false, progress = 0 }) => {
-  // Determine glow color based on rarity
-  const rarityGlow = {
-    legendary: "from-yellow-400/40 via-orange-500/40 to-red-500/40",
-    epic: "from-purple-400/30 via-pink-500/30 to-fuchsia-500/30",
-    rare: "from-blue-400/25 via-cyan-500/25 to-teal-500/25",
-    common: "from-gray-300/20 to-slate-400/20",
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.02, y: -4 }}
-      transition={{ duration: 0.3 }}
-      className="group relative"
-    >
-      <div
-        className={`absolute inset-0 rounded-2xl blur-lg transition-all duration-500 ${
-          isUnlocked
-            ? `bg-gradient-to-br ${rarityGlow[achievement.rarity]} group-hover:blur-xl`
-            : "bg-gradient-to-br from-violet-500/10 to-purple-500/10 group-hover:blur-md"
-        }`}
-      />
-    <div
-      className={`relative overflow-hidden p-6 rounded-2xl border-2 transition-all duration-300 backdrop-blur-2xl shadow-lg hover:shadow-2xl ${
-        isUnlocked
-          ? "border-yellow-400/60 bg-gradient-to-br from-yellow-50/80 via-orange-50/80 to-red-50/80 hover:shadow-yellow-500/30"
-          : "border-white/60 bg-white/60 hover:border-violet-300/60 hover:shadow-violet-500/20"
-      }`}
-    >
-      {/* Sparkle effect for unlocked achievements */}
-      {isUnlocked && (
-        <div className="absolute -top-1 -right-1">
-          <Sparkles className="w-6 h-6 text-yellow-500 animate-pulse" />
-        </div>
-      )}
-
-      <div className="flex items-center gap-4 mb-4">
-        <div
-          className={`relative p-3 rounded-2xl transition-all duration-300 ${
-            isUnlocked
-              ? "bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900 dark:to-orange-900 text-yellow-600 dark:text-yellow-400 shadow-lg"
-              : "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500"
-          }`}
-        >
-          {isUnlocked && (
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-2xl"
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          )}
-          <span className="text-3xl relative z-10">{achievement.icon}</span>
-        </div>
-
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h3
-              className={`font-bold text-lg ${
-                isUnlocked
-                  ? "text-yellow-800 dark:text-yellow-200"
-                  : "text-gray-600 dark:text-gray-400"
-              }`}
-            >
-              {achievement.name}
-            </h3>
-            {isUnlocked && <Crown className="w-5 h-5 text-yellow-500" />}
-          </div>
-          <p
-            className={`text-sm leading-relaxed ${
-              isUnlocked
-                ? "text-yellow-700 dark:text-yellow-300"
-                : "text-gray-500 dark:text-gray-500"
-            }`}
-          >
-            {achievement.description}
-          </p>
-        </div>
-        {isUnlocked && (
-          <motion.div
-            className="flex items-center gap-2 px-3 py-1 bg-yellow-100 dark:bg-yellow-900 rounded-full"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.3, type: "spring" }}
-          >
-            <Award className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-            <span className="text-sm font-bold text-yellow-700 dark:text-yellow-300">
-              +{achievement.points} XP
-            </span>
-          </motion.div>
-        )}
-      </div>
-
-      {!isUnlocked && progress > 0 && (
-        <div className="mt-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-              Progress
-            </span>
-            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-              {Math.round(progress)}%
-            </span>
-          </div>
-          <div className="relative">
-            <Progress
-              value={progress}
-              className="h-3 bg-gray-200 dark:bg-gray-700"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-20 animate-pulse" />
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-        <Badge
-          variant={
-            achievement.rarity === "legendary"
-              ? "destructive"
-              : achievement.rarity === "epic"
-              ? "default"
-              : achievement.rarity === "rare"
-              ? "secondary"
-              : "outline"
-          }
-          className="font-semibold"
-        >
-          ✨ {achievement.rarity}
-        </Badge>
-        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-          {achievement.type}
-        </span>
-      </div>
-    </div>
-  </motion.div>
-  );
-};
-
-const StatCard = ({ icon, label, value, change, color = "blue" }) => {
-  const colorClasses = {
-    blue: {
-      bg: "bg-gradient-to-br from-blue-500 to-cyan-600",
-      text: "text-blue-600",
-    },
-    yellow: {
-      bg: "bg-gradient-to-br from-yellow-400 to-orange-500",
-      text: "text-yellow-600",
-    },
-    orange: {
-      bg: "bg-gradient-to-br from-orange-500 to-red-600",
-      text: "text-orange-600",
-    },
-    green: {
-      bg: "bg-gradient-to-br from-emerald-500 to-teal-600",
-      text: "text-emerald-600",
-    },
+  const rarityColors = {
+    legendary: "from-amber-400 via-yellow-500 to-orange-500",
+    epic: "from-purple-400 via-fuchsia-500 to-pink-500",
+    rare: "from-blue-400 via-cyan-500 to-teal-500",
+    common: "from-slate-400 to-slate-500",
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -5, scale: 1.02 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      whileHover={{ y: -4 }}
       transition={{ duration: 0.3 }}
-      className="group relative"
+      className="relative group"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-500" />
-      <div className="relative bg-white/70 backdrop-blur-2xl border-2 border-white/80 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:shadow-violet-500/20 transition-all duration-500">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div
-              className={`p-3 rounded-xl ${
-                colorClasses[color]?.bg || colorClasses.blue.bg
-              } shadow-lg`}
-            >
-              {React.cloneElement(icon, {
-                className: "w-6 h-6 text-white",
-              })}
+      {/* Card */}
+      <div className={`relative backdrop-blur-xl rounded-2xl p-5 border transition-all duration-300 ${
+        isUnlocked
+          ? 'bg-gradient-to-br from-white/90 to-white/70 border-white/60 shadow-lg hover:shadow-xl'
+          : 'bg-white/40 border-white/40 shadow-md hover:shadow-lg'
+      }`}>
+        
+        {/* Lock/Check Icon */}
+        <div className="absolute top-4 right-4">
+          {isUnlocked ? (
+            <div className="p-1.5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 shadow-lg">
+              <CheckCircle2 className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <p className="text-sm font-bold text-slate-600 mb-1">{label}</p>
-              <p className="text-3xl font-black bg-gradient-to-r from-slate-900 via-violet-700 to-fuchsia-600 bg-clip-text text-transparent">
-                {value}
-              </p>
+          ) : (
+            <div className="p-1.5 rounded-full bg-slate-300/50">
+              <Lock className="w-4 h-4 text-slate-500" />
             </div>
-          </div>
-          {change && (
-            <motion.div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full shadow-md ${
-                change > 0
-                  ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
-                  : "bg-gradient-to-r from-red-500 to-orange-600 text-white"
-              }`}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-sm font-bold">
-                {change > 0 ? "+" : ""}
-                {change}
-              </span>
-            </motion.div>
           )}
+        </div>
+
+        {/* Icon & Content */}
+        <div className="flex gap-4 mb-4">
+          <div className={`flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${
+            isUnlocked 
+              ? `bg-gradient-to-br ${rarityColors[achievement.rarity]} shadow-md`
+              : 'bg-slate-200/60'
+          }`}>
+            {achievement.icon}
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <h3 className={`font-bold text-base mb-1 ${
+              isUnlocked ? 'text-slate-900' : 'text-slate-600'
+            }`}>
+              {achievement.name}
+            </h3>
+            <p className={`text-sm line-clamp-2 ${
+              isUnlocked ? 'text-slate-600' : 'text-slate-500'
+            }`}>
+              {achievement.description}
+            </p>
+          </div>
+        </div>
+
+        {/* Progress Bar (for locked achievements) */}
+        {!isUnlocked && progress > 0 && (
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-xs font-medium text-slate-600">Progress</span>
+              <span className="text-xs font-bold text-slate-700">{Math.round(progress)}%</span>
+            </div>
+            <Progress value={progress} className="h-1.5" />
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-3 border-t border-slate-200/60">
+          <Badge variant="outline" className="text-xs font-semibold capitalize">
+            {achievement.rarity}
+          </Badge>
+          <div className={`flex items-center gap-1.5 ${
+            isUnlocked ? 'text-amber-600' : 'text-slate-500'
+          }`}>
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="text-sm font-bold">{achievement.points} XP</span>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const StatCard = ({ icon, label, value, color = "indigo" }) => {
+  const colorClasses = {
+    indigo: "from-indigo-500 to-purple-600",
+    amber: "from-amber-500 to-orange-600",
+    rose: "from-rose-500 to-pink-600",
+    emerald: "from-emerald-500 to-teal-600",
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.2 }}
+      className="relative group"
+    >
+      <div className="relative backdrop-blur-xl bg-white/70 rounded-2xl p-5 border border-white/60 shadow-lg hover:shadow-xl transition-all duration-300">
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-xl bg-gradient-to-br ${colorClasses[color]} shadow-md`}>
+            {React.cloneElement(icon, { className: "w-5 h-5 text-white" })}
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-slate-600 mb-0.5">{label}</p>
+            <p className="text-2xl font-bold text-slate-900">{value}</p>
+          </div>
         </div>
       </div>
     </motion.div>

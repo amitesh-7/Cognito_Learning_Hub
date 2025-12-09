@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useGamification } from "../context/GamificationContext";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import {
   LineChart,
   Line,
@@ -64,6 +64,11 @@ import {
 } from "../components/AIInsightsNew";
 import { WeeklyActivityCard } from "../components/AIInsights";
 import { RealTimeStats } from "../components/Gamification";
+import StudyBuddyChat from "../components/StudyBuddy/StudyBuddyChat";
+import StudyGoals from "../components/StudyBuddy/StudyGoals";
+import QuestMap from "../components/Quests/QuestMap";
+import WorldEventsPage from "../components/WorldEvents/WorldEventsPage";
+import TimeTravelMode from "../components/TimeTravel/TimeTravelMode";
 
 // --- Animation Variants ---
 const containerVariants = {
@@ -96,16 +101,26 @@ export default function Dashboard() {
     currentStreak: gamificationStreak,
     userAchievements,
   } = useGamification();
+  const location = useLocation();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [streakCount, setStreakCount] = useState(0);
-  const [viewMode, setViewMode] = useState("overview"); // 'overview', 'detailed', 'insights'
+  const [viewMode, setViewMode] = useState("overview"); // 'overview', 'detailed', 'insights', 'study-buddy', 'goals', 'quests', 'world-events', 'time-travel'
   const { success } = useHaptic();
 
   // AI Insights state
   const [aiInsights, setAiInsights] = useState(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
+
+  // Check if user came from quiz results wanting to open Study Buddy
+  useEffect(() => {
+    if (location.state?.openStudyBuddy) {
+      setViewMode("study-buddy");
+      // Clear the state so it doesn't persist on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   // Redirect teachers to teacher dashboard (only after auth is loaded)
   if (!authLoading && user?.role === "Teacher") {
@@ -697,6 +712,71 @@ export default function Dashboard() {
             >
               <ClipboardList className="w-4 h-4" />
               <span className="hidden sm:inline">Details</span>
+            </motion.button>
+            <motion.button
+              onClick={() => setViewMode("study-buddy")}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+                viewMode === "study-buddy"
+                  ? "bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-md"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">Study Buddy</span>
+            </motion.button>
+            <motion.button
+              onClick={() => setViewMode("goals")}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+                viewMode === "goals"
+                  ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Target className="w-4 h-4" />
+              <span className="hidden sm:inline">Goals</span>
+            </motion.button>
+            <motion.button
+              onClick={() => setViewMode("quests")}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+                viewMode === "quests"
+                  ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Gamepad2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Quests</span>
+            </motion.button>
+            <motion.button
+              onClick={() => setViewMode("world-events")}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+                viewMode === "world-events"
+                  ? "bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-md"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">World Events</span>
+            </motion.button>
+            <motion.button
+              onClick={() => setViewMode("time-travel")}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+                viewMode === "time-travel"
+                  ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Clock className="w-4 h-4" />
+              <span className="hidden sm:inline">Time Travel</span>
             </motion.button>
           </div>
         </motion.div>
@@ -1824,6 +1904,61 @@ export default function Dashboard() {
                     </Link>
                   </div>
                 )}
+            </motion.div>
+          ) : viewMode === "study-buddy" ? (
+            /* AI Study Buddy Chat View */
+            <motion.div
+              key="study-buddy"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+            >
+              <StudyBuddyChat context={location.state?.quizContext} />
+            </motion.div>
+          ) : viewMode === "goals" ? (
+            /* Study Goals View */
+            <motion.div
+              key="goals"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+            >
+              <StudyGoals />
+            </motion.div>
+          ) : viewMode === "quests" ? (
+            /* Quest System View */
+            <motion.div
+              key="quests"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+            >
+              <QuestMap />
+            </motion.div>
+          ) : viewMode === "world-events" ? (
+            /* World Events View */
+            <motion.div
+              key="world-events"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+            >
+              <WorldEventsPage />
+            </motion.div>
+          ) : viewMode === "time-travel" ? (
+            /* Time Travel Mode View */
+            <motion.div
+              key="time-travel"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+            >
+              <TimeTravelMode />
             </motion.div>
           ) : (
             <motion.div

@@ -23,7 +23,6 @@ const UserSchema = new mongoose.Schema(
     },
     googleId: {
       type: String,
-      sparse: true,
     },
     picture: {
       type: String, // Google profile picture URL or uploaded avatar

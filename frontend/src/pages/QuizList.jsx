@@ -6,197 +6,30 @@ import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Input } from "../components/ui/Input";
 import ReportModal from "../components/ReportModal";
-
-// Icons
-const BookOpenIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-  </svg>
-);
-const HelpCircleIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="10"></circle>
-    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-  </svg>
-);
-const UserIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-    <circle cx="12" cy="7" r="4"></circle>
-  </svg>
-);
-const SearchIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="11" cy="11" r="8" />
-    <path d="m21 21-4.35-4.35" />
-  </svg>
-);
-const ClockIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12,6 12,12 16,14" />
-  </svg>
-);
-const TrendingUpIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-    <polyline points="16 7 22 7 22 13" />
-  </svg>
-);
-const StarIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-  </svg>
-);
-const ActivityIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-  </svg>
-);
-const PlayIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polygon points="5,3 19,12 5,21" />
-  </svg>
-);
-const BotIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M12 8V4H8" />
-    <rect width="16" height="12" x="4" y="8" rx="2" />
-    <path d="M2 14h2" />
-    <path d="M20 14h2" />
-    <path d="M15 13v2" />
-    <path d="M9 13v2" />
-  </svg>
-);
-const FlagIcon = (props) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-    <line x1="4" y1="22" x2="4" y2="15" />
-  </svg>
-);
+import {
+  BookOpen,
+  HelpCircle,
+  User,
+  Search,
+  Clock,
+  TrendingUp,
+  Star,
+  Activity,
+  Play,
+  Bot,
+  Flag,
+  Sparkles,
+  Zap,
+  Trophy,
+  Target,
+  Flame,
+  Brain,
+  ChevronRight,
+  Filter,
+  LayoutGrid,
+  List,
+  Award,
+} from "lucide-react";
 
 // --- Animation Variants ---
 const containerVariants = {
@@ -414,7 +247,7 @@ export default function QuizList() {
         >
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-violet-400 w-5 h-5" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-violet-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search quizzes or creators..."
@@ -444,7 +277,7 @@ export default function QuizList() {
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 backdrop-blur-sm flex items-center justify-center mx-auto mb-6 border border-violet-200/50">
-              <BookOpenIcon className="w-10 h-10 text-violet-400" />
+              <BookOpen className="w-10 h-10 text-violet-400" />
             </div>
             <h3 className="text-2xl font-bold text-slate-800 mb-3">
               {searchTerm ? "No quizzes found" : "No quizzes available"}
@@ -485,7 +318,7 @@ export default function QuizList() {
                       transition={{ duration: 0.6 }}
                       className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-xl flex items-center justify-center border-2 border-white/40 shadow-lg"
                     >
-                      <StarIcon className="w-7 h-7 text-yellow-300 fill-yellow-300" />
+                      <Star className="w-7 h-7 text-yellow-300 fill-yellow-300" />
                     </motion.div>
                     <div>
                       <span className="text-sm font-black text-white/80 uppercase tracking-wider">
@@ -503,12 +336,12 @@ export default function QuizList() {
                   </h4>
                   <p className="text-white/90 mb-6 text-lg font-semibold flex items-center gap-3">
                     <span className="flex items-center gap-2">
-                      <UserIcon className="w-5 h-5" />
+                      <User className="w-5 h-5" />
                       {filteredQuizzes[0].createdBy?.name || "Unknown"}
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-2">
-                      <HelpCircleIcon className="w-5 h-5" />
+                      <HelpCircle className="w-5 h-5" />
                       {filteredQuizzes[0].questions.length} questions
                     </span>
                   </p>
@@ -518,7 +351,7 @@ export default function QuizList() {
                       whileTap={{ scale: 0.95 }}
                       className="px-8 py-4 bg-white text-violet-600 hover:bg-white/95 rounded-xl font-black shadow-2xl hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)] transition-all duration-200 flex items-center gap-3 group/btn"
                     >
-                      <PlayIcon className="w-6 h-6" />
+                      <Play className="w-6 h-6" />
                       Start Quiz Now
                       <motion.span
                         animate={{ x: [0, 5, 0] }}
@@ -560,7 +393,7 @@ export default function QuizList() {
                           transition={{ duration: 0.6 }}
                           className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-lg group-hover:shadow-violet-500/50"
                         >
-                          <BookOpenIcon className="h-7 w-7 text-white" />
+                          <BookOpen className="h-7 w-7 text-white" />
                         </motion.div>
                         <div className="flex flex-col items-end gap-2">
                           <span className="px-3 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-violet-100 to-fuchsia-100 text-violet-700 border-2 border-violet-300/50 shadow-md">
@@ -581,7 +414,7 @@ export default function QuizList() {
                       <div className="space-y-2.5 mb-6 flex-grow">
                         <div className="flex items-center text-sm font-semibold">
                           <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center mr-3">
-                            <HelpCircleIcon className="w-4 h-4 text-violet-600" />
+                            <HelpCircle className="w-4 h-4 text-violet-600" />
                           </div>
                           <span className="text-slate-700">
                             {quiz.questions.length} Questions
@@ -589,7 +422,7 @@ export default function QuizList() {
                         </div>
                         <div className="flex items-center text-sm font-semibold">
                           <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
-                            <UserIcon className="w-4 h-4 text-blue-600" />
+                            <User className="w-4 h-4 text-blue-600" />
                           </div>
                           <span className="text-slate-700 truncate">
                             {quiz.createdBy?.name || "Unknown"}
@@ -597,7 +430,7 @@ export default function QuizList() {
                         </div>
                         <div className="flex items-center text-sm font-semibold">
                           <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center mr-3">
-                            <ClockIcon className="w-4 h-4 text-emerald-600" />
+                            <Clock className="w-4 h-4 text-emerald-600" />
                           </div>
                           <span className="text-slate-700">
                             {new Date(quiz.createdAt).toLocaleDateString()}
@@ -607,7 +440,7 @@ export default function QuizList() {
 
                       {/* XP Badge */}
                       <div className="mb-4 px-4 py-2 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-xl shadow-lg flex items-center justify-center gap-2">
-                        <StarIcon className="w-4 h-4 text-white fill-white" />
+                        <Star className="w-4 h-4 text-white fill-white" />
                         <span className="text-sm font-black text-white">
                           +{quiz.questions.length * 10} XP
                         </span>
@@ -623,7 +456,7 @@ export default function QuizList() {
                             whileTap={{ scale: 0.95 }}
                             className="w-full px-3 py-2.5 text-sm font-black text-slate-700 hover:bg-white/80 backdrop-blur-sm rounded-xl transition-all duration-200 border-2 border-slate-200 hover:border-violet-300 flex items-center justify-center gap-2 shadow-md"
                           >
-                            <TrendingUpIcon className="w-4 h-4" />
+                            <TrendingUp className="w-4 h-4" />
                             Leaderboard
                           </motion.button>
                         </Link>
@@ -636,7 +469,7 @@ export default function QuizList() {
                             whileTap={{ scale: 0.95 }}
                             className="w-full px-3 py-2.5 text-sm font-black text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 rounded-xl transition-all duration-200 shadow-lg hover:shadow-cyan-500/50 flex items-center justify-center gap-2"
                           >
-                            <BotIcon className="w-4 h-4" />
+                            <Bot className="w-4 h-4" />
                             AI Battle
                           </motion.button>
                         </Link>
@@ -646,7 +479,7 @@ export default function QuizList() {
                             whileTap={{ scale: 0.95 }}
                             className="w-full px-3 py-2.5 text-sm font-black text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 rounded-xl transition-all duration-200 shadow-lg hover:shadow-violet-500/50 flex items-center justify-center gap-2"
                           >
-                            <PlayIcon className="w-4 h-4" />
+                            <Play className="w-4 h-4" />
                             Play
                           </motion.button>
                         </Link>
@@ -659,7 +492,7 @@ export default function QuizList() {
                           }}
                           className="px-3 py-2.5 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 border-2 border-slate-200 hover:border-red-300 shadow-md"
                         >
-                          <FlagIcon className="w-4 h-4" />
+                          <Flag className="w-4 h-4" />
                         </motion.button>
                       </div>
                     </div>

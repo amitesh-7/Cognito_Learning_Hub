@@ -159,13 +159,13 @@ const gracefulShutdown = async (signal) => {
 
     try {
       // Close Socket.IO
-      io.close(() => {
-        logger.info("Socket.IO server closed");
-      });
-
       // Disconnect Redis
       await meetingManager.disconnect();
       logger.info("Redis disconnected");
+
+      io.close(() => {
+        logger.info("Socket.IO server closed");
+      });
 
       // Close MongoDB
       const mongoose = require("mongoose");
