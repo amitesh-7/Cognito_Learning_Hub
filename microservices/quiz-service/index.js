@@ -56,6 +56,9 @@ app.get("/api/quizzes/count", async (req, res) => {
 app.use("/api/generate", require("./routes/generation"));
 app.use("/api/quizzes", require("./routes/quizzes"));
 app.use("/api/doubt-solver", require("./routes/doubtSolver"));
+app.use("/api/advanced-questions", require("./routes/advancedQuestions")); // New advanced question types
+app.use("/api/study-buddy/chat", require("./routes/study-buddy/chat")); // AI Study Buddy chat
+app.use("/api/study-buddy/goals", require("./routes/study-buddy/goals")); // AI Study Buddy goals
 
 // Legacy routes (for backward compatibility with monolith)
 app.use("/api", require("./routes/legacy"));
@@ -154,7 +157,10 @@ const connectRedis = async () => {
     await cacheManager.connect();
     logger.info("Redis connected");
   } catch (error) {
-    logger.warn("⚠️ Redis connection failed (continuing without cache):", error.message);
+    logger.warn(
+      "⚠️ Redis connection failed (continuing without cache):",
+      error.message
+    );
     logger.warn("⚠️ Quiz caching and job queue will use fallback mode");
   }
 };

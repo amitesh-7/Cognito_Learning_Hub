@@ -16,6 +16,11 @@ import {
   Award,
   ArrowUp,
   Quote,
+  Brain,
+  Clock,
+  Calendar,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 
 /**
@@ -25,7 +30,7 @@ import {
 export function AIInsightsCard({ insights, onRefresh, isLoading }) {
   const [expanded, setExpanded] = useState(false);
 
-  if (!insights) {
+  if (!insights || insights.hasData === false) {
     return (
       <Card className="p-6 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border-0">
         <div className="flex items-center gap-3 mb-4">
@@ -37,16 +42,19 @@ export function AIInsightsCard({ insights, onRefresh, isLoading }) {
           </h3>
         </div>
         <p className="text-gray-600 dark:text-gray-300">
-          Take a few quizzes to unlock personalized AI insights about your learning journey!
+          {insights?.message ||
+            "Take a few quizzes to unlock personalized AI insights about your learning journey!"}
         </p>
       </Card>
     );
   }
 
+  const insightsData = insights.insights || {};
   const priorityColors = {
-    high: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    medium: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-    low: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    high: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800",
+    medium:
+      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
+    low: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800",
   };
 
   return (
@@ -64,14 +72,17 @@ export function AIInsightsCard({ insights, onRefresh, isLoading }) {
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
             >
-              <Sparkles className="w-5 h-5 text-white" />
+              <Brain className="w-5 h-5 text-white" />
             </motion.div>
             <div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                 AI Learning Coach
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Powered by {insights.generatedBy === "ai" ? "Gemini AI" : "Smart Analytics"}
+                Powered by{" "}
+                {insightsData.generatedBy === "ai"
+                  ? "Gemini AI ✨"
+                  : "Smart Analytics"}
               </p>
             </div>
           </div>
@@ -80,28 +91,35 @@ export function AIInsightsCard({ insights, onRefresh, isLoading }) {
             size="sm"
             onClick={onRefresh}
             disabled={isLoading}
-            className="text-purple-600 hover:text-purple-700"
+            className="text-purple-600 hover:text-purple-700 dark:text-purple-400"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+            />
           </Button>
         </div>
 
         {/* Summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-4 mb-4"
-        >
-          <p className="text-gray-700 dark:text-gray-200 font-medium">
-            {insights.summary}
-          </p>
-          <p className="text-purple-600 dark:text-purple-400 text-sm mt-2 italic">
-            ✨ {insights.encouragement}
-          </p>
-        </motion.div>
+        {insightsData.summary && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-4 mb-4 border border-purple-100 dark:border-purple-800/30"
+          >
+            <p className="text-gray-700 dark:text-gray-200 font-medium leading-relaxed">
+              {insightsData.summary}
+            </p>
+            {insightsData.encouragement && (
+              <p className="text-purple-600 dark:text-purple-400 text-sm mt-3 italic flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                {insightsData.encouragement}
+              </p>
+            )}
+          </motion.div>
+        )}
 
         {/* Key Insights */}
-        {insights.insights && insights.insights.length > 0 && (
+        {insightsData.insights && insightsData.insights.length > 0 && (
           <div className="mb-4">
             <div className="flex items-center gap-2 mb-3">
               <Lightbulb className="w-4 h-4 text-yellow-500" />
@@ -110,56 +128,19 @@ export function AIInsightsCard({ insights, onRefresh, isLoading }) {
               </h4>
             </div>
             <div className="space-y-2">
-              {insights.insights.slice(0, expanded ? undefined : 2).map((insight, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-start gap-2 bg-white/40 dark:bg-gray-800/40 rounded-lg p-3"
-                >
-                  <span className="text-purple-500 mt-0.5">💡</span>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">{insight}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Recommendations */}
-        {insights.recommendations && insights.recommendations.length > 0 && (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="w-4 h-4 text-green-500" />
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Recommendations
-              </h4>
-            </div>
-            <div className="space-y-2">
-              {insights.recommendations
-                .slice(0, expanded ? undefined : 2)
-                .map((rec, index) => (
+              {insightsData.insights
+                .slice(0, expanded ? undefined : 3)
+                .map((insight, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 + 0.2 }}
-                    className="bg-white/40 dark:bg-gray-800/40 rounded-lg p-3"
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-start gap-2 bg-white/40 dark:bg-gray-800/40 rounded-lg p-3 border border-purple-100/50 dark:border-purple-800/20"
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-800 dark:text-white">
-                        {rec.title}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          priorityColors[rec.priority]
-                        }`}
-                      >
-                        {rec.priority}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {rec.description}
+                    <span className="text-purple-500 mt-0.5">💡</span>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                      {insight}
                     </p>
                   </motion.div>
                 ))}
@@ -167,46 +148,113 @@ export function AIInsightsCard({ insights, onRefresh, isLoading }) {
           </div>
         )}
 
+        {/* Recommendations */}
+        {insightsData.recommendations &&
+          insightsData.recommendations.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Target className="w-4 h-4 text-green-500" />
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Action Steps
+                </h4>
+              </div>
+              <div className="space-y-2">
+                {insightsData.recommendations
+                  .slice(0, expanded ? undefined : 3)
+                  .map((rec, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 + 0.2 }}
+                      className={`rounded-lg p-3 border ${
+                        priorityColors[rec.priority || "medium"]
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-800 dark:text-white flex items-center gap-2">
+                          {rec.priority === "high" && (
+                            <AlertCircle className="w-4 h-4" />
+                          )}
+                          {rec.priority !== "high" && (
+                            <CheckCircle className="w-4 h-4" />
+                          )}
+                          {rec.title}
+                        </span>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full font-medium uppercase`}
+                        >
+                          {rec.priority || "medium"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                        {rec.description}
+                      </p>
+                    </motion.div>
+                  ))}
+              </div>
+            </div>
+          )}
+
         {/* Goal Suggestions */}
-        {insights.goalSuggestions && insights.goalSuggestions.length > 0 && expanded && (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Flame className="w-4 h-4 text-orange-500" />
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Goals for You
-              </h4>
+        {insightsData.goalSuggestions &&
+          insightsData.goalSuggestions.length > 0 &&
+          expanded && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Flame className="w-4 h-4 text-orange-500" />
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Suggested Goals
+                </h4>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {insightsData.goalSuggestions.map((goal, index) => (
+                  <motion.span
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="inline-flex items-center gap-1 bg-gradient-to-r from-orange-100 to-yellow-100 dark:from-orange-900/30 dark:to-yellow-900/30 text-orange-700 dark:text-orange-300 text-xs px-3 py-1.5 rounded-full border border-orange-200 dark:border-orange-800/30"
+                  >
+                    <Star className="w-3 h-3" />
+                    {goal}
+                  </motion.span>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {insights.goalSuggestions.map((goal, index) => (
-                <motion.span
-                  key={index}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="inline-flex items-center gap-1 bg-gradient-to-r from-orange-100 to-yellow-100 dark:from-orange-900/30 dark:to-yellow-900/30 text-orange-700 dark:text-orange-300 text-xs px-3 py-1.5 rounded-full"
-                >
-                  <Star className="w-3 h-3" />
-                  {goal}
-                </motion.span>
-              ))}
-            </div>
-          </div>
-        )}
+          )}
 
         {/* Motivational Quote */}
-        {insights.motivationalQuote && expanded && (
+        {insightsData.motivationalQuote && expanded && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl p-4 mb-4"
+            className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-xl p-4 mb-4 border border-purple-200 dark:border-purple-800/30"
           >
             <div className="flex gap-3">
-              <Quote className="w-5 h-5 text-purple-500 flex-shrink-0" />
-              <p className="text-sm italic text-purple-700 dark:text-purple-300">
-                "{insights.motivationalQuote}"
+              <Quote className="w-5 h-5 text-purple-500 flex-shrink-0 mt-1" />
+              <p className="text-sm italic text-purple-700 dark:text-purple-300 leading-relaxed">
+                "{insightsData.motivationalQuote}"
               </p>
             </div>
           </motion.div>
+        )}
+
+        {/* Expand/Collapse button */}
+        {(insightsData.insights?.length > 3 ||
+          insightsData.recommendations?.length > 3 ||
+          insightsData.goalSuggestions?.length > 0) && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium mt-2 transition-colors"
+          >
+            {expanded ? "Show less" : "Show all insights"}
+            <ChevronRight
+              className={`w-4 h-4 transition-transform ${
+                expanded ? "rotate-90" : ""
+              }`}
+            />
+          </button>
         )}
 
         {/* Expand/Collapse button */}
@@ -216,7 +264,9 @@ export function AIInsightsCard({ insights, onRefresh, isLoading }) {
         >
           {expanded ? "Show less" : "Show more insights"}
           <ChevronRight
-            className={`w-4 h-4 transition-transform ${expanded ? "rotate-90" : ""}`}
+            className={`w-4 h-4 transition-transform ${
+              expanded ? "rotate-90" : ""
+            }`}
           />
         </button>
       </div>
@@ -241,7 +291,8 @@ export function PeerComparisonCard({ comparison }) {
           </h3>
         </div>
         <p className="text-gray-600 dark:text-gray-300">
-          {comparison?.message || "Complete at least 3 quizzes to see how you compare with peers!"}
+          {comparison?.message ||
+            "Complete at least 3 quizzes to see how you compare with peers!"}
         </p>
       </Card>
     );
@@ -302,12 +353,19 @@ export function PeerComparisonCard({ comparison }) {
                 strokeDasharray={251.2}
                 initial={{ strokeDashoffset: 251.2 }}
                 animate={{
-                  strokeDashoffset: 251.2 - (comparison.percentile / 100) * 251.2,
+                  strokeDashoffset:
+                    251.2 - (comparison.percentile / 100) * 251.2,
                 }}
                 transition={{ duration: 1.5, ease: "easeOut" }}
               />
               <defs>
-                <linearGradient id="percentileGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <linearGradient
+                  id="percentileGradient"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="0%"
+                >
                   <stop offset="0%" stopColor="#3b82f6" />
                   <stop offset="100%" stopColor="#06b6d4" />
                 </linearGradient>
@@ -351,27 +409,31 @@ export function PeerComparisonCard({ comparison }) {
               Score Distribution
             </h4>
             <div className="space-y-2">
-              {Object.entries(comparison.scoreDistribution).map(([range, count]) => {
-                const percentage = Math.round((count / comparison.totalUsers) * 100);
-                return (
-                  <div key={range} className="flex items-center gap-2">
-                    <span className="text-xs text-gray-600 dark:text-gray-400 w-16">
-                      {range}
-                    </span>
-                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-                      <motion.div
-                        className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${percentage}%` }}
-                        transition={{ duration: 0.8 }}
-                      />
+              {Object.entries(comparison.scoreDistribution).map(
+                ([range, count]) => {
+                  const percentage = Math.round(
+                    (count / comparison.totalUsers) * 100
+                  );
+                  return (
+                    <div key={range} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-600 dark:text-gray-400 w-16">
+                        {range}
+                      </span>
+                      <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${percentage}%` }}
+                          transition={{ duration: 0.8 }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300 w-12 text-right">
+                        {count} users
+                      </span>
                     </div>
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300 w-12 text-right">
-                      {count} users
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
             </div>
           </div>
         )}
@@ -442,7 +504,9 @@ export function WeeklyActivityCard({ dailyActivity, weeklyTrend }) {
                   {activity.count || ""}
                 </span>
               </div>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{day}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {day}
+              </span>
             </motion.div>
           );
         })}

@@ -60,8 +60,9 @@ import {
 import {
   AIInsightsCard,
   PeerComparisonCard,
-  WeeklyActivityCard,
-} from "../components/AIInsights";
+  LearningPatternsCard,
+} from "../components/AIInsightsNew";
+import { WeeklyActivityCard } from "../components/AIInsights";
 import { RealTimeStats } from "../components/Gamification";
 
 // --- Animation Variants ---
@@ -124,25 +125,36 @@ export default function Dashboard() {
             user?._id
           }/insights`;
 
+      console.log("📊 Fetching AI Insights from:", endpoint);
+
       const response = await fetch(endpoint, {
         method: forceRefresh ? "POST" : "GET",
         headers: { "x-auth-token": token },
       });
 
+      console.log("📊 Response status:", response.status);
+
       if (response.ok) {
         const data = await response.json();
-        console.log("AI Insights Response:", data); // Debug log
+        console.log("📊 AI Insights Full Response:", data);
+        console.log("📊 Response data.data:", data.data);
+        console.log("📊 Response data.insights:", data.insights);
+
         // Handle both response formats
-        setAiInsights(data.data || data);
+        const insightsData = data.data || data;
+        console.log("📊 Final insights data:", insightsData);
+        setAiInsights(insightsData);
       } else {
         console.error(
-          "AI Insights API error:",
+          "❌ AI Insights API error:",
           response.status,
           response.statusText
         );
+        const errorText = await response.text();
+        console.error("❌ Error response:", errorText);
       }
     } catch (err) {
-      console.error("Failed to fetch AI insights:", err);
+      console.error("❌ Failed to fetch AI insights:", err);
     } finally {
       setInsightsLoading(false);
     }
@@ -162,27 +174,56 @@ export default function Dashboard() {
       setResults(data);
 
       // Calculate streak (consecutive days with quiz attempts)
+      // Streak logic: Count how many consecutive days (starting from today or yesterday) you took quizzes
+      // Example: If you took quizzes today, yesterday, and day before yesterday = 3 day streak
       const sortedResults = data.sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
-      let streak = 0;
-      let currentDate = new Date();
-      currentDate.setHours(0, 0, 0, 0);
+      console.log("🔥 Calculating streak from results:", sortedResults.length);
 
-      for (let i = 0; i < sortedResults.length; i++) {
-        const resultDate = new Date(sortedResults[i].createdAt);
-        resultDate.setHours(0, 0, 0, 0);
+      // Group results by unique days to avoid counting multiple quizzes on same day
+      const uniqueDays = new Set();
+      sortedResults.forEach((result) => {
+        const date = new Date(result.createdAt);
+        date.setHours(0, 0, 0, 0);
+        uniqueDays.add(date.getTime());
+      });
+
+      const sortedUniqueDays = Array.from(uniqueDays).sort((a, b) => b - a);
+      console.log("🔥 Unique days with quizzes:", sortedUniqueDays.length);
+
+      let streak = 0;
+      let expectedDate = new Date();
+      expectedDate.setHours(0, 0, 0, 0);
+
+      for (let dayTimestamp of sortedUniqueDays) {
+        const resultDate = new Date(dayTimestamp);
         const daysDiff = Math.floor(
-          (currentDate - resultDate) / (1000 * 60 * 60 * 24)
+          (expectedDate - resultDate) / (1000 * 60 * 60 * 24)
         );
 
-        if (daysDiff === streak) {
+        console.log(
+          `🔥 Checking day: Date=${resultDate.toLocaleDateString()}, DaysDiff=${daysDiff}, ExpectedDiff=${streak}`
+        );
+
+        // Accept today (0) or yesterday (1) for first day, then must be consecutive
+        if (daysDiff === 0 || (streak === 0 && daysDiff === 1)) {
           streak++;
-          currentDate = new Date(resultDate);
-        } else if (daysDiff > streak) {
+          expectedDate = new Date(resultDate);
+          expectedDate.setDate(expectedDate.getDate() - 1); // Next expected is previous day
+          console.log(`✅ Streak continues! New streak: ${streak} days`);
+        } else if (daysDiff === 1) {
+          // Consecutive day
+          streak++;
+          expectedDate = new Date(resultDate);
+          expectedDate.setDate(expectedDate.getDate() - 1);
+          console.log(`✅ Streak continues! New streak: ${streak} days`);
+        } else {
+          console.log(`❌ Streak broken at ${streak} days (gap found)`);
           break;
         }
       }
+      console.log(`🔥 Final streak count: ${streak} consecutive days`);
       setStreakCount(streak);
     } catch (err) {
       setError(err.message);
@@ -192,17 +233,50 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchResults();
-    if (user?._id) {
+    const loadData = async () => {
+      await fetchResults();
+      if (user?._id) {
+        await fetchAIInsights();
+      }
+    };
+    loadData();
+  }, [user?._id]);
+
+  // Refresh AI insights when results count changes (new quiz completed)
+  useEffect(() => {
+    if (user?._id && results.length > 0 && !insightsLoading) {
+      console.log(
+        "📊 Results changed, refreshing AI insights...",
+        results.length
+      );
       fetchAIInsights();
     }
-  }, [user?._id]);
+  }, [results.length]);
+
+  // Refresh insights when user returns to dashboard (after quiz)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user?._id && viewMode === "insights") {
+        console.log("👁️ Dashboard visible again, refreshing AI insights...");
+        fetchAIInsights();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [user?._id, viewMode]);
 
   // Pull-to-refresh functionality
   const handleRefresh = async () => {
     success(); // Haptic feedback on refresh
     setLoading(true);
     await fetchResults();
+    // Also refresh AI insights if user is on insights view
+    if (user?._id && viewMode === "insights") {
+      console.log("🔄 Pull-to-refresh: Updating AI insights...");
+      await fetchAIInsights();
+    }
   };
 
   const { isPulling, pullDistance, isRefreshing, pullProgress } =
@@ -571,7 +645,16 @@ export default function Dashboard() {
               <span className="hidden sm:inline">Overview</span>
             </motion.button>
             <motion.button
-              onClick={() => setViewMode("insights")}
+              onClick={() => {
+                setViewMode("insights");
+                // Refresh insights when switching to insights view
+                if (user?._id) {
+                  console.log(
+                    "🔄 Switching to insights view, refreshing data..."
+                  );
+                  fetchAIInsights();
+                }
+              }}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
                 viewMode === "insights"
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md"
@@ -1529,19 +1612,23 @@ export default function Dashboard() {
                     ) : (
                       <div className="space-y-3">
                         {recentResults.map((result, index) => {
-                          // Use correctAnswers if available (microservice), otherwise fall back to score (main backend)
-                          const correctCount =
-                            result.correctAnswers ?? result.score;
+                          console.log("📊 Result data:", result);
+
+                          // Calculate correct answers from percentage if correctAnswers is 0 or missing
+                          let correctCount = result.correctAnswers;
+                          if (!correctCount || correctCount === 0) {
+                            // Calculate from percentage: (percentage/100) * totalQuestions
+                            correctCount = Math.round(
+                              (result.percentage / 100) * result.totalQuestions
+                            );
+                          }
+
                           // Use percentage from database
-                          const scorePercentage =
-                            result.percentage ||
-                            (correctCount / result.totalQuestions) * 100 ||
-                            0;
+                          const scorePercentage = result.percentage || 0;
                           const isExcellent = scorePercentage >= 90;
                           const isGood = scorePercentage >= 70;
-                          // Points earned (score from microservice, or pointsEarned from main backend)
-                          const pointsEarned =
-                            result.pointsEarned || result.score || 0;
+                          // Points earned (score field contains the points like 40, 50)
+                          const pointsEarned = result.score || 0;
 
                           return (
                             <motion.div
@@ -1639,7 +1726,7 @@ export default function Dashboard() {
               </div>
             </motion.div>
           ) : viewMode === "insights" ? (
-            /* AI Insights View */
+            /* AI Insights View - Completely Rebuilt */
             <motion.div
               key="insights"
               className="space-y-6"
@@ -1648,101 +1735,75 @@ export default function Dashboard() {
               animate="visible"
               exit="hidden"
             >
-              {/* Enhanced Stats Grid */}
-              {aiInsights?.analytics && (
-                <motion.div variants={itemVariants}>
-                  <EnhancedStatsGrid
-                    analytics={aiInsights.analytics}
-                    patterns={aiInsights.patterns}
-                  />
-                </motion.div>
-              )}
-
-              {/* Main Insights Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* AI Insights Card */}
-                <motion.div variants={itemVariants}>
-                  <AIInsightsCard
-                    insights={aiInsights}
-                    onRefresh={() => fetchAIInsights(true)}
-                    isLoading={insightsLoading}
-                  />
-                </motion.div>
-
-                {/* Peer Comparison */}
-                <motion.div variants={itemVariants}>
-                  <PeerComparisonCard comparison={aiInsights?.peerComparison} />
-                </motion.div>
-              </div>
-
-              {/* Second Row: Learning Patterns & Activity */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Learning Patterns */}
-                <motion.div variants={itemVariants}>
-                  <LearningPatterns patterns={aiInsights?.patterns} />
-                </motion.div>
-
-                {/* Category Performance */}
-                <motion.div variants={itemVariants}>
-                  <CategoryPerformance
-                    categories={aiInsights?.analytics?.byCategory}
-                  />
-                </motion.div>
-              </div>
-
-              {/* Weekly Activity */}
-              <motion.div variants={itemVariants}>
-                <WeeklyActivityCard
-                  dailyActivity={aiInsights?.analytics?.dailyActivity}
-                  weeklyTrend={aiInsights?.analytics?.weeklyTrend}
-                />
-              </motion.div>
+              {console.log("🎯 Rendering insights view with data:", aiInsights)}
 
               {/* Loading State */}
               {insightsLoading && !aiInsights && (
-                <motion.div
-                  className="flex items-center justify-center py-20"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
+                <div className="flex items-center justify-center py-20">
                   <div className="text-center">
                     <div className="relative">
                       <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mx-auto mb-4"></div>
                       <Brain className="absolute inset-0 m-auto w-6 h-6 text-purple-600 animate-pulse" />
                     </div>
                     <p className="text-gray-600 dark:text-gray-400 font-medium">
-                      Analyzing your learning patterns...
+                      Analyzing your learning patterns with AI...
                     </p>
                   </div>
-                </motion.div>
+                </div>
+              )}
+
+              {/* Has Data - Show Insights */}
+              {!insightsLoading && aiInsights && aiInsights.hasData && (
+                <>
+                  {/* Main Insights Row */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <AIInsightsCard
+                      insights={aiInsights}
+                      onRefresh={() => fetchAIInsights(true)}
+                      isLoading={insightsLoading}
+                    />
+                    <PeerComparisonCard
+                      comparison={aiInsights.peerComparison}
+                    />
+                  </div>
+
+                  {/* Learning Patterns Row */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <LearningPatternsCard patterns={aiInsights.patterns} />
+                    <CategoryPerformance
+                      categories={aiInsights.analytics?.byCategory}
+                    />
+                  </div>
+
+                  {/* Weekly Activity */}
+                  {aiInsights.analytics?.weeklyTrend && (
+                    <WeeklyActivityCard
+                      dailyActivity={aiInsights.analytics.dailyActivity}
+                      weeklyTrend={aiInsights.analytics.weeklyTrend}
+                    />
+                  )}
+                </>
               )}
 
               {/* No Data State */}
               {!insightsLoading &&
-                aiInsights &&
-                (aiInsights.hasData === false ||
-                  (!aiInsights.insights &&
-                    !aiInsights.analytics &&
-                    !aiInsights.patterns)) && (
-                  <motion.div
-                    className="text-center py-20"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
+                (!aiInsights || aiInsights.hasData === false) && (
+                  <div className="text-center py-20">
                     <Sparkles className="w-16 h-16 mx-auto mb-4 text-purple-400" />
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                      Unlock AI Insights
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                      Unlock AI-Powered Insights
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                    <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-6">
                       {aiInsights?.message ||
-                        "Complete a few quizzes to unlock personalized AI-powered learning insights!"}
+                        "Take your first quiz to unlock personalized learning insights powered by AI!"}
                     </p>
                     <Link to="/quizzes">
-                      <Button className="mt-4 bg-gradient-to-r from-purple-500 to-pink-600">
-                        Start a Quiz
+                      <Button className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700">
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Start Your First Quiz
                       </Button>
                     </Link>
-                  </motion.div>
+                  </div>
                 )}
             </motion.div>
           ) : (

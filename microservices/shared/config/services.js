@@ -26,6 +26,7 @@ const getServiceUrl = (serviceName) => {
     gamification: PORTS.GAMIFICATION_SERVICE,
     moderation: PORTS.MODERATION_SERVICE,
     avatar: PORTS.AVATAR_SERVICE,
+    // ai_study_buddy moved to main backend service
   };
 
   const port = portMap[serviceName] || 3000;
@@ -42,6 +43,7 @@ const SERVICES = {
   GAMIFICATION: getServiceUrl("gamification"),
   MODERATION: getServiceUrl("moderation"),
   AVATAR: getServiceUrl("avatar"),
+  // AI_STUDY_BUDDY now integrated in main backend
 };
 
 module.exports = { SERVICES, getServiceUrl };

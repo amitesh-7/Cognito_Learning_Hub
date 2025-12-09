@@ -65,7 +65,8 @@ app.get("/api/results/count", async (req, res) => {
       Result.countDocuments(),
       Result.countDocuments({ percentage: { $gte: 70 } }),
     ]);
-    const satisfactionRate = count > 0 ? Math.round((highScoreCount / count) * 100) : 95;
+    const satisfactionRate =
+      count > 0 ? Math.round((highScoreCount / count) * 100) : 95;
     return ApiResponse.success(res, { count, satisfactionRate });
   } catch (error) {
     logger.error("Count error:", error);
@@ -77,6 +78,7 @@ app.get("/api/results/count", async (req, res) => {
 app.use("/api/results", require("./routes/submission"));
 app.use("/api/leaderboards", require("./routes/leaderboards"));
 app.use("/api/analytics", require("./routes/analytics"));
+app.use("/api/time-travel", require("./routes/timeTravel")); // Time-travel quiz mode
 
 // Root endpoint
 app.get("/", (req, res) => {
@@ -196,12 +198,15 @@ let server;
 const startServer = async () => {
   try {
     await connectDB();
-    
+
     // Try to connect to Redis, but don't fail if it doesn't work
     try {
       await cacheManager.connect();
     } catch (redisError) {
-      logger.warn("Redis connection failed, running without cache:", redisError.message);
+      logger.warn(
+        "Redis connection failed, running without cache:",
+        redisError.message
+      );
       logger.warn("Service will continue without caching functionality");
     }
 

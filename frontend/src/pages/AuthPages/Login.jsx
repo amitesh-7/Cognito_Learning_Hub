@@ -1,7 +1,13 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+  useSpring,
+} from "framer-motion";
 import {
   Sparkles,
   Mail,
@@ -51,7 +57,7 @@ const FloatingIcon = ({ Icon, className, delay = 0 }) => (
   <motion.div
     className={`absolute ${className}`}
     initial={{ opacity: 0, scale: 0 }}
-    animate={{ 
+    animate={{
       opacity: [0.3, 0.6, 0.3],
       scale: [1, 1.1, 1],
       y: [0, -15, 0],
@@ -73,20 +79,20 @@ const FloatingIcon = ({ Icon, className, delay = 0 }) => (
 // Animated Background Grid
 const BackgroundGrid = () => (
   <div className="absolute inset-0 overflow-hidden">
-    <div 
+    <div
       className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
       style={{
         backgroundImage: `
           linear-gradient(rgba(99, 102, 241, 0.3) 1px, transparent 1px),
           linear-gradient(90deg, rgba(99, 102, 241, 0.3) 1px, transparent 1px)
         `,
-        backgroundSize: '50px 50px',
+        backgroundSize: "50px 50px",
       }}
     />
     <motion.div
       className="absolute inset-0"
       animate={{
-        backgroundPosition: ['0% 0%', '100% 100%'],
+        backgroundPosition: ["0% 0%", "100% 100%"],
       }}
       transition={{
         duration: 20,
@@ -94,8 +100,9 @@ const BackgroundGrid = () => (
         ease: "linear",
       }}
       style={{
-        backgroundImage: 'radial-gradient(circle at center, rgba(99, 102, 241, 0.1) 0%, transparent 70%)',
-        backgroundSize: '100% 100%',
+        backgroundImage:
+          "radial-gradient(circle at center, rgba(99, 102, 241, 0.1) 0%, transparent 70%)",
+        backgroundSize: "100% 100%",
       }}
     />
   </div>
@@ -106,13 +113,13 @@ const TiltCard = ({ children, className }) => {
   const ref = useRef(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  
+
   const rotateX = useTransform(y, [-100, 100], [5, -5]);
   const rotateY = useTransform(x, [-100, 100], [-5, 5]);
-  
+
   const springRotateX = useSpring(rotateX, { stiffness: 300, damping: 30 });
   const springRotateY = useSpring(rotateY, { stiffness: 300, damping: 30 });
-  
+
   const handleMouseMove = (e) => {
     if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
@@ -121,12 +128,12 @@ const TiltCard = ({ children, className }) => {
     x.set(e.clientX - centerX);
     y.set(e.clientY - centerY);
   };
-  
+
   const handleMouseLeave = () => {
     x.set(0);
     y.set(0);
   };
-  
+
   return (
     <motion.div
       ref={ref}
@@ -162,7 +169,7 @@ const SuccessModal = ({ title, message, onClose }) => (
       >
         {/* Animated gradient background */}
         <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-emerald-500/10 to-teal-500/10 animate-pulse" />
-        
+
         <motion.div
           className="relative z-10"
           initial={{ scale: 0 }}
@@ -173,7 +180,7 @@ const SuccessModal = ({ title, message, onClose }) => (
             <CheckCircle className="w-10 h-10 text-white" />
           </div>
         </motion.div>
-        
+
         <motion.h2
           className="relative z-10 text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent mb-3"
           initial={{ opacity: 0, y: 20 }}
@@ -182,7 +189,7 @@ const SuccessModal = ({ title, message, onClose }) => (
         >
           {title}
         </motion.h2>
-        
+
         <motion.p
           className="relative z-10 text-gray-600 dark:text-gray-400 mb-8 text-lg"
           initial={{ opacity: 0, y: 20 }}
@@ -191,14 +198,14 @@ const SuccessModal = ({ title, message, onClose }) => (
         >
           {message}
         </motion.p>
-        
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <Button 
-            onClick={onClose} 
+          <Button
+            onClick={onClose}
             className="relative z-10 w-full h-14 text-lg font-semibold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
           >
             Continue to Dashboard
@@ -259,7 +266,9 @@ export default function Login() {
       setLoading(true);
       setError("");
 
-      const apiUrl = import.meta.env.VITE_API_URL || "https://quizwise-ai-server.onrender.com";
+      const apiUrl =
+        import.meta.env.VITE_API_URL ||
+        "https://quizwise-ai-server.onrender.com";
 
       const response = await fetch(`${apiUrl}/api/auth/google`, {
         method: "POST",
@@ -282,7 +291,11 @@ export default function Login() {
           setPendingGoogleUser({
             token,
             user,
-            userInfo: { name: user.name, email: user.email, picture: user.picture },
+            userInfo: {
+              name: user.name,
+              email: user.email,
+              picture: user.picture,
+            },
           });
           setShowRoleSelection(true);
         } else {
@@ -310,7 +323,9 @@ export default function Login() {
 
   const handleRoleSelect = async (selectedRole) => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "https://quizwise-ai-server.onrender.com";
+      const apiUrl =
+        import.meta.env.VITE_API_URL ||
+        "https://quizwise-ai-server.onrender.com";
       const response = await fetch(`${apiUrl}/api/auth/google/update-role`, {
         method: "POST",
         headers: {
@@ -374,9 +389,10 @@ export default function Login() {
         throw new Error(data.message || "Login failed.");
       }
 
-      const token = data.token || data.data?.accessToken || data.message?.accessToken;
+      const token =
+        data.token || data.data?.accessToken || data.message?.accessToken;
       if (!token) throw new Error("No authentication token received");
-      
+
       login(token);
       setTimeout(() => setShowSuccessModal(true), 100);
     } catch (err) {
@@ -390,17 +406,42 @@ export default function Login() {
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950">
       {/* Background Elements */}
       <BackgroundGrid />
-      
+
       {/* Animated Gradient Orbs */}
-      <GradientOrb className="w-[600px] h-[600px] -top-48 -left-48 bg-gradient-to-br from-indigo-400 to-purple-500" delay={0} />
-      <GradientOrb className="w-[500px] h-[500px] top-1/2 -right-32 bg-gradient-to-br from-pink-400 to-rose-500" delay={2} />
-      <GradientOrb className="w-[400px] h-[400px] -bottom-32 left-1/4 bg-gradient-to-br from-cyan-400 to-blue-500" delay={4} />
-      
+      <GradientOrb
+        className="w-[600px] h-[600px] -top-48 -left-48 bg-gradient-to-br from-indigo-400 to-purple-500"
+        delay={0}
+      />
+      <GradientOrb
+        className="w-[500px] h-[500px] top-1/2 -right-32 bg-gradient-to-br from-pink-400 to-rose-500"
+        delay={2}
+      />
+      <GradientOrb
+        className="w-[400px] h-[400px] -bottom-32 left-1/4 bg-gradient-to-br from-cyan-400 to-blue-500"
+        delay={4}
+      />
+
       {/* Floating Icons */}
-      <FloatingIcon Icon={GraduationCap} className="top-20 left-[10%] hidden lg:block" delay={0} />
-      <FloatingIcon Icon={BookOpen} className="top-40 right-[15%] hidden lg:block" delay={1} />
-      <FloatingIcon Icon={Target} className="bottom-32 left-[20%] hidden lg:block" delay={2} />
-      <FloatingIcon Icon={TrendingUp} className="bottom-48 right-[10%] hidden lg:block" delay={3} />
+      <FloatingIcon
+        Icon={GraduationCap}
+        className="top-20 left-[10%] hidden lg:block"
+        delay={0}
+      />
+      <FloatingIcon
+        Icon={BookOpen}
+        className="top-40 right-[15%] hidden lg:block"
+        delay={1}
+      />
+      <FloatingIcon
+        Icon={Target}
+        className="bottom-32 left-[20%] hidden lg:block"
+        delay={2}
+      />
+      <FloatingIcon
+        Icon={TrendingUp}
+        className="bottom-48 right-[10%] hidden lg:block"
+        delay={3}
+      />
 
       {showSuccessModal && (
         <SuccessModal
@@ -423,7 +464,6 @@ export default function Login() {
       {/* Main Content */}
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4 pt-24 lg:pt-20">
         <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 lg:gap-16 items-center">
-          
           {/* Left Side - Branding & Features */}
           <motion.div
             className="hidden lg:flex flex-col w-1/2 pr-8"
@@ -446,7 +486,9 @@ export default function Login() {
                   <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
                     Cognito
                   </h1>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Learning Hub</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Learning Hub
+                  </p>
                 </div>
               </div>
               <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
@@ -456,7 +498,8 @@ export default function Login() {
                 </span>
               </h2>
               <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-                Join thousands of students transforming their learning experience with AI-powered quizzes.
+                Join thousands of students transforming their learning
+                experience with AI-powered quizzes.
               </p>
             </motion.div>
 
@@ -471,12 +514,18 @@ export default function Login() {
                   transition={{ delay: 0.3 + index * 0.1 }}
                   whileHover={{ x: 10 }}
                 >
-                  <div className={`p-3 rounded-xl bg-gradient-to-br ${feature.gradient} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                  <div
+                    className={`p-3 rounded-xl bg-gradient-to-br ${feature.gradient} shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                  >
                     <feature.icon className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{feature.title}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {feature.description}
+                    </p>
                   </div>
                 </motion.div>
               ))}
@@ -490,9 +539,14 @@ export default function Login() {
               transition={{ delay: 0.7 }}
             >
               {platformHighlights.map((item, index) => (
-                <div key={item.label} className="flex items-center gap-2 px-4 py-2 bg-white/20 dark:bg-white/10 backdrop-blur-sm rounded-full">
+                <div
+                  key={item.label}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/20 dark:bg-white/10 backdrop-blur-sm rounded-full"
+                >
                   <item.icon className="w-4 h-4 text-indigo-300" />
-                  <span className="text-sm font-medium text-white">{item.label}</span>
+                  <span className="text-sm font-medium text-white">
+                    {item.label}
+                  </span>
                 </div>
               ))}
             </motion.div>
@@ -509,7 +563,7 @@ export default function Login() {
               <div className="relative p-8 lg:p-10 rounded-3xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 shadow-2xl shadow-indigo-500/10 dark:shadow-indigo-500/5">
                 {/* Decorative gradient border */}
                 <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-500/20 via-transparent to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                
+
                 {/* Mobile Logo */}
                 <div className="lg:hidden flex items-center justify-center gap-2 mb-6">
                   <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600">
@@ -566,11 +620,13 @@ export default function Login() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Email Address
                     </label>
-                    <div className={`relative rounded-xl transition-all duration-300 ${
-                      focusedField === 'email' 
-                        ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900' 
-                        : ''
-                    }`}>
+                    <div
+                      className={`relative rounded-xl transition-all duration-300 ${
+                        focusedField === "email"
+                          ? "ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900"
+                          : ""
+                      }`}
+                    >
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <input
                         type="email"
@@ -578,7 +634,7 @@ export default function Login() {
                         placeholder="you@example.com"
                         value={formData.email}
                         onChange={handleChange}
-                        onFocus={() => setFocusedField('email')}
+                        onFocus={() => setFocusedField("email")}
                         onBlur={() => setFocusedField(null)}
                         required
                         className="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 transition-colors"
@@ -596,11 +652,13 @@ export default function Login() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Password
                     </label>
-                    <div className={`relative rounded-xl transition-all duration-300 ${
-                      focusedField === 'password' 
-                        ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900' 
-                        : ''
-                    }`}>
+                    <div
+                      className={`relative rounded-xl transition-all duration-300 ${
+                        focusedField === "password"
+                          ? "ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900"
+                          : ""
+                      }`}
+                    >
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <input
                         type={showPassword ? "text" : "password"}
@@ -608,7 +666,7 @@ export default function Login() {
                         placeholder="••••••••"
                         value={formData.password}
                         onChange={handleChange}
-                        onFocus={() => setFocusedField('password')}
+                        onFocus={() => setFocusedField("password")}
                         onBlur={() => setFocusedField(null)}
                         required
                         className="w-full pl-12 pr-12 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 transition-colors"
@@ -618,7 +676,11 @@ export default function Login() {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                       >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        {showPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
                       </button>
                     </div>
                   </motion.div>
@@ -638,12 +700,12 @@ export default function Login() {
                     >
                       {/* Button gradient background */}
                       <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_100%] group-hover:animate-shimmer" />
-                      
+
                       {/* Glow effect */}
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 blur-xl" />
                       </div>
-                      
+
                       <span className="relative flex items-center justify-center gap-2">
                         {isSubmitting ? (
                           <>
@@ -669,7 +731,9 @@ export default function Login() {
                   transition={{ delay: 0.8 }}
                 >
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent" />
-                  <span className="text-sm text-gray-500 dark:text-gray-400">or continue with</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    or continue with
+                  </span>
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent" />
                 </motion.div>
 
@@ -722,7 +786,7 @@ export default function Login() {
       </div>
 
       {/* Add shimmer animation */}
-      <style jsx>{`
+      <style>{`
         @keyframes shimmer {
           0% { background-position: 200% 0; }
           100% { background-position: -200% 0; }

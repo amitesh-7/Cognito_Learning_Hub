@@ -12,6 +12,8 @@ const leaderboardRoutes = require("./routes/leaderboards");
 const statsRoutes = require("./routes/stats");
 const eventRoutes = require("./routes/events");
 const xpRoutes = require("./routes/xp");
+const worldEventRoutes = require("./routes/worldEvents");
+const questRoutes = require("./routes/quests");
 const { startStreakCronJob } = require("./jobs/streakChecker");
 const { startStatsSyncJob } = require("./jobs/statsSync");
 
@@ -74,6 +76,8 @@ app.use("/api/achievements", achievementRoutes);
 app.use("/api/leaderboards", leaderboardRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/world-events", worldEventRoutes); // Dynamic difficulty ecosystem
+app.use("/api/quests", questRoutes); // Narrative-driven learning quests
 app.use("/api", xpRoutes); // XP and achievement check routes
 
 // Error handling middleware

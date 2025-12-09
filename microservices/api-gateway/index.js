@@ -425,6 +425,9 @@ app.use(
   })
 );
 
+// AI Study Buddy routes are now handled by main backend service
+// No separate microservice needed
+
 app.use(
   "/api/chat",
   createProxyMiddleware({
@@ -476,7 +479,9 @@ app.use(
   createProxyMiddleware({
     ...proxyOptions,
     target: SERVICES.GAMIFICATION,
-    pathRewrite: { "^/api/gamification/leaderboard": "/api/leaderboards/global" },
+    pathRewrite: {
+      "^/api/gamification/leaderboard": "/api/leaderboards/global",
+    },
   })
 );
 

@@ -358,6 +358,14 @@ function App() {
 
                           {/* Live Session Routes */}
                           <Route
+                            path="/live"
+                            element={
+                              <ProtectedRoute>
+                                <LiveSessionSelector />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
                             path="/live/host/:quizId"
                             element={
                               <ProtectedRoute>
