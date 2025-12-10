@@ -44,7 +44,7 @@ import {
   HelpCircle,
   Calendar,
   Mail,
-  Settings
+  Settings,
 } from "lucide-react";
 
 // Animation Variants
@@ -92,7 +92,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => (
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
         >
-          <motion.div 
+          <motion.div
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
             className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/50 dark:to-red-800/50 flex items-center justify-center"
@@ -110,7 +110,11 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => (
               </Button>
             </motion.div>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button variant="destructive" onClick={onConfirm} className="flex items-center gap-2">
+              <Button
+                variant="destructive"
+                onClick={onConfirm}
+                className="flex items-center gap-2"
+              >
                 <Trash2 className="w-4 h-4" />
                 Confirm Delete
               </Button>
@@ -125,7 +129,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => (
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   if (totalPages <= 1) return null;
   return (
-    <motion.div 
+    <motion.div
       className="flex justify-center items-center gap-3 mt-6 py-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -306,7 +310,7 @@ export default function AdminDashboard() {
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <motion.div 
+          <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
             className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30"
@@ -335,7 +339,7 @@ export default function AdminDashboard() {
         message={`Are you sure you want to permanently delete "${quizToDelete?.title}"? This action cannot be undone.`}
       />
 
-      <motion.div 
+      <motion.div
         className="space-y-8 max-w-7xl mx-auto px-4"
         variants={containerVariants}
         initial="hidden"
@@ -343,7 +347,10 @@ export default function AdminDashboard() {
       >
         {/* Header */}
         <motion.div variants={itemVariants} className="relative">
-          <motion.div animate={floatingAnimation} className="absolute -top-4 -right-4 opacity-20">
+          <motion.div
+            animate={floatingAnimation}
+            className="absolute -top-4 -right-4 opacity-20"
+          >
             <Crown className="w-24 h-24 text-indigo-500" />
           </motion.div>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -362,13 +369,19 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="flex gap-3">
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <Button variant="outline" className="flex items-center gap-2">
                   <Activity className="w-4 h-4" />
                   System Health
                 </Button>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <Button className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
                   <TrendingUp className="w-4 h-4" />
                   Analytics
@@ -383,7 +396,7 @@ export default function AdminDashboard() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           variants={containerVariants}
         >
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             whileHover={{ y: -4, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300 }}
@@ -391,7 +404,7 @@ export default function AdminDashboard() {
             <Card className="relative overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-blue-100 dark:border-blue-900/50 hover:border-blue-300 dark:hover:border-blue-700 transition-all group">
               <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full opacity-10 group-hover:opacity-20 transition-opacity"></div>
               <div className="flex items-center gap-4">
-                <motion.div 
+                <motion.div
                   whileHover={{ rotate: 10 }}
                   className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30"
                 >
@@ -401,7 +414,7 @@ export default function AdminDashboard() {
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Users
                   </p>
-                  <motion.p 
+                  <motion.p
                     key={userStats.totalUsers}
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -410,15 +423,19 @@ export default function AdminDashboard() {
                     {userStats.totalUsers.toLocaleString()}
                   </motion.p>
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" />
-                    +{analytics.userSignups?.reduce((acc, item) => acc + item.count, 0) || 0} this week
+                    <TrendingUp className="w-3 h-3" />+
+                    {analytics.userSignups?.reduce(
+                      (acc, item) => acc + item.count,
+                      0
+                    ) || 0}{" "}
+                    this week
                   </p>
                 </div>
               </div>
             </Card>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             whileHover={{ y: -4, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300 }}
@@ -426,7 +443,7 @@ export default function AdminDashboard() {
             <Card className="relative overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-indigo-100 dark:border-indigo-900/50 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all group">
               <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-full opacity-10 group-hover:opacity-20 transition-opacity"></div>
               <div className="flex items-center gap-4">
-                <motion.div 
+                <motion.div
                   whileHover={{ rotate: 10 }}
                   className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30"
                 >
@@ -436,7 +453,7 @@ export default function AdminDashboard() {
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Quizzes
                   </p>
-                  <motion.p 
+                  <motion.p
                     key={totalQuizzes}
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -452,7 +469,7 @@ export default function AdminDashboard() {
             </Card>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             whileHover={{ y: -4, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300 }}
@@ -460,7 +477,7 @@ export default function AdminDashboard() {
             <Card className="relative overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-emerald-100 dark:border-emerald-900/50 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all group">
               <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full opacity-10 group-hover:opacity-20 transition-opacity"></div>
               <div className="flex items-center gap-4">
-                <motion.div 
+                <motion.div
                   whileHover={{ rotate: 10 }}
                   className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/30"
                 >
@@ -470,7 +487,7 @@ export default function AdminDashboard() {
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Teachers
                   </p>
-                  <motion.p 
+                  <motion.p
                     key={totalTeachers}
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -486,7 +503,7 @@ export default function AdminDashboard() {
             </Card>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             whileHover={{ y: -4, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300 }}
@@ -501,7 +518,7 @@ export default function AdminDashboard() {
               )}
               <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-red-400 to-pink-600 rounded-full opacity-10 group-hover:opacity-20 transition-opacity"></div>
               <div className="flex items-center gap-4">
-                <motion.div 
+                <motion.div
                   whileHover={{ rotate: 10 }}
                   className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-400 to-pink-600 flex items-center justify-center shadow-lg shadow-red-500/30"
                 >
@@ -511,7 +528,7 @@ export default function AdminDashboard() {
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Pending Reports
                   </p>
-                  <motion.p 
+                  <motion.p
                     key={reports.length}
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -528,7 +545,7 @@ export default function AdminDashboard() {
           </motion.div>
         </motion.div>
         {/* Charts Row */}
-        <motion.div 
+        <motion.div
           className="grid grid-cols-1 xl:grid-cols-2 gap-6"
           variants={containerVariants}
         >
@@ -570,7 +587,13 @@ export default function AdminDashboard() {
                       radius={[8, 8, 0, 0]}
                     />
                     <defs>
-                      <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient
+                        id="colorGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
                         <stop offset="0%" stopColor="#6366f1" />
                         <stop offset="100%" stopColor="#a855f7" />
                       </linearGradient>
@@ -657,8 +680,6 @@ export default function AdminDashboard() {
           </div>
 
           <Card className="p-0 overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50 shadow-xl">
-            </div>
-
             {/* Tab Content */}
             <AnimatePresence mode="wait">
               {activeTab === "users" && (
@@ -726,8 +747,12 @@ export default function AdminDashboard() {
                             <td colSpan={4} className="px-6 py-12 text-center">
                               <div className="text-gray-400">
                                 <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                <p className="text-lg font-medium">No users found</p>
-                                <p className="text-sm">Try adjusting your search criteria</p>
+                                <p className="text-lg font-medium">
+                                  No users found
+                                </p>
+                                <p className="text-sm">
+                                  Try adjusting your search criteria
+                                </p>
                               </div>
                             </td>
                           </tr>
@@ -761,10 +786,13 @@ export default function AdminDashboard() {
                                     handleRoleChange(user._id, e.target.value)
                                   }
                                   className={`text-sm font-medium border-2 rounded-xl px-3 py-1.5 transition-all cursor-pointer ${
-                                    user.role === "Admin" ? "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400" :
-                                    user.role === "Moderator" ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400" :
-                                    user.role === "Teacher" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                                    "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                                    user.role === "Admin"
+                                      ? "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400"
+                                      : user.role === "Moderator"
+                                      ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                                      : user.role === "Teacher"
+                                      ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                      : "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
                                   } focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500`}
                                 >
                                   <option>Student</option>
@@ -775,7 +803,7 @@ export default function AdminDashboard() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                 {new Date(user.createdAt).toLocaleDateString()}
-                            </td>
+                              </td>
                             </motion.tr>
                           ))
                         )}
@@ -852,8 +880,12 @@ export default function AdminDashboard() {
                             <td colSpan={4} className="px-6 py-12 text-center">
                               <div className="text-gray-400">
                                 <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                <p className="text-lg font-medium">No quizzes found</p>
-                                <p className="text-sm">Try adjusting your search criteria</p>
+                                <p className="text-lg font-medium">
+                                  No quizzes found
+                                </p>
+                                <p className="text-sm">
+                                  Try adjusting your search criteria
+                                </p>
                               </div>
                             </td>
                           </tr>
@@ -877,7 +909,9 @@ export default function AdminDashboard() {
                                       {quiz.title}
                                     </div>
                                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                                      {new Date(quiz.createdAt).toLocaleDateString()}
+                                      {new Date(
+                                        quiz.createdAt
+                                      ).toLocaleDateString()}
                                     </div>
                                   </div>
                                 </div>
