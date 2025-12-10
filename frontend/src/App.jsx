@@ -34,7 +34,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const QuickActions = lazy(() => import("./pages/QuickActions"));
 const QuizList = lazy(() => import("./pages/QuizList"));
 const QuizTaker = lazy(() => import("./pages/QuizTaker"));
-const TeacherDashboard = lazy(() => import("./pages/TeacherDashboardModern"));
+const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const ModeratorDashboard = lazy(() => import("./pages/ModeratorDashboard"));
 const EditQuiz = lazy(() => import("./pages/EditQuiz"));
