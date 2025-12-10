@@ -15,7 +15,9 @@ const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 
 const meetingManager = require("./services/meetingManager");
+const mediaServer = require("./services/mediaServer");
 const signalingHandlers = require("./socket/signalingHandlers");
+const mediasoupHandlers = require("./socket/mediasoupHandlers");
 const meetingRoutes = require("./routes/meetings");
 const connectDB = require("./models");
 const createLogger = require("../shared/utils/logger");
@@ -139,11 +141,20 @@ app.use((err, req, res, next) => {
 // SOCKET.IO HANDLERS
 // ============================================
 
-signalingHandlers(io);
+signalingHandlers(io); // P2P mode
+mediasoupHandlers(io); // SFU mode
 
 // Socket.IO connection logging
 io.on("connection", (socket) => {
-  logger.debug(`Socket.IO connection established: ${socket.id}`);
+  logger.info(`Socket.IO connection established: ${socket.id}`);
+
+  socket.on("disconnect", (reason) => {
+    logger.info(`Socket ${socket.id} disconnected: ${reason}`);
+  });
+
+  socket.on("error", (error) => {
+    logger.error(`Socket ${socket.id} error:`, error);
+  });
 });
 
 // ============================================
@@ -159,13 +170,19 @@ const gracefulShutdown = async (signal) => {
 
     try {
       // Close Socket.IO
-      // Disconnect Redis
-      await meetingManager.disconnect();
-      logger.info("Redis disconnected");
-
       io.close(() => {
         logger.info("Socket.IO server closed");
       });
+
+      // Close mediasoup workers
+      if (mediaServer) {
+        await mediaServer.close();
+        logger.info("mediasoup workers closed");
+      }
+
+      // Disconnect Redis
+      await meetingManager.disconnect();
+      logger.info("Redis disconnected");
 
       // Close MongoDB
       const mongoose = require("mongoose");
@@ -206,6 +223,13 @@ const startServer = async () => {
     await meetingManager.connect();
     logger.info("Redis connected");
 
+    // Initialize mediasoup workers
+    await mediaServer.init();
+    const stats = mediaServer.getStats();
+    logger.info(
+      `mediasoup initialized: ${stats.workers} workers, ${stats.cpus} CPUs`
+    );
+
     // Start server
     server.listen(PORT, () => {
       logger.info(`Meeting Service running on port ${PORT}`);
@@ -213,7 +237,7 @@ const startServer = async () => {
       logger.info(
         `CORS Origins: ${process.env.CORS_ORIGINS || "http://localhost:5173"}`
       );
-      logger.info(`WebRTC Signaling: Active`);
+      logger.info(`WebRTC Modes: P2P (legacy) + SFU (mediasoup)`);
       logger.info(
         `STUN Servers: ${process.env.STUN_SERVERS || "Not configured"}`
       );
@@ -225,6 +249,17 @@ const startServer = async () => {
           `TURN Server: Not configured (may cause connectivity issues behind strict NATs)`
         );
       }
+
+      logger.info(
+        `mediasoup RTC Ports: ${process.env.MEDIASOUP_MIN_PORT || 10000}-${
+          process.env.MEDIASOUP_MAX_PORT || 10100
+        }`
+      );
+      logger.info(
+        `mediasoup Announced IP: ${
+          process.env.MEDIASOUP_ANNOUNCED_IP || "auto-detect"
+        }`
+      );
     });
   } catch (error) {
     logger.error("Failed to start server:", error);
