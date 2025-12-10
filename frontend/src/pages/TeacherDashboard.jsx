@@ -136,7 +136,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
 // Stat Card Component with Animations
 const StatCard = ({ icon: Icon, label, value, trend, gradient, delay = 0 }) => (
   <motion.div
-    className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 backdrop-blur-xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl hover:shadow-2xl transition-all duration-500 group"
+    className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white dark:bg-slate-800 backdrop-blur-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-500 group"
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.5 }}
@@ -148,22 +148,22 @@ const StatCard = ({ icon: Icon, label, value, trend, gradient, delay = 0 }) => (
     {/* Floating orb */}
     <div className={`absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br ${gradient} rounded-full opacity-10 blur-2xl group-hover:opacity-20 transition-opacity`} />
 
-    <div className="relative flex items-center gap-4">
+    <div className="relative flex items-center gap-3 sm:gap-4">
       <motion.div
-        className={`p-4 rounded-2xl bg-gradient-to-br ${gradient} shadow-lg`}
+        className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${gradient} shadow-lg`}
         whileHover={{ rotate: 10, scale: 1.1 }}
         transition={{ type: "spring" }}
       >
-        <Icon className="w-7 h-7 text-white" />
+        <Icon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white" />
       </motion.div>
       
-      <div className="flex-1">
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+      <div className="flex-1 min-w-0">
+        <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5 sm:mb-1 truncate">
           {label}
         </p>
-        <div className="flex items-end gap-3">
+        <div className="flex items-end gap-2 sm:gap-3">
           <motion.span
-            className="text-3xl font-black text-slate-900 dark:text-white"
+            className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", delay: delay + 0.2 }}
@@ -202,25 +202,25 @@ const QuickActionCard = ({ icon: Icon, label, gradient, link, emoji, index }) =>
   >
     <Link to={link}>
       <motion.div
-        className="group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 backdrop-blur-xl border border-slate-200 dark:border-slate-700 p-5 cursor-pointer transition-all duration-500"
+        className="group relative overflow-hidden rounded-xl sm:rounded-2xl bg-white dark:bg-slate-800 backdrop-blur-xl border border-slate-200 dark:border-slate-700 p-3 sm:p-4 md:p-5 cursor-pointer transition-all duration-500"
         whileHover={{ scale: 1.03, y: -3 }}
         whileTap={{ scale: 0.98 }}
       >
         {/* Hover gradient */}
         <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-10 dark:group-hover:opacity-20 transition-opacity duration-500`} />
         
-        <div className="relative flex items-center gap-4">
+        <div className="relative flex items-center gap-2 sm:gap-3 md:gap-4">
           <motion.div
-            className={`w-12 h-12 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}
+            className={`w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}
             whileHover={{ rotate: 360 }}
             transition={{ duration: 0.6 }}
           >
-            <Icon className="w-6 h-6 text-white" />
+            <Icon className="w-5 h-5 sm:w-5.5 sm:h-5.5 md:w-6 md:h-6 text-white" />
           </motion.div>
           
-          <div className="flex-1">
-            <p className="font-semibold text-slate-800 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-all">
-              {emoji} {label}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-all truncate">
+              <span className="hidden sm:inline">{emoji} </span>{label}
             </p>
           </div>
           
@@ -254,23 +254,23 @@ const QuizCard = ({ quiz, index, onShare, onDelete, copied }) => (
     transition={{ delay: index * 0.08 }}
     whileHover={{ x: 5 }}
   >
-    <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 backdrop-blur-xl border border-slate-200 dark:border-slate-700 transition-all duration-500 hover:shadow-2xl hover:border-violet-300 dark:hover:border-violet-600">
+    <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white dark:bg-slate-800 backdrop-blur-xl border border-slate-200 dark:border-slate-700 transition-all duration-500 hover:shadow-2xl hover:border-violet-300 dark:hover:border-violet-600">
       {/* Status bar */}
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-violet-500 via-purple-500 to-indigo-500 scale-y-0 group-hover:scale-y-100 transition-transform duration-500 origin-top" />
       
       {/* Hover gradient */}
       <div className="absolute inset-0 bg-gradient-to-r from-violet-500/0 via-purple-500/5 to-indigo-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-      <div className="relative p-6">
-        <div className="flex items-start gap-5">
+      <div className="relative p-4 sm:p-5 md:p-6">
+        <div className="flex items-start gap-3 sm:gap-4 md:gap-5">
           {/* Quiz icon */}
           <motion.div
             className="relative flex-shrink-0"
             whileHover={{ rotate: 360, scale: 1.1 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-xl shadow-violet-500/30">
-              <BookOpen className="w-8 h-8 text-white" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-xl shadow-violet-500/30">
+              <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
             </div>
             {/* Engagement indicator */}
             <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 border-2 border-white dark:border-slate-800 flex items-center justify-center shadow-lg">
@@ -282,25 +282,27 @@ const QuizCard = ({ quiz, index, onShare, onDelete, copied }) => (
 
           {/* Quiz info */}
           <div className="flex-1 min-w-0">
-            <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-all">
+            <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-all line-clamp-2">
               {quiz.title}
             </h4>
 
-            <div className="flex flex-wrap items-center gap-2 mb-4">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3 sm:mb-4">
               {/* Questions badge */}
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 text-sm font-medium border border-violet-200 dark:border-violet-700">
-                <FileText className="w-3.5 h-3.5" />
-                {quiz.questions?.length || 0} questions
+              <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 text-xs sm:text-sm font-medium border border-violet-200 dark:border-violet-700">
+                <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span className="hidden sm:inline">{quiz.questions?.length || 0} questions</span>
+                <span className="sm:hidden">{quiz.questions?.length || 0}Q</span>
               </span>
 
               {/* Attempts badge */}
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-sm font-medium border border-purple-200 dark:border-purple-700">
-                <Users className="w-3.5 h-3.5" />
-                {quiz.timesTaken} attempts
+              <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-xs sm:text-sm font-medium border border-purple-200 dark:border-purple-700">
+                <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span className="hidden sm:inline">{quiz.timesTaken} attempts</span>
+                <span className="sm:hidden">{quiz.timesTaken}</span>
               </span>
 
               {/* Status badge */}
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold border ${
+              <span className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold border ${
                 quiz.timesTaken >= 10
                   ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700'
                   : quiz.timesTaken >= 5
@@ -321,23 +323,24 @@ const QuizCard = ({ quiz, index, onShare, onDelete, copied }) => (
             </div>
 
             {/* Action buttons */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* Host Live - Primary */}
               <Link to={`/live/host/${quiz._id}`}>
                 <motion.button
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 transition-all flex items-center gap-2"
+                  className="px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg sm:rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 transition-all flex items-center gap-1.5 sm:gap-2"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Radio className="w-4 h-4 animate-pulse" />
-                  Host Live
+                  <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-pulse" />
+                  <span className="hidden xs:inline">Host Live</span>
+                  <span className="xs:hidden">Live</span>
                 </motion.button>
               </Link>
 
               {/* Share */}
               <motion.button
                 onClick={() => onShare(quiz._id)}
-                className={`px-4 py-2.5 rounded-xl border-2 transition-all flex items-center gap-2 font-medium ${
+                className={`px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg sm:rounded-xl border-2 transition-all flex items-center gap-1.5 sm:gap-2 font-medium ${
                   copied 
                     ? 'bg-emerald-100 dark:bg-emerald-900/50 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300' 
                     : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:border-violet-300 dark:hover:border-violet-600'
@@ -345,30 +348,30 @@ const QuizCard = ({ quiz, index, onShare, onDelete, copied }) => (
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Share2 className="w-4 h-4" />
-                {copied ? 'Copied!' : 'Share'}
+                <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">{copied ? 'Copied!' : 'Share'}</span>
               </motion.button>
 
               {/* Edit */}
               <Link to={`/quiz/edit/${quiz._id}`}>
                 <motion.button
-                  className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:border-purple-300 dark:hover:border-purple-600 transition-all flex items-center gap-2"
+                  className="px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg sm:rounded-xl bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:border-purple-300 dark:hover:border-purple-600 transition-all flex items-center gap-1.5 sm:gap-2"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Edit3 className="w-4 h-4" />
-                  Edit
+                  <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Edit</span>
                 </motion.button>
               </Link>
 
               {/* Delete */}
               <motion.button
                 onClick={() => onDelete(quiz)}
-                className="p-2.5 rounded-xl bg-red-100 dark:bg-red-900/50 border-2 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900 transition-all"
+                className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-red-100 dark:bg-red-900/50 border-2 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900 transition-all"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </motion.button>
             </div>
           </div>
@@ -413,6 +416,7 @@ export default function TeacherDashboard() {
 
   // Fetch teacher data
   useEffect(() => {
+    console.log("👨‍🏫 User Info:", { name: user?.name, role: user?.role, id: user?.id });
     fetchTeacherData();
   }, [sortBy]);
 
@@ -425,7 +429,14 @@ export default function TeacherDashboard() {
         { headers: { "x-auth-token": token } }
       );
       if (!response.ok) throw new Error("Failed to fetch your data.");
-      const data = await response.json();
+      const responseData = await response.json();
+      
+      // Handle ApiResponse wrapper format
+      const data = responseData.data || responseData;
+      
+      console.log("📊 Teacher Dashboard Data:", data);
+      console.log("📚 Quizzes:", data.quizzes);
+      console.log("📈 Stats:", data.stats);
       
       setQuizzes(data.quizzes || []);
       setStats(data.stats || { totalQuizzes: 0, totalTakes: 0, uniqueStudents: 0 });
@@ -517,9 +528,9 @@ export default function TeacherDashboard() {
 
   // Quick actions configuration
   const quickActions = [
-    { icon: Edit3, label: "Manual Creator", emoji: "✏️", gradient: "from-blue-500 to-indigo-600", link: "/manual-quiz-creator" },
-    { icon: BookOpen, label: "File Generator", emoji: "📁", gradient: "from-purple-500 to-pink-600", link: "/file-quiz-generator" },
-    { icon: Target, label: "Topic Generator", emoji: "🎯", gradient: "from-amber-500 to-orange-600", link: "/topic-quiz-generator" },
+    { icon: Edit3, label: "Manual Creator", emoji: "✏️", gradient: "from-blue-500 to-indigo-600", link: "/quiz-maker/manual" },
+    { icon: BookOpen, label: "File Generator", emoji: "📁", gradient: "from-purple-500 to-pink-600", link: "/quiz-maker/file" },
+    { icon: Target, label: "Topic Generator", emoji: "🎯", gradient: "from-amber-500 to-orange-600", link: "/quiz-maker/topic" },
     { icon: Brain, label: "AI PDF Generator", emoji: "🤖", gradient: "from-emerald-500 to-teal-600", link: "/pdf-quiz-generator" },
     { icon: History, label: "Session History", emoji: "📊", gradient: "from-rose-500 to-pink-600", link: "/live/history" },
     { icon: Video, label: "Video Meeting", emoji: "🎥", gradient: "from-violet-500 to-fuchsia-600", link: "/meeting/create" },
@@ -622,17 +633,17 @@ export default function TeacherDashboard() {
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-br from-violet-500/30 to-purple-600/30 rounded-full blur-3xl dark:opacity-50" />
           <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-indigo-500/30 to-pink-600/30 rounded-full blur-3xl dark:opacity-50" />
 
-          <div className="relative p-8">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="relative p-4 sm:p-6 md:p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-6">
               {/* Left section */}
-              <div className="flex items-center gap-5">
+              <div className="flex items-center gap-3 sm:gap-5">
                 <motion.div
                   className="relative"
                   whileHover={{ rotate: 10, scale: 1.1 }}
                   transition={{ type: "spring" }}
                 >
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-xl shadow-violet-500/40">
-                    <GraduationCap className="w-9 h-9 text-white" />
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-xl shadow-violet-500/40">
+                    <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7 md:w-9 md:h-9 text-white" />
                   </div>
                   <motion.div
                     className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-400 to-purple-500"
@@ -643,7 +654,7 @@ export default function TeacherDashboard() {
                 
                 <div>
                   <motion.h1
-                    className="text-4xl md:text-5xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent"
+                    className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
@@ -663,38 +674,38 @@ export default function TeacherDashboard() {
 
               {/* Right section - Actions */}
               <motion.div
-                className="flex flex-wrap items-center gap-3"
+                className="flex flex-wrap items-center gap-2 sm:gap-3"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
               >
                 {/* Live indicator */}
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-700">
+                <div className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-700">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-emerald-700 dark:text-emerald-300 font-semibold text-sm">Live Dashboard</span>
+                  <span className="text-emerald-700 dark:text-emerald-300 font-semibold text-xs sm:text-sm">Live Dashboard</span>
                 </div>
 
                 {/* Refresh button */}
                 <motion.button
                   onClick={fetchTeacherData}
                   disabled={isRefreshing}
-                  className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-all disabled:opacity-50"
+                  className="p-2 sm:p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-all disabled:opacity-50"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 sm:w-5 sm:h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </motion.button>
 
                 {/* Create Quiz Button */}
                 <Link to="/quiz-maker">
                   <motion.button
-                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 transition-all flex items-center gap-2"
+                    className="px-4 py-2 sm:px-6 sm:py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold shadow-lg shadow-violet-500/30 hover:shadow-xl hover:shadow-violet-500/40 transition-all flex items-center gap-2"
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <Plus className="w-5 h-5" />
-                    Create Quiz
-                    <Sparkles className="w-4 h-4" />
+                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="hidden sm:inline">Create Quiz</span>
+                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
                   </motion.button>
                 </Link>
               </motion.div>
@@ -703,7 +714,7 @@ export default function TeacherDashboard() {
         </motion.header>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <StatCard
             icon={BookOpen}
             label="Total Quizzes"
@@ -774,23 +785,23 @@ export default function TeacherDashboard() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Quick Actions */}
           <motion.div
-            className="xl:col-span-1 space-y-6"
+            className="xl:col-span-1 space-y-4 sm:space-y-6"
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
           >
             {/* Quick Actions Card */}
-            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                  <Rocket className="w-6 h-6 text-white" />
+            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 shadow-xl">
+              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                  <Rocket className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">Quick Actions</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Create & manage content</p>
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Quick Actions</h3>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Create & manage content</p>
                 </div>
               </div>
 
@@ -803,27 +814,27 @@ export default function TeacherDashboard() {
           </motion.div>
 
           {/* Right Column - Charts & Quizzes */}
-          <div className="xl:col-span-3 space-y-6">
+          <div className="xl:col-span-3 space-y-4 sm:space-y-6">
             {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Weekly Performance Chart */}
               <motion.div
-                className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl"
+                className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 shadow-xl"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
               >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
-                      <BarChart3 className="w-5 h-5 text-white" />
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
+                      <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Weekly Performance</h3>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Weekly Performance</h3>
                   </div>
                 </div>
 
                 {weeklyData.length > 0 ? (
-                  <div className="h-64">
+                  <div className="h-48 sm:h-56 md:h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={weeklyData}>
                         <defs>
@@ -875,22 +886,22 @@ export default function TeacherDashboard() {
 
               {/* Engagement Distribution */}
               <motion.div
-                className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl"
+                className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 shadow-xl"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
               >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                      <PieChartIcon className="w-5 h-5 text-white" />
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
+                      <PieChartIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Engagement Distribution</h3>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Engagement Distribution</h3>
                   </div>
                 </div>
 
                 {engagementData.length > 0 ? (
-                  <div className="h-64">
+                  <div className="h-48 sm:h-56 md:h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -939,33 +950,33 @@ export default function TeacherDashboard() {
 
             {/* Recent Quizzes */}
             <motion.div
-              className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl"
+              className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6 shadow-xl"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
             >
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg">
-                    <BookOpen className="w-5 h-5 text-white" />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg">
+                    <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Recent Quizzes</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{filteredQuizzes.length} quizzes found</p>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Recent Quizzes</h3>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{filteredQuizzes.length} quizzes found</p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   {/* Search */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
+                  <div className="relative flex-1 sm:flex-initial">
+                    <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     <input
                       type="text"
-                      placeholder="Search quizzes..."
+                      placeholder="Search..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-4 py-2.5 w-48 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                      className="pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 w-full sm:w-40 md:w-48 text-sm rounded-lg sm:rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
                     />
                   </div>
 
@@ -973,7 +984,7 @@ export default function TeacherDashboard() {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all cursor-pointer"
+                    className="px-3 sm:px-4 py-2 sm:py-2.5 text-sm rounded-lg sm:rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all cursor-pointer"
                   >
                     <option value="createdAt">Newest First</option>
                     <option value="timesTaken">Most Popular</option>
@@ -981,18 +992,18 @@ export default function TeacherDashboard() {
                   </select>
 
                   {/* View toggle */}
-                  <div className="flex rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 p-1">
+                  <div className="flex rounded-lg sm:rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 p-0.5 sm:p-1">
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-violet-500 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                      className={`p-1.5 sm:p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-violet-500 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                     >
-                      <Grid3X3 className="w-4 h-4" />
+                      <Grid3X3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-violet-500 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                      className={`p-1.5 sm:p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-violet-500 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                     >
-                      <List className="w-4 h-4" />
+                      <List className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                   </div>
                 </div>

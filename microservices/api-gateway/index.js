@@ -212,7 +212,6 @@ app.get("/", (req, res) => {
       social: SERVICES.SOCIAL,
       gamification: SERVICES.GAMIFICATION,
       moderation: SERVICES.MODERATION,
-      avatar: SERVICES.AVATAR,
     },
   });
 });
@@ -547,52 +546,6 @@ app.use(
     ...proxyOptions,
     target: SERVICES.MODERATION,
     pathRewrite: { "^/api/admin": "/api/admin" },
-  })
-);
-
-// Route to Avatar Service
-app.use(
-  "/api/avatar",
-  createProxyMiddleware({
-    ...proxyOptions,
-    target: SERVICES.AVATAR,
-    pathRewrite: { "^/api/avatar": "/api/avatar" },
-  })
-);
-
-app.use(
-  "/api/emotions",
-  createProxyMiddleware({
-    ...proxyOptions,
-    target: SERVICES.AVATAR,
-    pathRewrite: { "^/api/emotions": "/api/emotions" },
-  })
-);
-
-app.use(
-  "/api/evolution",
-  createProxyMiddleware({
-    ...proxyOptions,
-    target: SERVICES.AVATAR,
-    pathRewrite: { "^/api/evolution": "/api/evolution" },
-  })
-);
-
-app.use(
-  "/api/voice",
-  createProxyMiddleware({
-    ...proxyOptions,
-    target: SERVICES.AVATAR,
-    pathRewrite: { "^/api/voice": "/api/voice" },
-  })
-);
-
-app.use(
-  "/api/learning-style",
-  createProxyMiddleware({
-    ...proxyOptions,
-    target: SERVICES.AVATAR,
-    pathRewrite: { "^/api/learning-style": "/api/learning-style" },
   })
 );
 

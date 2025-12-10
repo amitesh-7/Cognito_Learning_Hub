@@ -149,12 +149,6 @@ const Navbar = () => {
           icon: MessageSquare,
           badge: true,
         },
-        {
-          type: "link",
-          to: "/avatar",
-          label: "Avatar",
-          icon: User,
-        },
       ]
     : [];
 
