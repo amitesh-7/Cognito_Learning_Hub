@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Result = require("../models/Result");
-const Quiz = require("../../quiz-service/models/Quiz");
+const Quiz = require("../../shared/models/Quiz");
 
 /**
  * @route   GET /api/time-travel/analyze/:userId

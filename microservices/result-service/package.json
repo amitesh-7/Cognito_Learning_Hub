@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "build": "bash render-build.sh"
   },
   "keywords": [
     "results",
