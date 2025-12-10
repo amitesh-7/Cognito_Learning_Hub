@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useSpring, useTransform } from "framer-motion";
 import ParticleBackground from "../../components/ParticleBackground";
 import {
   Check,
@@ -19,10 +19,50 @@ import {
   Info,
 } from "lucide-react";
 
+// Animated Counter Component
+const AnimatedCounter = ({ value, duration = 1 }) => {
+  const [count, setCount] = useState(0);
+  const countRef = useRef(null);
+  
+  useEffect(() => {
+    if (countRef.current) return;
+    countRef.current = true;
+    
+    let startTime = null;
+    const animate = (currentTime) => {
+      if (!startTime) startTime = currentTime;
+      const progress = Math.min((currentTime - startTime) / (duration * 1000), 1);
+      
+      setCount(Math.floor(progress * value));
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setCount(value);
+      }
+    };
+    
+    requestAnimationFrame(animate);
+  }, [value, duration]);
+  
+  return <span>{count}</span>;
+};
+
 const FeatureComparison = () => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [showDetails, setShowDetails] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [sliderPosition, setSliderPosition] = useState(50);
+  const [ripples, setRipples] = useState([]);
+  const containerRef = useRef(null);
+  
+  // Scroll progress
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
 
   // Dark mode detection
   useEffect(() => {
@@ -245,7 +285,13 @@ const FeatureComparison = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 dark:from-slate-950 dark:via-violet-950/20 dark:to-fuchsia-950/20">
+    <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 dark:from-slate-950 dark:via-violet-950/20 dark:to-fuchsia-950/20">
+      {/* Scroll Progress Bar */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 origin-left z-50"
+        style={{ scaleX }}
+      />
+      
       {/* Particle Background */}
       <ParticleBackground isDark={isDarkMode} />
       
@@ -305,19 +351,39 @@ const FeatureComparison = () => {
             className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-12 px-2"
           >
             {categories.map((category) => (
-              <button
+              <motion.button
                 key={category.id}
                 onClick={() => setActiveCategory(category.id)}
-                className={`flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl text-sm md:text-base font-semibold transition-all duration-300 ${
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className={`relative flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl text-sm md:text-base font-semibold transition-all duration-300 overflow-hidden ${
                   activeCategory === category.id
-                    ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-xl scale-105"
-                    : "bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 shadow-lg hover:shadow-xl hover:scale-105"
+                    ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-xl"
+                    : "bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl text-slate-700 dark:text-slate-300 shadow-lg hover:shadow-xl border border-white/20 dark:border-slate-700/50"
                 }`}
               >
-                <category.icon className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden sm:inline">{category.name}</span>
-                <span className="sm:hidden">{category.name.split(' ')[0]}</span>
-              </button>
+                {/* Animated gradient border */}
+                {activeCategory !== category.id && (
+                  <motion.div
+                    className="absolute inset-0 rounded-xl md:rounded-2xl opacity-0 hover:opacity-100 transition-opacity"
+                    style={{
+                      background: 'linear-gradient(90deg, rgba(139,92,246,0.3), rgba(217,70,239,0.3), rgba(236,72,153,0.3))',
+                      backgroundSize: '200% 200%',
+                    }}
+                    animate={{
+                      backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: 'linear',
+                    }}
+                  />
+                )}
+                <category.icon className="w-4 h-4 md:w-5 md:h-5 relative z-10" />
+                <span className="hidden sm:inline relative z-10">{category.name}</span>
+                <span className="sm:hidden relative z-10">{category.name.split(' ')[0]}</span>
+              </motion.button>
             ))}
           </motion.div>
         </div>
@@ -343,12 +409,24 @@ const FeatureComparison = () => {
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className={`text-center p-4 rounded-2xl bg-gradient-to-br ${
-                    platform.bgColor
-                  } dark:${platform.darkBgColor} ${
-                    index === 0 ? "ring-2 ring-violet-500 dark:ring-violet-400" : ""
-                  }`}
+                  whileHover={{ 
+                    scale: 1.05, 
+                    y: -5,
+                    transition: { type: "spring", stiffness: 300 }
+                  }}
+                  className={`relative text-center p-4 rounded-2xl backdrop-blur-xl ${
+                    index === 0
+                      ? "bg-gradient-to-br from-violet-600/90 to-fuchsia-600/90 ring-2 ring-violet-400 dark:ring-violet-300"
+                      : "bg-white/40 dark:bg-slate-800/40 border border-white/20 dark:border-slate-700/50"
+                  } shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden`}
                 >
+                  {/* Particle effect on hover */}
+                  <motion.div
+                    className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity pointer-events-none"
+                    style={{
+                      background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(139,92,246,0.15), transparent 50%)`
+                    }}
+                  />
                   <div className="text-4xl mb-2">{platform.logo}</div>
                   <h3 className="font-bold text-slate-900 dark:text-white mb-1">
                     {platform.name}
@@ -372,18 +450,44 @@ const FeatureComparison = () => {
                 Total Features
               </div>
               <div className="text-center">
-                <span className="text-2xl font-black bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
-                  {counts.cognito}/{filteredFeatures.length}
-                </span>
+                <motion.span 
+                  className="text-2xl font-black bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                >
+                  <AnimatedCounter value={counts.cognito} />/{filteredFeatures.length}
+                </motion.span>
               </div>
-              <div className="text-center text-2xl font-black text-slate-700 dark:text-slate-300">
-                {counts.kahoot}/{filteredFeatures.length}
+              <div className="text-center">
+                <motion.span
+                  className="text-2xl font-black text-slate-700 dark:text-slate-300"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
+                >
+                  <AnimatedCounter value={counts.kahoot} />/{filteredFeatures.length}
+                </motion.span>
               </div>
-              <div className="text-center text-2xl font-black text-slate-700 dark:text-slate-300">
-                {counts.quizlet}/{filteredFeatures.length}
+              <div className="text-center">
+                <motion.span
+                  className="text-2xl font-black text-slate-700 dark:text-slate-300"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, delay: 0.4 }}
+                >
+                  <AnimatedCounter value={counts.quizlet} />/{filteredFeatures.length}
+                </motion.span>
               </div>
-              <div className="text-center text-2xl font-black text-slate-700 dark:text-slate-300">
-                {counts.duolingo}/{filteredFeatures.length}
+              <div className="text-center">
+                <motion.span
+                  className="text-2xl font-black text-slate-700 dark:text-slate-300"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, delay: 0.5 }}
+                >
+                  <AnimatedCounter value={counts.duolingo} />/{filteredFeatures.length}
+                </motion.span>
               </div>
             </div>
           </div>
@@ -424,8 +528,20 @@ const FeatureComparison = () => {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.05 }}
                   layout
-                  className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                  whileHover={{ y: -5 }}
+                  className="relative bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl rounded-2xl md:rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-white/20 dark:border-slate-700/50 group"
                 >
+                  {/* Animated gradient border on hover */}
+                  <motion.div
+                    className="absolute inset-0 rounded-2xl md:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(139,92,246,0.5), rgba(217,70,239,0.5), rgba(236,72,153,0.5))',
+                      padding: '2px',
+                      WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                      WebkitMaskComposite: 'xor',
+                      maskComposite: 'exclude',
+                    }}
+                  />
                   {/* Desktop Layout */}
                   <div className="hidden lg:grid grid-cols-5 gap-4 p-6 items-center">
                     {/* Feature Name */}
@@ -648,6 +764,105 @@ const FeatureComparison = () => {
               </div>
             </div>
           </motion.div>
+
+          {/* Interactive Comparison Slider */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-16 max-w-4xl mx-auto"
+          >
+            <h3 className="text-2xl md:text-3xl font-black text-center text-slate-900 dark:text-white mb-8">
+              <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+                Drag to Compare
+              </span>
+            </h3>
+            
+            <div className="relative h-96 rounded-3xl overflow-hidden shadow-2xl">
+              {/* Cognito Side */}
+              <div 
+                className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-600 flex items-center justify-center"
+                style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
+              >
+                <div className="text-center text-white p-8">
+                  <div className="text-6xl mb-4">🧠</div>
+                  <h4 className="text-3xl font-black mb-4">Cognito</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center gap-2">
+                      <Check className="w-5 h-5 text-emerald-300" />
+                      <span>4 AI Quiz Methods</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <Check className="w-5 h-5 text-emerald-300" />
+                      <span>700+ RPG Quests</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <Check className="w-5 h-5 text-emerald-300" />
+                      <span>150+ Avatar Items</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <Check className="w-5 h-5 text-emerald-300" />
+                      <span>WebRTC Video (50+)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Others Side */}
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-400 dark:from-slate-700 dark:to-slate-900 flex items-center justify-center">
+                <div className="text-center text-slate-900 dark:text-white p-8">
+                  <div className="text-6xl mb-4">🎮📚</div>
+                  <h4 className="text-3xl font-black mb-4">Other Platforms</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
+                      <X className="w-5 h-5 text-red-500" />
+                      <span>Limited AI Features</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
+                      <X className="w-5 h-5 text-red-500" />
+                      <span>No RPG Quests</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
+                      <X className="w-5 h-5 text-red-500" />
+                      <span>Basic Avatars</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400">
+                      <X className="w-5 h-5 text-red-500" />
+                      <span>No Advanced Video</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Draggable Slider */}
+              <motion.div
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0}
+                dragMomentum={false}
+                onDrag={(e, info) => {
+                  const newPosition = Math.max(0, Math.min(100, sliderPosition + (info.delta.x / 4)));
+                  setSliderPosition(newPosition);
+                }}
+                className="absolute top-0 bottom-0 w-1 bg-white cursor-ew-resize z-10"
+                style={{ left: `${sliderPosition}%` }}
+              >
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-2xl flex items-center justify-center">
+                  <motion.div
+                    animate={{ x: [-2, 2, -2] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="text-violet-600 font-bold text-xl"
+                  >
+                    ⇄
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
+            
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4">
+              Drag the slider to compare features
+            </p>
+          </motion.div>
         </div>
       </section>
 
@@ -694,10 +909,34 @@ const FeatureComparison = () => {
                 className="group"
               >
                 <div className="relative">
-                  <div
+                  <motion.div
                     className={`absolute -inset-1 bg-gradient-to-r ${reason.color} rounded-3xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500`}
+                    animate={{
+                      scale: [1, 1.05, 1],
+                      rotate: [0, 5, -5, 0],
+                    }}
+                    transition={{
+                      duration: 4,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
                   />
-                  <div className="relative bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-xl hover:shadow-2xl transition-all duration-500">
+                  <motion.div 
+                    className="relative bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-white/20 dark:border-slate-700/50 overflow-hidden"
+                    whileHover={{ scale: 1.02, y: -5 }}
+                  >
+                    {/* Particle ripple effect on hover */}
+                    <motion.div
+                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                      initial={false}
+                      whileHover={{
+                        background: [
+                          'radial-gradient(circle at 50% 50%, rgba(139,92,246,0.1) 0%, transparent 50%)',
+                          'radial-gradient(circle at 50% 50%, rgba(139,92,246,0.05) 50%, transparent 100%)',
+                        ],
+                      }}
+                      transition={{ duration: 0.8 }}
+                    />
                     <div
                       className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-gradient-to-br ${reason.color} flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}
                     >
@@ -709,7 +948,7 @@ const FeatureComparison = () => {
                     <p className="text-sm md:text-base text-slate-600 dark:text-slate-400">
                       {reason.description}
                     </p>
-                  </div>
+                  </motion.div>
                 </div>
               </motion.div>
             ))}
