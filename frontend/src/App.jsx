@@ -65,6 +65,7 @@ const TeachingHub = lazy(() => import("./pages/TeachingHub"));
 const AIQuizOpponent = lazy(() => import("./pages/AIQuizOpponent"));
 const QuizHistory = lazy(() => import("./pages/QuizHistory"));
 const QuizResultDetail = lazy(() => import("./pages/QuizResultDetail"));
+const MyQuizzes = lazy(() => import("./pages/MyQuizzes"));
 
 // Avatar Routes
 const AvatarCustomization = lazy(() => import("./pages/AvatarCustomization"));
@@ -119,15 +120,18 @@ function App() {
                 {!isFullScreen && <Navbar />}
 
                 {/* Skip to main content for accessibility */}
-                <a 
-                  href="#main-content" 
+                <a
+                  href="#main-content"
                   className="sr-only focus:not-sr-only focus:absolute focus:top-20 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-lg z-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   Skip to main content
                 </a>
 
                 {/* Main Content */}
-                <main id="main-content" className={isFullScreen ? "" : "relative z-10"}>
+                <main
+                  id="main-content"
+                  className={isFullScreen ? "" : "relative z-10"}
+                >
                   <Suspense
                     fallback={
                       <div className="flex items-center justify-center min-h-[60vh]">
@@ -194,6 +198,14 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <QuizList />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/quizzes/my-quizzes"
+                            element={
+                              <ProtectedRoute>
+                                <MyQuizzes />
                               </ProtectedRoute>
                             }
                           />
@@ -485,7 +497,7 @@ function App() {
                               </ModeratorRoute>
                             }
                           />
-                          
+
                           {/* 404 Not Found - Catch all */}
                           <Route path="*" element={<NotFound />} />
                         </Routes>

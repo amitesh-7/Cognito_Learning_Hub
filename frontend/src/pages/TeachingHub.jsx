@@ -35,16 +35,13 @@ const TeachingHub = () => {
       try {
         const token = localStorage.getItem("quizwise-token");
 
-        // Fetch quiz count
-        const quizzesResponse = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/quizzes/my-quizzes?limit=1`,
-          {
-            headers: { "x-auth-token": token },
-          }
+        // Fetch ALL quizzes count from database (public quizzes)
+        const allQuizzesResponse = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/quizzes?limit=1`
         );
 
-        if (!quizzesResponse.ok) throw new Error("Failed to fetch quizzes");
-        const quizzesData = await quizzesResponse.json();
+        if (!allQuizzesResponse.ok) throw new Error("Failed to fetch quizzes");
+        const allQuizzesData = await allQuizzesResponse.json();
 
         // Fetch real analytics stats
         const analyticsResponse = await fetch(
@@ -61,9 +58,10 @@ const TeachingHub = () => {
             analyticsData.data?.stats || analyticsData.stats || realStats;
         }
 
+        // Get total count of ALL quizzes in the database
         const totalQuizCount =
-          quizzesData.data?.pagination?.total ||
-          quizzesData.pagination?.total ||
+          allQuizzesData.data?.pagination?.total ||
+          allQuizzesData.pagination?.total ||
           0;
 
         setStats({
@@ -91,6 +89,14 @@ const TeachingHub = () => {
       link: "/teacher-dashboard",
       gradient: "from-blue-500 to-cyan-500",
       bgGradient: "from-blue-500/10 to-cyan-500/10",
+    },
+    {
+      title: "My Quizzes",
+      description: "View, edit, and manage all your created quizzes",
+      icon: BookOpen,
+      link: "/quizzes/my-quizzes",
+      gradient: "from-violet-500 to-purple-500",
+      bgGradient: "from-violet-500/10 to-purple-500/10",
     },
     {
       title: "Quiz Generator",
