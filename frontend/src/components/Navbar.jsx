@@ -394,23 +394,44 @@ const Navbar = () => {
                   </motion.div>
                 </motion.div>
 
-                <div className="overflow-hidden">
-                  <motion.h1
-                    className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-indigo-600 group-hover:to-blue-600 transition-all duration-700 tracking-tight whitespace-nowrap"
-                    style={{
-                      backgroundSize: "200% 200%",
-                    }}
+                <div className="overflow-hidden flex flex-col">
+                  <motion.div
+                    className="flex items-center gap-2"
+                    whileHover={{ x: 2 }}
+                    transition={{ duration: 0.3 }}
                   >
-                    <span className="hidden sm:inline">Cognito Learning Hub</span>
-                    <span className="sm:hidden">Cognito</span>
-                  </motion.h1>
+                    <motion.h1
+                      className="text-base sm:text-xl md:text-2xl lg:text-3xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-indigo-600 group-hover:to-blue-600 transition-all duration-700 tracking-tight whitespace-nowrap"
+                      style={{
+                        backgroundSize: "200% 200%",
+                        fontFamily: "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      <span className="hidden sm:inline">Cognito</span>
+                      <span className="sm:hidden">Cognito</span>
+                    </motion.h1>
+                    <motion.div
+                      className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 dark:from-indigo-400/20 dark:via-purple-400/20 dark:to-pink-400/20 rounded-full border border-indigo-200/50 dark:border-indigo-400/30"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Zap className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                      <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">AI Powered</span>
+                    </motion.div>
+                  </motion.div>
                   <motion.p
-                    className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-medium hidden sm:block"
+                    className="text-[9px] sm:text-[10px] md:text-xs text-gray-600 dark:text-gray-400 font-semibold hidden sm:flex items-center gap-2 mt-0.5"
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    AI-Powered Learning • 100% Free
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                      <span className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent font-bold">Smart Learning Platform</span>
+                    </span>
+                    <span className="hidden lg:inline text-gray-400">•</span>
+                    <span className="hidden lg:inline text-emerald-600 dark:text-emerald-400 font-bold">100% Free</span>
                   </motion.p>
                 </div>
               </Link>
