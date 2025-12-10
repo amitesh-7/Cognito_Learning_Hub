@@ -275,7 +275,7 @@ const FeatureComparison = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-7xl font-black mb-6"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black mb-4 md:mb-6 px-4"
           >
             <span className="text-slate-900 dark:text-white">See Why</span>
             <br />
@@ -289,7 +289,7 @@ const FeatureComparison = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto mb-12"
+            className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto mb-8 md:mb-12 px-4"
           >
             Compare Cognito Learning Hub with other popular platforms. See the features that make us
             <span className="text-violet-600 dark:text-violet-400 font-semibold"> unique </span>
@@ -302,20 +302,21 @@ const FeatureComparison = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex flex-wrap justify-center gap-3 mb-12"
+            className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-12 px-2"
           >
             {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setActiveCategory(category.id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-300 ${
+                className={`flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl text-sm md:text-base font-semibold transition-all duration-300 ${
                   activeCategory === category.id
                     ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-xl scale-105"
                     : "bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 shadow-lg hover:shadow-xl hover:scale-105"
                 }`}
               >
-                <category.icon className="w-5 h-5" />
-                <span>{category.name}</span>
+                <category.icon className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="hidden sm:inline">{category.name}</span>
+                <span className="sm:hidden">{category.name.split(' ')[0]}</span>
               </button>
             ))}
           </motion.div>
@@ -323,10 +324,10 @@ const FeatureComparison = () => {
       </section>
 
       {/* Comparison Table */}
-      <section className="relative px-4 pb-20">
+      <section className="relative px-2 md:px-4 pb-20">
         <div className="max-w-7xl mx-auto">
-          {/* Platform Headers */}
-          <div className="sticky top-0 z-20 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-xl border-b-2 border-slate-200 dark:border-slate-800 mb-4 rounded-t-3xl shadow-xl">
+          {/* Platform Headers - Desktop */}
+          <div className="hidden lg:block sticky top-0 z-20 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-xl border-b-2 border-slate-200 dark:border-slate-800 mb-4 rounded-t-3xl shadow-xl">
             <div className="grid grid-cols-5 gap-4 p-6">
               {/* Feature Column Header */}
               <div className="flex items-center">
@@ -366,7 +367,7 @@ const FeatureComparison = () => {
             </div>
 
             {/* Score Summary */}
-            <div className="grid grid-cols-5 gap-4 px-6 pb-6">
+            <div className="hidden lg:grid grid-cols-5 gap-4 px-6 pb-6">
               <div className="flex items-center text-sm font-semibold text-slate-600 dark:text-slate-400">
                 Total Features
               </div>
@@ -387,6 +388,31 @@ const FeatureComparison = () => {
             </div>
           </div>
 
+          {/* Mobile Platform Cards */}
+          <div className="lg:hidden grid grid-cols-2 gap-3 mb-6">
+            {platforms.map((platform, index) => (
+              <motion.div
+                key={platform.name}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1 }}
+                className={`p-4 rounded-2xl text-center ${
+                  index === 0
+                    ? "col-span-2 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white ring-2 ring-violet-400"
+                    : "bg-white dark:bg-slate-800 shadow-lg"
+                }`}
+              >
+                <div className="text-3xl mb-2">{platform.logo}</div>
+                <h3 className={`text-sm font-bold mb-1 ${index === 0 ? "text-white" : "text-slate-900 dark:text-white"}`}>
+                  {platform.name}
+                </h3>
+                <div className={`text-xl font-black ${index === 0 ? "text-amber-300" : "text-slate-600 dark:text-slate-400"}`}>
+                  {counts[platform.name.toLowerCase().replace(" ", "").replace("learninghub", "") || "cognito"]}/{filteredFeatures.length}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
           {/* Feature Rows */}
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
@@ -398,9 +424,10 @@ const FeatureComparison = () => {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.05 }}
                   layout
-                  className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                  className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl md:rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden"
                 >
-                  <div className="grid grid-cols-5 gap-4 p-6 items-center">
+                  {/* Desktop Layout */}
+                  <div className="hidden lg:grid grid-cols-5 gap-4 p-6 items-center">
                     {/* Feature Name */}
                     <div>
                       <div className="flex items-start gap-3">
@@ -497,6 +524,67 @@ const FeatureComparison = () => {
                     </div>
                   </div>
 
+                  {/* Mobile Layout */}
+                  <div className="lg:hidden p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-white mb-1">
+                          {feature.name}
+                        </h4>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">
+                          {feature.description}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowDetails(showDetails === index ? null : index)}
+                        className="ml-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0"
+                      >
+                        <Info className="w-4 h-4 text-violet-500" />
+                      </button>
+                    </div>
+                    
+                    {/* Mobile Comparison Grid */}
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <div className={`p-3 rounded-xl text-center ${
+                        feature.cognito.highlight
+                          ? "bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-950/30 dark:to-fuchsia-950/30 ring-1 ring-violet-400 col-span-2"
+                          : "bg-slate-50 dark:bg-slate-800/50"
+                      }`}>
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          {React.createElement(feature.cognito.icon, {
+                            className: `w-5 h-5 ${
+                              feature.cognito.icon === Check
+                                ? "text-emerald-500"
+                                : "text-slate-400"
+                            }`,
+                          })}
+                          {feature.cognito.highlight && (
+                            <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                          )}
+                        </div>
+                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          Cognito
+                        </div>
+                        <div className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                          {feature.cognito.value}
+                        </div>
+                      </div>
+                      
+                      {!feature.cognito.highlight && (
+                        <>
+                          <div className="p-2 rounded-xl text-center bg-slate-50 dark:bg-slate-800/50">
+                            <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              Others
+                            </div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400">
+                              {feature.kahoot.icon === Check ? "✓" : "✗"}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Details Expandable */}
                   <AnimatePresence>
                     {showDetails === index && (
@@ -529,30 +617,31 @@ const FeatureComparison = () => {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mt-16 text-center"
+            className="mt-12 md:mt-16 text-center px-4"
           >
-            <div className="inline-block relative">
+            <div className="inline-block relative w-full max-w-4xl">
               {/* Glow Effect */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 rounded-[3rem] blur-2xl opacity-30" />
+              <div className="absolute -inset-2 md:-inset-4 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 rounded-2xl md:rounded-[3rem] blur-2xl opacity-30" />
 
               {/* Card */}
-              <div className="relative bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-600 rounded-[2.5rem] p-12 text-white">
-                <div className="flex flex-col items-center gap-4">
-                  <Crown className="w-16 h-16 text-amber-300" />
-                  <h2 className="text-4xl font-black">
+              <div className="relative bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-600 rounded-2xl md:rounded-[2.5rem] p-6 md:p-12 text-white">
+                <div className="flex flex-col items-center gap-3 md:gap-4">
+                  <Crown className="w-12 h-12 md:w-16 md:h-16 text-amber-300" />
+                  <h2 className="text-2xl md:text-4xl font-black">
                     Cognito Learning Hub Wins!
                   </h2>
-                  <p className="text-xl text-white/80 max-w-2xl">
+                  <p className="text-base md:text-xl text-white/80 max-w-2xl">
                     With <span className="font-bold">{counts.cognito}</span> out of{" "}
                     <span className="font-bold">{filteredFeatures.length}</span> features
                     ({Math.round((counts.cognito / filteredFeatures.length) * 100)}%), we offer
                     the most comprehensive learning platform.
                   </p>
                   <Link to="/signup">
-                    <button className="mt-4 px-8 py-4 bg-white rounded-2xl text-violet-600 font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-2">
-                      <Rocket className="w-5 h-5" />
-                      Start Learning Free
-                      <ArrowRight className="w-5 h-5" />
+                    <button className="mt-4 px-6 py-3 md:px-8 md:py-4 bg-white rounded-xl md:rounded-2xl text-violet-600 font-bold text-base md:text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-2">
+                      <Rocket className="w-4 h-4 md:w-5 md:h-5" />
+                      <span className="hidden sm:inline">Start Learning Free</span>
+                      <span className="sm:hidden">Get Started</span>
+                      <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
                     </button>
                   </Link>
                 </div>
@@ -563,16 +652,16 @@ const FeatureComparison = () => {
       </section>
 
       {/* Why Choose Us Section */}
-      <section className="relative py-20 px-4 bg-white/50 dark:bg-slate-900/50">
+      <section className="relative py-12 md:py-20 px-4 bg-white/50 dark:bg-slate-900/50">
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-12">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white mb-8 md:mb-12">
             Why Choose{" "}
             <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
               Cognito?
             </span>
           </h2>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
             {[
               {
                 icon: Brain,
@@ -608,16 +697,16 @@ const FeatureComparison = () => {
                   <div
                     className={`absolute -inset-1 bg-gradient-to-r ${reason.color} rounded-3xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500`}
                   />
-                  <div className="relative bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500">
+                  <div className="relative bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-xl hover:shadow-2xl transition-all duration-500">
                     <div
-                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${reason.color} flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                      className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-gradient-to-br ${reason.color} flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}
                     >
-                      <reason.icon className="w-8 h-8 text-white" />
+                      <reason.icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+                    <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white mb-2 md:mb-3">
                       {reason.title}
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
+                    <p className="text-sm md:text-base text-slate-600 dark:text-slate-400">
                       {reason.description}
                     </p>
                   </div>
