@@ -39,30 +39,30 @@ export default function QuizMaker() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 relative overflow-hidden py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 dark:from-slate-900 dark:via-violet-950/30 dark:to-fuchsia-950/30 relative overflow-hidden py-8">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-20 w-96 h-96 bg-violet-400/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-20 right-20 w-96 h-96 bg-violet-400/10 dark:bg-violet-500/5 rounded-full blur-3xl animate-pulse" />
         <div
-          className="absolute bottom-20 left-20 w-96 h-96 bg-fuchsia-400/10 rounded-full blur-3xl animate-pulse"
+          className="absolute bottom-20 left-20 w-96 h-96 bg-fuchsia-400/10 dark:bg-fuchsia-500/5 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "1s" }}
         />
       </div>
 
       <motion.div
-        className="max-w-6xl mx-auto px-6 relative z-10"
+        className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         {/* Header Section - Gamified */}
-        <motion.div className="text-center mb-12" variants={itemVariants}>
-          <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-slate-900 via-violet-700 to-fuchsia-600 bg-clip-text text-transparent drop-shadow-lg mb-4">
+        <motion.div className="text-center mb-8 sm:mb-12 pt-16 sm:pt-20" variants={itemVariants}>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-slate-900 via-violet-700 to-fuchsia-600 dark:from-white dark:via-violet-300 dark:to-fuchsia-400 bg-clip-text text-transparent drop-shadow-lg mb-4">
             Quiz Studio
           </h1>
-          <p className="text-xl font-bold text-slate-700 tracking-wide">
+          <p className="text-base sm:text-xl font-bold text-slate-700 dark:text-slate-300 tracking-wide">
             Your creative hub for building{" "}
-            <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
               engaging
             </span>{" "}
             learning experiences ✨

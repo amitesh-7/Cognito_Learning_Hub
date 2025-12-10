@@ -48,6 +48,7 @@ const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const ReportsDashboard = lazy(() => import("./pages/ReportsDashboard"));
 const AchievementDashboard = lazy(() => import("./pages/AchievementDashboard"));
 const EnhancedQuizCreator = lazy(() => import("./pages/EnhancedQuizCreator"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 const GamifiedQuizTaker = lazy(() => import("./pages/GamifiedQuizTaker"));
 const PDFQuizGenerator = lazy(() => import("./pages/PDFQuizGenerator"));
 const SocialDashboard = lazy(() => import("./pages/SocialDashboard"));
@@ -116,8 +117,16 @@ function App() {
                 {/* Modern Glassmorphism Navbar with Scroll Behavior */}
                 {!isFullScreen && <Navbar />}
 
+                {/* Skip to main content for accessibility */}
+                <a 
+                  href="#main-content" 
+                  className="sr-only focus:not-sr-only focus:absolute focus:top-20 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-lg z-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Skip to main content
+                </a>
+
                 {/* Main Content */}
-                <main className={isFullScreen ? "" : "relative z-10"}>
+                <main id="main-content" className={isFullScreen ? "" : "relative z-10"}>
                   <Suspense
                     fallback={
                       <div className="flex items-center justify-center min-h-[60vh]">
@@ -483,6 +492,9 @@ function App() {
                               </ModeratorRoute>
                             }
                           />
+                          
+                          {/* 404 Not Found - Catch all */}
+                          <Route path="*" element={<NotFound />} />
                         </Routes>
                       </motion.div>
                     </AnimatePresence>

@@ -562,25 +562,25 @@ const SocialDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 relative overflow-hidden py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 dark:from-slate-900 dark:via-violet-950/30 dark:to-fuchsia-950/30 relative overflow-hidden py-8">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-20 w-96 h-96 bg-violet-400/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-20 right-20 w-96 h-96 bg-violet-400/10 dark:bg-violet-500/5 rounded-full blur-3xl animate-pulse" />
         <div
-          className="absolute bottom-20 left-20 w-96 h-96 bg-fuchsia-400/10 rounded-full blur-3xl animate-pulse"
+          className="absolute bottom-20 left-20 w-96 h-96 bg-fuchsia-400/10 dark:bg-fuchsia-500/5 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: "1s" }}
         />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-slate-900 via-violet-700 to-fuchsia-600 bg-clip-text text-transparent drop-shadow-lg mb-4">
+        <div className="text-center mb-8 sm:mb-12 pt-16 sm:pt-20">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-slate-900 via-violet-700 to-fuchsia-600 dark:from-white dark:via-violet-300 dark:to-fuchsia-400 bg-clip-text text-transparent drop-shadow-lg mb-4">
             Social Hub
           </h1>
-          <p className="text-xl font-bold text-slate-700 tracking-wide">
+          <p className="text-base sm:text-xl font-bold text-slate-700 dark:text-slate-300 tracking-wide">
             Connect with{" "}
-            <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
               friends
             </span>
             , compete in challenges, and stay updated! 🎮
@@ -589,41 +589,41 @@ const SocialDashboard = () => {
 
         {/* Navigation Tabs */}
         <div className="flex justify-center mb-8">
-          <div className="bg-white/70 backdrop-blur-2xl border-2 border-white/80 rounded-2xl shadow-xl p-2 flex gap-2">
+          <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-2xl border-2 border-white/80 dark:border-slate-700/80 rounded-2xl shadow-xl p-2 flex flex-wrap justify-center gap-2">
             <button
               onClick={() => setActiveTab("friends")}
-              className={`px-8 py-3 rounded-xl font-bold transition-all ${
+              className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl font-bold transition-all text-sm sm:text-base ${
                 activeTab === "friends"
                   ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg scale-105"
-                  : "text-slate-700 hover:bg-white/60 hover:scale-105"
+                  : "text-slate-700 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-700/60 hover:scale-105"
               }`}
             >
-              <Users className="w-5 h-5 inline mr-2" />
+              <Users className="w-4 sm:w-5 h-4 sm:h-5 inline mr-1 sm:mr-2" />
               Friends
             </button>
             <button
               onClick={() => setActiveTab("challenges")}
-              className={`px-8 py-3 rounded-xl font-bold transition-all ${
+              className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl font-bold transition-all text-sm sm:text-base ${
                 activeTab === "challenges"
                   ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg scale-105"
-                  : "text-slate-700 hover:bg-white/60 hover:scale-105"
+                  : "text-slate-700 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-700/60 hover:scale-105"
               }`}
             >
-              <Trophy className="w-5 h-5 inline mr-2" />
+              <Trophy className="w-4 sm:w-5 h-4 sm:h-5 inline mr-1 sm:mr-2" />
               Challenges
             </button>
             <button
               onClick={() => setActiveTab("notifications")}
-              className={`px-8 py-3 rounded-xl font-bold transition-all relative ${
+              className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl font-bold transition-all relative text-sm sm:text-base ${
                 activeTab === "notifications"
                   ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg scale-105"
-                  : "text-slate-700 hover:bg-white/60 hover:scale-105"
+                  : "text-slate-700 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-700/60 hover:scale-105"
               }`}
             >
-              <Bell className="w-5 h-5 inline mr-2" />
+              <Bell className="w-4 sm:w-5 h-4 sm:h-5 inline mr-1 sm:mr-2" />
               Notifications
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-gradient-to-br from-red-500 to-orange-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-black shadow-lg animate-pulse">
+                <span className="absolute -top-1 -right-1 bg-gradient-to-br from-red-500 to-orange-500 text-white text-xs w-5 sm:w-6 h-5 sm:h-6 rounded-full flex items-center justify-center font-black shadow-lg animate-pulse">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}

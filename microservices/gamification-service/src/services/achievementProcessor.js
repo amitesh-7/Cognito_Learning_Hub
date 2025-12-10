@@ -140,13 +140,14 @@ class AchievementProcessor {
     if (!criteria || !criteria.target) {
       return false;
     }
-      // Could be points, level, or other special metrics
-      if (criteria.type === 'points') {
-        return userStats.totalPoints >= criteria.target;
-      } else if (criteria.type === 'level') {
-        return userStats.level >= criteria.target;
-      }
+    
+    // Could be points, level, or other special metrics
+    if (criteria.type === 'points') {
+      return userStats.totalPoints >= criteria.target;
+    } else if (criteria.type === 'level') {
+      return userStats.level >= criteria.target;
     }
+    
     return false;
   }
 
