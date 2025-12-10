@@ -1,9 +1,9 @@
+/* Import performance optimizations */
+@import "./styles/performance-optimizations.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import performance optimizations */
-@import './styles/performance-optimizations.css';
 
 /* Custom Scrollbar for Bento Dashboard */
 .custom-scrollbar::-webkit-scrollbar {
@@ -32,14 +32,30 @@
 
 /* Wave animation for emoji */
 @keyframes wave {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(14deg); }
-  20% { transform: rotate(-8deg); }
-  30% { transform: rotate(14deg); }
-  40% { transform: rotate(-4deg); }
-  50% { transform: rotate(10deg); }
-  60% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  10% {
+    transform: rotate(14deg);
+  }
+  20% {
+    transform: rotate(-8deg);
+  }
+  30% {
+    transform: rotate(14deg);
+  }
+  40% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  }
+  60% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
 .animate-wave {
