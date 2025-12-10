@@ -17,7 +17,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import ModeratorRoute from "./components/ModeratorRoute";
 import { SocketProvider } from "./context/SocketContext";
-import { AvatarProvider } from "./context/AvatarContext";
 import { GamificationProvider } from "./context/GamificationContext";
 import { AchievementNotification } from "./components/Gamification";
 
@@ -34,7 +33,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const QuickActions = lazy(() => import("./pages/QuickActions"));
 const QuizList = lazy(() => import("./pages/QuizList"));
 const QuizTaker = lazy(() => import("./pages/QuizTaker"));
-const TeacherDashboard = lazy(() => import("./pages/TeacherDashboardModern"));
+const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const ModeratorDashboard = lazy(() => import("./pages/ModeratorDashboard"));
 const EditQuiz = lazy(() => import("./pages/EditQuiz"));
@@ -62,8 +61,6 @@ const LiveSessionSelector = lazy(() => import("./pages/LiveSessionSelector"));
 const DuelMode = lazy(() => import("./pages/DuelMode"));
 const DuelBattle = lazy(() => import("./pages/DuelBattle"));
 const TeachingHub = lazy(() => import("./pages/TeachingHub"));
-const AvatarDashboard = lazy(() => import("./pages/AvatarDashboard"));
-const AvatarCustomization = lazy(() => import("./pages/AvatarCustomization"));
 const AIQuizOpponent = lazy(() => import("./pages/AIQuizOpponent"));
 const QuizHistory = lazy(() => import("./pages/QuizHistory"));
 const QuizResultDetail = lazy(() => import("./pages/QuizResultDetail"));
@@ -92,9 +89,8 @@ function App() {
 
   return (
     <SocketProvider>
-      <AvatarProvider>
-        <GamificationProvider>
-          <ToastProvider>
+      <GamificationProvider>
+        <ToastProvider>
             <LenisScroll>
               <div className="min-h-screen bg-white dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300 relative overflow-x-hidden">
                 {/* Network Status Indicator */}
@@ -333,22 +329,6 @@ function App() {
                             }
                           />
                           <Route
-                            path="/avatar"
-                            element={
-                              <ProtectedRoute>
-                                <AvatarDashboard />
-                              </ProtectedRoute>
-                            }
-                          />
-                          <Route
-                            path="/avatar/customize"
-                            element={
-                              <ProtectedRoute>
-                                <AvatarCustomization />
-                              </ProtectedRoute>
-                            }
-                          />
-                          <Route
                             path="/doubt-solver"
                             element={
                               <ProtectedRoute>
@@ -551,7 +531,6 @@ function App() {
             </LenisScroll>
           </ToastProvider>
         </GamificationProvider>
-      </AvatarProvider>
     </SocketProvider>
   );
 }

@@ -969,7 +969,6 @@ export default function HomePage() {
                       { label: "24/7 AI Tutor", cognito: true, kahoot: false },
                       { label: "Video Meetings", cognito: true, kahoot: false },
                       { label: "Progress Analytics", cognito: true, kahoot: true },
-                      { label: "Custom Avatars", cognito: true, kahoot: false },
                       { label: "Social Features", cognito: true, kahoot: false },
                       { label: "Achievement System", cognito: true, kahoot: false },
                     ].map((row, idx) => (

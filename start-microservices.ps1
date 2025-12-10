@@ -13,7 +13,6 @@ $services = @(
     @{Name="Live Service"; Path="microservices\live-service"; Port=3004},
     @{Name="Social Service"; Path="microservices\social-service"; Port=3006},
     @{Name="Gamification Service"; Path="microservices\gamification-service"; Port=3007},
-    @{Name="Avatar Service"; Path="microservices\avatar-service"; Port=3008},
     @{Name="Meeting Service"; Path="microservices\meeting-service"; Port=3009},
     @{Name="Moderation Service"; Path="microservices\moderation-service"; Port=3010}
 )

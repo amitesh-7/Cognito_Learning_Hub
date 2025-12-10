@@ -88,9 +88,20 @@ router.get("/my-quizzes", authenticateToken, async (req, res) => {
         }
       );
 
+      logger.info("Stats response from Result service:", JSON.stringify(statsResponse.data, null, 2));
+
       if (statsResponse.data) {
-        teacherStats = statsResponse.data.stats || teacherStats;
+        // Handle both wrapped and unwrapped responses
+        if (statsResponse.data.data && statsResponse.data.data.stats) {
+          // Wrapped in ApiResponse format
+          teacherStats = statsResponse.data.data.stats;
+        } else if (statsResponse.data.stats) {
+          // Direct stats object
+          teacherStats = statsResponse.data.stats;
+        }
       }
+      
+      logger.info("Processed teacher stats:", teacherStats);
     } catch (error) {
       logger.warn(
         "Failed to fetch teacher stats from Result service:",
@@ -103,6 +114,8 @@ router.get("/my-quizzes", authenticateToken, async (req, res) => {
       totalTakes: teacherStats.totalAttempts,
       uniqueStudents: teacherStats.uniqueStudents,
     };
+    
+    logger.info("Final stats being sent to frontend:", stats);
 
     return ApiResponse.success(res, {
       ...result,
