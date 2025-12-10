@@ -520,6 +520,24 @@ app.use(
   })
 );
 
+app.use(
+  "/api/avatar",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.GAMIFICATION,
+    pathRewrite: { "^/api/avatar": "/api/avatar" },
+  })
+);
+
+app.use(
+  "/api/daily-quests",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.GAMIFICATION,
+    pathRewrite: { "^/api/daily-quests": "/api/daily-quests" },
+  })
+);
+
 // Gamification Events - For quiz completion XP triggers
 app.use(
   "/api/events",

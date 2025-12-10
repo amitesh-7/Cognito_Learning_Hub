@@ -178,6 +178,18 @@ class AchievementProcessor {
 
       console.log(`🏆 Unlocked achievement "${achievement.name}" for user ${userId}`);
       
+      // Auto-unlock avatar rewards if any
+      try {
+        const { unlockAvatarRewards } = require('./avatarService');
+        const avatarResult = await unlockAvatarRewards(userId, achievement._id);
+        if (avatarResult.unlocked && avatarResult.items?.length > 0) {
+          console.log(`🎁 Unlocked ${avatarResult.items.length} avatar item(s) for achievement "${achievement.name}"`);
+        }
+      } catch (avatarError) {
+        console.error('Error unlocking avatar rewards:', avatarError);
+        // Don't fail achievement unlock if avatar unlock fails
+      }
+      
       return userAchievement;
     } catch (error) {
       console.error('Error unlocking achievement:', error);

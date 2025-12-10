@@ -18,6 +18,7 @@ import AdminRoute from "./components/AdminRoute";
 import ModeratorRoute from "./components/ModeratorRoute";
 import { SocketProvider } from "./context/SocketContext";
 import { GamificationProvider } from "./context/GamificationContext";
+import { AvatarProvider } from "./context/AvatarContext";
 import { AchievementNotification } from "./components/Gamification";
 
 // Lazy load pages for better performance (code splitting)
@@ -65,6 +66,9 @@ const AIQuizOpponent = lazy(() => import("./pages/AIQuizOpponent"));
 const QuizHistory = lazy(() => import("./pages/QuizHistory"));
 const QuizResultDetail = lazy(() => import("./pages/QuizResultDetail"));
 
+// Avatar Routes
+const AvatarCustomization = lazy(() => import("./pages/AvatarCustomization"));
+
 // Video Meeting Routes
 const TeacherMeetingStart = lazy(() => import("./pages/TeacherMeetingStart"));
 const StudentJoinMeeting = lazy(() => import("./pages/StudentJoinMeeting"));
@@ -90,7 +94,8 @@ function App() {
   return (
     <SocketProvider>
       <GamificationProvider>
-        <ToastProvider>
+        <AvatarProvider>
+          <ToastProvider>
             <LenisScroll>
               <div className="min-h-screen bg-white dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300 relative overflow-x-hidden">
                 {/* Network Status Indicator */}
@@ -329,6 +334,14 @@ function App() {
                             }
                           />
                           <Route
+                            path="/avatar/customize"
+                            element={
+                              <ProtectedRoute>
+                                <AvatarCustomization />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
                             path="/doubt-solver"
                             element={
                               <ProtectedRoute>
@@ -530,7 +543,8 @@ function App() {
               </div>
             </LenisScroll>
           </ToastProvider>
-        </GamificationProvider>
+        </AvatarProvider>
+      </GamificationProvider>
     </SocketProvider>
   );
 }

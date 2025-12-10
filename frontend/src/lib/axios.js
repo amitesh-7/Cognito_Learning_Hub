@@ -21,8 +21,8 @@ const axiosInstance = axios.create({
  */
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Get JWT token from localStorage
-    const token = localStorage.getItem('token');
+    // Get JWT token from localStorage - try both keys for compatibility
+    const token = localStorage.getItem('quizwise-token') || localStorage.getItem('token');
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

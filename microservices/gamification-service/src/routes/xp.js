@@ -38,6 +38,21 @@ router.post('/award-xp', authenticateToken, async (req, res, next) => {
     const newLevel = Math.floor(stats.experience / 100) + 1;
     const levelUp = newLevel > oldLevel;
 
+    // Auto-unlock level-based avatar items if leveled up
+    let avatarUnlocks = [];
+    if (levelUp) {
+      try {
+        const { unlockLevelBasedItems } = require('../services/avatarService');
+        const avatarResult = await unlockLevelBasedItems(userId, newLevel);
+        if (avatarResult.unlocked && avatarResult.items?.length > 0) {
+          avatarUnlocks = avatarResult.items;
+          console.log(`🎁 Unlocked ${avatarResult.items.length} avatar item(s) at level ${newLevel}`);
+        }
+      } catch (avatarError) {
+        console.error('Error unlocking level-based avatar items:', avatarError);
+      }
+    }
+
     res.json({
       success: true,
       message: `Awarded ${amount} XP for ${reason}`,
@@ -48,6 +63,7 @@ router.post('/award-xp', authenticateToken, async (req, res, next) => {
       },
       xpGained: amount,
       levelUp,
+      avatarUnlocks: avatarUnlocks.length > 0 ? avatarUnlocks : undefined,
     });
   } catch (error) {
     console.error('Error awarding XP:', error);

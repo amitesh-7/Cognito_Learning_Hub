@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useGamification } from "../context/GamificationContext";
+import { AvatarProfile } from "./Avatar";
 import { useTheme } from "../hooks/useTheme";
 import { useReducedMotion, useIsMobile } from "../hooks/useReducedMotion";
 import Button from "./ui/Button";
@@ -138,6 +139,7 @@ const Navbar = () => {
           icon: Trophy,
           items: [
             { to: "/achievements", label: "Achievements", icon: Trophy, badge: true },
+            { to: "/avatar/customize", label: "My Avatar", icon: User },
             { to: "/social", label: "Social Hub", icon: Users },
             { to: "/leaderboard", label: "Leaderboard", icon: Zap },
           ],
@@ -687,6 +689,16 @@ const Navbar = () => {
                     </>
                   )}
 
+                  {/* Avatar Profile Display */}
+                  <motion.div variants={staggerItem}>
+                    <AvatarProfile 
+                      size="md" 
+                      showInfo={true} 
+                      showLevel={true} 
+                      className="mx-2"
+                    />
+                  </motion.div>
+
                   {/* Enhanced Logout Button */}
                   <motion.div variants={staggerItem}>
                     <motion.button
@@ -1081,19 +1093,12 @@ const Navbar = () => {
                 {/* User Info */}
                 {user ? (
                   <div className="flex items-center gap-4 pr-12">
-                    <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center border-2 border-white/40">
-                      <span className="text-3xl font-bold text-white">
-                        {user.name?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white">
-                        {user.name}
-                      </h3>
-                      <p className="text-sm text-purple-200 flex items-center gap-1">
-                        Made in India 🇮🇳
-                      </p>
-                    </div>
+                    <AvatarProfile 
+                      size="lg" 
+                      showInfo={true}
+                      showLevel={true}
+                      className="flex-row-reverse"
+                    />
                   </div>
                 ) : (
                   <div className="flex items-center gap-4 pr-12">

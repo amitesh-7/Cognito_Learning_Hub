@@ -59,6 +59,24 @@ const achievementSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  // Avatar rewards
+  rewards: {
+    avatarItems: [{
+      itemId: String,
+      itemType: {
+        type: String,
+        enum: ['baseCharacter', 'headAccessory', 'faceAccessory', 'badge', 'background', 'hairStyle', 'expression'],
+      },
+    }],
+    xpBonus: {
+      type: Number,
+      default: 0,
+    },
+    coinBonus: {
+      type: Number,
+      default: 0,
+    },
+  },
 }, {
   timestamps: true,
 });

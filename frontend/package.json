@@ -23,6 +23,7 @@
     "@splinetool/runtime": "^1.10.91",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "axios": "^1.13.2",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.12",
     "google-auth-library": "^10.3.1",

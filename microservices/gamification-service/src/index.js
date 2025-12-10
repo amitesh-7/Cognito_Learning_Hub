@@ -14,6 +14,8 @@ const eventRoutes = require("./routes/events");
 const xpRoutes = require("./routes/xp");
 const worldEventRoutes = require("./routes/worldEvents");
 const questRoutes = require("./routes/quests");
+const dailyQuestRoutes = require("./routes/quest"); // Daily quests for avatar items
+const avatarRoutes = require("./routes/avatar");
 const { startStreakCronJob } = require("./jobs/streakChecker");
 const { startStatsSyncJob } = require("./jobs/statsSync");
 
@@ -41,6 +43,8 @@ app.get("/", (req, res) => {
       leaderboards: "/api/leaderboards",
       stats: "/api/stats",
       events: "/api/events",
+      avatar: "/api/avatar",
+      quests: "/api/quests",
     },
   });
 });
@@ -78,6 +82,8 @@ app.use("/api/stats", statsRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/world-events", worldEventRoutes); // Dynamic difficulty ecosystem
 app.use("/api/quests", questRoutes); // Narrative-driven learning quests
+app.use("/api/daily-quests", dailyQuestRoutes); // Daily challenges for avatar rewards
+app.use("/api/avatar", avatarRoutes); // Avatar customization and unlockables
 app.use("/api", xpRoutes); // XP and achievement check routes
 
 // Error handling middleware

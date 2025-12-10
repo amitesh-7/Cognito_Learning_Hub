@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "jest"
+    "test": "jest",
+    "seed:achievements": "node scripts/seed-achievements-with-rewards.js"
   },
   "dependencies": {
     "axios": "^1.6.0",

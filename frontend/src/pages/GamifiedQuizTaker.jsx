@@ -355,6 +355,8 @@ export default function GamifiedQuizTaker() {
   const [showResults, setShowResults] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [avatarMinimized, setAvatarMinimized] = useState(false);
+  const [avatarMood, setAvatarMood] = useState('idle');
+  const [avatarMinimized, setAvatarMinimized] = useState(false);
 
   // Game stats
   const [gameStats, setGameStats] = useState({
@@ -473,6 +475,18 @@ export default function GamifiedQuizTaker() {
       },
     }));
 
+    // Update avatar mood based on answer
+    if (isCorrect) {
+      const newStreak = currentStreak + 1;
+      if (newStreak >= 3) {
+        setAvatarMood('streak'); // Streak achieved!
+      } else {
+        setAvatarMood('correct'); // Correct answer
+      }
+    } else {
+      setAvatarMood('wrong'); // Wrong answer, show encouragement
+    }
+
     // Update game stats
     setGameStats((prev) => ({
       ...prev,
@@ -525,6 +539,7 @@ export default function GamifiedQuizTaker() {
   const nextQuestion = () => {
     if (currentQuestionIndex < quiz.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setAvatarMood('thinking'); // Show thinking mood for new question
     } else {
       finishQuiz();
     }
@@ -533,11 +548,13 @@ export default function GamifiedQuizTaker() {
   const previousQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
+      setAvatarMood('thinking'); // Show thinking mood
     }
   };
 
   const finishQuiz = async () => {
     setIsFinished(true);
+    setAvatarMood('celebrate'); // Celebrate quiz completion!
 
     try {
       const token = localStorage.getItem("quizwise-token");
@@ -805,13 +822,13 @@ export default function GamifiedQuizTaker() {
       </div>
 
       {/* AI Learning Avatar Companion */}
-      {isAvatarEnabled && (
-        <QuizAvatarCompanion
-          position="bottom-right"
-          minimized={avatarMinimized}
-          onMinimize={() => setAvatarMinimized(true)}
-        />
-      )}
+      <QuizAvatarCompanion
+        position="bottom-right"
+        minimized={avatarMinimized}
+        onMinimize={setAvatarMinimized}
+        currentMood={avatarMood}
+        showEncouragement={true}
+      />
     </div>
   );
 }
