@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "cross-env ROLLUP_USE_NATIVE=false vite build",
+    "build": "ROLLUP_USE_NATIVE=false vite build",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -63,7 +63,6 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@vitest/coverage-v8": "^4.0.8",
-    "cross-env": "^7.0.3",
     "jsdom": "^27.1.0",
     "vitest": "^4.0.8"
   }
