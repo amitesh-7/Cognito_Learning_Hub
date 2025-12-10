@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, memo, useMemo, useCallback } from "
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useInView, useMotionValue, useTransform } from "framer-motion";
 import Lottie from "lottie-react";
+import ParticleBackground from "./ParticleBackground";
 import {
   Sparkles,
   Gamepad2,
@@ -129,6 +130,9 @@ export default function HomePageNew() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950 overflow-hidden">
+      {/* 3D Particle Background */}
+      <ParticleBackground isDark={false} />
+      
       {/* 3D Animated Background */}
       <div className="fixed inset-0 w-full h-full -z-10">
         <FloatingIconsBackground />
@@ -1961,6 +1965,188 @@ export default function HomePageNew() {
                   </motion.div>
                 </CardContent>
               </Card>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Platform Comparison Section */}
+        <section className="py-24 px-6 lg:px-8 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto">
+            {/* Section Header */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-16"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-violet-100 to-fuchsia-100 dark:from-violet-900/30 dark:to-fuchsia-900/30 backdrop-blur-xl border border-violet-200/50 dark:border-violet-700/50 mb-6"
+              >
+                <Crown className="w-5 h-5 text-amber-500" />
+                <span className="text-sm font-semibold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+                  Why Choose Us
+                </span>
+              </motion.div>
+
+              <h2 className="text-4xl md:text-6xl font-black mb-6">
+                <span className="text-slate-900 dark:text-white">See How We</span>
+                <br />
+                <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent">
+                  Stack Up
+                </span>
+              </h2>
+              
+              <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
+                Compare Cognito with other platforms and discover what makes us different
+              </p>
+            </motion.div>
+
+            {/* Quick Comparison Grid */}
+            <div className="grid md:grid-cols-4 gap-6 mb-12">
+              {[
+                { name: "Cognito", logo: "🧠", score: "14/14", highlight: true },
+                { name: "Kahoot", logo: "🎮", score: "7/14", highlight: false },
+                { name: "Quizlet", logo: "📚", score: "6/14", highlight: false },
+                { name: "Duolingo", logo: "🦉", score: "8/14", highlight: false },
+              ].map((platform, index) => (
+                <motion.div
+                  key={platform.name}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`relative p-6 rounded-3xl ${
+                    platform.highlight
+                      ? "bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white ring-4 ring-violet-400/50 dark:ring-violet-500/50 shadow-2xl scale-105"
+                      : "bg-white dark:bg-slate-800 shadow-lg hover:shadow-xl"
+                  } transition-all duration-300`}
+                >
+                  {platform.highlight && (
+                    <div className="absolute -top-3 -right-3">
+                      <motion.div
+                        animate={{ rotate: [0, 10, -10, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Crown className="w-8 h-8 text-amber-300 fill-amber-300" />
+                      </motion.div>
+                    </div>
+                  )}
+                  
+                  <div className="text-center">
+                    <div className="text-5xl mb-3">{platform.logo}</div>
+                    <h3 className={`text-xl font-bold mb-2 ${
+                      platform.highlight ? "text-white" : "text-slate-900 dark:text-white"
+                    }`}>
+                      {platform.name}
+                    </h3>
+                    <div className={`text-3xl font-black ${
+                      platform.highlight ? "text-amber-300" : "text-slate-600 dark:text-slate-400"
+                    }`}>
+                      {platform.score}
+                    </div>
+                    <p className={`text-sm ${
+                      platform.highlight ? "text-white/80" : "text-slate-500 dark:text-slate-400"
+                    }`}>
+                      Features
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Feature Highlights */}
+            <div className="grid md:grid-cols-3 gap-6 mb-12">
+              {[
+                {
+                  icon: Brain,
+                  title: "4 AI Quiz Methods",
+                  description: "Topic, PDF, YouTube & Manual",
+                  cognito: true,
+                  others: false,
+                },
+                {
+                  icon: Swords,
+                  title: "1v1 Duels with ELO",
+                  description: "Competitive battles <100ms",
+                  cognito: true,
+                  others: false,
+                },
+                {
+                  icon: Trophy,
+                  title: "700+ RPG Quests",
+                  description: "Boss battles & storylines",
+                  cognito: true,
+                  others: false,
+                },
+              ].map((feature, index) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-xl">
+                      <feature.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="flex flex-col items-center gap-1">
+                        <Check className="w-5 h-5 text-emerald-500" />
+                        <span className="text-xs text-slate-500 dark:text-slate-400">Us</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1">
+                        <X className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                        <span className="text-xs text-slate-500 dark:text-slate-400">Others</span>
+                      </div>
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    {feature.description}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* CTA Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center"
+            >
+              <Link to="/compare">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="group relative px-10 py-5 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-2xl text-white font-bold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                >
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-fuchsia-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  />
+                  <span className="relative z-10 flex items-center gap-3">
+                    <Trophy className="w-6 h-6" />
+                    See Full Comparison
+                    <motion.div
+                      animate={{ x: [0, 5, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      <ArrowRight className="w-5 h-5" />
+                    </motion.div>
+                  </span>
+                </motion.button>
+              </Link>
+              
+              <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                Compare all 14 features across 4 platforms
+              </p>
             </motion.div>
           </div>
         </section>

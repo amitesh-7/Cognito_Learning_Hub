@@ -77,6 +77,7 @@ const MeetingRoom = lazy(() => import("./pages/MeetingRoom"));
 
 // Public Pages - Modern 2025 Design
 const Features = lazy(() => import("./pages/PublicPages/Features"));
+const FeatureComparison = lazy(() => import("./pages/PublicPages/FeatureComparison"));
 const About = lazy(() => import("./pages/PublicPages/About"));
 const Contact = lazy(() => import("./pages/PublicPages/Contact"));
 const Pricing = lazy(() => import("./pages/PublicPages/Pricing"));
@@ -154,6 +155,7 @@ function App() {
                           {/* Public Routes */}
                           <Route path="/" element={<Home />} />
                           <Route path="/features" element={<Features />} />
+                          <Route path="/compare" element={<FeatureComparison />} />
                           <Route path="/about" element={<About />} />
                           <Route path="/contact" element={<Contact />} />
                           <Route path="/pricing" element={<Pricing />} />

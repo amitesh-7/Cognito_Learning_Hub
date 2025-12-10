@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform, AnimatePresence, useInView, useSpring } from "framer-motion";
+import ParticleBackground from "../../components/ParticleBackground";
 import {
   Brain,
   MessageCircle,
@@ -31,6 +32,9 @@ import {
   TrendingUp,
   Layers,
   MousePointer2,
+  Palette,
+  Video,
+  Radio,
 } from "lucide-react";
 
 // Magnetic Button Component
@@ -242,57 +246,139 @@ const ParallaxSection = ({ children, offset = 50 }) => {
 const Features = () => {
   const [activeFeature, setActiveFeature] = useState(0);
   const [hoveredStat, setHoveredStat] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
 
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setIsDarkMode(isDark);
+    };
+    
+    checkDarkMode();
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    
+    return () => observer.disconnect();
+  }, []);
+
   const features = [
     {
       id: "ai-quiz-generator",
-      title: "AI Quiz Generation",
-      subtitle: "Create quizzes in seconds with AI",
-      description: "Transform any topic into comprehensive quizzes instantly. Upload PDFs, paste text, or simply describe what you want to learn.",
+      title: "4-in-1 AI Quiz Generation",
+      subtitle: "Multi-Source Smart Quiz Creation",
+      description: "Unique 4-method quiz creation: Topic-based AI generation, PDF upload analysis (10MB), YouTube video transcription, and manual creation with AI assistance. No competitor offers this versatility.",
       icon: Sparkles,
       gradient: "from-blue-500 via-indigo-500 to-violet-500",
       highlights: [
-        "Generate from any topic instantly",
-        "Upload PDF/text files for auto-generation",
-        "Multiple question types supported",
-        "Adaptive difficulty adjustment",
-        "Automatic grading and feedback",
-        "Export and share capabilities",
+        "Topic-Based: Any subject, instant generation (15-30s)",
+        "PDF Upload: Extract questions from documents",
+        "YouTube: Auto-generate from video transcripts",
+        "Manual + AI: Intelligent creation suggestions",
+        "Adaptive difficulty with Google Gemini AI",
+        "Multi-format: MCQ, True/False, Fill-in-blanks",
       ],
     },
     {
       id: "1v1-duel",
-      title: "1v1 Duel Battle",
-      subtitle: "Real-time competitive learning",
-      description: "Challenge friends in exciting quiz battles. Real-time scoring, live competition, and bragging rights!",
+      title: "1v1 Duel Battle Mode",
+      subtitle: "Real-Time Competitive Learning",
+      description: "Game-like 1v1 battles with ELO ranking, power-ups, and speed multipliers. Live scoring via Socket.IO and Redis Pub/Sub ensures <100ms latency. No educational platform has this level of gaming integration.",
       icon: Gamepad2,
       gradient: "from-red-500 via-orange-500 to-amber-500",
       highlights: [
-        "Real-time 1v1 quiz battles",
-        "Challenge friends or random opponents",
-        "Live scoring and competition",
-        "Winner rankings and history",
-        "Earn rewards and achievements",
-        "Time-based challenges",
+        "ELO Ranking: Skill-based matchmaking system",
+        "Speed Multiplier: Points = Correctness × Speed",
+        "Power-Ups: Special abilities during battles",
+        "<100ms Latency: Socket.IO + Redis Pub/Sub",
+        "Battle History: Track all wins/losses/stats",
+        "Rewards: XP, coins, achievements on victory",
       ],
     },
     {
       id: "live-multiplayer",
-      title: "Live Multiplayer",
-      subtitle: "Host interactive quiz sessions",
-      description: "Create live quiz sessions with unique codes. Perfect for classrooms, events, and group learning.",
+      title: "Live Multiplayer Sessions",
+      subtitle: "100+ Concurrent Participants",
+      description: "Host live quiz sessions with 6-digit codes. Real-time leaderboards, instant feedback, and comprehensive analytics. Supports 100+ participants with no lag.",
       icon: Users,
       gradient: "from-emerald-500 via-teal-500 to-cyan-500",
       highlights: [
-        "Host with unique 6-digit codes",
-        "Real-time participant tracking",
-        "Live leaderboard updates",
-        "Support for large groups",
-        "Session recording and analytics",
-        "Interactive gameplay features",
+        "6-Digit Codes: Instant joining, no accounts needed",
+        "100+ Capacity: Large classroom support",
+        "Host Controls: Question pacing, moderation tools",
+        "Real-Time Leaderboard: Live ranking updates",
+        "Session Analytics: Detailed post-session reports",
+        "Mobile Optimized: Play on any device",
+      ],
+    },
+    {
+      id: "rpg-quest-system",
+      title: "RPG Quest System",
+      subtitle: "700+ Learning Adventures",
+      description: "Narrative-driven quest system across 5 themed realms with NPC guides, branching storylines, boss battles, and star ratings. No platform combines education with full RPG mechanics like this.",
+      icon: Trophy,
+      gradient: "from-orange-500 via-amber-500 to-yellow-500",
+      highlights: [
+        "700+ Quests: Math, Physics, Chemistry, Biology, CS",
+        "NPC Guides: Unique personalities, contextual hints",
+        "Boss Battles: Epic chapter finale challenges",
+        "Branching Paths: Performance-based storylines",
+        "Star Ratings: 1-3 stars, retry for perfection",
+        "Exclusive Rewards: XP, gold, avatar items, badges",
+      ],
+    },
+    {
+      id: "customizable-avatars",
+      title: "Avatar Customization",
+      subtitle: "150+ Unlockable Items",
+      description: "Achievement-based avatar system with 8 base characters, 15+ hairstyles, 20+ facial features, 25+ accessories, and 50+ badges. Unlock through achievements and quests—not purchases.",
+      icon: Palette,
+      gradient: "from-pink-500 via-rose-500 to-fuchsia-500",
+      highlights: [
+        "150+ Items: Heads, hair, faces, accessories, badges",
+        "Earn-to-Unlock: Achievement-based, not paid",
+        "8 Base Characters: Distinct personas and styles",
+        "Dynamic Moods: Happy, focused, tired expressions",
+        "Rarity Tiers: Common, Rare, Epic, Legendary",
+        "Collection Progress: Track unlocks per category",
+      ],
+    },
+    {
+      id: "webrtc-meetings",
+      title: "WebRTC Video Meetings",
+      subtitle: "SFU Architecture (50+ Users)",
+      description: "MediaSoup SFU architecture enables 50+ participant meetings with HD quality (1080p), screen sharing, and quiz integration. Whiteboard and breakout rooms for collaborative learning.",
+      icon: Video,
+      gradient: "from-cyan-500 via-blue-500 to-indigo-500",
+      highlights: [
+        "SFU: Selective Forwarding Unit for scalability",
+        "HD Video: Up to 1080p with adaptive quality",
+        "Screen Share: Present content seamlessly",
+        "Launch Quizzes: Mid-session quiz integration",
+        "Attendance Tracking: Automatic participation logs",
+        "Audio Processing: Echo cancel, noise suppress",
+      ],
+    },
+    {
+      id: "daily-quests",
+      title: "Daily Quest System",
+      subtitle: "Fresh Challenges Every Day",
+      description: "3 new quests daily (Easy, Medium, Hard) with exclusive avatar item rewards. Streak bonuses for consistency. Auto-refresh at midnight for continuous engagement.",
+      icon: Target,
+      gradient: "from-lime-500 via-green-500 to-emerald-500",
+      highlights: [
+        "3 Daily Quests: Easy, Medium, Hard difficulty",
+        "Avatar Rewards: Exclusive headwear, accessories",
+        "Streak Bonuses: Extra XP for consistency",
+        "Quest Types: Quizzes, scores, duels, achievements",
+        "XP Multipliers: Up to 3x bonus XP",
+        "Auto-Refresh: Midnight reset, new challenges",
       ],
     },
     {
@@ -313,18 +399,18 @@ const Features = () => {
     },
     {
       id: "ai-chatbot",
-      title: "AI Doubt Solver",
-      subtitle: "24/7 intelligent assistant",
-      description: "Get instant answers to any question. Our AI tutor is always ready to help you understand complex concepts.",
+      title: "AI Study Buddy & Tutor",
+      subtitle: "24/7 Contextual Learning Assistant",
+      description: "Google Gemini-powered AI that remembers your quiz history, knows your weak topics, and uses Socratic teaching methods. Multi-format support with KaTeX math rendering.",
       icon: Bot,
-      gradient: "from-pink-500 via-rose-500 to-red-500",
+      gradient: "from-purple-500 via-violet-500 to-indigo-500",
       highlights: [
-        "Instant doubt resolution",
-        "Natural language understanding",
-        "Subject-specific expertise",
-        "24/7 availability",
-        "Contextual learning support",
-        "Step-by-step explanations",
+        "Contextual Memory: Remembers your learning journey",
+        "Socratic Method: Guides you to answers",
+        "24/7 Availability: Instant responses, any time",
+        "KaTeX Rendering: Beautiful math formulas",
+        "Smart Suggestions: Based on your performance",
+        "Adaptive Explanations: Matches your skill level",
       ],
     },
     {
@@ -344,19 +430,35 @@ const Features = () => {
       ],
     },
     {
-      id: "gamification",
-      title: "Gamified Experience",
-      subtitle: "Learn through play",
-      description: "Earn XP, unlock achievements, climb leaderboards. Transform learning into an engaging game.",
-      icon: Trophy,
-      gradient: "from-yellow-500 via-orange-500 to-red-500",
+      id: "achievements",
+      title: "Multi-Layer Achievements",
+      subtitle: "100+ with Rarity Tiers",
+      description: "Progressive achievement system across 8 categories with rarity tiers (Common, Rare, Epic, Legendary). Secret achievements, streak rewards, and auto-unlocking avatar items.",
+      icon: Award,
+      gradient: "from-amber-500 via-yellow-500 to-orange-500",
       highlights: [
-        "XP and leveling system",
-        "Achievement badges",
-        "Daily streaks and rewards",
-        "Global leaderboards",
-        "Challenge friends",
-        "Seasonal events",
+        "100+ Achievements: 8 categories (Quiz, Score, Streak)",
+        "Rarity Tiers: Common, Rare, Epic, Legendary",
+        "Secret Achievements: Hidden until unlocked",
+        "Progressive Tracking: 10/50/100 quiz milestones",
+        "Auto-Unlock Rewards: Avatar items with achievements",
+        "Redis Caching: Instant achievement updates",
+      ],
+    },
+    {
+      id: "social-learning",
+      title: "Social Learning Network",
+      subtitle: "Friends, Chat, Challenges",
+      description: "Integrated social network with friend system, real-time messaging, group chats, and study challenges. Share achievements, create study groups, and learn together.",
+      icon: MessageCircle,
+      gradient: "from-blue-500 via-cyan-500 to-teal-500",
+      highlights: [
+        "Friend System: Search, connect, study together",
+        "Real-Time Chat: Instant messaging, typing indicators",
+        "Group Chats: Study group conversations",
+        "Study Challenges: Compete with friends on quizzes",
+        "Social Feed: Share achievements, quiz recommendations",
+        "Rich Media: Share images, links, quiz cards",
       ],
     },
     {
@@ -381,7 +483,7 @@ const Features = () => {
     { value: "50000+", label: "Active Learners", icon: Users, color: "from-blue-500 to-cyan-500" },
     { value: "100000+", label: "Quizzes Created", icon: FileText, color: "from-violet-500 to-purple-500" },
     { value: "5M+", label: "Questions Answered", icon: CheckCircle, color: "from-emerald-500 to-teal-500" },
-    { value: "99.9%", label: "Uptime", icon: Zap, color: "from-amber-500 to-orange-500" },
+    { value: "700+", label: "Learning Quests", icon: Trophy, color: "from-amber-500 to-orange-500" },
   ];
 
   const userRoles = [
@@ -410,6 +512,9 @@ const Features = () => {
 
   return (
     <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/30 to-fuchsia-50/30 dark:from-slate-950 dark:via-violet-950/20 dark:to-fuchsia-950/20 overflow-hidden">
+      {/* 3D Particle Background with Dark Mode Support */}
+      <ParticleBackground isDark={isDarkMode} />
+      
       {/* Progress Bar */}
       <motion.div 
         className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 origin-left z-50"
@@ -417,7 +522,7 @@ const Features = () => {
       />
 
       {/* Floating Orbs Background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <FloatingOrb className="w-[600px] h-[600px] -top-40 -right-40 bg-violet-400/20 dark:bg-violet-600/10" delay={0} />
         <FloatingOrb className="w-[500px] h-[500px] top-1/3 -left-40 bg-fuchsia-400/20 dark:bg-fuchsia-600/10" delay={2} />
         <FloatingOrb className="w-[400px] h-[400px] bottom-20 right-1/4 bg-blue-400/20 dark:bg-blue-600/10" delay={4} />
