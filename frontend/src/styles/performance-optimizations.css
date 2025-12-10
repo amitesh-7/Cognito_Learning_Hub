@@ -1,0 +1,416 @@
+/* ==============================================
+   PERFORMANCE OPTIMIZATIONS FOR SMOOTH SCROLLING
+   ============================================== */
+
+/* Global Performance Settings */
+* {
+  /* Prevent layout shifts */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Better text rendering */
+  text-rendering: optimizeLegibility;
+}
+
+/* Smooth scroll container */
+html {
+  /* Hardware acceleration for smooth scrolling */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  
+  /* Better scrolling on mobile */
+  -webkit-overflow-scrolling: touch;
+  
+  /* Prevent scroll jank */
+  scroll-behavior: auto; /* Let Lenis handle smooth scroll */
+}
+
+body {
+  /* Remove default scroll */
+  overflow-x: hidden;
+  
+  /* Hardware acceleration */
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+}
+
+/* ==============================================
+   GPU-ACCELERATED ANIMATIONS
+   ============================================== */
+
+/* Optimize animated elements - use transform and opacity only */
+.animate-smooth {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+}
+
+/* For elements that scale/rotate */
+.animate-scale {
+  will-change: transform;
+  transform-origin: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* For fade animations */
+.animate-fade {
+  will-change: opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* For slide animations */
+.animate-slide {
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* ==============================================
+   SCROLL OPTIMIZATIONS
+   ============================================== */
+
+/* Optimize images for scroll performance */
+img {
+  /* Prevent flickering during scroll */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  
+  /* Lazy loading hint */
+  content-visibility: auto;
+}
+
+/* Optimize large cards/sections */
+.scroll-section {
+  /* Hint browser about upcoming content */
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px; /* Estimated height */
+  
+  /* Isolation for better paint performance */
+  isolation: isolate;
+}
+
+/* ==============================================
+   ANIMATION PERFORMANCE
+   ============================================== */
+
+/* Framer Motion optimizations */
+[data-framer-component-type] {
+  /* Hardware acceleration */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: auto; /* Let framer-motion manage this */
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==============================================
+   GRADIENT OPTIMIZATIONS
+   ============================================== */
+
+/* Optimize gradient backgrounds */
+.gradient-bg {
+  /* Use will-change sparingly */
+  will-change: background-position;
+  background-size: 200% 200%;
+  
+  /* Force GPU layer */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Optimize moving gradients */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  animation: gradient-shift 15s ease infinite;
+  will-change: background-position;
+}
+
+/* ==============================================
+   BLUR OPTIMIZATIONS
+   ============================================== */
+
+/* Optimize backdrop blur */
+.backdrop-blur {
+  /* Use backdrop-filter with caution - can be expensive */
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  
+  /* Fallback for better performance */
+  @supports not (backdrop-filter: blur(12px)) {
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+  
+  /* Force GPU */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Lighter blur for better performance */
+.backdrop-blur-light {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transform: translateZ(0);
+}
+
+/* ==============================================
+   SHADOW OPTIMIZATIONS
+   ============================================== */
+
+/* Optimize box shadows during animations */
+.shadow-smooth {
+  /* Don't animate shadows - use pseudo-elements instead */
+  position: relative;
+  isolation: isolate;
+}
+
+.shadow-smooth::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.shadow-smooth:hover::after {
+  opacity: 1;
+}
+
+/* ==============================================
+   CHART / GRAPH OPTIMIZATIONS
+   ============================================== */
+
+/* Optimize chart containers */
+.chart-container {
+  /* Isolate chart repaints */
+  isolation: isolate;
+  contain: layout style paint;
+  
+  /* Hardware acceleration */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* ==============================================
+   LIST / TABLE VIRTUALIZATION HINTS
+   ============================================== */
+
+/* Optimize long lists */
+.virtual-list {
+  /* Better scrolling performance */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Contain layout changes */
+  contain: strict;
+  
+  /* Hardware acceleration */
+  transform: translateZ(0);
+  will-change: scroll-position;
+}
+
+.virtual-list-item {
+  /* Isolate items */
+  content-visibility: auto;
+  contain-intrinsic-size: 0 100px;
+  isolation: isolate;
+}
+
+/* ==============================================
+   LOADING STATES
+   ============================================== */
+
+/* Skeleton loaders - optimized */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  will-change: background-position;
+  transform: translateZ(0);
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ==============================================
+   FLOATING ELEMENTS
+   ============================================== */
+
+/* Optimize floating orbs/particles */
+.floating-orb {
+  /* Use transform only for smooth animations */
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  
+  /* Reduce paints */
+  pointer-events: none;
+  isolation: isolate;
+}
+
+/* ==============================================
+   CUSTOM SCROLLBAR
+   ============================================== */
+
+/* Hide scrollbar for smooth appearance */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth custom scrollbar */
+.scrollbar-smooth::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-smooth::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-smooth::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.scrollbar-smooth::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Dark mode scrollbar */
+.dark .scrollbar-smooth::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark .scrollbar-smooth::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ==============================================
+   MOBILE OPTIMIZATIONS
+   ============================================== */
+
+@media (max-width: 768px) {
+  /* Reduce animations on mobile */
+  .animate-smooth,
+  .animate-scale,
+  .animate-fade {
+    will-change: auto;
+  }
+  
+  /* Simpler gradients on mobile */
+  .gradient-bg {
+    animation: none;
+    background-position: 0% 50%;
+  }
+  
+  /* Lighter blur on mobile */
+  .backdrop-blur {
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* ==============================================
+   PRINT OPTIMIZATIONS
+   ============================================== */
+
+@media print {
+  /* Remove animations for print */
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    will-change: auto !important;
+  }
+  
+  /* Remove shadows for faster print */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}
+
+/* ==============================================
+   ACCESSIBILITY & FOCUS STATES
+   ============================================== */
+
+/* Smooth focus transitions */
+*:focus {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  transition: outline-offset 0.2s ease;
+}
+
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* ==============================================
+   UTILITY CLASSES
+   ============================================== */
+
+/* Force GPU acceleration */
+.gpu-accelerated {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Prevent layout shifts */
+.prevent-shift {
+  content-visibility: auto;
+  contain-intrinsic-size: auto;
+}
+
+/* Isolate expensive operations */
+.isolate {
+  isolation: isolate;
+  contain: layout style paint;
+}

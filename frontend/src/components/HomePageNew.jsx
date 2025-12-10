@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, memo, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useInView, useMotionValue, useTransform } from "framer-motion";
 import Lottie from "lottie-react";
-import Lenis from "lenis";
 import {
   Sparkles,
   Gamepad2,
@@ -72,7 +71,6 @@ export default function HomePageNew() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [battleScore1, setBattleScore1] = useState(0);
   const [battleScore2, setBattleScore2] = useState(0);
-  const lenisRef = useRef(null);
   const heroRef = useRef(null);
   const isHeroInView = useInView(heroRef, { once: false, amount: 0.3 });
 
@@ -99,32 +97,12 @@ export default function HomePageNew() {
   }, [isPlaying, isHeroInView]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
+    const timer = setTimeout(() => setIsLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Initialize Lenis smooth scrolling
-  useEffect(() => {
-    if (!isLoading) {
-      const lenis = new Lenis({
-        duration: 1.2,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        smooth: true,
-      });
-
-      lenisRef.current = lenis;
-
-      function raf(time) {
-        lenis.raf(time);
-        requestAnimationFrame(raf);
-      }
-      requestAnimationFrame(raf);
-
-      return () => {
-        lenis.destroy();
-      };
-    }
-  }, [isLoading]);
+  // Lenis smooth scrolling is now handled globally in App.jsx via LenisScroll component
+  // This prevents duplicate initialization and improves overall performance
 
   if (isLoading) {
     return (

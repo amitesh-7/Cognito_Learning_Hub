@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import performance optimizations */
+@import './styles/performance-optimizations.css';
+
 /* Custom Scrollbar for Bento Dashboard */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;

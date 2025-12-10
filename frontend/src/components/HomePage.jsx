@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, memo, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import Lenis from "lenis";
 import {
   Sparkles,
   Gamepad2,
@@ -57,7 +56,6 @@ export default function HomePage() {
     totalQuizzesTaken: 0,
     satisfactionRate: 95,
   });
-  const lenisRef = useRef(null);
 
   // Fetch real platform stats
   useEffect(() => {
@@ -80,42 +78,15 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    // Simulate loading time
+    // Simulate loading time - reduced for better UX
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000);
+    }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Initialize Lenis smooth scrolling
-  useEffect(() => {
-    if (!isLoading) {
-      const lenis = new Lenis({
-        duration: 1.2,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        direction: "vertical",
-        gestureDirection: "vertical",
-        smooth: true,
-        mouseMultiplier: 1,
-        smoothTouch: false,
-        touchMultiplier: 2,
-        infinite: false,
-      });
-
-      lenisRef.current = lenis;
-
-      function raf(time) {
-        lenis.raf(time);
-        requestAnimationFrame(raf);
-      }
-
-      requestAnimationFrame(raf);
-
-      return () => {
-        lenis.destroy();
-      };
-    }
-  }, [isLoading]);
+  // Lenis is now initialized globally in App.jsx via LenisScroll component
+  // No need to initialize it here - prevents duplicate initialization and improves performance
 
   // Structured Data for SEO
   const structuredData = {

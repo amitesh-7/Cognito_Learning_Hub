@@ -38,7 +38,6 @@ import {
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useGamification } from "../context/GamificationContext";
-import { AvatarProfile } from "./Avatar";
 import { useTheme } from "../hooks/useTheme";
 import { useReducedMotion, useIsMobile } from "../hooks/useReducedMotion";
 import Button from "./ui/Button";
@@ -689,16 +688,6 @@ const Navbar = () => {
                     </>
                   )}
 
-                  {/* Avatar Profile Display */}
-                  <motion.div variants={staggerItem}>
-                    <AvatarProfile 
-                      size="md" 
-                      showInfo={true} 
-                      showLevel={true} 
-                      className="mx-2"
-                    />
-                  </motion.div>
-
                   {/* Enhanced Logout Button */}
                   <motion.div variants={staggerItem}>
                     <motion.button
@@ -1093,12 +1082,17 @@ const Navbar = () => {
                 {/* User Info */}
                 {user ? (
                   <div className="flex items-center gap-4 pr-12">
-                    <AvatarProfile 
-                      size="lg" 
-                      showInfo={true}
-                      showLevel={true}
-                      className="flex-row-reverse"
-                    />
+                    <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center border-2 border-white/40">
+                      <Brain className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">
+                        {user?.name || 'User'}
+                      </h3>
+                      <p className="text-sm text-purple-200">
+                        Level {currentLevel || 1} • {totalXP || 0} XP
+                      </p>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-4 pr-12">
