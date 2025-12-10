@@ -368,20 +368,46 @@ export default function HomePageNew() {
                         <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
                         <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
                       </div>
-                      <div className="flex-1 bg-gray-800/50 rounded px-3 py-1 text-xs text-gray-400">
-                        cognito-learning-hub.com
+                      <div className="flex-1 bg-gray-800/50 rounded px-3 py-1 text-xs text-gray-400 flex items-center justify-between">
+                        <span>cognito-learning-hub.com</span>
+                        <span className="text-[10px] text-gray-500">
+                          Demo {activeDemo + 1}/7
+                        </span>
                       </div>
                       <motion.button
                         onClick={() => setIsPlaying(!isPlaying)}
-                        className="p-1 rounded hover:bg-gray-700/50 transition-colors"
+                        className={`p-1.5 rounded-lg transition-all duration-300 ${
+                          isPlaying 
+                            ? 'bg-indigo-600 hover:bg-indigo-700 text-white' 
+                            : 'bg-red-600 hover:bg-red-700 text-white'
+                        }`}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
+                        title={isPlaying ? "Pause demo" : "Play demo"}
                       >
-                        {isPlaying ? (
-                          <Pause className="w-3 h-3 text-gray-400" />
-                        ) : (
-                          <Play className="w-3 h-3 text-gray-400" />
-                        )}
+                        <AnimatePresence mode="wait">
+                          {isPlaying ? (
+                            <motion.div
+                              key="pause"
+                              initial={{ rotate: -90, opacity: 0 }}
+                              animate={{ rotate: 0, opacity: 1 }}
+                              exit={{ rotate: 90, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <Pause className="w-4 h-4" />
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="play"
+                              initial={{ rotate: -90, opacity: 0 }}
+                              animate={{ rotate: 0, opacity: 1 }}
+                              exit={{ rotate: 90, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <Play className="w-4 h-4" />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </motion.button>
                     </div>
 
@@ -939,31 +965,127 @@ export default function HomePageNew() {
                   />
                 </div>
 
-                {/* Progress Indicators */}
-                <div className="flex justify-center gap-2 mt-8">
-                  {[
-                    { label: "PDF", color: "bg-blue-500" },
-                    { label: "Topic", color: "bg-purple-500" },
-                    { label: "YouTube", color: "bg-red-500" },
-                    { label: "Manual", color: "bg-emerald-500" },
-                    { label: "AI Tutor", color: "bg-cyan-500" },
-                    { label: "Battle", color: "bg-orange-500" },
-                    { label: "Meet", color: "bg-green-500" },
-                  ].map((item, i) => (
-                    <div key={i} className="flex flex-col items-center gap-1">
-                      <motion.div
-                        className={`w-2 h-2 rounded-full ${item.color}`}
-                        animate={{
-                          scale: activeDemo === i ? 1.5 : 1,
-                          opacity: activeDemo === i ? 1 : 0.3,
+                {/* Progress Indicators & Navigation Controls */}
+                <div className="mt-8 space-y-4">
+                  {/* Demo Navigation Dots */}
+                  <div className="flex justify-center gap-2">
+                    {[
+                      { label: "PDF", color: "bg-blue-500", hoverColor: "hover:bg-blue-600" },
+                      { label: "Topic", color: "bg-purple-500", hoverColor: "hover:bg-purple-600" },
+                      { label: "YouTube", color: "bg-red-500", hoverColor: "hover:bg-red-600" },
+                      { label: "Manual", color: "bg-emerald-500", hoverColor: "hover:bg-emerald-600" },
+                      { label: "AI Tutor", color: "bg-cyan-500", hoverColor: "hover:bg-cyan-600" },
+                      { label: "Battle", color: "bg-orange-500", hoverColor: "hover:bg-orange-600" },
+                      { label: "Meet", color: "bg-green-500", hoverColor: "hover:bg-green-600" },
+                    ].map((item, i) => (
+                      <motion.button
+                        key={i}
+                        onClick={() => {
+                          setActiveDemo(i);
+                          setIsPlaying(false); // Pause when manually selecting
                         }}
-                        transition={{ duration: 0.3 }}
-                      />
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
-                        {item.label}
-                      </span>
-                    </div>
-                  ))}
+                        className="flex flex-col items-center gap-1 group cursor-pointer"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <motion.div
+                          className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                            activeDemo === i 
+                              ? `${item.color} ring-2 ring-offset-2 ring-offset-gray-900 dark:ring-offset-gray-100 ${item.color.replace('bg-', 'ring-')}` 
+                              : `${item.color} opacity-30 group-hover:opacity-60`
+                          } ${item.hoverColor}`}
+                          animate={{
+                            scale: activeDemo === i ? 1.5 : 1,
+                          }}
+                          transition={{ duration: 0.3 }}
+                        />
+                        <span className={`text-[10px] font-medium transition-all duration-300 ${
+                          activeDemo === i 
+                            ? 'text-gray-900 dark:text-white font-bold' 
+                            : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'
+                        }`}>
+                          {item.label}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  {/* Play/Pause & Navigation Controls */}
+                  <div className="flex items-center justify-center gap-3">
+                    <motion.button
+                      onClick={() => setActiveDemo((prev) => (prev - 1 + 7) % 7)}
+                      className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-all"
+                      whileHover={{ scale: 1.1, x: -3 }}
+                      whileTap={{ scale: 0.95 }}
+                      title="Previous demo"
+                    >
+                      <ChevronRight className="w-4 h-4 rotate-180" />
+                    </motion.button>
+
+                    <motion.button
+                      onClick={() => setIsPlaying(!isPlaying)}
+                      className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 flex items-center gap-2 ${
+                        isPlaying
+                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg'
+                          : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white shadow-lg'
+                      }`}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <AnimatePresence mode="wait">
+                        {isPlaying ? (
+                          <motion.div
+                            key="pause"
+                            initial={{ rotate: -90, opacity: 0 }}
+                            animate={{ rotate: 0, opacity: 1 }}
+                            exit={{ rotate: 90, opacity: 0 }}
+                            className="flex items-center gap-2"
+                          >
+                            <Pause className="w-4 h-4" />
+                            <span>Pause</span>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="play"
+                            initial={{ rotate: -90, opacity: 0 }}
+                            animate={{ rotate: 0, opacity: 1 }}
+                            exit={{ rotate: 90, opacity: 0 }}
+                            className="flex items-center gap-2"
+                          >
+                            <Play className="w-4 h-4" />
+                            <span>Play</span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.button>
+
+                    <motion.button
+                      onClick={() => setActiveDemo((prev) => (prev + 1) % 7)}
+                      className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-all"
+                      whileHover={{ scale: 1.1, x: 3 }}
+                      whileTap={{ scale: 0.95 }}
+                      title="Next demo"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </motion.button>
+                  </div>
+
+                  {/* Auto-play indicator */}
+                  <motion.div
+                    className="text-center text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <motion.div
+                      className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-green-500' : 'bg-red-500'}`}
+                      animate={isPlaying ? { scale: [1, 1.3, 1], opacity: [1, 0.5, 1] } : {}}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    />
+                    <span>
+                      {isPlaying ? 'Auto-playing demos' : 'Paused - Click to navigate'}
+                    </span>
+                  </motion.div>
                 </div>
               </motion.div>
             </div>
