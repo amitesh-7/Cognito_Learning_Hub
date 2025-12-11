@@ -357,6 +357,16 @@ app.use(
   })
 );
 
+// Route to Study Buddy (Quiz Service)
+app.use(
+  "/api/study-buddy",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.QUIZ,
+    pathRewrite: { "^/api/study-buddy": "/api/study-buddy" },
+  })
+);
+
 // Route to Result Service
 app.use(
   "/api/results",
