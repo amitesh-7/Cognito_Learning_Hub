@@ -157,7 +157,7 @@ router.post(
   handleValidationErrors,
   async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, role } = req.body;
 
       // Check if database is connected
       const mongoose = require("mongoose");
@@ -187,6 +187,14 @@ router.post(
         return ApiResponse.unauthorized(res, "Invalid email or password");
       }
 
+      // Validate role if provided
+      if (role && user.role !== role) {
+        return ApiResponse.unauthorized(
+          res,
+          `Invalid credentials. Please select the correct role (${user.role}) or contact support.`
+        );
+      }
+
       // Generate tokens
       const { accessToken, refreshToken } = generateTokens(
         user._id,
@@ -207,7 +215,7 @@ router.post(
       user.status = "online";
       await user.save();
 
-      logger.info(`User logged in: ${email}`);
+      logger.info(`User logged in: ${email} as ${user.role}`);
 
       return ApiResponse.success(
         res,
@@ -245,6 +253,16 @@ router.post("/google", authLimiter, async (req, res) => {
       return ApiResponse.badRequest(res, "Google credential is required");
     }
 
+    // Check if Google Client ID is configured
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      logger.error("GOOGLE_CLIENT_ID not configured in environment");
+      return ApiResponse.error(
+        res,
+        "Google authentication not configured on server",
+        500
+      );
+    }
+
     // Verify Google token
     logger.info("Verifying Google OAuth token", {
       expectedAudience: process.env.GOOGLE_CLIENT_ID,
@@ -264,6 +282,7 @@ router.post("/google", authLimiter, async (req, res) => {
 
     // Find or create user
     let user = await User.findOne({ email });
+    let isNewUser = false;
 
     if (!user) {
       // Create new user with valid role (default to Student)
@@ -282,6 +301,7 @@ router.post("/google", authLimiter, async (req, res) => {
         isEmailVerified: true, // Google accounts are pre-verified
       });
       await user.save();
+      isNewUser = true;
       logger.info(`New Google user created: ${email} with role: ${userRole}`);
     } else if (!user.googleId) {
       // Link Google account to existing user
@@ -327,12 +347,106 @@ router.post("/google", authLimiter, async (req, res) => {
         },
         accessToken,
         refreshToken,
+        isNewUser, // Flag to determine if role selection is needed
       },
       "Google login successful"
     );
   } catch (error) {
     logger.error("Google OAuth error:", error);
-    return ApiResponse.error(res, "Google authentication failed", 500);
+    
+    // Provide more specific error messages
+    if (error.message && error.message.includes("Token used too early")) {
+      return ApiResponse.error(res, "Google token not yet valid. Please try again.", 400);
+    }
+    if (error.message && error.message.includes("Token used too late")) {
+      return ApiResponse.error(res, "Google token expired. Please try again.", 400);
+    }
+    if (error.message && error.message.includes("Invalid token signature")) {
+      return ApiResponse.error(res, "Invalid Google token. Please try again.", 400);
+    }
+    
+    return ApiResponse.error(
+      res,
+      `Google authentication failed: ${error.message || "Unknown error"}`,
+      500
+    );
+  }
+});
+
+/**
+ * @route   POST /api/auth/google/update-role
+ * @desc    Update role for Google OAuth users
+ * @access  Private (requires valid token)
+ */
+router.post("/google/update-role", authenticateToken, async (req, res) => {
+  try {
+    const { role } = req.body;
+    const userId = req.user.userId || req.user.id;
+
+    // Validate role
+    const validRoles = ["Student", "Teacher", "Moderator", "Admin"];
+    if (!role || !validRoles.includes(role)) {
+      return ApiResponse.badRequest(
+        res,
+        "Invalid role. Must be Student, Teacher, Moderator, or Admin"
+      );
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return ApiResponse.notFound(res, "User not found");
+    }
+
+    // Check if user has Google OAuth
+    if (!user.googleId) {
+      return ApiResponse.badRequest(
+        res,
+        "This endpoint is only for Google OAuth users"
+      );
+    }
+
+    // Update role
+    user.role = role;
+    await user.save();
+
+    // Generate new tokens with updated role
+    const { accessToken, refreshToken } = generateTokens(
+      user._id,
+      user.role,
+      user.name,
+      user.picture
+    );
+
+    // Store hashed refresh token
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    user.refreshTokens.push({
+      token: hashedRefreshToken,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+    await user.save();
+
+    logger.info(`Role updated for Google user: ${user.email} to ${role}`);
+
+    return ApiResponse.success(
+      res,
+      {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          picture: user.picture,
+          isEmailVerified: user.isEmailVerified,
+        },
+        accessToken,
+        refreshToken,
+      },
+      "Role updated successfully"
+    );
+  } catch (error) {
+    logger.error("Update role error:", error);
+    return ApiResponse.error(res, "Failed to update role", 500);
   }
 });
 
