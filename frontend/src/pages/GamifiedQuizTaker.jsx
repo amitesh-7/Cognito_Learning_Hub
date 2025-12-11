@@ -747,6 +747,10 @@ export default function GamifiedQuizTaker() {
               <BarChart className="w-4 h-4 mr-2" />
               View Dashboard
             </Button>
+            <Button onClick={() => navigate(`/leaderboard/${quizId}`)} variant="outline">
+              <Trophy className="w-4 h-4 mr-2" />
+              View Quiz Leaderboard
+            </Button>
             <Button onClick={() => navigate("/quiz-list")} variant="outline">
               Take Another Quiz
             </Button>

@@ -387,6 +387,12 @@ export default function QuizResultDetail() {
                     Retry Quiz
                   </Button>
                 </Link>
+                <Link to={`/leaderboard/${result.quiz?._id}`}>
+                  <Button className="gap-2 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white">
+                    <Trophy className="w-4 h-4" />
+                    View Quiz Leaderboard
+                  </Button>
+                </Link>
                 <Link
                   to="/dashboard"
                   state={{

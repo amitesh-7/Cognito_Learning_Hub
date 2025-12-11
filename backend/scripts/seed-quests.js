@@ -10,49 +10,72 @@ const Quest = require("../models/Quest");
 const realms = [
   {
     name: "Algorithmic Valley",
-    description:
-      "Master algorithms, data structures, and computational thinking",
-    npc: "Oracle of Algorithms",
+    description: "Master algorithms, data structures, and computational thinking",
+    npc: {
+      name: "Oracle of Algorithms",
+      role: "Algorithm Master",
+      personality: "Analytical and precise, speaks in Big-O notation"
+    },
     color: "purple",
   },
   {
     name: "Web Wizardry",
     description: "Learn the arts of frontend, backend, and full-stack magic",
-    npc: "Wizard of the Web",
+    npc: {
+      name: "Wizard of the Web",
+      role: "Full Stack Sorcerer",
+      personality: "Creative and dynamic, weaves code like spells"
+    },
     color: "blue",
   },
   {
     name: "Data Kingdom",
     description: "Unlock the secrets of databases, analytics, and data science",
-    npc: "Data Dragon",
+    npc: {
+      name: "Data Dragon",
+      role: "Data Sovereign",
+      personality: "Wise and insightful, sees patterns in chaos"
+    },
     color: "green",
   },
   {
     name: "AI Sanctuary",
-    description:
-      "Explore machine learning, neural networks, and artificial intelligence",
-    npc: "AI Sage",
+    description: "Explore machine learning, neural networks, and artificial intelligence",
+    npc: {
+      name: "AI Sage",
+      role: "Neural Network Monk",
+      personality: "Contemplative and futuristic, teaches machines to think"
+    },
     color: "pink",
   },
   {
     name: "System Fortress",
-    description:
-      "Build mastery in operating systems, networks, and infrastructure",
-    npc: "System Guardian",
+    description: "Build mastery in operating systems, networks, and infrastructure",
+    npc: {
+      name: "System Guardian",
+      role: "Infrastructure Keeper",
+      personality: "Steadfast and reliable, protects the foundation"
+    },
     color: "red",
   },
   {
     name: "Security Citadel",
-    description:
-      "Defend against threats with cybersecurity and ethical hacking",
-    npc: "Security Sentinel",
+    description: "Defend against threats with cybersecurity and ethical hacking",
+    npc: {
+      name: "Security Sentinel",
+      role: "Cyber Defender",
+      personality: "Vigilant and strategic, thinks like an attacker"
+    },
     color: "yellow",
   },
   {
     name: "Cloud Highlands",
-    description:
-      "Scale the peaks of cloud computing, DevOps, and distributed systems",
-    npc: "Cloud Keeper",
+    description: "Scale the peaks of cloud computing, DevOps, and distributed systems",
+    npc: {
+      name: "Cloud Keeper",
+      role: "DevOps Shepherd",
+      personality: "Visionary and scalable, orchestrates the clouds"
+    },
     color: "cyan",
   },
 ];
@@ -136,9 +159,9 @@ const generateQuests = (realm, startIndex = 0) => {
         requirements,
         status: "available",
         npcDialogue: {
-          start: `Welcome, brave learner! ${realm.npc} has a challenge for you.`,
-          progress: `You're making excellent progress! Keep going!`,
-          complete: `Magnificent work! You've mastered this challenge!`,
+          start: `${realm.npc.name} greets you: "Welcome to ${realm.name}, brave coder! Ready for your next challenge?"`,
+          progress: `${realm.npc.name} encourages: "${realm.npc.personality}. You're doing great!"`,
+          complete: `${realm.npc.name} celebrates: "Excellent work! You've earned ${xpReward} XP in ${realm.name}!"`,
         },
       });
     }
@@ -392,40 +415,53 @@ async function seedQuests() {
       process.env.MONGODB_URI ||
       "mongodb://localhost:27017/cognito_learning_hub";
 
-    console.log(
-      "Attempting to connect to:",
-      MONGO_URI.includes("@") ? "MongoDB Atlas" : "Local MongoDB"
-    );
+    console.log("\n🔗 Connecting to MongoDB...");
+    console.log(MONGO_URI.includes("@") ? "   Using MongoDB Atlas" : "   Using Local MongoDB");
+    
     await mongoose.connect(MONGO_URI);
-    console.log("✅ Connected to MongoDB");
+    console.log("✅ Connected to MongoDB\n");
 
-    // Clear existing quests
-    await Quest.deleteMany({});
-    console.log("Cleared existing quests");
+    // Clear existing CS-focused quests only
+    const csRealms = [
+      "Algorithmic Valley", 
+      "Web Wizardry", 
+      "Data Kingdom", 
+      "AI Sanctuary", 
+      "System Fortress", 
+      "Security Citadel", 
+      "Cloud Highlands"
+    ];
+    const deleteCount = await Quest.countDocuments({ realm: { $in: csRealms } });
+    await Quest.deleteMany({ realm: { $in: csRealms } });
+    console.log(`🗑️  Cleared ${deleteCount} existing CS-focused quests\n`);
 
     // Generate quests for each realm
     let allQuests = [];
-    let startIndex = 0;
+    let startIndex = 700; // Start after academic quests
 
+    console.log("🎯 Generating CS-Focused Tech Quests:\n");
     for (const realm of realms) {
-      console.log(`Generating quests for ${realm.name}...`);
+      console.log(`   💻 ${realm.name}...`);
       const realmQuests = generateQuests(realm, startIndex);
       allQuests = allQuests.concat(realmQuests);
       startIndex += realmQuests.length;
-      console.log(`  Generated ${realmQuests.length} quests`);
+      console.log(`      ✓ Generated ${realmQuests.length} quests`);
     }
 
     // Insert all quests
+    console.log(`\n💾 Inserting ${allQuests.length} quests into database...`);
     await Quest.insertMany(allQuests);
-    console.log(`\n✅ Successfully seeded ${allQuests.length} quests!`);
-    console.log(`Total quests per realm: ${allQuests.length / realms.length}`);
+    console.log(`✅ Successfully seeded ${allQuests.length} CS-focused quests!\n`);
 
     // Summary
-    console.log("\n📊 Summary:");
+    console.log("📊 SUMMARY:");
+    console.log("=".repeat(50));
     for (const realm of realms) {
       const count = allQuests.filter((q) => q.realm === realm.name).length;
-      console.log(`  ${realm.name}: ${count} quests`);
+      console.log(`   ${realm.npc.name.padEnd(25)} | ${count.toString().padStart(3)} quests`);
     }
+    console.log("=".repeat(50));
+    console.log(`   ${"TOTAL CS-FOCUSED".padEnd(25)} | ${allQuests.length.toString().padStart(3)} quests\n`);
 
     process.exit(0);
   } catch (error) {

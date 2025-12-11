@@ -19,6 +19,15 @@ const questSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: [
+        // Academic Realms
+        "Mathematics Kingdom",
+        "Physics Universe",
+        "Chemistry Lab",
+        "Biology Forest",
+        "Computer Science Hub",
+        "History Archives",
+        "Language Realm",
+        // Tech/CS Realms
         "Algorithmic Valley",
         "Web Wizardry",
         "Data Kingdom",

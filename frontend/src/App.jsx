@@ -33,6 +33,7 @@ const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const QuickActions = lazy(() => import("./pages/QuickActions"));
 const QuizList = lazy(() => import("./pages/QuizList"));
+const QuestPage = lazy(() => import("./pages/QuestPage"));
 const QuizTaker = lazy(() => import("./pages/QuizTaker"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -200,6 +201,14 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <QuizList />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/quests"
+                            element={
+                              <ProtectedRoute>
+                                <QuestPage />
                               </ProtectedRoute>
                             }
                           />

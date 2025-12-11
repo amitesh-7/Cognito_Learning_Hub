@@ -10,12 +10,14 @@ const { authenticateToken } = require("../../../shared/middleware/auth");
 router.get("/realms", async (req, res) => {
   try {
     const realms = [
+      // Academic Realms
       {
         id: "mathematics-kingdom",
         name: "Mathematics Kingdom",
         description: "Master the art of numbers and equations",
         icon: "🔢",
         color: "#3B82F6",
+        category: "academic",
       },
       {
         id: "physics-universe",
@@ -23,6 +25,7 @@ router.get("/realms", async (req, res) => {
         description: "Explore the laws of nature",
         icon: "⚛️",
         color: "#8B5CF6",
+        category: "academic",
       },
       {
         id: "chemistry-lab",
@@ -30,6 +33,7 @@ router.get("/realms", async (req, res) => {
         description: "Discover the secrets of matter",
         icon: "🧪",
         color: "#10B981",
+        category: "academic",
       },
       {
         id: "biology-forest",
@@ -37,6 +41,7 @@ router.get("/realms", async (req, res) => {
         description: "Understand the living world",
         icon: "🌿",
         color: "#059669",
+        category: "academic",
       },
       {
         id: "computer-science-hub",
@@ -44,6 +49,80 @@ router.get("/realms", async (req, res) => {
         description: "Code your way to mastery",
         icon: "💻",
         color: "#6366F1",
+        category: "academic",
+      },
+      {
+        id: "history-archives",
+        name: "History Archives",
+        description: "Journey through time and human history",
+        icon: "📜",
+        color: "#F59E0B",
+        category: "academic",
+      },
+      {
+        id: "language-realm",
+        name: "Language Realm",
+        description: "Master the power of words and communication",
+        icon: "📚",
+        color: "#EF4444",
+        category: "academic",
+      },
+      // Tech/CS Realms
+      {
+        id: "algorithmic-valley",
+        name: "Algorithmic Valley",
+        description: "Master algorithms and data structures",
+        icon: "🟣",
+        color: "#7C3AED",
+        category: "tech",
+      },
+      {
+        id: "web-wizardry",
+        name: "Web Wizardry",
+        description: "Build modern web applications",
+        icon: "🔵",
+        color: "#2563EB",
+        category: "tech",
+      },
+      {
+        id: "data-kingdom",
+        name: "Data Kingdom",
+        description: "Unlock data science and analytics",
+        icon: "🟢",
+        color: "#059669",
+        category: "tech",
+      },
+      {
+        id: "ai-sanctuary",
+        name: "AI Sanctuary",
+        description: "Explore AI and machine learning",
+        icon: "💗",
+        color: "#EC4899",
+        category: "tech",
+      },
+      {
+        id: "system-fortress",
+        name: "System Fortress",
+        description: "Build robust system infrastructure",
+        icon: "🔴",
+        color: "#DC2626",
+        category: "tech",
+      },
+      {
+        id: "security-citadel",
+        name: "Security Citadel",
+        description: "Master cybersecurity and ethical hacking",
+        icon: "🟡",
+        color: "#F59E0B",
+        category: "tech",
+      },
+      {
+        id: "cloud-highlands",
+        name: "Cloud Highlands",
+        description: "Scale cloud computing heights",
+        icon: "🩵",
+        color: "#06B6D4",
+        category: "tech",
       },
     ];
 
@@ -93,6 +172,79 @@ router.get("/realm/:realm", async (req, res) => {
   }
 });
 
+// @route   GET /api/quests/user/progress
+// @desc    Get user's quest progress across all realms
+// @access  Private
+router.get("/user/progress", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const realms = [
+      "Mathematics Kingdom",
+      "Physics Universe",
+      "Chemistry Lab",
+      "Biology Forest",
+      "Computer Science Hub",
+      "History Archives",
+      "Language Realm",
+      "Algorithmic Valley",
+      "Web Wizardry",
+      "Data Kingdom",
+      "AI Sanctuary",
+      "System Fortress",
+      "Security Citadel",
+      "Cloud Highlands",
+    ];
+
+    const progress = await Promise.all(
+      realms.map(async (realm) => {
+        const realmProgress = await UserQuest.getRealmProgress(userId, realm);
+        return {
+          realm,
+          ...realmProgress,
+        };
+      })
+    );
+
+    res.json({ success: true, data: progress });
+  } catch (error) {
+    console.error("Error fetching user progress:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// @route   GET /api/quests/my-quests
+// @desc    Get all user's quests with their progress
+// @access  Private
+router.get("/my-quests", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get all user quests with progress
+    const userQuests = await UserQuest.find({ user: userId })
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    // Format the response - handle null/undefined values safely
+    const questsData = userQuests.map(uq => ({
+      questId: uq.questId || '',
+      status: uq.status || 'locked',
+      stars: uq.stars || 0,
+      attemptCount: uq.attemptCount || 0,
+      startedAt: uq.startedAt || null,
+      completedAt: uq.completedAt || null,
+      realm: uq.realm || '',
+      chapter: uq.chapter || 0,
+      lastAttempt: uq.lastAttemptDate || null,
+    }));
+
+    res.json({ success: true, data: questsData });
+  } catch (error) {
+    console.error("Error fetching user quests:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+});
+
 // @route   GET /api/quests/:questId
 // @desc    Get quest details
 // @access  Public
@@ -110,38 +262,6 @@ router.get("/:questId", async (req, res) => {
     res.json({ success: true, data: quest });
   } catch (error) {
     console.error("Error fetching quest:", error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-// @route   GET /api/quests/user/progress
-// @desc    Get user's quest progress across all realms
-// @access  Private
-router.get("/user/progress", authenticateToken, async (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    const realms = [
-      "Mathematics Kingdom",
-      "Physics Universe",
-      "Chemistry Lab",
-      "Biology Forest",
-      "Computer Science Hub",
-    ];
-
-    const progress = await Promise.all(
-      realms.map(async (realm) => {
-        const realmProgress = await UserQuest.getRealmProgress(userId, realm);
-        return {
-          realm,
-          ...realmProgress,
-        };
-      })
-    );
-
-    res.json({ success: true, data: progress });
-  } catch (error) {
-    console.error("Error fetching user progress:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });

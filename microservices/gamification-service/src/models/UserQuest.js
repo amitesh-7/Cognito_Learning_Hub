@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Quest = require("./Quest");
 
 const userQuestSchema = new mongoose.Schema(
   {
@@ -226,20 +227,23 @@ userQuestSchema.methods.claimRewards = function (questRewards) {
 
 // Static methods
 userQuestSchema.statics.getRealmProgress = async function (userId, realm) {
-  const quests = await this.find({ user: userId, realm });
+  // Get total available quests in this realm (don't filter by isActive as seeded quests might not have it)
+  const totalAvailableQuests = await Quest.countDocuments({ realm });
+  
+  // Get user's quest progress
+  const userQuests = await this.find({ user: userId, realm });
 
-  const total = quests.length;
-  const completed = quests.filter((q) => q.status === "completed").length;
-  const inProgress = quests.filter((q) => q.status === "in_progress").length;
-  const totalStars = quests.reduce((sum, q) => sum + q.stars, 0);
-  const maxStars = total * 3;
+  const completed = userQuests.filter((q) => q.status === "completed").length;
+  const inProgress = userQuests.filter((q) => q.status === "in_progress").length;
+  const totalStars = userQuests.reduce((sum, q) => sum + (q.stars || 0), 0);
+  const maxStars = totalAvailableQuests * 3;
 
   return {
-    total,
+    total: totalAvailableQuests,
     completed,
     inProgress,
-    locked: total - completed - inProgress,
-    percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+    locked: totalAvailableQuests - completed - inProgress,
+    percentage: totalAvailableQuests > 0 ? Math.round((completed / totalAvailableQuests) * 100) : 0,
     stars: totalStars,
     maxStars,
   };
@@ -250,8 +254,6 @@ userQuestSchema.statics.getNextAvailableQuest = async function (
   realm,
   completedQuestIds
 ) {
-  const Quest = mongoose.model("Quest");
-
   // Get all realm quests
   const allQuests = await Quest.find({ realm, isActive: true }).sort({
     chapter: 1,

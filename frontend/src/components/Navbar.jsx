@@ -35,6 +35,7 @@ import {
   Gamepad2,
   User,
   History,
+  Map,
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useGamification } from "../context/GamificationContext";
@@ -127,6 +128,7 @@ const Navbar = () => {
           icon: Brain,
           items: [
             { to: "/quizzes", label: "My Quizzes", icon: BookOpen },
+            { to: "/quests", label: "Quest Realms", icon: Map, badge: true },
             { to: "/doubt-solver", label: "AI Tutor", icon: Bot },
             { to: "/duel", label: "1v1 Duel", icon: Swords },
             { to: "/live", label: "Live Sessions", icon: Radio },

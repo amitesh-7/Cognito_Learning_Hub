@@ -35,13 +35,16 @@ const QuestMap = () => {
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
 
+  // All 14 realms - Academic + Tech
   const realms = [
+    // Academic Realms (7)
     {
       id: "Mathematics Kingdom",
       name: "Mathematics Kingdom",
       icon: "🔢",
       color: "from-blue-500 to-cyan-500",
       bgColor: "bg-blue-50 dark:bg-blue-900/20",
+      category: "academic",
     },
     {
       id: "Physics Universe",
@@ -49,6 +52,7 @@ const QuestMap = () => {
       icon: "⚛️",
       color: "from-purple-500 to-pink-500",
       bgColor: "bg-purple-50 dark:bg-purple-900/20",
+      category: "academic",
     },
     {
       id: "Chemistry Lab",
@@ -56,6 +60,7 @@ const QuestMap = () => {
       icon: "🧪",
       color: "from-green-500 to-emerald-500",
       bgColor: "bg-green-50 dark:bg-green-900/20",
+      category: "academic",
     },
     {
       id: "Biology Forest",
@@ -63,6 +68,7 @@ const QuestMap = () => {
       icon: "🌿",
       color: "from-green-600 to-lime-500",
       bgColor: "bg-green-50 dark:bg-green-900/20",
+      category: "academic",
     },
     {
       id: "Computer Science Hub",
@@ -70,6 +76,7 @@ const QuestMap = () => {
       icon: "💻",
       color: "from-indigo-500 to-violet-500",
       bgColor: "bg-indigo-50 dark:bg-indigo-900/20",
+      category: "academic",
     },
     {
       id: "History Archives",
@@ -77,6 +84,7 @@ const QuestMap = () => {
       icon: "📜",
       color: "from-amber-500 to-orange-500",
       bgColor: "bg-amber-50 dark:bg-amber-900/20",
+      category: "academic",
     },
     {
       id: "Language Realm",
@@ -84,6 +92,64 @@ const QuestMap = () => {
       icon: "📚",
       color: "from-rose-500 to-red-500",
       bgColor: "bg-rose-50 dark:bg-rose-900/20",
+      category: "academic",
+    },
+    // Tech/CS Realms (7)
+    {
+      id: "Algorithmic Valley",
+      name: "Algorithmic Valley",
+      icon: "🟣",
+      color: "from-purple-600 to-indigo-600",
+      bgColor: "bg-purple-50 dark:bg-purple-900/20",
+      category: "tech",
+    },
+    {
+      id: "Web Wizardry",
+      name: "Web Wizardry",
+      icon: "🔵",
+      color: "from-blue-600 to-cyan-600",
+      bgColor: "bg-blue-50 dark:bg-blue-900/20",
+      category: "tech",
+    },
+    {
+      id: "Data Kingdom",
+      name: "Data Kingdom",
+      icon: "🟢",
+      color: "from-green-600 to-teal-600",
+      bgColor: "bg-green-50 dark:bg-green-900/20",
+      category: "tech",
+    },
+    {
+      id: "AI Sanctuary",
+      name: "AI Sanctuary",
+      icon: "💗",
+      color: "from-pink-600 to-rose-600",
+      bgColor: "bg-pink-50 dark:bg-pink-900/20",
+      category: "tech",
+    },
+    {
+      id: "System Fortress",
+      name: "System Fortress",
+      icon: "🔴",
+      color: "from-red-600 to-orange-600",
+      bgColor: "bg-red-50 dark:bg-red-900/20",
+      category: "tech",
+    },
+    {
+      id: "Security Citadel",
+      name: "Security Citadel",
+      icon: "🟡",
+      color: "from-yellow-600 to-amber-600",
+      bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
+      category: "tech",
+    },
+    {
+      id: "Cloud Highlands",
+      name: "Cloud Highlands",
+      icon: "🩵",
+      color: "from-cyan-600 to-sky-600",
+      bgColor: "bg-cyan-50 dark:bg-cyan-900/20",
+      category: "tech",
     },
   ];
 
@@ -144,12 +210,16 @@ const QuestMap = () => {
         }
       );
 
+      console.log("My quests response:", response.status, response.ok);
+
       if (response.ok) {
         const data = await response.json();
+        console.log("My quests data:", data);
         const questsArray = Array.isArray(data.data) ? data.data : [];
+        console.log("User quests array:", questsArray.length, "quests");
         setUserQuests(questsArray);
       } else {
-        console.log("User quests not available yet");
+        console.log("User quests not available yet, status:", response.status);
         setUserQuests([]);
       }
     } catch (error) {
