@@ -1,0 +1,37 @@
+name: Keep Render Services Alive - Account 3
+
+on:
+  schedule:
+    # Run every 10 minutes
+    - cron: "*/10 * * * *"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping-services:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Services (Account 3)
+        run: |
+          echo "🚀 Pinging services from Account 3..."
+
+          services=(
+            "https://social-service-lwjy.onrender.com/health"
+            "https://gamification-service-ax6n.onrender.com/health"
+            "https://moderation-service-3e2e.onrender.com/health"
+          )
+
+          for service in "${services[@]}"; do
+            echo "Pinging: $service"
+            response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$service" || echo "FAILED")
+            
+            if [ "$response" = "200" ] || [ "$response" = "204" ]; then
+              echo "✅ $service - OK (HTTP $response)"
+            else
+              echo "⚠️ $service - Response: $response"
+            fi
+            
+            sleep 2
+          done
+
+          echo "✨ Ping complete from Account 3!"
