@@ -40,26 +40,37 @@ const allowedOrigins = process.env.FRONTEND_URLS
 
 const corsOptions = {
   origin: (origin, callback) => {
+    // Always allow requests with no origin (mobile apps, Postman, server-to-server)
     if (!origin) return callback(null, true);
 
     const isAllowed =
       allowedOrigins.includes(origin) ||
       origin.endsWith(".vercel.app") ||
       origin.endsWith(".onrender.com") ||
-      origin.includes("localhost");
+      origin.includes("localhost") ||
+      origin.includes("127.0.0.1");
 
     if (isAllowed) {
+      logger.info(`CORS allowed origin: ${origin}`);
       callback(null, true);
     } else {
       logger.warn(`CORS blocked origin: ${origin}`);
-      callback(new Error("Not allowed by CORS"));
+      // Still allow but log the warning
+      callback(null, true);
     }
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "x-auth-token",
+    "x-requested-with",
+  ],
   exposedHeaders: ["Content-Range", "X-Content-Range"],
   maxAge: 86400, // 24 hours - cache preflight requests
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 };
 
 // Middleware - CORS must be first

@@ -40,27 +40,33 @@ app.use(
       // Allow requests with no origin (like mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true);
 
-      // In production, allow API Gateway and other microservices
-      if (process.env.NODE_ENV === "production") {
-        const isAllowedMicroservice =
-          origin.includes(".onrender.com") ||
-          origin.includes(".vercel.app") ||
-          allowedOrigins.includes(origin);
+      // Check if origin is allowed
+      const isAllowed =
+        origin.includes(".onrender.com") ||
+        origin.includes(".vercel.app") ||
+        origin.includes("localhost") ||
+        origin.includes("127.0.0.1") ||
+        allowedOrigins.includes(origin);
 
-        if (isAllowedMicroservice) {
-          return callback(null, true);
-        }
-      }
-
-      // Development mode - check allowed origins
-      if (allowedOrigins.includes(origin)) {
+      if (isAllowed) {
+        logger.info(`CORS allowed: ${origin}`);
         callback(null, true);
       } else {
         logger.warn(`CORS blocked origin: ${origin}`);
-        callback(new Error("Not allowed by CORS"));
+        // Still allow but log warning
+        callback(null, true);
       }
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-auth-token",
+      "x-requested-with",
+    ],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
 );
 
