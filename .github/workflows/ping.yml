@@ -1,0 +1,50 @@
+name: Keep Render Services Alive
+
+on:
+  schedule:
+    # Run every 10 minutes
+    - cron: "*/10 * * * *"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping-services:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping All Microservices
+        run: |
+          echo "🚀 Pinging all Render services to prevent sleep..."
+
+          services=(
+            "https://api-gateway-kzo9.onrender.com/health"
+            "https://auth-service-uds0.onrender.com/health"
+            "https://quiz-service-6jzt.onrender.com/health"
+            "https://result-service-vwjh.onrender.com/health"
+            "https://live-service-ga6w.onrender.com/health"
+            "https://meeting-service-ogfj.onrender.com/health"
+            "https://social-service-lwjy.onrender.com/health"
+            "https://gamification-service-ax6n.onrender.com/health"
+            "https://moderation-service-3e2e.onrender.com/health"
+          )
+
+          for service in "${services[@]}"; do
+            echo "Pinging: $service"
+            response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$service" || echo "FAILED")
+            
+            if [ "$response" = "200" ] || [ "$response" = "204" ]; then
+              echo "✅ $service - OK (HTTP $response)"
+            else
+              echo "⚠️ $service - Response: $response"
+            fi
+            
+            # Small delay between requests
+            sleep 2
+          done
+
+          echo "✨ Ping complete!"
+
+      - name: Summary
+        run: |
+          echo "## Service Status Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Last pinged: $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "Next ping: ~10 minutes" >> $GITHUB_STEP_SUMMARY
