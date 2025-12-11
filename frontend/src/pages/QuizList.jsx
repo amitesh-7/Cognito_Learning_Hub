@@ -73,12 +73,16 @@ export default function QuizList() {
   const [sortBy, setSortBy] = useState("newest");
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const [filterDifficulty, setFilterDifficulty] = useState("all");
+  const [viewMode, setViewMode] = useState("grid"); // grid or list
+  const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
 
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/quizzes`
+          `${import.meta.env.VITE_API_URL}/api/quizzes?limit=1000`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch quizzes.");
@@ -105,25 +109,44 @@ export default function QuizList() {
     fetchQuizzes();
   }, []);
 
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, sortBy, filterDifficulty]);
+
   // Filter and sort quizzes
   const filteredQuizzes = quizzes
     .filter(
       (quiz) =>
-        quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quiz.createdBy?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+        (quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        quiz.createdBy?.name?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (filterDifficulty === "all" || quiz.difficulty?.toLowerCase() === filterDifficulty)
     )
     .sort((a, b) => {
       switch (sortBy) {
         case "newest":
           return new Date(b.createdAt) - new Date(a.createdAt);
+        case "oldest":
+          return new Date(a.createdAt) - new Date(b.createdAt);
         case "popular":
           return (b.timesTaken || 0) - (a.timesTaken || 0);
-        case "questions":
+        case "questions-high":
           return b.questions.length - a.questions.length;
+        case "questions-low":
+          return a.questions.length - b.questions.length;
+        case "title":
+          return a.title.localeCompare(b.title);
         default:
           return 0;
       }
     });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredQuizzes.length / itemsPerPage);
+  const paginatedQuizzes = filteredQuizzes.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  );
 
   // Generate activity feed data
   const recentActivity = quizzes.slice(0, 5).map((quiz, index) => ({
@@ -245,7 +268,8 @@ export default function QuizList() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col gap-4">
+            {/* Search Bar */}
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-violet-400 dark:text-violet-300 w-5 h-5" />
               <input
@@ -256,15 +280,90 @@ export default function QuizList() {
                 className="w-full pl-12 pr-4 py-3.5 bg-white/30 dark:bg-slate-700/50 backdrop-blur-md border border-white/40 dark:border-slate-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-400 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium text-slate-800 dark:text-slate-100 shadow-sm"
               />
             </div>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-5 py-3.5 border border-white/40 dark:border-slate-600/50 rounded-xl bg-white/30 dark:bg-slate-700/50 backdrop-blur-md text-slate-800 dark:text-slate-100 font-bold focus:ring-2 focus:ring-violet-500 focus:outline-none shadow-sm"
-            >
-              <option value="newest">⭐ Newest First</option>
-              <option value="popular">🔥 Most Popular</option>
-              <option value="questions">📚 Most Questions</option>
-            </select>
+            
+            {/* Filters Row */}
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+              {/* Sort Dropdown */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="flex-1 px-4 py-3 border border-white/40 dark:border-slate-600/50 rounded-xl bg-white/30 dark:bg-slate-700/50 backdrop-blur-md text-slate-800 dark:text-slate-100 font-bold focus:ring-2 focus:ring-violet-500 focus:outline-none shadow-sm"
+              >
+                <option value="newest">⭐ Newest First</option>
+                <option value="oldest">🕐 Oldest First</option>
+                <option value="popular">🔥 Most Popular</option>
+                <option value="questions-high">📚 Most Questions</option>
+                <option value="questions-low">📖 Least Questions</option>
+                <option value="title">🔤 A-Z Title</option>
+              </select>
+
+              {/* Difficulty Filter */}
+              <select
+                value={filterDifficulty}
+                onChange={(e) => setFilterDifficulty(e.target.value)}
+                className="flex-1 px-4 py-3 border border-white/40 dark:border-slate-600/50 rounded-xl bg-white/30 dark:bg-slate-700/50 backdrop-blur-md text-slate-800 dark:text-slate-100 font-bold focus:ring-2 focus:ring-violet-500 focus:outline-none shadow-sm"
+              >
+                <option value="all">All Difficulty</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+
+              {/* View Mode Toggle */}
+              <div className="flex gap-2 bg-white/30 dark:bg-slate-700/50 backdrop-blur-md rounded-xl p-1 border border-white/40 dark:border-slate-600/50">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`px-4 py-2 rounded-lg transition-all ${
+                    viewMode === "grid"
+                      ? "bg-violet-600 text-white shadow-md"
+                      : "text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-600/50"
+                  }`}
+                >
+                  <LayoutGrid className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`px-4 py-2 rounded-lg transition-all ${
+                    viewMode === "list"
+                      ? "bg-violet-600 text-white shadow-md"
+                      : "text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-600/50"
+                  }`}
+                >
+                  <List className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Active Filters Summary */}
+            {(searchTerm || filterDifficulty !== "all") && (
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="text-slate-600 dark:text-slate-300 font-medium">Active filters:</span>
+                {searchTerm && (
+                  <span className="px-3 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-full font-medium">
+                    Search: "{searchTerm}"
+                  </span>
+                )}
+                {filterDifficulty !== "all" && (
+                  <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full font-medium capitalize">
+                    {filterDifficulty}
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setFilterDifficulty("all");
+                  }}
+                  className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
+            
+            {/* Results Count */}
+            <div className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              Showing <span className="text-violet-600 dark:text-violet-400 font-bold">{paginatedQuizzes.length}</span> of <span className="text-violet-600 dark:text-violet-400 font-bold">{filteredQuizzes.length}</span> quizzes
+            </div>
           </div>
         </motion.div>
 
@@ -290,97 +389,105 @@ export default function QuizList() {
           </motion.div>
         ) : (
           <>
-            {/* Featured Quiz Highlight - Enhanced */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              whileHover={{ scale: 1.01 }}
-              className="relative overflow-hidden bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 rounded-3xl p-8 shadow-2xl text-white group"
-            >
-              {/* Animated Background Orbs */}
+            {/* Featured Quiz Highlight - Enhanced (only show if on page 1 and has quizzes) */}
+            {page === 1 && paginatedQuizzes.length > 0 && (
               <motion.div
-                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-white/10 rounded-full blur-3xl"
-              />
-              <motion.div
-                animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
-                transition={{ duration: 5, repeat: Infinity, delay: 1 }}
-                className="absolute bottom-0 left-0 -mb-8 -ml-8 w-64 h-64 bg-fuchsia-300/10 rounded-full blur-3xl"
-              />
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                whileHover={{ scale: 1.01 }}
+                className="relative overflow-hidden bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 rounded-3xl p-8 shadow-2xl text-white group mb-6"
+              >
+                {/* Animated Background Orbs */}
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                  className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-white/10 rounded-full blur-3xl"
+                />
+                <motion.div
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
+                  transition={{ duration: 5, repeat: Infinity, delay: 1 }}
+                  className="absolute bottom-0 left-0 -mb-8 -ml-8 w-64 h-64 bg-fuchsia-300/10 rounded-full blur-3xl"
+                />
 
-              <div className="relative flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-5">
-                    <motion.div
-                      whileHover={{ rotate: 360 }}
-                      transition={{ duration: 0.6 }}
-                      className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-xl flex items-center justify-center border-2 border-white/40 shadow-lg"
-                    >
-                      <Star className="w-7 h-7 text-yellow-300 fill-yellow-300" />
-                    </motion.div>
-                    <div>
-                      <span className="text-sm font-black text-white/80 uppercase tracking-wider">
-                        Featured Quiz
-                      </span>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold border border-white/30">
-                          ⚡ Trending
+                <div className="relative flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-5">
+                      <motion.div
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.6 }}
+                        className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-xl flex items-center justify-center border-2 border-white/40 shadow-lg"
+                      >
+                        <Star className="w-7 h-7 text-yellow-300 fill-yellow-300" />
+                      </motion.div>
+                      <div>
+                        <span className="text-sm font-black text-white/80 uppercase tracking-wider">
+                          Featured Quiz
                         </span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold border border-white/30">
+                            ⚡ Trending
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <h4 className="text-2xl font-black mb-4 drop-shadow-lg">
-                    {filteredQuizzes[0].title}
-                  </h4>
-                  <p className="text-white/90 mb-6 text-lg font-semibold flex items-center gap-3">
-                    <span className="flex items-center gap-2">
-                      <User className="w-5 h-5" />
-                      {filteredQuizzes[0].createdBy?.name || "Unknown"}
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-2">
-                      <HelpCircle className="w-5 h-5" />
-                      {filteredQuizzes[0].questions.length} questions
-                    </span>
-                  </p>
-                  <Link to={`/quiz/${filteredQuizzes[0]._id}`}>
-                    <motion.button
-                      whileHover={{ scale: 1.05, x: 5 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-8 py-4 bg-white text-violet-600 hover:bg-white/95 rounded-xl font-black shadow-2xl hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)] transition-all duration-200 flex items-center gap-3 group/btn"
-                    >
-                      <Play className="w-6 h-6" />
-                      Start Quiz Now
-                      <motion.span
-                        animate={{ x: [0, 5, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
+                    <h4 className="text-2xl font-black mb-4 drop-shadow-lg">
+                      {paginatedQuizzes[0].title}
+                    </h4>
+                    <p className="text-white/90 mb-6 text-lg font-semibold flex items-center gap-3">
+                      <span className="flex items-center gap-2">
+                        <User className="w-5 h-5" />
+                        {paginatedQuizzes[0].createdBy?.name || "Unknown"}
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-2">
+                        <HelpCircle className="w-5 h-5" />
+                        {paginatedQuizzes[0].questions.length} questions
+                      </span>
+                    </p>
+                    <Link to={`/quiz/${paginatedQuizzes[0]._id}`}>
+                      <motion.button
+                        whileHover={{ scale: 1.05, x: 5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-8 py-4 bg-white text-violet-600 hover:bg-white/95 rounded-xl font-black shadow-2xl hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)] transition-all duration-200 flex items-center gap-3 group/btn"
                       >
-                        →
-                      </motion.span>
-                    </motion.button>
-                  </Link>
+                        <Play className="w-6 h-6" />
+                        Start Quiz Now
+                        <motion.span
+                          animate={{ x: [0, 5, 0] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          →
+                        </motion.span>
+                      </motion.button>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            )}
 
             {/* Quiz Grid - Gamified Cards */}
             <motion.div
-              className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+              className={`${
+                viewMode === "grid"
+                  ? "grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+                  : "space-y-4"
+              }`}
               variants={containerVariants}
               initial="hidden"
               animate="visible"
             >
-              {filteredQuizzes.slice(1).map((quiz, index) => (
+              {paginatedQuizzes.slice(1).map((quiz, index) => (
                 <motion.div
                   key={quiz._id}
                   variants={itemVariants}
                   transition={{ delay: index * 0.05 }}
-                  whileHover={{ scale: 1.03, y: -5 }}
+                  whileHover={{ scale: viewMode === "grid" ? 1.03 : 1.01, y: -5 }}
                   className="group h-full"
                 >
-                  <div className="relative h-full bg-gradient-to-br from-white/80 to-violet-50/40 dark:from-slate-800/80 dark:to-violet-900/40 backdrop-blur-2xl rounded-2xl border-2 border-white/80 dark:border-slate-700/80 hover:border-violet-300 dark:hover:border-violet-500 p-4 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col overflow-hidden">
+                  <div className={`relative h-full bg-gradient-to-br from-white/80 to-violet-50/40 dark:from-slate-800/80 dark:to-violet-900/40 backdrop-blur-2xl rounded-2xl border-2 border-white/80 dark:border-slate-700/80 hover:border-violet-300 dark:hover:border-violet-500 p-4 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-300 ${
+                    viewMode === "list" ? "flex flex-row items-center gap-6" : "flex flex-col"
+                  } overflow-hidden`}>
                     {/* Shine effect on hover */}
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 dark:via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -500,6 +607,129 @@ export default function QuizList() {
                 </motion.div>
               ))}
             </motion.div>
+
+            {/* Pagination Controls */}
+            {filteredQuizzes.length > itemsPerPage && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="mt-8 flex flex-col gap-4"
+              >
+                {/* Items Per Page Selector */}
+                <div className="flex items-center justify-center gap-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <span>Show per page:</span>
+                  <div className="flex gap-2">
+                    {[6, 12, 24, 48].map((count) => (
+                      <button
+                        key={count}
+                        onClick={() => {
+                          setItemsPerPage(count);
+                          setPage(1); // Reset to first page when changing items per page
+                        }}
+                        className={`px-4 py-2 rounded-lg font-bold transition-all ${
+                          itemsPerPage === count
+                            ? "bg-violet-600 text-white shadow-md"
+                            : "bg-white/30 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-violet-100 dark:hover:bg-violet-900/30"
+                        }`}
+                      >
+                        {count}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pagination Bar */}
+                <div className="bg-white/20 dark:bg-slate-800/40 backdrop-blur-xl rounded-2xl border border-white/30 dark:border-slate-700/50 p-4 shadow-lg">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    {/* Page Info */}
+                    <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      Page <span className="text-violet-600 dark:text-violet-400 font-black">{page}</span> of{" "}
+                      <span className="text-violet-600 dark:text-violet-400 font-black">
+                        {Math.ceil(filteredQuizzes.length / itemsPerPage)}
+                      </span>
+                    </div>
+
+                    {/* Pagination Buttons */}
+                    <div className="flex items-center gap-2">
+                      {/* Previous Button */}
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setPage(Math.max(1, page - 1))}
+                        disabled={page === 1}
+                        className={`px-4 py-2 rounded-xl font-bold transition-all ${
+                          page === 1
+                            ? "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                            : "bg-violet-600 text-white hover:bg-violet-700 shadow-md hover:shadow-violet-500/50"
+                        }`}
+                      >
+                        ← Previous
+                      </motion.button>
+
+                      {/* Page Numbers */}
+                      <div className="flex gap-2">
+                        {Array.from(
+                          { length: Math.ceil(filteredQuizzes.length / itemsPerPage) },
+                          (_, i) => i + 1
+                        )
+                          .filter((pageNum) => {
+                            // Show first page, last page, current page, and pages around current
+                            const totalPages = Math.ceil(filteredQuizzes.length / itemsPerPage);
+                            return (
+                              pageNum === 1 ||
+                              pageNum === totalPages ||
+                              Math.abs(pageNum - page) <= 1
+                            );
+                          })
+                          .map((pageNum, index, array) => (
+                            <React.Fragment key={pageNum}>
+                              {/* Show ellipsis if there's a gap */}
+                              {index > 0 && array[index - 1] !== pageNum - 1 && (
+                                <span className="px-2 text-slate-500 dark:text-slate-400">...</span>
+                              )}
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => setPage(pageNum)}
+                                className={`w-10 h-10 rounded-lg font-black transition-all ${
+                                  page === pageNum
+                                    ? "bg-violet-600 text-white shadow-lg shadow-violet-500/50"
+                                    : "bg-white/30 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-violet-100 dark:hover:bg-violet-900/30"
+                                }`}
+                              >
+                                {pageNum}
+                              </motion.button>
+                            </React.Fragment>
+                          ))}
+                      </div>
+
+                      {/* Next Button */}
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() =>
+                          setPage(
+                            Math.min(
+                              Math.ceil(filteredQuizzes.length / itemsPerPage),
+                              page + 1
+                            )
+                          )
+                        }
+                        disabled={page === Math.ceil(filteredQuizzes.length / itemsPerPage)}
+                        className={`px-4 py-2 rounded-xl font-bold transition-all ${
+                          page === Math.ceil(filteredQuizzes.length / itemsPerPage)
+                            ? "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                            : "bg-violet-600 text-white hover:bg-violet-700 shadow-md hover:shadow-violet-500/50"
+                        }`}
+                      >
+                        Next →
+                      </motion.button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </>
         )}
       </div>
