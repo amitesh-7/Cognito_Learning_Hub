@@ -803,7 +803,7 @@ const MeetingRoom = () => {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                      {userName?.charAt(0)?.toUpperCase() || "Y"}
+                      {myUserName?.charAt(0)?.toUpperCase() || "Y"}
                     </div>
                   </div>
                 )}
