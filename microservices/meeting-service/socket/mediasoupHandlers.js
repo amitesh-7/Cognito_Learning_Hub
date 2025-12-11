@@ -17,6 +17,7 @@ module.exports = (io) => {
     let currentRoomId = null;
     let currentUserId = null;
     let currentPeerId = socket.id;
+    let currentUserName = null;
 
     // ============================================
     // JOIN MEETING (mediasoup mode)
@@ -71,6 +72,7 @@ module.exports = (io) => {
         currentRoomId = roomId;
         currentUserId = userId;
         currentPeerId = socket.id;
+        currentUserName = userName;
 
         // Add participant to Redis
         await meetingManager.addParticipant(roomId, {
@@ -243,6 +245,7 @@ module.exports = (io) => {
             producerId,
             peerId: currentPeerId,
             userId: currentUserId,
+            userName: currentUserName,
             kind,
           });
 

@@ -290,7 +290,25 @@ const MeetingRoom = () => {
     // New producer available - use ref to get latest handler
     meetSocket.on(
       "newProducer",
-      async ({ producerId, peerId, userId, kind }) => {
+      async ({ producerId, peerId, userId, userName, kind }) => {
+        console.log(
+          `[Meeting SFU] New producer from peer ${peerId}, user: ${userName}, kind: ${kind}`
+        );
+
+        // Update peer info with userName if available
+        if (userName) {
+          setPeers((prev) => {
+            const updated = new Map(prev);
+            const existingPeer = updated.get(peerId) || {};
+            updated.set(peerId, {
+              ...existingPeer,
+              name: userName,
+              userId,
+            });
+            return updated;
+          });
+        }
+
         const handler = mediasoupHandlerRef.current;
         if (handler) {
           try {
@@ -629,44 +647,53 @@ const MeetingRoom = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 flex flex-col">
       {/* Top bar */}
-      <div className="bg-black/40 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-white text-lg font-semibold flex items-center gap-2">
-            <Video className="w-5 h-5" />
-            Meeting Room: {roomId}
-          </h1>
+      <div className="bg-gradient-to-r from-black/60 via-black/40 to-black/60 backdrop-blur-xl border-b border-white/10 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-500/20 rounded-xl">
+              <Video className="w-5 h-5 text-purple-400" />
+            </div>
+            <div>
+              <h1 className="text-white text-lg font-bold">Meeting Room</h1>
+              <p className="text-white/50 text-xs font-mono">{roomId}</p>
+            </div>
+          </div>
           <button
             onClick={copyRoomId}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors group relative"
+            className="p-2 hover:bg-white/10 rounded-lg transition-all duration-300 group relative"
             title="Copy Room ID"
           >
             {copiedRoomId ? (
-              <Check className="w-4 h-4 text-green-400" />
+              <Check className="w-5 h-5 text-green-400" />
             ) : (
-              <Copy className="w-4 h-4 text-white group-hover:text-blue-400" />
+              <Copy className="w-5 h-5 text-white/70 group-hover:text-purple-400" />
             )}
             {copiedRoomId && (
-              <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+              <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50">
                 Copied!
               </span>
             )}
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-white/70 text-sm">
-            {participants.length} participant
-            {participants.length !== 1 ? "s" : ""}
-          </span>
+        <div className="flex items-center gap-4">
+          {/* Connection indicator */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/20 rounded-full">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-green-400 text-sm font-medium">
+              {participants.length} participant
+              {participants.length !== 1 ? "s" : ""}
+            </span>
+          </div>
           {isHost && (
             <button
               onClick={endMeeting}
-              className="px-4 py-2 bg-red-500/90 hover:bg-red-600 text-white rounded-lg transition-all flex items-center gap-2"
+              className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2 shadow-lg shadow-red-500/30"
             >
               <LogOut className="w-4 h-4" />
-              End Meeting
+              <span className="font-medium">End Meeting</span>
             </button>
           )}
         </div>
@@ -676,45 +703,49 @@ const MeetingRoom = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar - participants panel (collapsible) */}
         {showParticipants && (
-          <div className="w-80 bg-black/40 backdrop-blur-md border-r border-white/10 flex flex-col">
+          <div className="w-80 bg-gradient-to-b from-black/60 to-black/40 backdrop-blur-xl border-r border-white/10 flex flex-col">
             <div className="p-4 border-b border-white/10 flex items-center justify-between">
               <h2 className="text-white font-semibold flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Participants ({participants.length})
+                <div className="p-2 bg-purple-500/20 rounded-lg">
+                  <Users className="w-5 h-5 text-purple-400" />
+                </div>
+                <span>Participants ({participants.length})</span>
               </h2>
               <button
                 onClick={() => setShowParticipants(false)}
-                className="p-1 hover:bg-white/10 rounded transition-colors"
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-white/70" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {participants.map((p) => (
                 <div
                   key={p.socketId || p.userId}
-                  className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                  className="flex items-center justify-between p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-purple-500/20"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg">
                       {(p.userName || p.name || "?")[0].toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-white text-sm font-medium">
+                      <p className="text-white text-sm font-medium flex items-center gap-2">
                         {p.userName || p.name || "Participant"}
                         {p.peerId === mySocketId && (
-                          <span className="ml-2 text-xs text-green-400">
-                            (You)
+                          <span className="px-2 py-0.5 text-[10px] bg-green-500/20 text-green-400 rounded-full font-medium">
+                            You
                           </span>
                         )}
                         {p.isHost && (
-                          <span className="ml-2 text-xs text-yellow-400">
-                            (Host)
+                          <span className="px-2 py-0.5 text-[10px] bg-yellow-500/20 text-yellow-400 rounded-full font-medium">
+                            Host
                           </span>
                         )}
                       </p>
                       {p.role && (
-                        <p className="text-white/50 text-xs">{p.role}</p>
+                        <p className="text-white/50 text-xs capitalize">
+                          {p.role}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -722,14 +753,14 @@ const MeetingRoom = () => {
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleMuteParticipant(p.socketId)}
-                        className="p-1 hover:bg-white/10 rounded transition-colors"
+                        className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
                         title="Mute participant"
                       >
                         <MicOff className="w-4 h-4 text-red-400" />
                       </button>
                       <button
                         onClick={() => handleRemoveParticipant(p.socketId)}
-                        className="p-1 hover:bg-white/10 rounded transition-colors"
+                        className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
                         title="Remove participant"
                       >
                         <UserX className="w-4 h-4 text-red-400" />
@@ -760,119 +791,150 @@ const MeetingRoom = () => {
               }`}
             >
               {/* Local video */}
-              <div className="relative bg-black/40 rounded-xl overflow-hidden border border-white/10 aspect-video">
-                <video
-                  ref={localVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full">
-                  <p className="text-white text-sm font-medium">
-                    You {isHost && "(Host)"}
-                  </p>
+              <div className="relative rounded-2xl overflow-hidden border border-white/10 aspect-video bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 shadow-xl group hover:border-purple-500/30 transition-all duration-300">
+                {cameraOn ? (
+                  <video
+                    ref={localVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                      {userName?.charAt(0)?.toUpperCase() || "Y"}
+                    </div>
+                  </div>
+                )}
+                {/* Name label */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 z-20">
+                  <div className="flex items-center gap-2">
+                    <span className="text-white font-medium text-sm">
+                      You{" "}
+                      {isHost && (
+                        <span className="bg-yellow-500 text-black px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ml-1">
+                          Host
+                        </span>
+                      )}
+                    </span>
+                  </div>
                 </div>
+                {/* Mic off indicator */}
                 {!micOn && (
-                  <div className="absolute top-3 right-3 bg-red-500/90 p-2 rounded-full">
+                  <div className="absolute top-3 right-3 bg-red-500/90 p-2 rounded-full shadow-lg z-20">
                     <MicOff className="w-4 h-4 text-white" />
+                  </div>
+                )}
+                {/* Camera off indicator */}
+                {!cameraOn && (
+                  <div className="absolute top-3 left-3 bg-red-500/90 p-2 rounded-full shadow-lg z-20">
+                    <VideoOff className="w-4 h-4 text-white" />
                   </div>
                 )}
               </div>
 
               {/* Remote videos */}
-              {Array.from(peers.entries())
-                .filter(([_, peerData]) => peerData.name) // Only render peers with names (complete data)
-                .map(([peerId, peerData]) => {
-                  console.log(
-                    `[Meeting SFU] Rendering RemoteVideoSFU for peer ${peerId}:`,
-                    {
-                      name: peerData.name,
-                      hasVideoTrack: !!peerData.videoTrack,
-                      hasAudioTrack: !!peerData.audioTrack,
-                      videoTrackState: peerData.videoTrack?.readyState,
-                      audioTrackState: peerData.audioTrack?.readyState,
-                    }
-                  );
-                  return (
-                    <RemoteVideoSFU
-                      key={peerId}
-                      peerId={peerId}
-                      videoTrack={peerData.videoTrack}
-                      audioTrack={peerData.audioTrack}
-                      screenTrack={peerData.screenTrack}
-                      name={peerData.name}
-                      isHost={peerData.isHost}
-                    />
-                  );
-                })}
+              {Array.from(peers.entries()).map(([peerId, peerData]) => {
+                const displayName =
+                  peerData.name ||
+                  peerData.userName ||
+                  peerData.displayName ||
+                  `Participant ${peerId.slice(-4)}`;
+
+                console.log(
+                  `[Meeting SFU] Rendering RemoteVideoSFU for peer ${peerId}:`,
+                  {
+                    name: displayName,
+                    hasVideoTrack: !!peerData.videoTrack,
+                    hasAudioTrack: !!peerData.audioTrack,
+                    videoTrackState: peerData.videoTrack?.readyState,
+                    audioTrackState: peerData.audioTrack?.readyState,
+                  }
+                );
+                return (
+                  <RemoteVideoSFU
+                    key={peerId}
+                    peerId={peerId}
+                    videoTrack={peerData.videoTrack}
+                    audioTrack={peerData.audioTrack}
+                    screenTrack={peerData.screenTrack}
+                    name={displayName}
+                    isHost={peerData.isHost}
+                  />
+                );
+              })}
             </div>
           </div>
 
           {/* Bottom controls */}
-          <div className="bg-black/40 backdrop-blur-md border-t border-white/10 p-4">
-            <div className="flex items-center justify-center gap-3">
+          <div className="bg-gradient-to-r from-black/60 via-black/40 to-black/60 backdrop-blur-xl border-t border-white/10 p-4">
+            <div className="flex items-center justify-center gap-4">
               {/* Toggle Mic */}
               <button
                 onClick={toggleMic}
-                className={`p-4 rounded-full transition-all ${
+                className={`p-4 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
                   micOn
-                    ? "bg-white/10 hover:bg-white/20"
-                    : "bg-red-500/90 hover:bg-red-600"
+                    ? "bg-white/10 hover:bg-white/20 border border-white/20"
+                    : "bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/30"
                 }`}
                 title={micOn ? "Mute" : "Unmute"}
               >
                 {micOn ? (
-                  <Mic className="w-5 h-5 text-white" />
+                  <Mic className="w-6 h-6 text-white" />
                 ) : (
-                  <MicOff className="w-5 h-5 text-white" />
+                  <MicOff className="w-6 h-6 text-white" />
                 )}
               </button>
 
               {/* Toggle Camera */}
               <button
                 onClick={toggleCamera}
-                className={`p-4 rounded-full transition-all ${
+                className={`p-4 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
                   cameraOn
-                    ? "bg-white/10 hover:bg-white/20"
-                    : "bg-red-500/90 hover:bg-red-600"
+                    ? "bg-white/10 hover:bg-white/20 border border-white/20"
+                    : "bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/30"
                 }`}
                 title={cameraOn ? "Turn off camera" : "Turn on camera"}
               >
                 {cameraOn ? (
-                  <Video className="w-5 h-5 text-white" />
+                  <Video className="w-6 h-6 text-white" />
                 ) : (
-                  <VideoOff className="w-5 h-5 text-white" />
+                  <VideoOff className="w-6 h-6 text-white" />
                 )}
               </button>
 
               {/* Toggle Screen Share */}
               <button
                 onClick={toggleScreenShare}
-                className={`p-4 rounded-full transition-all ${
+                className={`p-4 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
                   isScreenSharing
-                    ? "bg-blue-500/90 hover:bg-blue-600"
-                    : "bg-white/10 hover:bg-white/20"
+                    ? "bg-blue-500 hover:bg-blue-600 shadow-lg shadow-blue-500/30"
+                    : "bg-white/10 hover:bg-white/20 border border-white/20"
                 }`}
                 title={isScreenSharing ? "Stop sharing" : "Share screen"}
               >
                 {isScreenSharing ? (
-                  <MonitorOff className="w-5 h-5 text-white" />
+                  <MonitorOff className="w-6 h-6 text-white" />
                 ) : (
-                  <Monitor className="w-5 h-5 text-white" />
+                  <Monitor className="w-6 h-6 text-white" />
                 )}
               </button>
 
               {/* Toggle Chat */}
               <button
                 onClick={() => setShowChat(!showChat)}
-                className="p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all relative"
+                className={`p-4 rounded-2xl transition-all duration-300 transform hover:scale-105 relative ${
+                  showChat
+                    ? "bg-purple-500 hover:bg-purple-600 shadow-lg shadow-purple-500/30"
+                    : "bg-white/10 hover:bg-white/20 border border-white/20"
+                }`}
                 title="Chat"
               >
-                <MessageSquare className="w-5 h-5 text-white" />
-                {chatMessages.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                    {chatMessages.length}
+                <MessageSquare className="w-6 h-6 text-white" />
+                {chatMessages.length > 0 && !showChat && (
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-pink-500 to-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold animate-pulse">
+                    {chatMessages.length > 9 ? "9+" : chatMessages.length}
                   </span>
                 )}
               </button>
@@ -881,20 +943,23 @@ const MeetingRoom = () => {
               {!showParticipants && (
                 <button
                   onClick={() => setShowParticipants(true)}
-                  className="p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all"
+                  className="p-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 transform hover:scale-105"
                   title="Show participants"
                 >
-                  <Users className="w-5 h-5 text-white" />
+                  <Users className="w-6 h-6 text-white" />
                 </button>
               )}
 
               {/* Leave Meeting */}
               <button
                 onClick={leaveMeeting}
-                className="p-4 rounded-full bg-red-500/90 hover:bg-red-600 transition-all"
+                className="p-4 px-6 rounded-2xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-red-500/30 flex items-center gap-2"
                 title="Leave meeting"
               >
-                <Phone className="w-5 h-5 text-white transform rotate-135" />
+                <Phone className="w-6 h-6 text-white transform rotate-135" />
+                <span className="text-white font-medium hidden sm:inline">
+                  Leave
+                </span>
               </button>
             </div>
           </div>
@@ -902,29 +967,49 @@ const MeetingRoom = () => {
 
         {/* Right sidebar - chat panel (collapsible) */}
         {showChat && (
-          <div className="w-80 bg-black/40 backdrop-blur-md border-l border-white/10 flex flex-col">
+          <div className="w-80 bg-gradient-to-b from-black/60 to-black/40 backdrop-blur-xl border-l border-white/10 flex flex-col">
             <div className="p-4 border-b border-white/10 flex items-center justify-between">
               <h2 className="text-white font-semibold flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                Chat
+                <div className="p-2 bg-purple-500/20 rounded-lg">
+                  <MessageSquare className="w-5 h-5 text-purple-400" />
+                </div>
+                <span>Chat</span>
               </h2>
               <button
                 onClick={() => setShowChat(false)}
-                className="p-1 hover:bg-white/10 rounded transition-colors"
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-white/70" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {chatMessages.length === 0 && (
+                <div className="text-center text-white/40 py-8">
+                  <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">No messages yet</p>
+                  <p className="text-xs mt-1">Be the first to say hello!</p>
+                </div>
+              )}
               {chatMessages.map((msg, idx) => (
-                <div key={idx} className="bg-white/5 rounded-lg p-3">
-                  <p className="text-purple-400 text-xs font-semibold mb-1">
-                    {msg.from}
-                  </p>
-                  <p className="text-white text-sm">{msg.message}</p>
-                  <p className="text-white/40 text-xs mt-1">
-                    {new Date(msg.timestamp).toLocaleTimeString()}
-                  </p>
+                <div
+                  key={idx}
+                  className="bg-white/5 rounded-xl p-3 border border-white/5 hover:border-purple-500/20 transition-all duration-300"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
+                      {msg.from?.charAt(0)?.toUpperCase() || "?"}
+                    </div>
+                    <p className="text-purple-400 text-xs font-semibold">
+                      {msg.from}
+                    </p>
+                    <p className="text-white/40 text-[10px] ml-auto">
+                      {new Date(msg.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                  <p className="text-white text-sm pl-8">{msg.message}</p>
                 </div>
               ))}
             </div>
@@ -935,13 +1020,13 @@ const MeetingRoom = () => {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Type a message..."
-                  className="flex-1 bg-white/10 text-white placeholder-white/40 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="flex-1 bg-white/10 text-white placeholder-white/40 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 border border-white/10 focus:border-purple-500/50 transition-all"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors flex items-center gap-2"
+                  className="px-4 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-5 h-5" />
                 </button>
               </form>
             </div>
@@ -1159,8 +1244,8 @@ const RemoteVideoSFU = ({
   const hasVideo = videoTrack || screenTrack;
 
   return (
-    <div className="bg-gray-800 rounded-xl relative aspect-video overflow-hidden">
-      {/* Always render video element to keep ref valid */}
+    <div className="relative aspect-video overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 border border-white/10 shadow-xl group hover:border-purple-500/30 transition-all duration-300">
+      {/* Video element - always rendered but conditionally visible */}
       <video
         ref={videoRef}
         autoPlay
@@ -1170,10 +1255,10 @@ const RemoteVideoSFU = ({
         }`}
       />
 
-      {/* Show avatar when no video */}
+      {/* Avatar when no video */}
       {!hasVideo && (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-800 absolute inset-0">
-          <div className="w-20 h-20 bg-gray-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+        <div className="w-full h-full flex items-center justify-center absolute inset-0">
+          <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
             {name?.charAt(0)?.toUpperCase() || "?"}
           </div>
         </div>
@@ -1182,14 +1267,28 @@ const RemoteVideoSFU = ({
       {/* Hidden audio element */}
       <audio ref={audioRef} autoPlay />
 
-      <div className="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-        {name}
-        {isHost && (
-          <span className="bg-yellow-500 text-black px-1 rounded text-[10px] font-bold">
-            HOST
+      {/* Name label - always visible at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 z-20">
+        <div className="flex items-center gap-2">
+          <span className="text-white font-medium text-sm truncate">
+            {name || "Participant"}
           </span>
-        )}
-        {screenTrack && " 🖥️"}
+          {isHost && (
+            <span className="bg-yellow-500 text-black px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">
+              Host
+            </span>
+          )}
+          {screenTrack && (
+            <span className="bg-blue-500 text-white px-2 py-0.5 rounded-full text-[10px] font-medium">
+              🖥️ Screen
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Connection indicator */}
+      <div className="absolute top-3 right-3 z-20">
+        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
       </div>
     </div>
   );

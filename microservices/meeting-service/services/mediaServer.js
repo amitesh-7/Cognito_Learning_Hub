@@ -9,6 +9,23 @@ const createLogger = require("../../shared/utils/logger");
 
 const logger = createLogger("media-server");
 
+/**
+ * Get local IP address (non-loopback)
+ */
+function getLocalIp() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      // Skip loopback and non-IPv4
+      if (iface.family === "IPv4" && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  // Fallback to localhost if no network interface found
+  return "127.0.0.1";
+}
+
 class MediaServer {
   constructor() {
     this.workers = [];
@@ -91,13 +108,15 @@ class MediaServer {
         listenIps: [
           {
             ip: "0.0.0.0",
-            // For local dev use 127.0.0.1; for production set MEDIASOUP_ANNOUNCED_IP
-            announcedIp:
-              process.env.MEDIASOUP_ANNOUNCED_IP ||
-              process.env.SERVER_IP ||
-              "127.0.0.1",
+            // Use local IP for development, or env variable for production
+            announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP || getLocalIp(),
           },
         ],
+        enableUdp: true,
+        enableTcp: true,
+        preferUdp: true,
+        enableSctp: true,
+        numSctpStreams: { OS: 1024, MIS: 1024 },
         initialAvailableOutgoingBitrate: 1000000,
         minimumAvailableOutgoingBitrate: 600000,
         maxSctpMessageSize: 262144,
