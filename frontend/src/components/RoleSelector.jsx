@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { GraduationCap, BookOpen } from 'lucide-react';
+import { GraduationCap, BookOpen, Shield } from 'lucide-react';
 
 const RoleSelector = ({ selectedRole, onRoleChange, className = '' }) => {
   const roles = [
@@ -20,6 +20,14 @@ const RoleSelector = ({ selectedRole, onRoleChange, className = '' }) => {
       color: 'from-purple-500 to-pink-500',
       hoverColor: 'hover:border-purple-400',
     },
+    {
+      value: 'Admin',
+      label: 'Admin',
+      icon: Shield,
+      description: 'Platform management',
+      color: 'from-orange-500 to-red-500',
+      hoverColor: 'hover:border-orange-400',
+    },
   ];
 
   return (
@@ -27,7 +35,7 @@ const RoleSelector = ({ selectedRole, onRoleChange, className = '' }) => {
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
         I am a
       </label>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         {roles.map((role) => {
           const Icon = role.icon;
           const isSelected = selectedRole === role.value;

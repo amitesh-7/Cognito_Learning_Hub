@@ -284,13 +284,13 @@ const StudyGoals = () => {
       </div>
 
       {/* Create Goal Button */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
           My Learning Goals
         </h2>
         <Button
           onClick={() => setShowCreateModal(true)}
-          className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+          className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white w-full sm:w-auto shadow-lg"
         >
           <Plus className="w-5 h-5 mr-2" />
           New Goal
@@ -303,8 +303,8 @@ const StudyGoals = () => {
           <div className="animate-spin w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto" />
         </div>
       ) : goals.length === 0 ? (
-        <Card className="p-12 text-center">
-          <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <Card className="p-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+          <Target className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             No goals yet
           </h3>
@@ -313,7 +313,7 @@ const StudyGoals = () => {
           </p>
           <Button
             onClick={() => setShowCreateModal(true)}
-            className="bg-gradient-to-r from-indigo-600 to-purple-600"
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg"
           >
             <Plus className="w-5 h-5 mr-2" />
             Create Goal
@@ -330,7 +330,7 @@ const StudyGoals = () => {
                 exit={{ opacity: 0, scale: 0.9 }}
                 layout
               >
-                <Card className="p-6 hover:shadow-lg transition-shadow">
+                <Card className="p-6 hover:shadow-lg transition-shadow bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                   <div className="flex items-start justify-between mb-4">
                     {getStatusIcon(goal.status)}
                     <div className="flex gap-2">
@@ -395,7 +395,7 @@ const StudyGoals = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -418,7 +418,8 @@ const StudyGoals = () => {
                       }}
                     >
                       <TrendingUp className="w-4 h-4 mr-1" />
-                      +10%
+                      <span className="hidden sm:inline">+10%</span>
+                      <span className="sm:hidden">Progress</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -428,16 +429,19 @@ const StudyGoals = () => {
                         setNewGoal(goal);
                         setShowCreateModal(true);
                       }}
+                      className="w-full sm:w-auto"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Edit2 className="w-4 h-4 sm:mr-0" />
+                      <span className="sm:hidden ml-2">Edit</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-red-600 hover:bg-red-50"
+                      className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 w-full sm:w-auto"
                       onClick={() => deleteGoal(goal._id)}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 sm:mr-0" />
+                      <span className="sm:hidden ml-2">Delete</span>
                     </Button>
                   </div>
                 </Card>
@@ -454,7 +458,7 @@ const StudyGoals = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={() => {
               setShowCreateModal(false);
               resetForm();
@@ -465,7 +469,7 @@ const StudyGoals = () => {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 shadow-2xl"
             >
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                 {editingGoal ? "Edit Goal" : "Create New Goal"}
@@ -482,7 +486,7 @@ const StudyGoals = () => {
                     onChange={(e) =>
                       setNewGoal({ ...newGoal, title: e.target.value })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all"
                     placeholder="e.g., Master React Hooks"
                   />
                 </div>
@@ -496,13 +500,13 @@ const StudyGoals = () => {
                     onChange={(e) =>
                       setNewGoal({ ...newGoal, description: e.target.value })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all resize-none"
                     rows={3}
                     placeholder="What do you want to achieve?"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Category
@@ -512,7 +516,7 @@ const StudyGoals = () => {
                       onChange={(e) =>
                         setNewGoal({ ...newGoal, category: e.target.value })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     >
                       <option value="custom">Custom</option>
                       <option value="exam_preparation">Exam Preparation</option>
@@ -531,7 +535,7 @@ const StudyGoals = () => {
                       onChange={(e) =>
                         setNewGoal({ ...newGoal, priority: e.target.value })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -550,7 +554,7 @@ const StudyGoals = () => {
                     onChange={(e) =>
                       setNewGoal({ ...newGoal, targetDate: e.target.value })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
 
@@ -558,16 +562,20 @@ const StudyGoals = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Related Topics
                   </label>
-                  <div className="flex gap-2 mb-2">
+                  <div className="flex flex-col sm:flex-row gap-2 mb-2">
                     <input
                       type="text"
                       value={topicInput}
                       onChange={(e) => setTopicInput(e.target.value)}
                       onKeyPress={(e) => e.key === "Enter" && addTopic()}
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                       placeholder="Add a topic and press Enter"
                     />
-                    <Button onClick={addTopic} type="button">
+                    <Button
+                      onClick={addTopic}
+                      type="button"
+                      className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                    >
                       <Plus className="w-5 h-5" />
                     </Button>
                   </div>
@@ -587,14 +595,14 @@ const StudyGoals = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
                 <Button
                   onClick={() => {
                     setShowCreateModal(false);
                     resetForm();
                   }}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   Cancel
                 </Button>
@@ -609,7 +617,7 @@ const StudyGoals = () => {
                     }
                   }}
                   disabled={!newGoal.title}
-                  className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600"
+                  className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {editingGoal ? "Update Goal" : "Create Goal"}
                 </Button>
