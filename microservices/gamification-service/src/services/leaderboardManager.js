@@ -271,9 +271,6 @@ class LeaderboardManager {
    */
   async getUserDetailsBatch(userIds) {
     try {
-      const mongoose = require("mongoose");
-      const User = mongoose.model("User");
-
       const users = await User.find({ _id: { $in: userIds } })
         .select("name email")
         .lean();

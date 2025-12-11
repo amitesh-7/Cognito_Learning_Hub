@@ -37,17 +37,15 @@ import {
   Trophy,
   ArrowLeft,
   Sparkles,
-  Brain,
   ChevronRight,
   Star,
   BarChart3,
   Activity,
-  Gamepad2,
-  Users,
   Lightbulb,
   MessageCircle,
   Coffee,
   Rocket,
+  Gamepad2,
 } from "lucide-react";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "../components/ui/PullToRefreshIndicator";
@@ -57,17 +55,9 @@ import {
   CategoryPerformance,
   LearningPatterns,
 } from "../components/EnhancedStats";
-import {
-  AIInsightsCard,
-  PeerComparisonCard,
-  LearningPatternsCard,
-} from "../components/AIInsightsNew";
-import { WeeklyActivityCard } from "../components/AIInsights";
 import { RealTimeStats } from "../components/Gamification";
 import StudyBuddyChat from "../components/StudyBuddy/StudyBuddyChat";
 import StudyGoals from "../components/StudyBuddy/StudyGoals";
-import QuestMap from "../components/Quests/QuestMap";
-import WorldEventsPage from "../components/WorldEvents/WorldEventsPage";
 import TimeTravelMode from "../components/TimeTravel/TimeTravelMode";
 
 // --- Animation Variants ---
@@ -106,12 +96,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [streakCount, setStreakCount] = useState(0);
-  const [viewMode, setViewMode] = useState("overview"); // 'overview', 'detailed', 'insights', 'study-buddy', 'goals', 'quests', 'world-events', 'time-travel'
+  const [viewMode, setViewMode] = useState("overview"); // 'overview', 'detailed', 'study-buddy', 'goals', 'time-travel'
   const { success } = useHaptic();
-
-  // AI Insights state
-  const [aiInsights, setAiInsights] = useState(null);
-  const [insightsLoading, setInsightsLoading] = useState(false);
 
   // Check if user came from quiz results wanting to open Study Buddy
   useEffect(() => {
@@ -126,73 +112,6 @@ export default function Dashboard() {
   if (!authLoading && user?.role === "Teacher") {
     return <Navigate to="/teacher-dashboard" replace />;
   }
-
-  // Fetch AI-powered personalized insights
-  const fetchAIInsights = async (forceRefresh = false) => {
-    try {
-      setInsightsLoading(true);
-      const token = localStorage.getItem("quizwise-token");
-      const endpoint = forceRefresh
-        ? `${import.meta.env.VITE_API_URL}/api/analytics/user/${
-            user?._id
-          }/refresh-insights`
-        : `${import.meta.env.VITE_API_URL}/api/analytics/user/${
-            user?._id
-          }/insights`;
-
-      console.log("📊 Fetching AI Insights from:", endpoint);
-
-      const response = await fetch(endpoint, {
-        method: forceRefresh ? "POST" : "GET",
-        headers: { "x-auth-token": token },
-      });
-
-      console.log("📊 Response status:", response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log(
-          "📊 AI Insights Full Response:",
-          JSON.stringify(data, null, 2)
-        );
-        console.log("📊 Response data.data:", data.data);
-        console.log("📊 Response data.data.insights:", data.data?.insights);
-
-        // API returns: { success, message, data: { insights: {...}, cached: bool } }
-        // We need the insights object
-        const insightsData =
-          data.data?.insights || data.insights || data.data || data;
-        console.log(
-          "📊 Final insights data:",
-          JSON.stringify(insightsData, null, 2)
-        );
-        console.log("📊 Has insights data?", insightsData.hasData);
-        console.log("📊 Insights object?", insightsData.insights);
-        setAiInsights(insightsData);
-      } else {
-        console.error(
-          "❌ AI Insights API error:",
-          response.status,
-          response.statusText
-        );
-        try {
-          const errorText = await response.text();
-          console.error("❌ Error response body:", errorText);
-        } catch (e) {
-          console.error("❌ Could not read error response");
-        }
-        // Set empty insights to show "no data" state
-        setAiInsights({
-          hasData: false,
-          message: "Failed to load insights. Please try again.",
-        });
-      }
-    } catch (err) {
-      console.error("❌ Failed to fetch AI insights:", err);
-    } finally {
-      setInsightsLoading(false);
-    }
-  };
 
   const fetchResults = async () => {
     try {
@@ -269,48 +188,15 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       await fetchResults();
-      if (user?._id) {
-        await fetchAIInsights();
-      }
     };
     loadData();
   }, [user?._id]);
-
-  // Refresh AI insights when results count changes (new quiz completed)
-  useEffect(() => {
-    if (user?._id && results.length > 0 && !insightsLoading) {
-      console.log(
-        "📊 Results changed, refreshing AI insights...",
-        results.length
-      );
-      fetchAIInsights();
-    }
-  }, [results.length]);
-
-  // Refresh insights when user returns to dashboard (after quiz)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && user?._id && viewMode === "insights") {
-        console.log("👁️ Dashboard visible again, refreshing AI insights...");
-        fetchAIInsights();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [user?._id, viewMode]);
 
   // Pull-to-refresh functionality
   const handleRefresh = async () => {
     success(); // Haptic feedback on refresh
     setLoading(true);
     await fetchResults();
-    // Also refresh AI insights if user is on insights view
-    if (user?._id && viewMode === "insights") {
-      console.log("🔄 Pull-to-refresh: Updating AI insights...");
-      await fetchAIInsights();
-    }
   };
 
   const { isPulling, pullDistance, isRefreshing, pullProgress } =
@@ -508,7 +394,12 @@ export default function Dashboard() {
             x: [0, 20, 0],
             scale: [1, 1.1, 1],
           }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+            type: "tween",
+          }}
         />
         <motion.div
           className="absolute bottom-20 left-[5%] w-80 h-80 bg-gradient-to-br from-pink-500/25 to-rose-600/25 rounded-full blur-3xl"
@@ -522,6 +413,7 @@ export default function Dashboard() {
             repeat: Infinity,
             ease: "easeInOut",
             delay: 1,
+            type: "tween",
           }}
         />
         <motion.div
@@ -535,6 +427,7 @@ export default function Dashboard() {
             repeat: Infinity,
             ease: "easeInOut",
             delay: 2,
+            type: "tween",
           }}
         />
         <motion.div
@@ -547,6 +440,7 @@ export default function Dashboard() {
             duration: 9,
             repeat: Infinity,
             ease: "easeInOut",
+            type: "tween",
             delay: 3,
           }}
         />
@@ -554,7 +448,12 @@ export default function Dashboard() {
         <motion.div
           className="absolute top-1/4 right-1/3 w-4 h-4 bg-indigo-400/60 rounded-full"
           animate={{ y: [0, -100, 0], opacity: [0.6, 1, 0.6] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          transition={{
+            duration: 5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            type: "tween",
+          }}
         />
         <motion.div
           className="absolute top-2/3 left-1/3 w-3 h-3 bg-purple-400/60 rounded-full"
@@ -564,6 +463,7 @@ export default function Dashboard() {
             repeat: Infinity,
             ease: "easeInOut",
             delay: 1,
+            type: "tween",
           }}
         />
         <motion.div
@@ -574,6 +474,7 @@ export default function Dashboard() {
             repeat: Infinity,
             ease: "easeInOut",
             delay: 2,
+            type: "tween",
           }}
         />
       </div>
@@ -663,8 +564,8 @@ export default function Dashboard() {
             </motion.div>
           </div>
 
-          {/* Enhanced view mode selector with better visuals */}
-          <div className="flex gap-1 sm:gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-1.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-lg overflow-x-auto scrollbar-hide">
+          {/* Modern view selector focused on gamified progress */}
+          <div className="flex gap-2 bg-gradient-to-r from-slate-900 via-indigo-900 to-purple-900 text-white p-2 rounded-2xl shadow-xl overflow-x-auto scrollbar-hide border border-white/10">
             <motion.button
               onClick={() => {
                 setViewMode("overview");
@@ -672,137 +573,80 @@ export default function Dashboard() {
               }}
               aria-label="Overview"
               aria-pressed={viewMode === "overview"}
-              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "overview"
-                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                  ? "bg-white/15 shadow-lg backdrop-blur"
+                  : "hover:bg-white/10 text-white/80"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Overview</span>
-            </motion.button>
-            <motion.button
-              onClick={() => {
-                setViewMode("insights");
-                console.log("✅ Switched to insights mode");
-                // Refresh insights when switching to insights view
-                if (user?._id) {
-                  console.log(
-                    "🔄 Switching to insights view, refreshing data..."
-                  );
-                  fetchAIInsights();
-                }
-              }}
-              aria-label="View AI Insights"
-              aria-pressed={viewMode === "insights"}
-              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
-                viewMode === "insights"
-                  ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
-              }`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Brain className="w-4 h-4" />
-              <span className="hidden sm:inline">AI Insights</span>
+              <span>Overview</span>
             </motion.button>
             <motion.button
               onClick={() => {
                 setViewMode("detailed");
                 console.log("✅ Switched to detailed mode");
               }}
-              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "detailed"
-                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                  ? "bg-white/15 shadow-lg backdrop-blur"
+                  : "hover:bg-white/10 text-white/80"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <ClipboardList className="w-4 h-4" />
-              <span className="hidden sm:inline">Details</span>
+              <span>Progress</span>
             </motion.button>
             <motion.button
               onClick={() => {
                 setViewMode("study-buddy");
                 console.log("✅ Switched to study-buddy mode");
               }}
-              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "study-buddy"
-                  ? "bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-md"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                  ? "bg-white/15 shadow-lg backdrop-blur"
+                  : "hover:bg-white/10 text-white/80"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <MessageCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Study Buddy</span>
+              <span>Study Buddy</span>
             </motion.button>
             <motion.button
               onClick={() => {
                 setViewMode("goals");
                 console.log("✅ Switched to goals mode");
               }}
-              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "goals"
-                  ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                  ? "bg-white/15 shadow-lg backdrop-blur"
+                  : "hover:bg-white/10 text-white/80"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <Target className="w-4 h-4" />
-              <span className="hidden sm:inline">Goals</span>
-            </motion.button>
-            <motion.button
-              onClick={() => {
-                setViewMode("quests");
-                console.log("✅ Switched to quests mode");
-              }}
-              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
-                viewMode === "quests"
-                  ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
-              }`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Gamepad2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Quests</span>
-            </motion.button>
-            <motion.button
-              onClick={() => {
-                setViewMode("world-events");
-                console.log("✅ Switched to world-events mode");
-              }}
-              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
-                viewMode === "world-events"
-                  ? "bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-md"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
-              }`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">World Events</span>
+              <span>Goals</span>
             </motion.button>
             <motion.button
               onClick={() => {
                 setViewMode("time-travel");
                 console.log("✅ Switched to time-travel mode");
               }}
-              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 whitespace-nowrap ${
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "time-travel"
-                  ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                  ? "bg-white/15 shadow-lg backdrop-blur"
+                  : "hover:bg-white/10 text-white/80"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline">Time Travel</span>
+              <span>Time Travel</span>
             </motion.button>
           </div>
         </motion.div>
@@ -876,7 +720,11 @@ export default function Dashboard() {
                     <motion.div
                       className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg mb-4"
                       animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        type: "tween",
+                      }}
                     >
                       <Video className="w-8 h-8 text-white" />
                     </motion.div>
@@ -930,7 +778,11 @@ export default function Dashboard() {
                     <motion.div
                       className="w-16 h-16 mx-auto bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg mb-4"
                       animate={{ y: [0, -3, 0] }}
-                      transition={{ duration: 2, repeat: Infinity }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        type: "tween",
+                      }}
                     >
                       <Lightbulb className="w-8 h-8 text-white" />
                     </motion.div>
@@ -1213,6 +1065,7 @@ export default function Dashboard() {
                                   transition={{
                                     duration: 1.5,
                                     repeat: Infinity,
+                                    type: "tween",
                                   }}
                                 >
                                   <ChevronRight className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -1230,7 +1083,11 @@ export default function Dashboard() {
                       >
                         <motion.div
                           animate={{ y: [0, -10, 0] }}
-                          transition={{ duration: 2, repeat: Infinity }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            type: "tween",
+                          }}
                         >
                           <Trophy className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                         </motion.div>
@@ -1850,87 +1707,6 @@ export default function Dashboard() {
                 </motion.div>
               </div>
             </motion.div>
-          ) : viewMode === "insights" ? (
-            /* AI Insights View - Completely Rebuilt */
-            <motion.div
-              key="insights"
-              className="space-y-6"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-            >
-              {console.log("🎯 Rendering insights view with data:", aiInsights)}
-
-              {/* Loading State */}
-              {insightsLoading && !aiInsights && (
-                <div className="flex items-center justify-center py-20">
-                  <div className="text-center">
-                    <div className="relative">
-                      <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mx-auto mb-4"></div>
-                      <Brain className="absolute inset-0 m-auto w-6 h-6 text-purple-600 animate-pulse" />
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-400 font-medium">
-                      Analyzing your learning patterns with AI...
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Has Data - Show Insights */}
-              {!insightsLoading && aiInsights && aiInsights.hasData && (
-                <>
-                  {/* Main Insights Row */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <AIInsightsCard
-                      insights={aiInsights}
-                      onRefresh={() => fetchAIInsights(true)}
-                      isLoading={insightsLoading}
-                    />
-                    <PeerComparisonCard
-                      comparison={aiInsights.peerComparison}
-                    />
-                  </div>
-
-                  {/* Learning Patterns Row */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <LearningPatternsCard patterns={aiInsights.patterns} />
-                    <CategoryPerformance
-                      categories={aiInsights.analytics?.byCategory}
-                    />
-                  </div>
-
-                  {/* Weekly Activity */}
-                  {aiInsights.analytics?.weeklyTrend && (
-                    <WeeklyActivityCard
-                      dailyActivity={aiInsights.analytics.dailyActivity}
-                      weeklyTrend={aiInsights.analytics.weeklyTrend}
-                    />
-                  )}
-                </>
-              )}
-
-              {/* No Data State */}
-              {!insightsLoading &&
-                (!aiInsights || aiInsights.hasData === false) && (
-                  <div className="text-center py-20">
-                    <Sparkles className="w-16 h-16 mx-auto mb-4 text-purple-400" />
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                      Unlock AI-Powered Insights
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-6">
-                      {aiInsights?.message ||
-                        "Take your first quiz to unlock personalized learning insights powered by AI!"}
-                    </p>
-                    <Link to="/quizzes">
-                      <Button className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700">
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Start Your First Quiz
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-            </motion.div>
           ) : viewMode === "study-buddy" ? (
             /* AI Study Buddy Chat View */
             <motion.div
@@ -1952,28 +1728,6 @@ export default function Dashboard() {
               exit="hidden"
             >
               <StudyGoals />
-            </motion.div>
-          ) : viewMode === "quests" ? (
-            /* Quest System View */
-            <motion.div
-              key="quests"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-            >
-              <QuestMap />
-            </motion.div>
-          ) : viewMode === "world-events" ? (
-            /* World Events View */
-            <motion.div
-              key="world-events"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-            >
-              <WorldEventsPage />
             </motion.div>
           ) : viewMode === "time-travel" ? (
             /* Time Travel Mode View */

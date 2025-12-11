@@ -32,6 +32,8 @@ const QuestMap = () => {
   const [loading, setLoading] = useState(false);
   const [selectedQuest, setSelectedQuest] = useState(null);
   const [showNPCDialog, setShowNPCDialog] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const questsPerPage = 12;
   const { success, error: showError } = useToast();
   const navigate = useNavigate();
 
@@ -155,6 +157,7 @@ const QuestMap = () => {
 
   useEffect(() => {
     if (selectedRealm) {
+      setCurrentPage(1); // Reset to first page when changing realms
       fetchRealmQuests();
     }
   }, [selectedRealm]);
@@ -178,16 +181,23 @@ const QuestMap = () => {
       if (response.ok) {
         const data = await response.json();
         const questsArray = Array.isArray(data.data) ? data.data : [];
-        setQuests(questsArray);
+        if (questsArray.length === 0) {
+          const demoQuests = await generateDemoQuests(selectedRealm);
+          setQuests(demoQuests);
+        } else {
+          setQuests(questsArray);
+        }
       } else {
         console.error("Failed to load quests, status:", response.status);
-        setQuests([]);
-        showError("Failed to load quests");
+        const demoQuests = await generateDemoQuests(selectedRealm);
+        setQuests(demoQuests);
+        showError("Loading demo quests (live data unavailable)");
       }
     } catch (error) {
       console.error("Error fetching quests:", error);
-      setQuests([]);
-      showError("Failed to load quests");
+      const demoQuests = await generateDemoQuests(selectedRealm);
+      setQuests(demoQuests);
+      showError("Loading demo quests (live data unavailable)");
     } finally {
       setLoading(false);
     }
@@ -264,6 +274,18 @@ const QuestMap = () => {
   };
 
   const startQuest = async (quest) => {
+    if (quest.isDemo) {
+      // For demo quests, check if they have a linked quiz
+      if (quest.quizId) {
+        success(`🎮 Starting ${quest.title}!`);
+        setShowNPCDialog(false);
+        navigate(`/quiz/${quest.quizId}`);
+        return;
+      } else {
+        showError("Quiz not available yet. Please check back later!");
+        return;
+      }
+    }
     try {
       const token =
         localStorage.getItem("token") || localStorage.getItem("quizwise-token");
@@ -298,6 +320,133 @@ const QuestMap = () => {
   const openQuestDetails = (quest) => {
     setSelectedQuest(quest);
     setShowNPCDialog(true);
+  };
+
+  const demoQuestTypes = ["main", "side_quest", "battle", "boss", "challenge"];
+  const demoDifficulties = ["Easy", "Medium", "Hard"];
+
+  const generateDemoQuests = async (realmId) => {
+    try {
+      // Fetch quizzes for this realm from database
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("quizwise-token");
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+      const response = await fetch(
+        `${API_URL}/api/quizzes?search=${encodeURIComponent(realmId)}&limit=50`,
+        {
+          headers: { "x-auth-token": token },
+        }
+      );
+
+      let quizzes = [];
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Quiz API response:", data);
+        quizzes = Array.isArray(data.data?.quizzes) ? data.data.quizzes : [];
+        // Filter to only quizzes that match the realm exactly by title or tags
+        quizzes = quizzes
+          .filter(
+            (q) =>
+              q.title?.includes(realmId) ||
+              q.tags?.some((tag) => tag === realmId)
+          )
+          .slice(0, 20);
+        console.log(
+          `Found ${quizzes.length} quizzes for ${realmId}:`,
+          quizzes.map((q) => q.title)
+        );
+      } else {
+        console.error("Failed to fetch quizzes:", response.status);
+      }
+
+      const quests = [];
+      for (let i = 1; i <= 20; i++) {
+        const chapter = Math.floor((i - 1) / 5) + 1;
+        const questType = demoQuestTypes[(i - 1) % demoQuestTypes.length];
+        const difficulty = demoDifficulties[(i - 1) % demoDifficulties.length];
+
+        // Find matching quiz for this quest
+        const matchingQuiz = quizzes.find(
+          (q) =>
+            q.title === `${realmId} Quest ${i} Quiz` ||
+            q.title?.includes(`Quest ${i}`)
+        );
+
+        if (i === 1 && matchingQuiz) {
+          console.log(
+            `Matched quiz for quest ${i}:`,
+            matchingQuiz.title,
+            "ID:",
+            matchingQuiz._id
+          );
+        }
+
+        quests.push({
+          isDemo: true,
+          questId: `demo-${realmId}-${i}`,
+          quizId: matchingQuiz?._id || matchingQuiz?.id || null, // Link to actual quiz
+          chapter: `${chapter}`,
+          chapterTitle: `${realmId} Mastery`,
+          title: `${realmId} Quest ${i}`,
+          description:
+            matchingQuiz?.description ||
+            `Complete a themed challenge in ${realmId}. Demo quest ${i} of 20.`,
+          questType,
+          difficulty,
+          estimatedTime: 10 + (i % 10),
+          rewards: { xp: 50 + (i % 50), gold: 0 },
+          isLocked: false,
+          isActive: true,
+          storyline: `Prove your skills in ${realmId} by finishing this training quest.`,
+          npc: {
+            name: "Guide NPC",
+            role: "Realm Mentor",
+            dialogue: {
+              introduction:
+                "Welcome to the demo quest. Complete the tasks to prepare for live quests!",
+            },
+            avatarUrl: "🧙",
+          },
+        });
+      }
+      return quests;
+    } catch (error) {
+      console.error("Error generating demo quests:", error);
+      // Fallback to basic demo quests without quiz IDs
+      const quests = [];
+      for (let i = 1; i <= 20; i++) {
+        const chapter = Math.floor((i - 1) / 5) + 1;
+        const questType = demoQuestTypes[(i - 1) % demoQuestTypes.length];
+        const difficulty = demoDifficulties[(i - 1) % demoDifficulties.length];
+        quests.push({
+          isDemo: true,
+          questId: `demo-${realmId}-${i}`,
+          quizId: null,
+          chapter: `${chapter}`,
+          chapterTitle: `${realmId} Mastery`,
+          title: `${realmId} Quest ${i}`,
+          description: `Complete a themed challenge in ${realmId}. Demo quest ${i} of 20.`,
+          questType,
+          difficulty,
+          estimatedTime: 10 + (i % 10),
+          rewards: { xp: 50 + (i % 50), gold: 0 },
+          isLocked: false,
+          isActive: true,
+          storyline: `Prove your skills in ${realmId} by finishing this training quest.`,
+          npc: {
+            name: "Guide NPC",
+            role: "Realm Mentor",
+            dialogue: {
+              introduction:
+                "Welcome to the demo quest. Complete the tasks to prepare for live quests!",
+            },
+            avatarUrl: "🧙",
+          },
+        });
+      }
+      return quests;
+    }
   };
 
   // Group quests by chapter - safely handle if quests is not an array
@@ -386,98 +535,145 @@ const QuestMap = () => {
         <div className="space-y-8">
           {Object.entries(questsByChapter)
             .sort(([a], [b]) => parseInt(a) - parseInt(b))
-            .map(([chapter, chapterQuests]) => (
-              <div key={chapter}>
-                <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                  <Book className="w-6 h-6 text-purple-600" />
-                  Chapter {chapter}: {chapterQuests[0]?.chapterTitle}
-                </h3>
+            .map(([chapter, chapterQuests]) => {
+              // Paginate quests within chapters
+              const startIdx = (currentPage - 1) * questsPerPage;
+              const endIdx = currentPage * questsPerPage;
+              const paginatedQuests = quests.slice(startIdx, endIdx);
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {chapterQuests.map((quest) => {
-                    const status = getQuestStatus(quest.questId);
-                    const isLocked = quest.isLocked || !quest.isActive;
-                    const isCompleted = status === "completed";
-                    const isInProgress = status === "in_progress";
+              // Only show chapter if it has quests on current page
+              const chapterQuestsOnPage = chapterQuests.filter((q) =>
+                paginatedQuests.some((pq) => pq.questId === q.questId)
+              );
 
-                    return (
-                      <motion.div
-                        key={quest.questId}
-                        whileHover={!isLocked ? { scale: 1.02 } : {}}
-                      >
-                        <Card
-                          className={`p-4 cursor-pointer border-2 transition-all ${
-                            isCompleted
-                              ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                              : isInProgress
-                              ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20"
-                              : isLocked
-                              ? "opacity-60 cursor-not-allowed"
-                              : "hover:border-purple-500"
-                          }`}
-                          onClick={() => !isLocked && openQuestDetails(quest)}
+              if (chapterQuestsOnPage.length === 0) return null;
+
+              return (
+                <div key={chapter}>
+                  <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <Book className="w-6 h-6 text-purple-600" />
+                    Chapter {chapter}: {chapterQuests[0]?.chapterTitle}
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {chapterQuestsOnPage.map((quest) => {
+                      const status = getQuestStatus(quest.questId);
+                      const isLocked = quest.isLocked || !quest.isActive;
+                      const isCompleted = status === "completed";
+                      const isInProgress = status === "in_progress";
+
+                      return (
+                        <motion.div
+                          key={quest.questId}
+                          whileHover={!isLocked ? { scale: 1.02 } : {}}
                         >
-                          {/* Quest Header */}
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              {getQuestIcon(quest.questType)}
-                              <Badge
-                                className={getDifficultyColor(quest.difficulty)}
-                              >
-                                {quest.difficulty}
-                              </Badge>
+                          <Card
+                            className={`p-4 cursor-pointer border-2 transition-all ${
+                              isCompleted
+                                ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                                : isInProgress
+                                ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20"
+                                : isLocked
+                                ? "opacity-60 cursor-not-allowed"
+                                : "hover:border-purple-500"
+                            }`}
+                            onClick={() => !isLocked && openQuestDetails(quest)}
+                          >
+                            {/* Quest Header */}
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                {getQuestIcon(quest.questType)}
+                                <Badge
+                                  className={getDifficultyColor(
+                                    quest.difficulty
+                                  )}
+                                >
+                                  {quest.difficulty}
+                                </Badge>
+                              </div>
+                              {isLocked && (
+                                <Lock className="w-5 h-5 text-gray-400" />
+                              )}
+                              {isCompleted && (
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                              )}
                             </div>
-                            {isLocked && (
-                              <Lock className="w-5 h-5 text-gray-400" />
-                            )}
+
+                            {/* Quest Title */}
+                            <h4 className="font-bold text-lg mb-2">
+                              {quest.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">
+                              {quest.description}
+                            </p>
+
+                            {/* Quest Info */}
+                            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {quest.estimatedTime}m
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Star className="w-4 h-4 text-yellow-500" />
+                                {quest.rewards?.xp} XP
+                              </div>
+                            </div>
+
+                            {/* Status Badge */}
                             {isCompleted && (
-                              <CheckCircle className="w-5 h-5 text-green-600" />
+                              <Badge className="w-full justify-center bg-green-100 text-green-800">
+                                ✓ Completed
+                              </Badge>
                             )}
-                          </div>
-
-                          {/* Quest Title */}
-                          <h4 className="font-bold text-lg mb-2">
-                            {quest.title}
-                          </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">
-                            {quest.description}
-                          </p>
-
-                          {/* Quest Info */}
-                          <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {quest.estimatedTime}m
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 text-yellow-500" />
-                              {quest.rewards?.xp} XP
-                            </div>
-                          </div>
-
-                          {/* Status Badge */}
-                          {isCompleted && (
-                            <Badge className="w-full justify-center bg-green-100 text-green-800">
-                              ✓ Completed
-                            </Badge>
-                          )}
-                          {isInProgress && (
-                            <Badge className="w-full justify-center bg-yellow-100 text-yellow-800">
-                              In Progress
-                            </Badge>
-                          )}
-                          {!isCompleted && !isInProgress && !isLocked && (
-                            <Badge className="w-full justify-center bg-purple-100 text-purple-800">
-                              Available
-                            </Badge>
-                          )}
-                        </Card>
-                      </motion.div>
-                    );
-                  })}
+                            {isInProgress && (
+                              <Badge className="w-full justify-center bg-yellow-100 text-yellow-800">
+                                In Progress
+                              </Badge>
+                            )}
+                            {!isCompleted && !isInProgress && !isLocked && (
+                              <Badge className="w-full justify-center bg-purple-100 text-purple-800">
+                                Available
+                              </Badge>
+                            )}
+                          </Card>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+
+          {/* Pagination Controls */}
+          {quests.length > questsPerPage && (
+            <div className="flex justify-center items-center gap-4 mt-8">
+              <Button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                variant="outline"
+                className="disabled:opacity-50"
+              >
+                ← Previous
+              </Button>
+              <span className="text-gray-700 dark:text-gray-300 font-medium">
+                Page {currentPage} of {Math.ceil(quests.length / questsPerPage)}
+              </span>
+              <Button
+                onClick={() =>
+                  setCurrentPage((p) =>
+                    Math.min(Math.ceil(quests.length / questsPerPage), p + 1)
+                  )
+                }
+                disabled={
+                  currentPage === Math.ceil(quests.length / questsPerPage)
+                }
+                variant="outline"
+                className="disabled:opacity-50"
+              >
+                Next →
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -488,108 +684,115 @@ const QuestMap = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto"
             onClick={() => setShowNPCDialog(false)}
           >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-            >
-              <Card className="border-0">
-                {/* NPC Section */}
-                {selectedQuest.npc && (
-                  <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-3xl">
-                        {selectedQuest.npc.avatarUrl || "👤"}
+            <div className="flex items-center justify-center min-h-full w-full py-8">
+              <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              >
+                <Card className="border-0">
+                  {/* NPC Section */}
+                  {selectedQuest.npc && (
+                    <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-3xl">
+                          {selectedQuest.npc.avatarUrl || "👤"}
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-bold">
+                            {selectedQuest.npc.name}
+                          </h3>
+                          <p className="opacity-90">{selectedQuest.npc.role}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-2xl font-bold">
-                          {selectedQuest.npc.name}
-                        </h3>
-                        <p className="opacity-90">{selectedQuest.npc.role}</p>
+                      <div className="bg-white/10 p-4 rounded-lg">
+                        <MessageSquare className="w-5 h-5 mb-2" />
+                        <p className="italic">
+                          {selectedQuest.npc.dialogue?.introduction}
+                        </p>
                       </div>
                     </div>
-                    <div className="bg-white/10 p-4 rounded-lg">
-                      <MessageSquare className="w-5 h-5 mb-2" />
-                      <p className="italic">
-                        {selectedQuest.npc.dialogue?.introduction}
+                  )}
+
+                  <div className="p-6 space-y-6">
+                    {/* Quest Details */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        {getQuestIcon(selectedQuest.questType)}
+                        <h3 className="text-2xl font-bold">
+                          {selectedQuest.title}
+                        </h3>
+                      </div>
+                      <p className="text-gray-700 dark:text-gray-300">
+                        {selectedQuest.description}
                       </p>
                     </div>
-                  </div>
-                )}
 
-                <div className="p-6 space-y-6">
-                  {/* Quest Details */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      {getQuestIcon(selectedQuest.questType)}
-                      <h3 className="text-2xl font-bold">
-                        {selectedQuest.title}
-                      </h3>
+                    {/* Storyline */}
+                    <div>
+                      <h4 className="font-semibold flex items-center gap-2 mb-2">
+                        <Scroll className="w-4 h-4" />
+                        Storyline
+                      </h4>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {selectedQuest.storyline}
+                      </p>
                     </div>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {selectedQuest.description}
-                    </p>
-                  </div>
 
-                  {/* Storyline */}
-                  <div>
-                    <h4 className="font-semibold flex items-center gap-2 mb-2">
-                      <Scroll className="w-4 h-4" />
-                      Storyline
-                    </h4>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {selectedQuest.storyline}
-                    </p>
-                  </div>
-
-                  {/* Rewards */}
-                  <div>
-                    <h4 className="font-semibold flex items-center gap-2 mb-3">
-                      <Gift className="w-4 h-4" />
-                      Rewards
-                    </h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
-                        <Star className="w-5 h-5 text-yellow-500 mb-1" />
-                        <div className="font-bold">
-                          {selectedQuest.rewards?.xp} XP
-                        </div>
-                      </div>
-                      {selectedQuest.rewards?.gold > 0 && (
-                        <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
-                          <Trophy className="w-5 h-5 text-amber-500 mb-1" />
+                    {/* Rewards */}
+                    <div>
+                      <h4 className="font-semibold flex items-center gap-2 mb-3">
+                        <Gift className="w-4 h-4" />
+                        Rewards
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
+                          <Star className="w-5 h-5 text-yellow-500 mb-1" />
                           <div className="font-bold">
-                            {selectedQuest.rewards?.gold} Gold
+                            {selectedQuest.rewards?.xp} XP
                           </div>
                         </div>
-                      )}
+                        {selectedQuest.rewards?.gold > 0 && (
+                          <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
+                            <Trophy className="w-5 h-5 text-amber-500 mb-1" />
+                            <div className="font-bold">
+                              {selectedQuest.rewards?.gold} Gold
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => startQuest(selectedQuest)}
+                        disabled={selectedQuest.isDemo && !selectedQuest.quizId}
+                        className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        {selectedQuest.isDemo
+                          ? selectedQuest.quizId
+                            ? "Start Quest 🎮"
+                            : "Quiz Not Available"
+                          : "Start Quest"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowNPCDialog(false)}
+                      >
+                        Cancel
+                      </Button>
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={() => startQuest(selectedQuest)}
-                      className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Start Quest
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowNPCDialog(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
+                </Card>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

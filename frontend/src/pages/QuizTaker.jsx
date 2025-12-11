@@ -192,6 +192,72 @@ export default function QuizTaker() {
             const submitData = await submitRes.json();
             console.log("✅ Quiz result submitted successfully:", submitData);
 
+            // Complete quest if this was a quest quiz
+            try {
+              // Check if quiz has realm tag (realm quest)
+              if (quiz.tags && quiz.tags.length > 0) {
+                const realmName = quiz.tags.find(
+                  (tag) =>
+                    tag.includes("Kingdom") ||
+                    tag.includes("Universe") ||
+                    tag.includes("Lab") ||
+                    tag.includes("Forest") ||
+                    tag.includes("Hub") ||
+                    tag.includes("Archives") ||
+                    tag.includes("Realm") ||
+                    tag.includes("Valley") ||
+                    tag.includes("Wizardry") ||
+                    tag.includes("Sanctuary") ||
+                    tag.includes("Fortress") ||
+                    tag.includes("Citadel") ||
+                    tag.includes("Highlands")
+                );
+
+                // Extract quest number from title like "Mathematics Kingdom Quest 1 Quiz"
+                const questMatch = quiz.title?.match(/Quest (\d+)/);
+                if (realmName && questMatch) {
+                  const questId = `demo-${realmName}-${questMatch[1]}`;
+                  console.log("🏆 Completing quest:", questId);
+
+                  const completeRes = await fetch(
+                    `${API_URL}/api/gamification/quests/${encodeURIComponent(
+                      questId
+                    )}/complete`,
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "x-auth-token": token,
+                      },
+                      body: JSON.stringify({
+                        score: score,
+                        maxScore: quiz.questions.length,
+                        timeTaken: Math.floor((now - startTime) / 1000),
+                        resultId: submitData.data?._id || submitData.resultId,
+                      }),
+                    }
+                  );
+
+                  if (completeRes.ok) {
+                    console.log("✅ Quest marked as complete!");
+                  } else if (completeRes.status === 404) {
+                    // Demo quests are not stored server-side; ignore the missing quest gracefully
+                    console.warn(
+                      "⚠️ Quest completion skipped: demo quest not registered in gamification service"
+                    );
+                  } else {
+                    console.warn(
+                      "⚠️ Quest completion failed:",
+                      completeRes.status,
+                      await completeRes.text()
+                    );
+                  }
+                }
+              }
+            } catch (questErr) {
+              console.warn("⚠️ Failed to mark quest complete:", questErr);
+            }
+
             // Result-service automatically notifies gamification-service
             // Just refresh UI and show success message
             if (refreshData) {
@@ -350,7 +416,7 @@ export default function QuizTaker() {
                   className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur-xl opacity-30"
                 />
               </motion.div>
-              
+
               {/* Floating sparkles */}
               {[...Array(6)].map((_, i) => (
                 <motion.div
@@ -445,10 +511,15 @@ export default function QuizTaker() {
             <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
               Oops! Something went wrong
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-8 px-4">{error}</p>
+            <p className="text-gray-600 dark:text-gray-300 mb-8 px-4">
+              {error}
+            </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <Button
                   onClick={() => window.location.reload()}
                   className="w-full sm:w-auto bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg px-8"
@@ -457,7 +528,10 @@ export default function QuizTaker() {
                   Try Again
                 </Button>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <Button
                   variant="outline"
                   onClick={() => window.history.back()}
@@ -485,8 +559,14 @@ export default function QuizTaker() {
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900 relative overflow-hidden">
         <Confetti
           recycle={false}
-          numberOfPieces={isExcellent ? 400 : isGood ? 200 : isPassing ? 100 : 30}
-          colors={isExcellent ? ['#fbbf24', '#f59e0b', '#d97706', '#f472b6', '#c084fc'] : undefined}
+          numberOfPieces={
+            isExcellent ? 400 : isGood ? 200 : isPassing ? 100 : 30
+          }
+          colors={
+            isExcellent
+              ? ["#fbbf24", "#f59e0b", "#d97706", "#f472b6", "#c084fc"]
+              : undefined
+          }
         />
 
         {/* Animated background decorations */}
@@ -507,34 +587,35 @@ export default function QuizTaker() {
             transition={{ duration: 25, repeat: Infinity }}
             className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl"
           />
-          
+
           {/* Floating achievement icons */}
-          {isExcellent && [...Array(8)].map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ y: "100vh", opacity: 0 }}
-              animate={{
-                y: "-100vh",
-                opacity: [0, 1, 1, 0],
-                x: Math.sin(i) * 100,
-              }}
-              transition={{
-                duration: 4 + Math.random() * 2,
-                repeat: Infinity,
-                delay: i * 0.5,
-              }}
-              className="absolute"
-              style={{ left: `${10 + i * 12}%` }}
-            >
-              {i % 3 === 0 ? (
-                <Star className="w-8 h-8 text-amber-400/60" />
-              ) : i % 3 === 1 ? (
-                <Trophy className="w-8 h-8 text-yellow-400/60" />
-              ) : (
-                <Award className="w-8 h-8 text-purple-400/60" />
-              )}
-            </motion.div>
-          ))}
+          {isExcellent &&
+            [...Array(8)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ y: "100vh", opacity: 0 }}
+                animate={{
+                  y: "-100vh",
+                  opacity: [0, 1, 1, 0],
+                  x: Math.sin(i) * 100,
+                }}
+                transition={{
+                  duration: 4 + Math.random() * 2,
+                  repeat: Infinity,
+                  delay: i * 0.5,
+                }}
+                className="absolute"
+                style={{ left: `${10 + i * 12}%` }}
+              >
+                {i % 3 === 0 ? (
+                  <Star className="w-8 h-8 text-amber-400/60" />
+                ) : i % 3 === 1 ? (
+                  <Trophy className="w-8 h-8 text-yellow-400/60" />
+                ) : (
+                  <Award className="w-8 h-8 text-purple-400/60" />
+                )}
+              </motion.div>
+            ))}
         </div>
 
         <div className="relative z-10 flex items-center justify-center min-h-screen p-4 py-12">
@@ -553,7 +634,12 @@ export default function QuizTaker() {
                 <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 0.3, type: "spring", stiffness: 150, damping: 15 }}
+                  transition={{
+                    delay: 0.3,
+                    type: "spring",
+                    stiffness: 150,
+                    damping: 15,
+                  }}
                   className="relative"
                 >
                   <div className="relative inline-block mx-auto">
@@ -570,7 +656,7 @@ export default function QuizTaker() {
                     >
                       <Trophy className="w-20 h-20 mx-auto text-amber-500" />
                     </motion.div>
-                    
+
                     {/* Sparkle effects around trophy */}
                     {[...Array(6)].map((_, i) => (
                       <motion.div
@@ -587,8 +673,12 @@ export default function QuizTaker() {
                         }}
                         className="absolute"
                         style={{
-                          top: `${50 + Math.sin(i * 60 * Math.PI / 180) * 60}%`,
-                          left: `${50 + Math.cos(i * 60 * Math.PI / 180) * 60}%`,
+                          top: `${
+                            50 + Math.sin((i * 60 * Math.PI) / 180) * 60
+                          }%`,
+                          left: `${
+                            50 + Math.cos((i * 60 * Math.PI) / 180) * 60
+                          }%`,
                           transform: "translate(-50%, -50%)",
                         }}
                       >
@@ -606,7 +696,13 @@ export default function QuizTaker() {
                   className="text-center"
                 >
                   <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-3">
-                    {isExcellent ? "🎉 Outstanding!" : isGood ? "👏 Great Job!" : isPassing ? "💪 Good Effort!" : "📚 Keep Learning!"}
+                    {isExcellent
+                      ? "🎉 Outstanding!"
+                      : isGood
+                      ? "👏 Great Job!"
+                      : isPassing
+                      ? "💪 Good Effort!"
+                      : "📚 Keep Learning!"}
                   </h1>
                   <p className="text-xl text-gray-600 dark:text-gray-300">
                     You've completed "{quiz.title}"
@@ -620,21 +716,28 @@ export default function QuizTaker() {
                   transition={{ delay: 0.7, type: "spring" }}
                   className="relative"
                 >
-                  <div className={`
+                  <div
+                    className={`
                     relative p-8 rounded-3xl border-2 mx-auto max-w-sm
-                    ${isExcellent 
-                      ? "bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 border-amber-300 dark:border-amber-600" 
-                      : isGood 
-                      ? "bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 border-green-300 dark:border-green-600"
-                      : isPassing
-                      ? "bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 border-blue-300 dark:border-blue-600"
-                      : "bg-gradient-to-br from-orange-50 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 border-orange-300 dark:border-orange-600"
+                    ${
+                      isExcellent
+                        ? "bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 border-amber-300 dark:border-amber-600"
+                        : isGood
+                        ? "bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 border-green-300 dark:border-green-600"
+                        : isPassing
+                        ? "bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 border-blue-300 dark:border-blue-600"
+                        : "bg-gradient-to-br from-orange-50 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 border-orange-300 dark:border-orange-600"
                     }
-                  `}>
+                  `}
+                  >
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      transition={{ delay: 0.9, type: "spring", stiffness: 200 }}
+                      transition={{
+                        delay: 0.9,
+                        type: "spring",
+                        stiffness: 200,
+                      }}
                     >
                       <div className="text-7xl md:text-8xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                         {percentage}%
@@ -655,23 +758,39 @@ export default function QuizTaker() {
                 >
                   <div className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 rounded-2xl p-5 text-center border border-green-200 dark:border-green-800">
                     <CheckCircle className="w-8 h-8 mx-auto text-green-500 mb-2" />
-                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">{score}</div>
-                    <div className="text-sm font-medium text-green-700 dark:text-green-300">Correct</div>
+                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                      {score}
+                    </div>
+                    <div className="text-sm font-medium text-green-700 dark:text-green-300">
+                      Correct
+                    </div>
                   </div>
                   <div className="bg-gradient-to-br from-red-50 to-pink-100 dark:from-red-900/30 dark:to-pink-900/30 rounded-2xl p-5 text-center border border-red-200 dark:border-red-800">
                     <XCircle className="w-8 h-8 mx-auto text-red-500 mb-2" />
-                    <div className="text-3xl font-bold text-red-600 dark:text-red-400">{quiz.questions.length - score}</div>
-                    <div className="text-sm font-medium text-red-700 dark:text-red-300">Incorrect</div>
+                    <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+                      {quiz.questions.length - score}
+                    </div>
+                    <div className="text-sm font-medium text-red-700 dark:text-red-300">
+                      Incorrect
+                    </div>
                   </div>
                   <div className="bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 rounded-2xl p-5 text-center border border-amber-200 dark:border-amber-800">
                     <Zap className="w-8 h-8 mx-auto text-amber-500 mb-2" />
-                    <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">+{score * 10}</div>
-                    <div className="text-sm font-medium text-amber-700 dark:text-amber-300">XP Earned</div>
+                    <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">
+                      +{score * 10}
+                    </div>
+                    <div className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                      XP Earned
+                    </div>
                   </div>
                   <div className="bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-900/30 dark:to-violet-900/30 rounded-2xl p-5 text-center border border-purple-200 dark:border-purple-800">
                     <Target className="w-8 h-8 mx-auto text-purple-500 mb-2" />
-                    <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{percentage}%</div>
-                    <div className="text-sm font-medium text-purple-700 dark:text-purple-300">Accuracy</div>
+                    <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                      {percentage}%
+                    </div>
+                    <div className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                      Accuracy
+                    </div>
                   </div>
                 </motion.div>
 
@@ -682,7 +801,10 @@ export default function QuizTaker() {
                   transition={{ delay: 1.2 }}
                   className="flex flex-col sm:flex-row justify-center gap-4 pt-4"
                 >
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     <Button
                       onClick={restartQuiz}
                       size="lg"
@@ -692,7 +814,10 @@ export default function QuizTaker() {
                       Play Again
                     </Button>
                   </motion.div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     <Button
                       variant="outline"
                       size="lg"
@@ -703,7 +828,10 @@ export default function QuizTaker() {
                       Leaderboard
                     </Button>
                   </motion.div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     <Button
                       variant="ghost"
                       size="lg"
@@ -768,7 +896,7 @@ export default function QuizTaker() {
           <Card className="shadow-2xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl overflow-hidden">
             {/* Gradient accent bar */}
             <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
-            
+
             <CardHeader className="pb-4 pt-6">
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                 <div className="flex-1">
@@ -786,20 +914,27 @@ export default function QuizTaker() {
                   <CardDescription className="text-base flex items-center gap-4 flex-wrap">
                     <span className="flex items-center gap-2">
                       <Target className="w-4 h-4 text-indigo-500" />
-                      Question {currentQuestionIndex + 1} of {quiz.questions.length}
+                      Question {currentQuestionIndex + 1} of{" "}
+                      {quiz.questions.length}
                     </span>
                     <span className="flex items-center gap-2">
                       <Flame className="w-4 h-4 text-orange-500" />
-                      Score: <span className="font-bold text-indigo-600 dark:text-indigo-400">{score}</span>
+                      Score:{" "}
+                      <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                        {score}
+                      </span>
                     </span>
                   </CardDescription>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   {/* Animated timer */}
                   <motion.div
                     animate={timeLeft <= 10 ? { scale: [1, 1.05, 1] } : {}}
-                    transition={{ duration: 0.5, repeat: timeLeft <= 10 ? Infinity : 0 }}
+                    transition={{
+                      duration: 0.5,
+                      repeat: timeLeft <= 10 ? Infinity : 0,
+                    }}
                     className={cn(
                       "flex items-center gap-2 px-5 py-3 rounded-2xl font-bold shadow-xl transition-all duration-300 border-2",
                       timeLeft <= 10
@@ -810,10 +945,15 @@ export default function QuizTaker() {
                     )}
                   >
                     <Clock className="w-5 h-5" />
-                    <span className="text-xl font-black tabular-nums">{timeLeft}s</span>
+                    <span className="text-xl font-black tabular-nums">
+                      {timeLeft}s
+                    </span>
                   </motion.div>
-                  
-                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
                     <Button
                       variant="ghost"
                       size="icon"
@@ -869,10 +1009,16 @@ export default function QuizTaker() {
                       <Clock className="w-4 h-4" />
                       Time Remaining
                     </span>
-                    <span className={cn(
-                      "font-bold",
-                      timeLeft <= 10 ? "text-red-500" : timeLeft <= 20 ? "text-amber-500" : "text-emerald-500"
-                    )}>
+                    <span
+                      className={cn(
+                        "font-bold",
+                        timeLeft <= 10
+                          ? "text-red-500"
+                          : timeLeft <= 20
+                          ? "text-amber-500"
+                          : "text-emerald-500"
+                      )}
+                    >
                       {timeLeft}s
                     </span>
                   </div>
@@ -947,8 +1093,8 @@ export default function QuizTaker() {
                     hidden: { opacity: 0 },
                     visible: {
                       opacity: 1,
-                      transition: { staggerChildren: 0.1, delayChildren: 0.2 }
-                    }
+                      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+                    },
                   }}
                 >
                   {currentQuestion.options.map((option, index) => {
@@ -961,13 +1107,15 @@ export default function QuizTaker() {
                         key={index}
                         variants={{
                           hidden: { opacity: 0, y: 20 },
-                          visible: { opacity: 1, y: 0 }
+                          visible: { opacity: 1, y: 0 },
                         }}
                       >
                         <motion.button
                           onClick={() => handleAnswerSelect(option)}
                           disabled={!!selectedAnswer}
-                          whileHover={!selectedAnswer ? { scale: 1.02, x: 8 } : {}}
+                          whileHover={
+                            !selectedAnswer ? { scale: 1.02, x: 8 } : {}
+                          }
                           whileTap={!selectedAnswer ? { scale: 0.98 } : {}}
                           className={cn(
                             "w-full h-auto p-5 md:p-6 text-left rounded-2xl border-2 transition-all duration-300 flex items-center justify-between group",
@@ -981,32 +1129,36 @@ export default function QuizTaker() {
                           )}
                         >
                           <div className="flex items-center gap-4">
-                            <span className={cn(
-                              "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all",
-                              showResult
-                                ? isCorrect
-                                  ? "bg-green-500 text-white"
-                                  : isSelected
-                                  ? "bg-red-500 text-white"
-                                  : "bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
-                                : "bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 text-indigo-600 dark:text-indigo-400 group-hover:from-indigo-500 group-hover:to-purple-600 group-hover:text-white"
-                            )}>
+                            <span
+                              className={cn(
+                                "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all",
+                                showResult
+                                  ? isCorrect
+                                    ? "bg-green-500 text-white"
+                                    : isSelected
+                                    ? "bg-red-500 text-white"
+                                    : "bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
+                                  : "bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 text-indigo-600 dark:text-indigo-400 group-hover:from-indigo-500 group-hover:to-purple-600 group-hover:text-white"
+                              )}
+                            >
                               {String.fromCharCode(65 + index)}
                             </span>
-                            <span className={cn(
-                              "text-base md:text-lg font-medium",
-                              showResult
-                                ? isCorrect
-                                  ? "text-green-800 dark:text-green-200"
-                                  : isSelected
-                                  ? "text-red-800 dark:text-red-200"
-                                  : "text-gray-500 dark:text-gray-400"
-                                : "text-gray-800 dark:text-gray-200"
-                            )}>
+                            <span
+                              className={cn(
+                                "text-base md:text-lg font-medium",
+                                showResult
+                                  ? isCorrect
+                                    ? "text-green-800 dark:text-green-200"
+                                    : isSelected
+                                    ? "text-red-800 dark:text-red-200"
+                                    : "text-gray-500 dark:text-gray-400"
+                                  : "text-gray-800 dark:text-gray-200"
+                              )}
+                            >
                               {option}
                             </span>
                           </div>
-                          
+
                           {showResult && (
                             <motion.div
                               initial={{ scale: 0 }}
@@ -1016,12 +1168,16 @@ export default function QuizTaker() {
                               {isCorrect ? (
                                 <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                                   <CheckCircle className="w-6 h-6" />
-                                  <span className="font-bold text-sm hidden md:inline">Correct!</span>
+                                  <span className="font-bold text-sm hidden md:inline">
+                                    Correct!
+                                  </span>
                                 </div>
                               ) : isSelected ? (
                                 <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
                                   <XCircle className="w-6 h-6" />
-                                  <span className="font-bold text-sm hidden md:inline">Wrong</span>
+                                  <span className="font-bold text-sm hidden md:inline">
+                                    Wrong
+                                  </span>
                                 </div>
                               ) : null}
                             </motion.div>
@@ -1040,7 +1196,10 @@ export default function QuizTaker() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5, type: "spring" }}
                   >
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
                       <Button
                         onClick={handleNextQuestion}
                         size="lg"

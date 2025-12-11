@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { 
-  Map, 
-  Book, 
-  Trophy, 
-  Star, 
+import {
+  Map,
+  Book,
+  Trophy,
+  Star,
   Target,
   Crown,
   Zap,
   Award,
-  CheckCircle
+  CheckCircle,
 } from "lucide-react";
 import QuestMap from "../components/Quests/QuestMap";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { Progress } from "../components/ui/Progress";
 
@@ -30,37 +35,107 @@ const QuestPage = () => {
     fetchQuestStats();
   }, []);
 
+  const defaultRealmProgress = [
+    "Mathematics Kingdom",
+    "Physics Universe",
+    "Chemistry Lab",
+    "Biology Forest",
+    "Computer Science Hub",
+    "History Archives",
+    "Language Realm",
+    "Algorithmic Valley",
+    "Web Wizardry",
+    "Data Kingdom",
+    "AI Sanctuary",
+    "System Fortress",
+    "Security Citadel",
+    "Cloud Highlands",
+  ].map((realm) => ({
+    realm,
+    total: 100,
+    completed: 0,
+    inProgress: 0,
+    locked: 100,
+    percentage: 0,
+    stars: 0,
+    maxStars: 100,
+  }));
+
+  const normalizeProgress = (progress) => {
+    if (!Array.isArray(progress) || progress.length === 0) {
+      return defaultRealmProgress;
+    }
+
+    return progress.map((realmProgress, idx) => {
+      const fallback = defaultRealmProgress[idx];
+      const total = realmProgress.total || fallback.total;
+      const completed = realmProgress.completed || 0;
+      const inProgress = realmProgress.inProgress || 0;
+      const locked =
+        realmProgress.locked || Math.max(total - completed - inProgress, 0);
+      const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      return {
+        ...fallback,
+        ...realmProgress,
+        total,
+        completed,
+        inProgress,
+        locked,
+        percentage,
+        maxStars: realmProgress.maxStars || fallback.maxStars,
+        stars: realmProgress.stars || 0,
+      };
+    });
+  };
+
   const fetchQuestStats = async () => {
     try {
-      const token = localStorage.getItem("token") || localStorage.getItem("quizwise-token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("quizwise-token");
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-      const response = await fetch(`${API_URL}/api/gamification/quests/user/progress`, {
-        headers: { "x-auth-token": token },
-      });
+      const response = await fetch(
+        `${API_URL}/api/gamification/quests/user/progress`,
+        {
+          headers: { "x-auth-token": token },
+        }
+      );
 
       console.log("Quest stats response:", response.status, response.ok);
 
       if (response.ok) {
         const data = await response.json();
         console.log("Quest stats data:", data);
-        
+
         if (data.success && data.data) {
-          const progress = data.data;
+          const progress = normalizeProgress(data.data);
           console.log("Progress array:", progress);
-          
-          const completed = progress.reduce((sum, realm) => sum + (realm.completed || 0), 0);
-          const total = progress.reduce((sum, realm) => sum + (realm.total || 0), 0);
-          
-          console.log("Calculated stats - Completed:", completed, "Total:", total);
+
+          const completed = progress.reduce(
+            (sum, realm) => sum + (realm.completed || 0),
+            0
+          );
+          const total = progress.reduce(
+            (sum, realm) => sum + (realm.total || 0),
+            0
+          );
+
+          console.log(
+            "Calculated stats - Completed:",
+            completed,
+            "Total:",
+            total
+          );
           console.log("Sample realm data:", progress[0]);
-          
+
           setStats({
             totalQuests: total || 1400,
             completedQuests: completed,
             totalXP: completed * 100, // Approximate XP
             totalRealms: progress.length,
-            completedRealms: progress.filter(r => r.percentage === 100).length,
+            completedRealms: progress.filter((r) => r.percentage === 100)
+              .length,
             badges: Math.floor(completed / 20),
           });
         }
@@ -70,9 +145,10 @@ const QuestPage = () => {
     }
   };
 
-  const overallProgress = stats.totalQuests > 0 
-    ? Math.round((stats.completedQuests / stats.totalQuests) * 100) 
-    : 0;
+  const overallProgress =
+    stats.totalQuests > 0
+      ? Math.round((stats.completedQuests / stats.totalQuests) * 100)
+      : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-indigo-900/20 p-6">
@@ -95,7 +171,8 @@ const QuestPage = () => {
             </h1>
           </div>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Embark on epic learning journeys across 14 themed realms. Complete quests, earn rewards, and master new skills!
+            Embark on epic learning journeys across 14 themed realms. Complete
+            quests, earn rewards, and master new skills!
           </p>
         </motion.div>
 
