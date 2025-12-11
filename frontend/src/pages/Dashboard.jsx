@@ -565,7 +565,7 @@ export default function Dashboard() {
           </div>
 
           {/* Modern view selector focused on gamified progress */}
-          <div className="flex gap-2 bg-gradient-to-r from-slate-900 via-indigo-900 to-purple-900 text-white p-2 rounded-2xl shadow-xl overflow-x-auto scrollbar-hide border border-white/10">
+          <div className="flex gap-2 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-indigo-900 dark:to-purple-900 text-slate-800 dark:text-white p-2 rounded-2xl shadow-xl overflow-x-auto scrollbar-hide border border-indigo-200/50 dark:border-white/10">
             <motion.button
               onClick={() => {
                 setViewMode("overview");
@@ -575,8 +575,8 @@ export default function Dashboard() {
               aria-pressed={viewMode === "overview"}
               className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "overview"
-                  ? "bg-white/15 shadow-lg backdrop-blur"
-                  : "hover:bg-white/10 text-white/80"
+                  ? "bg-white dark:bg-white/15 shadow-lg backdrop-blur"
+                  : "hover:bg-white/60 dark:hover:bg-white/10 text-slate-700 dark:text-white/80"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -591,8 +591,8 @@ export default function Dashboard() {
               }}
               className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "detailed"
-                  ? "bg-white/15 shadow-lg backdrop-blur"
-                  : "hover:bg-white/10 text-white/80"
+                  ? "bg-white dark:bg-white/15 shadow-lg backdrop-blur"
+                  : "hover:bg-white/60 dark:hover:bg-white/10 text-slate-700 dark:text-white/80"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -607,8 +607,8 @@ export default function Dashboard() {
               }}
               className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "study-buddy"
-                  ? "bg-white/15 shadow-lg backdrop-blur"
-                  : "hover:bg-white/10 text-white/80"
+                  ? "bg-white dark:bg-white/15 shadow-lg backdrop-blur"
+                  : "hover:bg-white/60 dark:hover:bg-white/10 text-slate-700 dark:text-white/80"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -623,8 +623,8 @@ export default function Dashboard() {
               }}
               className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "goals"
-                  ? "bg-white/15 shadow-lg backdrop-blur"
-                  : "hover:bg-white/10 text-white/80"
+                  ? "bg-white dark:bg-white/15 shadow-lg backdrop-blur"
+                  : "hover:bg-white/60 dark:hover:bg-white/10 text-slate-700 dark:text-white/80"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -639,8 +639,8 @@ export default function Dashboard() {
               }}
               className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 whitespace-nowrap ${
                 viewMode === "time-travel"
-                  ? "bg-white/15 shadow-lg backdrop-blur"
-                  : "hover:bg-white/10 text-white/80"
+                  ? "bg-white dark:bg-white/15 shadow-lg backdrop-blur"
+                  : "hover:bg-white/60 dark:hover:bg-white/10 text-slate-700 dark:text-white/80"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

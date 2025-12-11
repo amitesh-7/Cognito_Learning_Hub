@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
+import { Badge } from "../ui/Badge";
 
 const StudyGoals = () => {
   const [goals, setGoals] = useState([]);
@@ -23,7 +24,7 @@ const StudyGoals = () => {
   const [newGoal, setNewGoal] = useState({
     title: "",
     description: "",
-    category: "",
+    category: "custom",
     targetDate: "",
     priority: "medium",
     relatedTopics: [],
@@ -39,7 +40,7 @@ const StudyGoals = () => {
       const token = localStorage.getItem("quizwise-token");
       const response = await fetch(
         `${
-          import.meta.env.VITE_API_URL || "http://localhost:3002"
+          import.meta.env.VITE_API_URL || "http://localhost:3001"
         }/api/study-buddy/goals`,
         {
           headers: { "x-auth-token": token },
@@ -47,7 +48,7 @@ const StudyGoals = () => {
       );
       const data = await response.json();
       if (data.success) {
-        setGoals(data.data.goals || []);
+        setGoals(data.data || []);
       }
     } catch (error) {
       console.error("Error fetching goals:", error);
@@ -59,9 +60,18 @@ const StudyGoals = () => {
   const createGoal = async () => {
     try {
       const token = localStorage.getItem("quizwise-token");
+
+      // Convert priority string to number for backend
+      const priorityMap = { low: 2, medium: 3, high: 5 };
+      const goalData = {
+        ...newGoal,
+        priority: priorityMap[newGoal.priority] || 3,
+        category: newGoal.category || "custom", // Ensure category is never empty
+      };
+
       const response = await fetch(
         `${
-          import.meta.env.VITE_API_URL || "http://localhost:3002"
+          import.meta.env.VITE_API_URL || "http://localhost:3001"
         }/api/study-buddy/goals`,
         {
           method: "POST",
@@ -69,7 +79,7 @@ const StudyGoals = () => {
             "Content-Type": "application/json",
             "x-auth-token": token,
           },
-          body: JSON.stringify(newGoal),
+          body: JSON.stringify(goalData),
         }
       );
       const data = await response.json();
@@ -88,7 +98,7 @@ const StudyGoals = () => {
       const token = localStorage.getItem("quizwise-token");
       const response = await fetch(
         `${
-          import.meta.env.VITE_API_URL || "http://localhost:3002"
+          import.meta.env.VITE_API_URL || "http://localhost:3001"
         }/api/study-buddy/goals/${goalId}`,
         {
           method: "PUT",
@@ -113,7 +123,7 @@ const StudyGoals = () => {
       const token = localStorage.getItem("quizwise-token");
       await fetch(
         `${
-          import.meta.env.VITE_API_URL || "http://localhost:3002"
+          import.meta.env.VITE_API_URL || "http://localhost:3001"
         }/api/study-buddy/goals/${goalId}`,
         {
           method: "DELETE",
@@ -130,7 +140,7 @@ const StudyGoals = () => {
     setNewGoal({
       title: "",
       description: "",
-      category: "",
+      category: "custom",
       targetDate: "",
       priority: "medium",
       relatedTopics: [],
@@ -159,8 +169,30 @@ const StudyGoals = () => {
     });
   };
 
+  const getCategoryLabel = (category) => {
+    const labels = {
+      exam_preparation: "Exam Preparation",
+      skill_mastery: "Skill Mastery",
+      career_goal: "Career Goal",
+      certification: "Certification",
+      custom: "Custom",
+    };
+    return labels[category] || category;
+  };
+
+  const getPriorityLabel = (priority) => {
+    // Convert number to string label
+    if (typeof priority === "number") {
+      if (priority >= 5) return "high";
+      if (priority >= 3) return "medium";
+      return "low";
+    }
+    return priority;
+  };
+
   const getPriorityColor = (priority) => {
-    switch (priority) {
+    const label = getPriorityLabel(priority);
+    switch (label) {
       case "high":
         return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100";
       case "medium":
@@ -304,7 +336,7 @@ const StudyGoals = () => {
                     <div className="flex gap-2">
                       <Badge className={getPriorityColor(goal.priority)}>
                         <Flag className="w-3 h-3 mr-1" />
-                        {goal.priority}
+                        {getPriorityLabel(goal.priority)}
                       </Badge>
                     </div>
                   </div>
@@ -318,7 +350,7 @@ const StudyGoals = () => {
 
                   {goal.category && (
                     <Badge variant="outline" className="mb-3">
-                      {goal.category}
+                      {getCategoryLabel(goal.category)}
                     </Badge>
                   )}
 
@@ -479,15 +511,19 @@ const StudyGoals = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Category
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={newGoal.category}
                       onChange={(e) =>
                         setNewGoal({ ...newGoal, category: e.target.value })
                       }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                      placeholder="e.g., Programming"
-                    />
+                    >
+                      <option value="custom">Custom</option>
+                      <option value="exam_preparation">Exam Preparation</option>
+                      <option value="skill_mastery">Skill Mastery</option>
+                      <option value="career_goal">Career Goal</option>
+                      <option value="certification">Certification</option>
+                    </select>
                   </div>
 
                   <div>
@@ -535,7 +571,11 @@ const StudyGoals = () => {
                       className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                       placeholder="Add a topic and press Enter"
                     />
-                    <Button onClick={addTopic} type="button" className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white">
+                    <Button
+                      onClick={addTopic}
+                      type="button"
+                      className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                    >
                       <Plus className="w-5 h-5" />
                     </Button>
                   </div>
