@@ -492,12 +492,16 @@ export default function Login() {
                   </p>
                 </div>
               </div>
-              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white leading-tight">
+              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white leading-tight mb-4">
                 Learn Smarter,{" "}
                 <span className="bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
                   Not Harder
                 </span>
               </h2>
+              <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-8">
+                Transform your learning experience with AI-powered quizzes,
+                gamification, and real-time collaboration.
+              </p>
               <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
                 Join thousands of students transforming their learning
                 experience with AI-powered quizzes.
@@ -611,27 +615,27 @@ export default function Login() {
 
                 {/* Test Credentials Card */}
                 <motion.div
-                  className="mb-6 p-4 rounded-xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20 border border-blue-200 dark:border-blue-800"
+                  className="mb-6 p-5 rounded-xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20 border-2 border-blue-300 dark:border-blue-800 shadow-sm"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-                  <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-blue-600" />
+                  <h4 className="text-sm font-bold text-gray-900 dark:text-gray-200 mb-3 flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     IIT Bombay Techfest Testing Credentials
                   </h4>
-                  <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300">
-                    <div className="flex justify-between items-center p-2 rounded-lg bg-white/60 dark:bg-gray-800/60">
-                      <span className="font-medium">Teacher:</span>
-                      <span className="font-mono">teacher@cognito.com / Teacher@123</span>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between items-center p-2.5 rounded-lg bg-white/80 dark:bg-gray-800/60 border border-blue-200 dark:border-gray-700">
+                      <span className="font-semibold text-gray-800 dark:text-gray-300">Teacher:</span>
+                      <span className="font-mono text-gray-900 dark:text-gray-200 font-medium">teacher@cognito.com / Teacher@123</span>
                     </div>
-                    <div className="flex justify-between items-center p-2 rounded-lg bg-white/60 dark:bg-gray-800/60">
-                      <span className="font-medium">Student:</span>
-                      <span className="font-mono">student@cognito.com / Student@123</span>
+                    <div className="flex justify-between items-center p-2.5 rounded-lg bg-white/80 dark:bg-gray-800/60 border border-purple-200 dark:border-gray-700">
+                      <span className="font-semibold text-gray-800 dark:text-gray-300">Student:</span>
+                      <span className="font-mono text-gray-900 dark:text-gray-200 font-medium">student@cognito.com / Student@123</span>
                     </div>
-                    <div className="flex justify-between items-center p-2 rounded-lg bg-white/60 dark:bg-gray-800/60">
-                      <span className="font-medium">Admin:</span>
-                      <span className="font-mono">admin@cognito.com / Admin@123</span>
+                    <div className="flex justify-between items-center p-2.5 rounded-lg bg-white/80 dark:bg-gray-800/60 border border-pink-200 dark:border-gray-700">
+                      <span className="font-semibold text-gray-800 dark:text-gray-300">Admin:</span>
+                      <span className="font-mono text-gray-900 dark:text-gray-200 font-medium">admin@cognito.com / Admin@123</span>
                     </div>
                   </div>
                 </motion.div>
@@ -645,7 +649,7 @@ export default function Login() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
                   >
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-semibold text-gray-800 dark:text-gray-300 mb-2">
                       Email Address
                     </label>
                     <div
@@ -655,7 +659,7 @@ export default function Login() {
                           : ""
                       }`}
                     >
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-400" />
                       <input
                         type="email"
                         name="email"
@@ -666,7 +670,7 @@ export default function Login() {
                         onBlur={() => setFocusedField(null)}
                         required
                         autoComplete="email"
-                        className="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 transition-colors"
+                        className="w-full pl-12 pr-4 py-4 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-indigo-500 transition-colors shadow-sm"
                       />
                     </div>
                   </motion.div>
@@ -678,7 +682,7 @@ export default function Login() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6 }}
                   >
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-semibold text-gray-800 dark:text-gray-300 mb-2">
                       Password
                     </label>
                     <div
@@ -688,7 +692,7 @@ export default function Login() {
                           : ""
                       }`}
                     >
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-400" />
                       <input
                         type={showPassword ? "text" : "password"}
                         name="password"
@@ -699,12 +703,12 @@ export default function Login() {
                         onBlur={() => setFocusedField(null)}
                         required
                         autoComplete="current-password"
-                        className="w-full pl-12 pr-12 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 transition-colors"
+                        className="w-full pl-12 pr-12 py-4 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-indigo-500 transition-colors shadow-sm"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
                       >
                         {showPassword ? (
                           <EyeOff className="w-5 h-5" />

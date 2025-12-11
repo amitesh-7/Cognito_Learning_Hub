@@ -29,7 +29,7 @@ const DuelMode = () => {
         const response = await fetch(
           `${
             import.meta.env.VITE_API_URL || "http://localhost:3001"
-          }/api/quizzes`,
+          }/api/quizzes?limit=1000`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
