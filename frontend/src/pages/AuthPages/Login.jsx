@@ -33,6 +33,7 @@ import { Input } from "../../components/ui/Input";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import GoogleAuthButton from "../../components/GoogleAuthButton";
 import RoleSelectionModal from "../../components/ui/RoleSelectionModal";
+import RoleSelector from "../../components/RoleSelector";
 
 // Animated Gradient Orb
 const GradientOrb = ({ className, delay = 0 }) => (
@@ -247,7 +248,7 @@ const platformHighlights = [
 ];
 
 export default function Login() {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({ email: "", password: "", role: "Student" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -311,7 +312,7 @@ export default function Login() {
       }
     } catch (error) {
       console.error("Google login error:", error);
-      setError("Failed to login with Google");
+      setError("Failed to login with Google. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -637,6 +638,7 @@ export default function Login() {
                         onFocus={() => setFocusedField("email")}
                         onBlur={() => setFocusedField(null)}
                         required
+                        autoComplete="email"
                         className="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 transition-colors"
                       />
                     </div>
@@ -669,6 +671,7 @@ export default function Login() {
                         onFocus={() => setFocusedField("password")}
                         onBlur={() => setFocusedField(null)}
                         required
+                        autoComplete="current-password"
                         className="w-full pl-12 pr-12 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 transition-colors"
                       />
                       <button
@@ -683,6 +686,18 @@ export default function Login() {
                         )}
                       </button>
                     </div>
+                  </motion.div>
+
+                  {/* Role Selection */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.65 }}
+                  >
+                    <RoleSelector
+                      selectedRole={formData.role}
+                      onRoleChange={(role) => setFormData({ ...formData, role })}
+                    />
                   </motion.div>
 
                   {/* Submit Button */}

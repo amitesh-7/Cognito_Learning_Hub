@@ -28,6 +28,7 @@ import {
 import { LoadingSpinner } from "../../components/ui/Loading";
 import GoogleAuthButton from "../../components/GoogleAuthButton";
 import RoleSelectionModal from "../../components/ui/RoleSelectionModal";
+import RoleSelector from "../../components/RoleSelector";
 
 // Animated Gradient Orb
 const GradientOrb = ({ className, delay = 0 }) => (
@@ -380,7 +381,7 @@ export default function SignUp() {
       }
     } catch (error) {
       console.error("Google signup error:", error);
-      setError("Failed to sign up with Google");
+      setError("Failed to sign up with Google. Please try again.");
     }
   };
 
@@ -657,6 +658,7 @@ export default function SignUp() {
                         onFocus={() => setFocusedField('name')}
                         onBlur={() => setFocusedField(null)}
                         required
+                        autoComplete="name"
                         className="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
                       />
                     </div>
@@ -686,6 +688,7 @@ export default function SignUp() {
                         onFocus={() => setFocusedField('email')}
                         onBlur={() => setFocusedField(null)}
                         required
+                        autoComplete="email"
                         className="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
                       />
                     </div>
@@ -715,6 +718,7 @@ export default function SignUp() {
                         onFocus={() => setFocusedField('password')}
                         onBlur={() => setFocusedField(null)}
                         required
+                        autoComplete="new-password"
                         className="w-full pl-12 pr-12 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
                       />
                       <button
@@ -740,41 +744,10 @@ export default function SignUp() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.65 }}
                   >
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      I am a...
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {roleOptions.map((role) => (
-                        <motion.button
-                          key={role.value}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, role: role.value })}
-                          className={`relative p-4 rounded-xl border-2 transition-all duration-300 text-left ${
-                            formData.role === role.value
-                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                              : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700'
-                          }`}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <div className={`p-2 rounded-lg bg-gradient-to-br ${role.gradient} w-fit mb-2`}>
-                            <role.icon className="w-5 h-5 text-white" />
-                          </div>
-                          <p className="font-medium text-gray-900 dark:text-white">{role.title}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{role.description}</p>
-                          
-                          {formData.role === role.value && (
-                            <motion.div
-                              className="absolute top-3 right-3"
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                            >
-                              <CheckCircle className="w-5 h-5 text-purple-500" />
-                            </motion.div>
-                          )}
-                        </motion.button>
-                      ))}
-                    </div>
+                    <RoleSelector
+                      selectedRole={formData.role}
+                      onRoleChange={(role) => setFormData({ ...formData, role })}
+                    />
                   </motion.div>
 
                   {/* Submit Button */}
