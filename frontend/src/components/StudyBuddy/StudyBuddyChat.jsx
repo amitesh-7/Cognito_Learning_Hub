@@ -20,6 +20,7 @@ const StudyBuddyChat = ({ context = {} }) => {
   const [sessionId, setSessionId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [conversations, setConversations] = useState([]);
+  const [showHistory, setShowHistory] = useState(false); // mobile drawer toggle
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -169,9 +170,9 @@ const StudyBuddyChat = ({ context = {} }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[calc(100vh-200px)]">
-      {/* Conversation History Sidebar */}
-      <Card className="lg:col-span-1 p-4 overflow-y-auto bg-white dark:bg-gray-900">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[calc(100vh-140px)]">
+      {/* Conversation History Sidebar (desktop) */}
+      <Card className="hidden lg:block lg:col-span-1 p-4 overflow-y-auto bg-white dark:bg-gray-900">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-indigo-600" />
@@ -223,6 +224,75 @@ const StudyBuddyChat = ({ context = {} }) => {
           ))}
         </div>
       </Card>
+
+      {/* Mobile History Drawer */}
+      {showHistory && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
+          <div className="absolute bottom-0 left-0 right-0 max-h-[70vh] rounded-t-2xl bg-white dark:bg-gray-900 p-4 shadow-2xl overflow-y-auto">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-indigo-600" />
+                History
+              </h3>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={startNewConversation}
+                  className="text-xs"
+                >
+                  New Chat
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowHistory(false)}
+                  className="text-xs"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {conversations.map((conv) => (
+                <motion.div
+                  key={conv.sessionId}
+                  whileHover={{ scale: 1.02 }}
+                  className={`p-3 rounded-lg cursor-pointer transition-all ${
+                    sessionId === conv.sessionId
+                      ? "bg-indigo-100 dark:bg-indigo-900 border-2 border-indigo-500"
+                      : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  }`}
+                  onClick={() => {
+                    loadConversation(conv.sessionId);
+                    setShowHistory(false);
+                  }}
+                >
+                  <div className="flex-1">
+                    <p className="text-sm font-medium truncate">
+                      {conv.messages[0]?.content.substring(0, 30)}...
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(conv.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteConversation(conv.sessionId);
+                    }}
+                    size="sm"
+                    variant="ghost"
+                    className="text-red-500 hover:text-red-700 p-1"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Chat Area */}
       <Card className="lg:col-span-3 flex flex-col bg-white dark:bg-gray-900">
@@ -298,7 +368,7 @@ const StudyBuddyChat = ({ context = {} }) => {
                   </div>
                 )}
                 <div
-                  className={`max-w-[70%] rounded-2xl p-4 ${
+                  className={`max-w-[90%] md:max-w-[75%] rounded-2xl p-4 ${
                     message.role === "user"
                       ? "bg-indigo-600 text-white"
                       : message.isError
