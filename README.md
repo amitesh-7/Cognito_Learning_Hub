@@ -193,7 +193,21 @@ See [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md) for detailed instructions.
 
 ---
 
-## 📚 Documentation
+## � Test Credentials (IIT Bombay Techfest)
+
+For testing purposes, use the following pre-configured accounts:
+
+| Role        | Email                  | Password      |
+| ----------- | ---------------------- | ------------- |
+| **Admin**   | admin@cognito.com      | Admin@123     |
+| **Teacher** | teacher@cognito.com    | Teacher@123   |
+| **Student** | student@cognito.com    | Student@123   |
+
+> ⚠️ **Note**: These are demo credentials for evaluation purposes only.
+
+---
+
+## �📚 Documentation
 
 | Document                                         | Description                          |
 | ------------------------------------------------ | ------------------------------------ |

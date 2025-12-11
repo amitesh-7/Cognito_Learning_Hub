@@ -609,6 +609,33 @@ export default function Login() {
                   )}
                 </AnimatePresence>
 
+                {/* Test Credentials Card */}
+                <motion.div
+                  className="mb-6 p-4 rounded-xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20 border border-blue-200 dark:border-blue-800"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-blue-600" />
+                    IIT Bombay Techfest Testing Credentials
+                  </h4>
+                  <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300">
+                    <div className="flex justify-between items-center p-2 rounded-lg bg-white/60 dark:bg-gray-800/60">
+                      <span className="font-medium">Teacher:</span>
+                      <span className="font-mono">teacher@cognito.com / Teacher@123</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 rounded-lg bg-white/60 dark:bg-gray-800/60">
+                      <span className="font-medium">Student:</span>
+                      <span className="font-mono">student@cognito.com / Student@123</span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 rounded-lg bg-white/60 dark:bg-gray-800/60">
+                      <span className="font-medium">Admin:</span>
+                      <span className="font-mono">admin@cognito.com / Admin@123</span>
+                    </div>
+                  </div>
+                </motion.div>
+
                 {/* Login Form */}
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* Email Field */}
