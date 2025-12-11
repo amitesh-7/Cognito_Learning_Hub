@@ -103,10 +103,10 @@ router.post(
 
       // Generate tokens
       const { accessToken, refreshToken } = generateTokens(
-        newUser._id,
-        newUser.role,
-        newUser.name,
-        newUser.picture
+        user._id,
+        user.role,
+        user.name,
+        user.picture
       );
 
       // Store hashed refresh token
@@ -246,8 +246,8 @@ router.post("/google", authLimiter, async (req, res) => {
     }
 
     // Verify Google token
-    logger.info('Verifying Google OAuth token', {
-      expectedAudience: process.env.GOOGLE_CLIENT_ID
+    logger.info("Verifying Google OAuth token", {
+      expectedAudience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const ticket = await googleClient.verifyIdToken({
@@ -256,9 +256,9 @@ router.post("/google", authLimiter, async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    logger.info('Google OAuth token verified successfully', {
+    logger.info("Google OAuth token verified successfully", {
       email: payload.email,
-      tokenAudience: payload.aud
+      tokenAudience: payload.aud,
     });
     const { sub: googleId, email, name, picture } = payload;
 
