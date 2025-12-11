@@ -6,15 +6,15 @@ Write-Host ""
 
 # Array of services to start
 $services = @(
-    @{Name="API Gateway"; Path="microservices\api-gateway"; Port=8000},
+    @{Name="API Gateway"; Path="microservices\api-gateway"; Port=3000},
     @{Name="Auth Service"; Path="microservices\auth-service"; Port=3001},
     @{Name="Quiz Service"; Path="microservices\quiz-service"; Port=3002},
     @{Name="Result Service"; Path="microservices\result-service"; Port=3003},
     @{Name="Live Service"; Path="microservices\live-service"; Port=3004},
     @{Name="Social Service"; Path="microservices\social-service"; Port=3006},
     @{Name="Gamification Service"; Path="microservices\gamification-service"; Port=3007},
-    @{Name="Meeting Service"; Path="microservices\meeting-service"; Port=3009},
-    @{Name="Moderation Service"; Path="microservices\moderation-service"; Port=3010}
+    @{Name="Moderation Service"; Path="microservices\moderation-service"; Port=3008},
+    @{Name="Meeting Service"; Path="microservices\meeting-service"; Port=3009}
 )
 
 foreach ($service in $services) {
@@ -34,7 +34,7 @@ foreach ($service in $services) {
     Write-Host "  - $($service.Name): http://localhost:$($service.Port)" -ForegroundColor White
 }
 Write-Host ""
-Write-Host "Main Entry Point: http://localhost:8000 (API Gateway)" -ForegroundColor Yellow
+Write-Host "Main Entry Point: http://localhost:3000 (API Gateway)" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "To stop all services, close all PowerShell windows" -ForegroundColor Gray
 

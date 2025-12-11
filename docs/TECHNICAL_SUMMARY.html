@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Cognito Learning Hub - Technical Summary | IIT Bombay Techfest 2025
+    </title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        line-height: 1.25;
+        color: #1a1a2e;
+        background: #ffffff;
+        font-size: 8pt;
+      }
+
+      .page {
+        width: 210mm;
+        min-height: auto;
+        padding: 6mm 10mm;
+        margin: 0 auto;
+        background: white;
+        page-break-after: always;
+      }
+
+      .page:last-child {
+        page-break-after: avoid;
+      }
+
+      @media print {
+        body {
+          background: white;
+        }
+        .page {
+          margin: 0;
+          padding: 6mm 8mm;
+          width: 100%;
+          min-height: auto;
+        }
+        .no-print {
+          display: none !important;
+        }
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #6366f1;
+      }
+
+      .logo {
+        font-size: 18px;
+        font-weight: 700;
+        color: #6366f1;
+        margin-bottom: 3px;
+      }
+
+      .subtitle {
+        font-size: 10px;
+        color: #64748b;
+        margin-bottom: 3px;
+      }
+
+      .team-info {
+        font-size: 9px;
+        color: #1e293b;
+        font-weight: 600;
+      }
+
+      .event-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      h2 {
+        font-size: 11px;
+        color: #1e293b;
+        margin: 8px 0 4px 0;
+        padding-bottom: 3px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      h2 .icon {
+        font-size: 11px;
+      }
+
+      h3 {
+        font-size: 9.5px;
+        color: #475569;
+        margin: 6px 0 3px 0;
+      }
+
+      p {
+        margin-bottom: 4px;
+        text-align: justify;
+      }
+
+      ul {
+        margin-left: 15px;
+        margin-bottom: 5px;
+      }
+
+      li {
+        margin-bottom: 2px;
+      }
+
+      .highlight-box {
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        border-left: 3px solid #6366f1;
+        padding: 6px 10px;
+        margin: 5px 0;
+        border-radius: 0 4px 4px 0;
+      }
+
+      .architecture-diagram {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 8px;
+        margin: 5px 0;
+        font-family: "Courier New", monospace;
+        font-size: 7px;
+        line-height: 1.2;
+        overflow-x: auto;
+        white-space: pre;
+      }
+
+      .architecture-image {
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 5px 0;
+      }
+
+      .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 5px 0;
+      }
+
+      .tech-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin: 4px 0;
+      }
+
+      .tech-badge {
+        background: #f1f5f9;
+        color: #475569;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 7.5px;
+        font-weight: 500;
+      }
+
+      .tech-badge.primary {
+        background: #6366f1;
+        color: white;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 4px 0;
+        font-size: 7.5px;
+      }
+
+      th,
+      td {
+        border: 1px solid #e2e8f0;
+        padding: 3px 5px;
+        text-align: left;
+      }
+
+      th {
+        background: #f1f5f9;
+        font-weight: 600;
+      }
+
+      .roadmap-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        margin: 4px 0;
+      }
+
+      .roadmap-phase {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 7px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .footer {
+        margin-top: 8px;
+        padding-top: 5px;
+        border-top: 1px solid #e2e8f0;
+        text-align: center;
+        font-size: 7px;
+        color: #64748b;
+      }
+
+      .download-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        transition: transform 0.2s, box-shadow 0.2s;
+        z-index: 999;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Page 1 -->
+    <div class="page">
+      <div class="header">
+        <div class="logo">🧠 Cognito Learning Hub</div>
+        <div class="subtitle">
+          Intelligence Meets Interaction — AI-Powered Educational Platform
+        </div>
+        <div class="team-info">Team: OPTIMISTIC MUTANT CODERS</div>
+        <div class="event-badge">IIT Bombay Techfest 2025</div>
+      </div>
+
+      <h2><span class="icon">🎯</span> 1. Problem Statement</h2>
+      <p>
+        Traditional educational platforms lack intelligent personalization,
+        real-time engagement, and meaningful gamification. Students face
+        fragmented learning experiences with static quizzes, no social
+        interaction, and minimal feedback on performance. Teachers struggle with
+        manual quiz creation and lack tools for live, interactive sessions.
+      </p>
+      <div class="highlight-box">
+        <strong>Our Solution:</strong> An AI-powered microservices platform that
+        transforms learning through intelligent quiz generation, real-time
+        multiplayer sessions, comprehensive gamification, and video
+        collaboration — all unified under one seamless experience.
+      </div>
+
+      <h2><span class="icon">🤖</span> 2. Approach & AI Components</h2>
+
+      <h3>2.1 AI-Powered Quiz Generation</h3>
+      <p>
+        Leveraging <strong>Google Gemini AI</strong> for intelligent content
+        creation. Teachers input a topic or upload documents (PDF/DOCX/TXT), and
+        our system generates contextually relevant, difficulty-calibrated
+        questions with explanations.
+      </p>
+      <ul>
+        <li>
+          <strong>Topic-Based Generation:</strong> Natural language topic →
+          structured quiz with multiple difficulty levels
+        </li>
+        <li>
+          <strong>Document Parsing:</strong> Extract key concepts from uploaded
+          materials using PDF.js and Mammoth.js
+        </li>
+        <li>
+          <strong>Adaptive Difficulty:</strong> AI adjusts question complexity
+          based on user performance history
+        </li>
+      </ul>
+
+      <h3>2.2 AI Study Buddy</h3>
+      <p>
+        An intelligent tutoring assistant that provides real-time explanations,
+        study tips, and personalized guidance. Uses conversational AI to answer
+        student queries contextually.
+      </p>
+
+      <h3>2.3 Smart Analytics</h3>
+      <ul>
+        <li>Performance pattern recognition for strength/weakness analysis</li>
+        <li>Personalized quiz recommendations based on learning gaps</li>
+        <li>Predictive insights for optimal study scheduling</li>
+      </ul>
+
+      <h2><span class="icon">🏗️</span> 3. Technical Architecture</h2>
+
+      <div class="architecture-diagram architecture-image">
+        <img
+          src="React Microservices Platform-2025-12-11-115345.png"
+          alt="Cognito Learning Hub - Technical Architecture"
+          style="
+            width: 100%;
+            max-height: 110mm;
+            height: auto;
+            object-fit: contain;
+            display: block;
+          "
+        />
+      </div>
+
+      <h3>3.1 Microservices (9 Services)</h3>
+      <div class="two-column">
+        <div>
+          <table>
+            <tr>
+              <th>Service</th>
+              <th>Port</th>
+              <th>Function</th>
+            </tr>
+            <tr>
+              <td>API Gateway</td>
+              <td>3000</td>
+              <td>Routing, Auth, Rate Limit</td>
+            </tr>
+            <tr>
+              <td>Auth</td>
+              <td>3001</td>
+              <td>JWT, OAuth, Roles</td>
+            </tr>
+            <tr>
+              <td>Quiz</td>
+              <td>3002</td>
+              <td>CRUD, AI Generation</td>
+            </tr>
+            <tr>
+              <td>Result</td>
+              <td>3003</td>
+              <td>Analytics, Leaderboards</td>
+            </tr>
+          </table>
+        </div>
+        <div>
+          <table>
+            <tr>
+              <th>Service</th>
+              <th>Port</th>
+              <th>Function</th>
+            </tr>
+            <tr>
+              <td>Live</td>
+              <td>3004</td>
+              <td>Real-time, Duels</td>
+            </tr>
+            <tr>
+              <td>Social</td>
+              <td>3006</td>
+              <td>Friends, Chat</td>
+            </tr>
+            <tr>
+              <td>Gamification</td>
+              <td>3007</td>
+              <td>XP, Achievements, Avatars</td>
+            </tr>
+            <tr>
+              <td>Moderation</td>
+              <td>3008</td>
+              <td>Content Safety, Reports</td>
+            </tr>
+            <tr>
+              <td>Meeting</td>
+              <td>3009</td>
+              <td>Video (MediaSoup)</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <h3>3.2 Technology Stack</h3>
+      <div class="tech-stack">
+        <span class="tech-badge primary">React 18</span>
+        <span class="tech-badge primary">Node.js 20</span>
+        <span class="tech-badge primary">MongoDB Atlas</span>
+        <span class="tech-badge primary">Redis Cloud</span>
+        <span class="tech-badge primary">Google Gemini AI</span>
+        <span class="tech-badge">Express.js</span>
+        <span class="tech-badge">Socket.IO</span>
+        <span class="tech-badge">MediaSoup SFU</span>
+        <span class="tech-badge">TailwindCSS</span>
+        <span class="tech-badge">Framer Motion</span>
+        <span class="tech-badge">Bull Queues</span>
+        <span class="tech-badge">JWT Auth</span>
+      </div>
+
+      <div class="footer">
+        Cognito Learning Hub — IIT Bombay Techfest 2025 — Page 1 of 2
+      </div>
+    </div>
+
+    <!-- Page 2 -->
+    <div class="page">
+      <h2><span class="icon">⚠️</span> 4. Challenges & Mitigations</h2>
+
+      <table>
+        <tr>
+          <th style="width: 30%">Challenge</th>
+          <th style="width: 35%">Impact</th>
+          <th style="width: 35%">Mitigation</th>
+        </tr>
+        <tr>
+          <td><strong>Real-time Synchronization</strong></td>
+          <td>Live quizzes require sub-100ms latency for fair competition</td>
+          <td>
+            Socket.IO with Redis pub/sub for cross-instance sync; optimistic UI
+            updates
+          </td>
+        </tr>
+        <tr>
+          <td><strong>AI Response Quality</strong></td>
+          <td>Generated questions may have errors or poor formatting</td>
+          <td>
+            Structured prompts with validation; teacher review workflow;
+            feedback loop
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Video Scalability</strong></td>
+          <td>WebRTC mesh fails beyond 4-5 participants</td>
+          <td>
+            MediaSoup SFU architecture with multi-worker support; TURN fallback
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Database Performance</strong></td>
+          <td>Complex analytics queries slow down with scale</td>
+          <td>
+            Redis caching layer; pre-computed aggregations; indexed queries
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Microservices Complexity</strong></td>
+          <td>Distributed system debugging and consistency</td>
+          <td>
+            Centralized logging (Winston); shared error handling; Bull job
+            queues
+          </td>
+        </tr>
+        <tr>
+          <td><strong>NAT Traversal (WebRTC)</strong></td>
+          <td>Users behind strict NATs can't establish connections</td>
+          <td>
+            STUN servers (Google); TURN relay configuration; announced IP setup
+          </td>
+        </tr>
+      </table>
+
+      <h2><span class="icon">🚀</span> 5. Roadmap to Final Build</h2>
+
+      <div class="roadmap-item">
+        <span class="roadmap-phase">Phase 1 ✓</span>
+        <div>
+          <strong>Core Platform (Completed)</strong><br />
+          Microservices architecture, Auth, Quiz CRUD, AI generation, Result
+          analytics, Basic gamification
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <span class="roadmap-phase">Phase 2 ✓</span>
+        <div>
+          <strong>Real-time Features (Completed)</strong><br />
+          Live quiz sessions, 1v1 duels, Socket.IO integration, Leaderboards,
+          Social features
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <span class="roadmap-phase">Phase 3 ✓</span>
+        <div>
+          <strong>Video Conferencing (Completed)</strong><br />
+          MediaSoup SFU implementation, Multi-participant rooms, Screen sharing,
+          In-meeting chat
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <span class="roadmap-phase">Phase 4</span>
+        <div>
+          <strong>Advanced AI (In Progress)</strong><br />
+          Adaptive difficulty engine, Personalized learning paths, Performance
+          predictions, Voice-based questions
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <span class="roadmap-phase">Phase 5</span>
+        <div>
+          <strong>Mobile & Polish (Planned)</strong><br />
+          Flutter mobile app, Push notifications, Offline mode, Performance
+          optimization, Accessibility
+        </div>
+      </div>
+
+      <h2><span class="icon">🌐</span> 6. Deployment</h2>
+      <div class="highlight-box">
+        <table style="margin: 0; border: none">
+          <tr style="border: none">
+            <td style="border: none; padding: 4px 8px">
+              <strong>Frontend:</strong>
+            </td>
+            <td style="border: none; padding: 4px 8px">
+              https://cognito-learning-hub.vercel.app
+            </td>
+          </tr>
+          <tr style="border: none">
+            <td style="border: none; padding: 4px 8px">
+              <strong>API Gateway:</strong>
+            </td>
+            <td style="border: none; padding: 4px 8px">
+              https://api-gateway-kzo9.onrender.com
+            </td>
+          </tr>
+          <tr style="border: none">
+            <td style="border: none; padding: 4px 8px">
+              <strong>GitHub:</strong>
+            </td>
+            <td style="border: none; padding: 4px 8px">
+              https://github.com/amitesh-7/Cognito_Learning_Hub
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <h2><span class="icon">✨</span> 7. Key Differentiators</h2>
+      <div class="two-column">
+        <ul>
+          <li>
+            <strong>AI-First Design:</strong> Not an afterthought — AI powers
+            core functionality
+          </li>
+          <li>
+            <strong>True Microservices:</strong> 9 independent, scalable
+            services
+          </li>
+          <li>
+            <strong>Real Gamification:</strong> 15+ achievements, 50 levels,
+            quests, streaks
+          </li>
+        </ul>
+        <ul>
+          <li>
+            <strong>Production-Ready:</strong> Redis caching, job queues, error
+            handling
+          </li>
+          <li>
+            <strong>Video at Scale:</strong> MediaSoup SFU, not peer-to-peer
+            mesh
+          </li>
+          <li>
+            <strong>Modern UX:</strong> Glassmorphism, smooth animations,
+            responsive
+          </li>
+        </ul>
+      </div>
+
+      <h2><span class="icon">👥</span> 8. Team</h2>
+      <p>
+        <strong>Team OPTIMISTIC MUTANT CODERS</strong> — Passionate developers
+        building the future of education technology. Combining expertise in AI,
+        distributed systems, and user experience to create an impactful learning
+        platform.
+      </p>
+      <ul>
+        <li>Amitesh Vishwakarma (amitesh-7)</li>
+        <li>Rakshita (neely941565-ops)</li>
+        <li>Priyanshu Chaurasia (priyanshu-1006)</li>
+        <li>Ritesh (riteshydv05)</li>
+      </ul>
+
+      <div class="footer">
+        Cognito Learning Hub — IIT Bombay Techfest 2025 — Page 2 of 2<br />
+        <em>Contact: team@cognitolearninghub.com | December 2024</em>
+      </div>
+    </div>
+
+    <button class="download-btn no-print" onclick="window.print()">
+      📄 Download as PDF
+    </button>
+  </body>
+</html>

@@ -266,17 +266,23 @@ router.post("/google", authLimiter, async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
-      // Create new user
+      // Create new user with valid role (default to Student)
+      const validRoles = ["Student", "Teacher", "Moderator", "Admin"];
+      const userRole =
+        req.body.role && validRoles.includes(req.body.role)
+          ? req.body.role
+          : "Student";
+
       user = new User({
         name,
         email,
         googleId,
         picture,
-        role: "Student",
+        role: userRole,
         isEmailVerified: true, // Google accounts are pre-verified
       });
       await user.save();
-      logger.info(`New Google user created: ${email}`);
+      logger.info(`New Google user created: ${email} with role: ${userRole}`);
     } else if (!user.googleId) {
       // Link Google account to existing user
       user.googleId = googleId;
