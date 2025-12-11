@@ -62,10 +62,10 @@ export default function Leaderboard() {
     try {
       const token = localStorage.getItem("quizwise-token");
 
-      // If no quizId, fetch global leaderboard (all users ranked by total score)
+      // If no quizId, fetch global leaderboard by XP from gamification service
       if (!quizId) {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/users/leaderboard`,
+          `${import.meta.env.VITE_API_URL}/api/gamification/leaderboard?limit=100`,
           {
             headers: { "x-auth-token": token },
           }
@@ -75,8 +75,23 @@ export default function Leaderboard() {
           throw new Error("Could not fetch global leaderboard.");
 
         const data = await response.json();
-        setLeaderboard(data);
-        setQuizTitle("Global Rankings");
+        console.log("📊 Leaderboard data:", data);
+        
+        // Handle gamification service response format
+        const leaderboardData = data.leaderboard || data || [];
+        
+        // Transform data to match expected format with XP display
+        const transformedData = leaderboardData.map((entry, index) => ({
+          rank: entry.rank || index + 1,
+          userName: entry.user?.name || "Unknown User",
+          user: entry.user || { name: "Unknown User", email: "" },
+          score: entry.score || 0,
+          totalXP: entry.score || 0, // Score is XP points
+          userId: entry.userId,
+        }));
+        
+        setLeaderboard(transformedData);
+        setQuizTitle("Global Rankings - Highest XP");
       } else {
         // Fetch quiz-specific leaderboard
         const [leaderboardRes, quizRes] = await Promise.all([
@@ -280,7 +295,7 @@ export default function Leaderboard() {
                     <p className="font-bold text-lg text-gray-500 dark:text-gray-400">
                       {quizId
                         ? `${topThree[1].score} / ${topThree[1].totalQuestions}`
-                        : `${topThree[1].score} pts`}
+                        : `${topThree[1].totalXP || topThree[1].score} XP`}
                     </p>
                     <div className="h-20 w-24 bg-gray-300 dark:bg-gray-600 rounded-t-lg mx-auto mt-2 flex items-center justify-center text-3xl font-bold text-gray-500 dark:text-gray-400">
                       2
@@ -298,7 +313,7 @@ export default function Leaderboard() {
                     <p className="font-bold text-xl text-yellow-500 dark:text-yellow-400">
                       {quizId
                         ? `${topThree[0].score} / ${topThree[0].totalQuestions}`
-                        : `${topThree[0].score} pts`}
+                        : `${topThree[0].totalXP || topThree[0].score} XP`}
                     </p>
                     <div className="h-32 w-32 bg-yellow-300 dark:bg-yellow-600 rounded-t-lg mx-auto mt-2 flex items-center justify-center text-4xl font-bold text-yellow-600 dark:text-yellow-300">
                       1
@@ -316,7 +331,7 @@ export default function Leaderboard() {
                     <p className="font-bold text-lg text-yellow-700 dark:text-yellow-500">
                       {quizId
                         ? `${topThree[2].score} / ${topThree[2].totalQuestions}`
-                        : `${topThree[2].score} pts`}
+                        : `${topThree[2].totalXP || topThree[2].score} XP`}
                     </p>
                     <div className="h-16 w-24 bg-yellow-700 dark:bg-yellow-900 rounded-t-lg mx-auto mt-2 flex items-center justify-center text-3xl font-bold text-yellow-800 dark:text-yellow-600">
                       3
@@ -351,7 +366,7 @@ export default function Leaderboard() {
                         <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
                           {quizId
                             ? `${entry.score} / ${entry.totalQuestions}`
-                            : `${entry.score} pts`}
+                            : `${entry.totalXP || entry.score} XP`}
                         </div>
                       </li>
                     ) : null
