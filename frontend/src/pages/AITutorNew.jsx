@@ -251,7 +251,10 @@ const AITutor = () => {
         const aiMsg = {
           id: Date.now() + 1,
           role: "assistant",
-          content: data.data?.reply || data.reply || "Sorry, I couldn't help with that.",
+          content:
+            data.data?.reply ||
+            data.reply ||
+            "Sorry, I couldn't help with that.",
           time: new Date().toISOString(),
         };
 
@@ -415,11 +418,11 @@ const AITutor = () => {
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
-            initial={{ x: -280 }}
+            initial={{ x: -300 }}
             animate={{ x: 0 }}
-            exit={{ x: -280 }}
+            exit={{ x: -300 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed sm:relative z-40 w-full sm:w-64 md:w-72 h-screen max-h-screen bg-white/40 backdrop-blur-2xl border-r border-white/60 flex flex-col shadow-2xl"
+            className="fixed lg:relative z-40 w-[85%] max-w-[300px] sm:w-72 h-screen max-h-screen bg-white/95 lg:bg-white/40 backdrop-blur-2xl border-r border-white/60 flex flex-col shadow-2xl"
           >
             {/* New Chat Button */}
             <div className="p-4 border-b border-white/60">
@@ -509,13 +512,13 @@ const AITutor = () => {
       {/* Mobile Backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 sm:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col max-h-screen overflow-hidden relative z-10">
+      <div className="flex-1 flex flex-col h-screen max-h-screen overflow-hidden relative z-10">
         {/* Header */}
         <div className="flex-shrink-0 bg-white/40 backdrop-blur-2xl border-b border-white/60 shadow-lg z-20">
           <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
@@ -589,25 +592,28 @@ const AITutor = () => {
         </div>
 
         {/* Messages - Scrollable Area ONLY */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div
+          className="flex-1 overflow-y-auto overflow-x-hidden"
+          style={{ scrollbarGutter: "stable" }}
+        >
           {currentMessages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center px-6 pb-32">
+            <div className="h-full flex flex-col items-center justify-center px-4 sm:px-6 pb-40 sm:pb-32">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center max-w-2xl"
+                className="text-center max-w-2xl w-full"
               >
-                <div className="inline-flex p-6 bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 rounded-3xl mb-6 shadow-2xl">
-                  <Sparkles className="w-16 h-16 text-white" />
+                <div className="inline-flex p-4 sm:p-6 bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 rounded-2xl sm:rounded-3xl mb-4 sm:mb-6 shadow-2xl">
+                  <Sparkles className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
                 </div>
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-violet-700 via-purple-600 to-fuchsia-700 bg-clip-text text-transparent mb-4">
+                <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-violet-700 via-purple-600 to-fuchsia-700 bg-clip-text text-transparent mb-2 sm:mb-4">
                   Hello, {user?.name?.split(" ")[0] || "there"}!
                 </h2>
-                <p className="text-xl text-slate-600 font-medium mb-12">
+                <p className="text-base sm:text-xl text-slate-600 font-medium mb-6 sm:mb-12">
                   How can I help you learn today?
                 </p>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {examplePrompts.map((prompt, i) => (
                     <motion.button
                       key={i}
@@ -615,9 +621,9 @@ const AITutor = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.1 }}
-                      className="p-5 text-left rounded-2xl bg-white/40 backdrop-blur-xl hover:bg-white/60 border border-white/60 hover:border-violet-300 transition-all shadow-lg hover:shadow-xl group"
+                      className="p-3 sm:p-5 text-left rounded-xl sm:rounded-2xl bg-white/40 backdrop-blur-xl hover:bg-white/60 border border-white/60 hover:border-violet-300 transition-all shadow-lg hover:shadow-xl group active:scale-[0.98]"
                     >
-                      <p className="text-slate-700 group-hover:text-violet-700 font-semibold transition-colors">
+                      <p className="text-sm sm:text-base text-slate-700 group-hover:text-violet-700 font-semibold transition-colors">
                         {prompt}
                       </p>
                     </motion.button>
@@ -626,33 +632,33 @@ const AITutor = () => {
               </motion.div>
             </div>
           ) : (
-            <div className="max-w-4xl mx-auto px-6 py-8">
+            <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-[180px] sm:pb-[160px]">
               {currentMessages.map((msg, idx) => (
                 <motion.div
                   key={msg.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.2 }}
-                  className="mb-8"
+                  className="mb-4 sm:mb-8"
                 >
                   <div
-                    className={`flex gap-4 ${
+                    className={`flex gap-2 sm:gap-4 ${
                       msg.role === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
                     {msg.role === "assistant" && (
-                      <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 flex items-center justify-center shadow-lg">
-                        <Bot className="w-6 h-6 text-white" />
+                      <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 flex items-center justify-center shadow-lg">
+                        <Bot className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                       </div>
                     )}
 
                     <div
-                      className={`max-w-2xl ${
+                      className={`max-w-[85%] sm:max-w-[75%] md:max-w-2xl ${
                         msg.role === "user" ? "order-first" : ""
                       }`}
                     >
                       <div
-                        className={`rounded-2xl px-6 py-4 ${
+                        className={`rounded-xl sm:rounded-2xl px-3 py-2.5 sm:px-6 sm:py-4 ${
                           msg.role === "user"
                             ? "bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-white shadow-xl"
                             : "bg-gradient-to-br from-white/80 to-white/60 backdrop-blur-xl text-slate-800 shadow-xl border border-white/80"
@@ -708,10 +714,10 @@ const AITutor = () => {
                       </div>
 
                       {msg.role === "assistant" && (
-                        <div className="flex items-center gap-2 mt-2 ml-2 flex-wrap">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mt-2 ml-0 sm:ml-2 flex-wrap">
                           <button
                             onClick={() => toggleFavorite(msg.id)}
-                            className={`px-3 py-1.5 hover:bg-white/40 backdrop-blur-sm rounded-xl transition text-xs flex items-center gap-1.5 border ${
+                            className={`px-2 py-1 sm:px-3 sm:py-1.5 hover:bg-white/40 backdrop-blur-sm rounded-lg sm:rounded-xl transition text-[10px] sm:text-xs flex items-center gap-1 sm:gap-1.5 border active:scale-95 ${
                               favoriteMessages.includes(msg.id)
                                 ? "text-red-500 border-red-300 bg-red-50/50"
                                 : "text-slate-500 border-white/40 bg-white/20 hover:text-red-500 hover:border-red-300"
@@ -723,29 +729,32 @@ const AITutor = () => {
                             }
                           >
                             <Heart
-                              className={`w-3.5 h-3.5 ${
+                              className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${
                                 favoriteMessages.includes(msg.id)
                                   ? "fill-red-500"
                                   : ""
                               }`}
                             />
-                            {favoriteMessages.includes(msg.id)
-                              ? "Saved"
-                              : "Save"}
+                            <span className="hidden xs:inline">
+                              {favoriteMessages.includes(msg.id)
+                                ? "Saved"
+                                : "Save"}
+                            </span>
                           </button>
                           <button
                             onClick={() => copyToClipboard(msg.content, msg.id)}
-                            className="px-3 py-1.5 hover:bg-white/40 backdrop-blur-sm rounded-xl transition text-slate-500 hover:text-violet-600 text-xs flex items-center gap-1.5 border border-white/40 bg-white/20"
+                            className="px-2 py-1 sm:px-3 sm:py-1.5 hover:bg-white/40 backdrop-blur-sm rounded-lg sm:rounded-xl transition text-slate-500 hover:text-violet-600 text-[10px] sm:text-xs flex items-center gap-1 sm:gap-1.5 border border-white/40 bg-white/20 active:scale-95"
                             title="Copy"
                           >
                             {copiedId === msg.id ? (
                               <>
-                                <Check className="w-3.5 h-3.5 text-green-500" />{" "}
-                                Copied
+                                <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-500" />
+                                <span className="hidden xs:inline">Copied</span>
                               </>
                             ) : (
                               <>
-                                <Copy className="w-3.5 h-3.5" /> Copy
+                                <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                <span className="hidden xs:inline">Copy</span>
                               </>
                             )}
                           </button>
@@ -753,30 +762,32 @@ const AITutor = () => {
                             <button
                               onClick={() => speakMessage(msg.content)}
                               disabled={isSpeaking}
-                              className="px-3 py-1.5 hover:bg-white/40 backdrop-blur-sm rounded-xl transition text-slate-500 hover:text-violet-600 text-xs flex items-center gap-1.5 disabled:opacity-50 border border-white/40 bg-white/20"
+                              className="px-2 py-1 sm:px-3 sm:py-1.5 hover:bg-white/40 backdrop-blur-sm rounded-lg sm:rounded-xl transition text-slate-500 hover:text-violet-600 text-[10px] sm:text-xs flex items-center gap-1 sm:gap-1.5 disabled:opacity-50 border border-white/40 bg-white/20 active:scale-95"
                               title="Read aloud"
                             >
                               <Volume2
-                                className={`w-3.5 h-3.5 ${
+                                className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${
                                   isSpeaking ? "animate-pulse" : ""
                                 }`}
                               />
-                              {isSpeaking ? "Speaking..." : "Speak"}
+                              <span className="hidden xs:inline">
+                                {isSpeaking ? "Speaking..." : "Speak"}
+                              </span>
                             </button>
                           )}
                           <button
-                            className="px-3 py-1.5 hover:bg-white/40 backdrop-blur-sm rounded-xl transition text-slate-500 hover:text-violet-600 text-xs flex items-center gap-1.5 border border-white/40 bg-white/20"
+                            className="px-2 py-1 sm:px-3 sm:py-1.5 hover:bg-white/40 backdrop-blur-sm rounded-lg sm:rounded-xl transition text-slate-500 hover:text-violet-600 text-[10px] sm:text-xs flex items-center gap-1 sm:gap-1.5 border border-white/40 bg-white/20 active:scale-95"
                             title="Like this response"
                           >
-                            <ThumbsUp className="w-3.5 h-3.5" />
-                            Like
+                            <ThumbsUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            <span className="hidden xs:inline">Like</span>
                           </button>
                         </div>
                       )}
                     </div>
 
                     {msg.role === "user" && (
-                      <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center text-white font-bold shadow-lg">
+                      <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-lg">
                         {user?.name?.charAt(0) || "U"}
                       </div>
                     )}
@@ -788,23 +799,23 @@ const AITutor = () => {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex gap-4 mb-8"
+                  className="flex gap-2 sm:gap-4 mb-4 sm:mb-8"
                 >
-                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 flex items-center justify-center shadow-lg">
-                    <Bot className="w-6 h-6 text-white" />
+                  <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 flex items-center justify-center shadow-lg">
+                    <Bot className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <div className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-2xl px-6 py-4 shadow-lg">
-                    <div className="flex gap-2">
+                  <div className="bg-white/60 backdrop-blur-xl border border-white/60 rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-4 shadow-lg">
+                    <div className="flex gap-1.5 sm:gap-2">
                       <div
-                        className="w-2 h-2 bg-violet-500 rounded-full animate-bounce"
+                        className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-violet-500 rounded-full animate-bounce"
                         style={{ animationDelay: "0ms" }}
                       ></div>
                       <div
-                        className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"
+                        className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full animate-bounce"
                         style={{ animationDelay: "150ms" }}
                       ></div>
                       <div
-                        className="w-2 h-2 bg-fuchsia-500 rounded-full animate-bounce"
+                        className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-fuchsia-500 rounded-full animate-bounce"
                         style={{ animationDelay: "300ms" }}
                       ></div>
                     </div>
@@ -819,35 +830,39 @@ const AITutor = () => {
       </div>
 
       {/* Input Area - Fixed at Bottom of Viewport - OUTSIDE main content */}
-      <div className="fixed bottom-0 right-0 left-0 sm:left-64 md:left-72 border-t border-white/30 bg-white/40 backdrop-blur-2xl z-30 shadow-2xl">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
+      <div
+        className={`fixed bottom-0 right-0 left-0 ${
+          sidebarOpen ? "lg:left-72" : "lg:left-0"
+        } border-t border-white/30 bg-white/40 backdrop-blur-2xl z-30 shadow-2xl transition-all duration-300`}
+      >
+        <div className="max-w-4xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
           {/* File Preview */}
           {attachedFiles.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-2">
+            <div className="mb-2 sm:mb-3 flex flex-wrap gap-1.5 sm:gap-2">
               {attachedFiles.map((file, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-2 px-3 py-2 bg-white/80 backdrop-blur-sm rounded-xl border border-violet-200 shadow-sm"
+                  className="flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-violet-200 shadow-sm"
                 >
                   {getFileIcon(file.type)}
-                  <span className="text-xs text-slate-700 font-medium max-w-[150px] truncate">
+                  <span className="text-[10px] sm:text-xs text-slate-700 font-medium max-w-[100px] sm:max-w-[150px] truncate">
                     {file.name}
                   </span>
                   <button
                     type="button"
                     onClick={() => removeFile(index)}
-                    className="p-1 hover:bg-red-100 rounded-lg transition"
+                    className="p-0.5 sm:p-1 hover:bg-red-100 rounded-md sm:rounded-lg transition"
                   >
-                    <XCircle className="w-4 h-4 text-red-500" />
+                    <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500" />
                   </button>
                 </motion.div>
               ))}
             </div>
           )}
           <form onSubmit={handleSend} className="relative">
-            <div className="flex items-center gap-3 bg-white/60 backdrop-blur-xl rounded-3xl shadow-xl border border-white/60 p-3">
+            <div className="flex items-center gap-1.5 sm:gap-3 bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl border border-white/60 p-2 sm:p-3">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -860,7 +875,7 @@ const AITutor = () => {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
-                className="p-2 rounded-xl transition-colors text-slate-500 hover:text-violet-600 hover:bg-violet-50/50 disabled:opacity-50"
+                className="p-2 rounded-lg sm:rounded-xl transition-colors text-slate-500 hover:text-violet-600 hover:bg-violet-50/50 disabled:opacity-50 min-w-[40px] min-h-[40px] flex items-center justify-center"
                 title="Attach files"
               >
                 <Paperclip className="w-5 h-5" />
@@ -869,7 +884,7 @@ const AITutor = () => {
                 type="button"
                 onClick={startListening}
                 disabled={isListening || isLoading}
-                className={`p-2 rounded-xl transition-colors ${
+                className={`p-2 rounded-lg sm:rounded-xl transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center ${
                   isListening
                     ? "text-red-500 animate-pulse bg-red-50"
                     : "text-slate-500 hover:text-violet-600 hover:bg-violet-50/50"
@@ -888,12 +903,12 @@ const AITutor = () => {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask me anything..."
                 disabled={isLoading}
-                className="flex-1 bg-transparent px-4 py-3 text-slate-800 placeholder-slate-400 focus:outline-none text-base font-medium"
+                className="flex-1 bg-transparent px-2 sm:px-4 py-2.5 sm:py-3 text-slate-800 placeholder-slate-400 focus:outline-none text-sm sm:text-base font-medium min-w-0"
               />
               <button
                 type="submit"
                 disabled={!input.trim() || isLoading}
-                className="p-3 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-700 hover:via-purple-700 hover:to-fuchsia-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed rounded-2xl transition-all shadow-lg hover:shadow-xl"
+                className="p-2.5 sm:p-3 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 hover:from-violet-700 hover:via-purple-700 hover:to-fuchsia-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed rounded-xl sm:rounded-2xl transition-all shadow-lg hover:shadow-xl min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 <Send className="w-5 h-5 text-white" />
               </button>
@@ -901,15 +916,15 @@ const AITutor = () => {
           </form>
           {isListening && (
             <motion.p
-              className="text-xs text-center text-red-500 mt-2 flex items-center justify-center gap-2"
+              className="text-[10px] sm:text-xs text-center text-red-500 mt-1.5 sm:mt-2 flex items-center justify-center gap-1.5 sm:gap-2"
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ repeat: Infinity, duration: 1.5 }}
             >
-              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-red-500 rounded-full animate-pulse"></div>
               Listening...
             </motion.p>
           )}
-          <p className="text-xs text-center text-gray-400 mt-3">
+          <p className="text-[10px] sm:text-xs text-center text-gray-400 mt-2 sm:mt-3">
             AI can make mistakes. Verify important information.
           </p>
         </div>
