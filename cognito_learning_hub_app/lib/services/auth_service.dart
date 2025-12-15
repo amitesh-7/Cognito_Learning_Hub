@@ -11,6 +11,10 @@ class AuthService {
   final _storage = const FlutterSecureStorage();
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
+    // Temporarily commented out - needs Android OAuth client configured in Google Cloud Console
+    // with package name: com.cognitolearninghub.cognito_learning_hub_app
+    // and SHA-1: 12:8F:B2:69:C8:01:22:EC:3E:D5:68:BD:8F:8B:31:04:67:1C:8A:A4
+    // serverClientId: '899719437468-2rve50aat7ftj3ns0hfuvos928vejt9b.apps.googleusercontent.com',
   );
 
   // Email/Password Login
@@ -99,6 +103,24 @@ class AuthService {
       }
 
       final googleAuth = await googleUser.authentication;
+
+      // Debug logging
+      print('🔐 Google Auth - Email: ${googleUser.email}');
+      print('🔐 Google Auth - Display Name: ${googleUser.displayName}');
+      print('🔐 Google Auth - ID: ${googleUser.id}');
+      print(
+          '🔐 Google Auth - idToken available: ${googleAuth.idToken != null}');
+      print(
+          '🔐 Google Auth - accessToken available: ${googleAuth.accessToken != null}');
+
+      if (googleAuth.idToken == null || googleAuth.idToken!.isEmpty) {
+        // Without serverClientId, we won't get idToken - that's expected
+        return AuthResult(
+            success: false,
+            error:
+                'Google Sign-In successful but backend authentication not configured.\n\n'
+                'See GOOGLE_SIGNIN_SETUP.md for instructions.');
+      }
 
       // Backend expects 'credential' with the idToken
       final response = await _api.post(

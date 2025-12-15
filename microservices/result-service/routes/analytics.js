@@ -247,7 +247,7 @@ router.get("/comparison", authenticateToken, async (req, res) => {
       },
     ]);
 
-    res.json(ApiResponse.success({ comparison }));
+    return ApiResponse.success(res, { comparison });
   } catch (error) {
     logger.error("Get comparison error:", error);
     return ApiResponse.error(res, "Failed to fetch comparison", 500);

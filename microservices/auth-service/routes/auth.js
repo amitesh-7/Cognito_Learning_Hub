@@ -353,18 +353,30 @@ router.post("/google", authLimiter, async (req, res) => {
     );
   } catch (error) {
     logger.error("Google OAuth error:", error);
-    
+
     // Provide more specific error messages
     if (error.message && error.message.includes("Token used too early")) {
-      return ApiResponse.error(res, "Google token not yet valid. Please try again.", 400);
+      return ApiResponse.error(
+        res,
+        "Google token not yet valid. Please try again.",
+        400
+      );
     }
     if (error.message && error.message.includes("Token used too late")) {
-      return ApiResponse.error(res, "Google token expired. Please try again.", 400);
+      return ApiResponse.error(
+        res,
+        "Google token expired. Please try again.",
+        400
+      );
     }
     if (error.message && error.message.includes("Invalid token signature")) {
-      return ApiResponse.error(res, "Invalid Google token. Please try again.", 400);
+      return ApiResponse.error(
+        res,
+        "Invalid Google token. Please try again.",
+        400
+      );
     }
-    
+
     return ApiResponse.error(
       res,
       `Google authentication failed: ${error.message || "Unknown error"}`,
@@ -568,21 +580,19 @@ router.get("/me", authenticateToken, async (req, res) => {
       return ApiResponse.notFound(res, "User not found");
     }
 
-    res.json(
-      ApiResponse.success({
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          picture: user.picture,
-          isEmailVerified: user.isEmailVerified,
-          status: user.status,
-          lastSeen: user.lastSeen,
-          createdAt: user.createdAt,
-        },
-      })
-    );
+    return ApiResponse.success(res, {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        picture: user.picture,
+        isEmailVerified: user.isEmailVerified,
+        status: user.status,
+        lastSeen: user.lastSeen,
+        createdAt: user.createdAt,
+      },
+    });
   } catch (error) {
     logger.error("Get current user error:", error);
     return ApiResponse.error(res, "Failed to fetch user", 500);
