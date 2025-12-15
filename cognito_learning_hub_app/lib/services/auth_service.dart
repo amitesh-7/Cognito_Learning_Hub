@@ -11,10 +11,10 @@ class AuthService {
   final _storage = const FlutterSecureStorage();
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    // Temporarily commented out - needs Android OAuth client configured in Google Cloud Console
-    // with package name: com.cognitolearninghub.cognito_learning_hub_app
-    // and SHA-1: 12:8F:B2:69:C8:01:22:EC:3E:D5:68:BD:8F:8B:31:04:67:1C:8A:A4
-    // serverClientId: '899719437468-2rve50aat7ftj3ns0hfuvos928vejt9b.apps.googleusercontent.com',
+    // IMPORTANT: Use Web Client ID here (NOT Android Client ID)
+    // Backend verifies idToken using this same Web Client ID
+    serverClientId:
+        '899719437468-o81tag3bm1h3470d98dtb5btfi906jki.apps.googleusercontent.com',
   );
 
   // Email/Password Login

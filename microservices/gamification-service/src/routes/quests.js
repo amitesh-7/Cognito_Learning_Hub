@@ -226,14 +226,14 @@ router.get("/my-quests", authenticateToken, async (req, res) => {
       .lean();
 
     // Format the response - handle null/undefined values safely
-    const questsData = userQuests.map(uq => ({
-      questId: uq.questId || '',
-      status: uq.status || 'locked',
+    const questsData = userQuests.map((uq) => ({
+      questId: uq.questId || "",
+      status: uq.status || "locked",
       stars: uq.stars || 0,
       attemptCount: uq.attemptCount || 0,
       startedAt: uq.startedAt || null,
       completedAt: uq.completedAt || null,
-      realm: uq.realm || '',
+      realm: uq.realm || "",
       chapter: uq.chapter || 0,
       lastAttempt: uq.lastAttemptDate || null,
     }));
@@ -241,7 +241,9 @@ router.get("/my-quests", authenticateToken, async (req, res) => {
     res.json({ success: true, data: questsData });
   } catch (error) {
     console.error("Error fetching user quests:", error);
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
   }
 });
 
@@ -383,16 +385,22 @@ router.post("/:questId/start", authenticateToken, async (req, res) => {
 // @access  Private
 router.post("/:questId/complete", authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId || req.user.id;
     const { questId } = req.params;
     const { score, maxScore, timeTaken, resultId } = req.body;
 
     // Get quest
     const quest = await Quest.findOne({ questId });
     if (!quest) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Quest not found" });
+      // Return success with warning for demo/unregistered quests
+      console.log(
+        `⚠️ Quest '${questId}' not found in database (might be a demo quest)`
+      );
+      return res.status(200).json({
+        success: true,
+        message: "Quest completed (demo quest, not tracked)",
+        isDemo: true,
+      });
     }
 
     // Get or create user quest

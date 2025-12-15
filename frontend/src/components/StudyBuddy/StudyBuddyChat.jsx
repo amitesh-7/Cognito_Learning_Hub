@@ -31,19 +31,27 @@ const StudyBuddyChat = ({ context = {} }) => {
     scrollToBottom();
   }, [messages]);
 
+  // Fetch conversations only once on mount
   useEffect(() => {
     fetchConversations();
-    // If quiz context is provided, show a helpful message
+  }, []); // Empty dependency array - run once
+
+  // Handle quiz context separately
+  useEffect(() => {
     if (context?.quizTitle) {
       setInputMessage(
         `I just completed "${context.quizTitle}" and scored ${context.score}/${context.totalQuestions} (${context.percentage}%). Can you help me improve?`
       );
     }
-  }, [context]);
+  }, [context?.quizTitle]); // Only re-run if quizTitle changes
 
   const fetchConversations = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("quizwise-token");
+      if (!token) {
+        console.warn("No auth token found");
+        return;
+      }
       const response = await fetch(
         `${
           import.meta.env.VITE_API_URL || "http://localhost:3002"
@@ -75,7 +83,10 @@ const StudyBuddyChat = ({ context = {} }) => {
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("quizwise-token");
+      if (!token) {
+        throw new Error("Not authenticated. Please log in.");
+      }
       const response = await fetch(
         `${
           import.meta.env.VITE_API_URL || "http://localhost:3002"
@@ -104,6 +115,9 @@ const StudyBuddyChat = ({ context = {} }) => {
         };
         setMessages((prev) => [...prev, aiMessage]);
         setSessionId(data.data.sessionId);
+
+        // Refresh conversation list to show new/updated conversation
+        fetchConversations();
       } else {
         throw new Error(data.error || "Failed to get response");
       }
@@ -124,7 +138,7 @@ const StudyBuddyChat = ({ context = {} }) => {
 
   const loadConversation = async (convSessionId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("quizwise-token");
       const response = await fetch(
         `${
           import.meta.env.VITE_API_URL || "http://localhost:3002"
@@ -150,7 +164,7 @@ const StudyBuddyChat = ({ context = {} }) => {
 
   const deleteConversation = async (convSessionId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("quizwise-token");
       await fetch(
         `${
           import.meta.env.VITE_API_URL || "http://localhost:3002"
@@ -203,7 +217,7 @@ const StudyBuddyChat = ({ context = {} }) => {
                 className="flex-1"
               >
                 <p className="text-sm font-medium truncate">
-                  {conv.messages[0]?.content.substring(0, 30)}...
+                  {conv.summary || "New conversation"}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {new Date(conv.createdAt).toLocaleDateString()}
@@ -270,7 +284,7 @@ const StudyBuddyChat = ({ context = {} }) => {
                 >
                   <div className="flex-1">
                     <p className="text-sm font-medium truncate">
-                      {conv.messages[0]?.content.substring(0, 30)}...
+                      {conv.summary || "New conversation"}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {new Date(conv.createdAt).toLocaleDateString()}

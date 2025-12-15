@@ -6,6 +6,9 @@ const Conversation = require("../../models/study-buddy/Conversation");
 const LearningMemory = require("../../models/study-buddy/LearningMemory");
 const { v4: uuidv4 } = require("uuid");
 
+// Helper to get user ID from request
+const getUserId = (req) => req.user.userId || getUserId(req);
+
 /**
  * @route   POST /api/chat/message
  * @desc    Send message to AI Study Buddy
@@ -24,10 +27,11 @@ router.post("/message", authenticateToken, async (req, res) => {
 
     // Generate or use existing session ID
     const activeSessionId = sessionId || uuidv4();
+    const userId = req.user.userId || getUserId(req);
 
     // Generate AI response
     const result = await aiStudyBuddyService.generateResponse(
-      req.user.id,
+      userId,
       message,
       activeSessionId,
       context || {}
@@ -54,18 +58,42 @@ router.post("/message", authenticateToken, async (req, res) => {
 router.get("/conversations", authenticateToken, async (req, res) => {
   try {
     const { limit = 10, status = "active" } = req.query;
+    const userId = req.user.userId || getUserId(req);
 
     const conversations = await Conversation.find({
-      user: req.user.id,
+      user: userId,
       ...(status !== "all" && { status }),
     })
       .sort({ "metadata.lastActivity": -1 })
       .limit(parseInt(limit))
-      .select("sessionId summary topics metadata status createdAt");
+      .select("sessionId summary topics metadata status createdAt messages");
+
+    // Format conversations with better titles
+    const formattedConversations = conversations.map((conv) => {
+      const convObj = conv.toObject();
+      if (!convObj.summary) {
+        // Generate a title from topics or first user message
+        if (convObj.topics && convObj.topics.length > 0) {
+          convObj.summary = convObj.topics.join(", ");
+        } else if (convObj.messages && convObj.messages.length > 0) {
+          const firstUserMsg = convObj.messages.find((m) => m.role === "user");
+          if (firstUserMsg) {
+            convObj.summary =
+              firstUserMsg.content.substring(0, 50) +
+              (firstUserMsg.content.length > 50 ? "..." : "");
+          }
+        }
+      }
+      // Remove messages array before sending to reduce payload size
+      delete convObj.messages;
+      return convObj;
+    });
 
     res.json({
       success: true,
-      data: conversations,
+      data: {
+        conversations: formattedConversations,
+      },
     });
   } catch (error) {
     console.error("Error fetching conversations:", error);
@@ -86,7 +114,7 @@ router.get("/conversation/:sessionId", authenticateToken, async (req, res) => {
     const { sessionId } = req.params;
 
     const conversation = await Conversation.findOne({
-      user: req.user.id,
+      user: getUserId(req),
       sessionId,
     });
 
@@ -99,7 +127,9 @@ router.get("/conversation/:sessionId", authenticateToken, async (req, res) => {
 
     res.json({
       success: true,
-      data: conversation,
+      data: {
+        conversation,
+      },
     });
   } catch (error) {
     console.error("Error fetching conversation:", error);
@@ -123,7 +153,7 @@ router.get(
       const { sessionId } = req.params;
 
       const summary = await aiStudyBuddyService.getConversationSummary(
-        req.user.id,
+        getUserId(req),
         sessionId
       );
 
@@ -164,13 +194,13 @@ router.delete(
       if (archive === "false") {
         // Permanently delete
         await Conversation.deleteOne({
-          user: req.user.id,
+          user: getUserId(req),
           sessionId,
         });
       } else {
         // Archive
         await Conversation.updateOne(
-          { user: req.user.id, sessionId },
+          { user: getUserId(req), sessionId },
           { status: "archived" }
         );
       }
@@ -201,7 +231,7 @@ router.get("/memories", authenticateToken, async (req, res) => {
   try {
     const { type, topic, limit = 20 } = req.query;
 
-    const query = { user: req.user.id };
+    const query = { user: getUserId(req) };
     if (type) query.memoryType = type;
     if (topic) query.topic = topic;
 
@@ -230,7 +260,7 @@ router.get("/memories", authenticateToken, async (req, res) => {
 router.get("/suggestions", authenticateToken, async (req, res) => {
   try {
     const suggestions = await aiStudyBuddyService.getProactiveSuggestions(
-      req.user.id
+      getUserId(req)
     );
 
     res.json({
@@ -256,7 +286,7 @@ router.post("/feedback", authenticateToken, async (req, res) => {
     const { sessionId, messageIndex, rating, feedback } = req.body;
 
     const conversation = await Conversation.findOne({
-      user: req.user.id,
+      user: getUserId(req),
       sessionId,
     });
 
@@ -298,7 +328,7 @@ router.post("/feedback", authenticateToken, async (req, res) => {
 router.get("/topics", authenticateToken, async (req, res) => {
   try {
     const conversations = await Conversation.find({
-      user: req.user.id,
+      user: getUserId(req),
     }).select("topics");
 
     // Aggregate all unique topics
@@ -309,7 +339,7 @@ router.get("/topics", authenticateToken, async (req, res) => {
 
     // Get topic frequencies
     const topicStats = await LearningMemory.aggregate([
-      { $match: { user: req.user.id } },
+      { $match: { user: getUserId(req) } },
       { $group: { _id: "$topic", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]);

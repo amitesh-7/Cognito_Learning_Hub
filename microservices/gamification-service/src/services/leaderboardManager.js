@@ -26,6 +26,7 @@ class LeaderboardManager {
 
       if (leaderboard.length === 0) {
         // Fallback to database and rebuild cache
+        console.log("📊 Leaderboard empty, rebuilding from database...");
         return await this.rebuildGlobalLeaderboard(start, limit);
       }
 
@@ -33,10 +34,13 @@ class LeaderboardManager {
       const userIds = leaderboard.map((entry) => entry.userId);
       const users = await this.getUserDetailsBatch(userIds);
 
-      return leaderboard.map((entry) => ({
+      const result = leaderboard.map((entry) => ({
         ...entry,
-        user: users.get(entry.userId) || { name: "Unknown User" },
+        user: users.get(entry.userId) || { name: "Unknown User", email: "" },
       }));
+
+      console.log(`📊 Returning ${result.length} leaderboard entries`);
+      return result;
     } catch (error) {
       console.error("Error getting global leaderboard:", error);
       throw error;
@@ -271,13 +275,21 @@ class LeaderboardManager {
    */
   async getUserDetailsBatch(userIds) {
     try {
+      console.log(`📋 Fetching details for ${userIds.length} users...`);
+
       const users = await User.find({ _id: { $in: userIds } })
-        .select("name email")
+        .select("name email picture")
         .lean();
+
+      console.log(`✅ Found ${users.length} user records`);
 
       const userMap = new Map();
       users.forEach((user) => {
-        userMap.set(user._id.toString(), user);
+        userMap.set(user._id.toString(), {
+          name: user.name || "Unknown User",
+          email: user.email || "",
+          picture: user.picture || null,
+        });
       });
 
       return userMap;

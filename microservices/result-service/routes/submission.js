@@ -3,16 +3,16 @@
  * Handles quiz result submission with cache invalidation
  */
 
-const express = require('express');
-const ApiResponse = require('../../shared/utils/response');
-const createLogger = require('../../shared/utils/logger');
-const { authenticateToken } = require('../../shared/middleware/auth');
-const { validateFields } = require('../../shared/middleware/inputValidation');
-const Result = require('../models/Result');
-const cacheManager = require('../services/cacheManager');
+const express = require("express");
+const ApiResponse = require("../../shared/utils/response");
+const createLogger = require("../../shared/utils/logger");
+const { authenticateToken } = require("../../shared/middleware/auth");
+const { validateFields } = require("../../shared/middleware/inputValidation");
+const Result = require("../models/Result");
+const cacheManager = require("../services/cacheManager");
 
 const router = express.Router();
-const logger = createLogger('submission-routes');
+const logger = createLogger("submission-routes");
 
 /**
  * @route   POST /api/results/submit
@@ -20,14 +20,14 @@ const logger = createLogger('submission-routes');
  * @access  Private
  */
 router.post(
-  '/submit',
+  "/submit",
   authenticateToken,
   validateFields({
-    quizId: { required: true, type: 'objectId' },
-    answers: { required: true, type: 'array', minLength: 1 },
-    startedAt: { required: true, type: 'string' },
-    completedAt: { required: true, type: 'string' },
-    sessionId: { type: 'objectId' },
+    quizId: { required: true, type: "objectId" },
+    answers: { required: true, type: "array", minLength: 1 },
+    startedAt: { required: true, type: "string" },
+    completedAt: { required: true, type: "string" },
+    sessionId: { type: "objectId" },
   }),
   async (req, res) => {
     try {
@@ -40,153 +40,199 @@ router.post(
         quizMetadata,
       } = req.body;
 
-    logger.info(`Processing result submission for quiz ${quizId}`);
-    logger.info(`Received ${answers.length} answers`);
+      logger.info(`Processing result submission for quiz ${quizId}`);
+      logger.info(`Received ${answers.length} answers`);
 
-    // Map answers to match schema - handle both field name variations
-    const mongoose = require('mongoose');
-    const processedAnswers = answers.map(ans => ({
-      questionId: mongoose.Types.ObjectId.isValid(ans.questionId) 
-        ? ans.questionId 
-        : new mongoose.Types.ObjectId(),
-      selectedAnswer: ans.selectedAnswer || ans.userAnswer || 'no_answer',
-      isCorrect: Boolean(ans.isCorrect),
-      points: Number(ans.points) || 0,
-      timeSpent: Number(ans.timeSpent || ans.timeTaken || 0),
-    }));
+      // Map answers to match schema - handle both field name variations
+      const mongoose = require("mongoose");
+      const processedAnswers = answers.map((ans) => ({
+        questionId: mongoose.Types.ObjectId.isValid(ans.questionId)
+          ? ans.questionId
+          : new mongoose.Types.ObjectId(),
+        selectedAnswer: ans.selectedAnswer || ans.userAnswer || "no_answer",
+        isCorrect: Boolean(ans.isCorrect),
+        points: Number(ans.points) || 0,
+        timeSpent: Number(ans.timeSpent || ans.timeTaken || 0),
+      }));
 
-    // Calculate metrics
-    const totalQuestions = processedAnswers.length;
-    const correctAnswers = processedAnswers.filter(ans => ans.isCorrect).length;
-    const incorrectAnswers = totalQuestions - correctAnswers;
-    const score = processedAnswers.reduce((sum, ans) => sum + (ans.points || 0), 0);
-    const maxScore = processedAnswers.reduce((sum, ans) => sum + (ans.points || 10), 0); // Assume 10 if not provided
-    
-    const startTime = new Date(startedAt);
-    const endTime = new Date(completedAt);
-    const totalTimeSpent = endTime - startTime;
-    
-    const percentage = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
-    const averageTimePerQuestion = totalQuestions > 0 ? totalTimeSpent / totalQuestions : 0;
+      // Calculate metrics
+      const totalQuestions = processedAnswers.length;
+      const correctAnswers = processedAnswers.filter(
+        (ans) => ans.isCorrect
+      ).length;
+      const incorrectAnswers = totalQuestions - correctAnswers;
+      const score = processedAnswers.reduce(
+        (sum, ans) => sum + (ans.points || 0),
+        0
+      );
+      const maxScore = processedAnswers.reduce(
+        (sum, ans) => sum + (ans.points || 10),
+        0
+      ); // Assume 10 if not provided
 
-    // Create result
-    const result = new Result({
-      userId: req.user.userId,
-      quizId,
-      sessionId: sessionId || null,
-      isMultiplayer: !!sessionId,
-      score,
-      maxScore,
-      percentage,
-      correctAnswers,
-      incorrectAnswers,
-      totalQuestions,
-      startedAt: startTime,
-      completedAt: endTime,
-      totalTimeSpent,
-      averageTimePerQuestion,
-      answers: processedAnswers,
-      quizMetadata: quizMetadata || {},
-    });
+      const startTime = new Date(startedAt);
+      const endTime = new Date(completedAt);
+      const totalTimeSpent = endTime - startTime;
 
-    await result.save();
-    logger.info(`Result submitted: ${result._id} by user ${req.user.userId} for quiz ${quizId}`);
+      const percentage =
+        totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+      const averageTimePerQuestion =
+        totalQuestions > 0 ? totalTimeSpent / totalQuestions : 0;
 
-    // Calculate XP with proper hierarchy (percentage already calculated above)
-    
-    // Difficulty multiplier: Easy=1.0x, Medium=1.5x, Hard=2.0x, Expert=2.5x
-    const difficultyMultipliers = {
-      'Easy': 1.0,
-      'Medium': 1.5,
-      'Hard': 2.0,
-      'Expert': 2.5
-    };
-    const difficultyLevel = quizMetadata?.difficulty || 'Medium';
-    const difficultyMultiplier = difficultyMultipliers[difficultyLevel] || 1.5;
-    
-    // Base XP: 1 point = 1 XP
-    let experienceGained = score;
-    
-    // Apply difficulty multiplier
-    experienceGained = Math.round(experienceGained * difficultyMultiplier);
-    
-    // Performance bonus: +50% for >80%, +25% for >60%
-    let bonusPoints = 0;
-    if (percentage >= 80) {
-      bonusPoints = Math.round(experienceGained * 0.5);
-      experienceGained += bonusPoints;
-    } else if (percentage >= 60) {
-      bonusPoints = Math.round(experienceGained * 0.25);
-      experienceGained += bonusPoints;
-    }
-    
-    // Time bonus: Fast completion (< 50% of time limit) gets +10%
-    const avgTimePerQuestion = totalTimeSpent / totalQuestions / 1000; // in seconds
-    const avgTimeLimit = 30; // default time limit
-    if (avgTimePerQuestion < avgTimeLimit * 0.5) {
-      const timeBonus = Math.round(experienceGained * 0.1);
-      bonusPoints += timeBonus;
-      experienceGained += timeBonus;
-    }
+      // Create result
+      const result = new Result({
+        userId: req.user.userId,
+        quizId,
+        sessionId: sessionId || null,
+        isMultiplayer: !!sessionId,
+        score,
+        maxScore,
+        percentage,
+        correctAnswers,
+        incorrectAnswers,
+        totalQuestions,
+        startedAt: startTime,
+        completedAt: endTime,
+        totalTimeSpent,
+        averageTimePerQuestion,
+        answers: processedAnswers,
+        quizMetadata: quizMetadata || {},
+      });
 
-    // Notify gamification service (non-blocking)
-    const axios = require('axios');
-    const GAMIFICATION_URL = process.env.GAMIFICATION_SERVICE_URL || 'http://localhost:3007';
-    axios.post(`${GAMIFICATION_URL}/api/events/quiz-completed`, {
-      userId: req.user.userId,
-      quizId,
-      resultData: {
-        percentage: percentage,
-        pointsEarned: score,
-        bonusPoints: bonusPoints,
-        totalTimeTaken: totalTimeSpent / 1000, // Convert to seconds
-        passed: percentage >= 60, // 60% passing
-        experienceGained: experienceGained,
-        category: quizMetadata?.category || 'General',
-        difficulty: difficultyLevel,
-        difficultyMultiplier: difficultyMultiplier
+      await result.save();
+      logger.info(
+        `Result submitted: ${result._id} by user ${req.user.userId} for quiz ${quizId}`
+      );
+
+      // Calculate XP with proper hierarchy (percentage already calculated above)
+
+      // Difficulty multiplier: Easy=1.0x, Medium=1.5x, Hard=2.0x, Expert=2.5x
+      const difficultyMultipliers = {
+        Easy: 1.0,
+        Medium: 1.5,
+        Hard: 2.0,
+        Expert: 2.5,
+      };
+      const difficultyLevel = quizMetadata?.difficulty || "Medium";
+      const difficultyMultiplier =
+        difficultyMultipliers[difficultyLevel] || 1.5;
+
+      // Base XP: 1 point = 1 XP
+      let experienceGained = score;
+
+      // Apply difficulty multiplier
+      experienceGained = Math.round(experienceGained * difficultyMultiplier);
+
+      // Performance bonus: +50% for >80%, +25% for >60%
+      let bonusPoints = 0;
+      if (percentage >= 80) {
+        bonusPoints = Math.round(experienceGained * 0.5);
+        experienceGained += bonusPoints;
+      } else if (percentage >= 60) {
+        bonusPoints = Math.round(experienceGained * 0.25);
+        experienceGained += bonusPoints;
       }
-    }).catch(err => {
-      logger.error('Gamification notification failed:', err.message);
-    });
 
-    // Invalidate related caches asynchronously (don't block response)
-    cacheManager.invalidateResultCaches(req.user.userId, quizId)
-      .catch(err => logger.error('Cache invalidation error:', err));
+      // Time bonus: Fast completion (< 50% of time limit) gets +10%
+      const avgTimePerQuestion = totalTimeSpent / totalQuestions / 1000; // in seconds
+      const avgTimeLimit = 30; // default time limit
+      if (avgTimePerQuestion < avgTimeLimit * 0.5) {
+        const timeBonus = Math.round(experienceGained * 0.1);
+        bonusPoints += timeBonus;
+        experienceGained += timeBonus;
+      }
 
-    return ApiResponse.created(res, {
-      result: result.getSummary(),
-      analysis: result.getDetailedAnalysis(),
-    });
-  } catch (error) {
-    logger.error('Submit result error:', error);
-    return ApiResponse.error(res, 'Failed to submit result', 500);
+      // Notify gamification service (non-blocking)
+      const axios = require("axios");
+      const GAMIFICATION_URL =
+        process.env.GAMIFICATION_SERVICE_URL || "http://localhost:3007";
+
+      logger.info(
+        `🎮 Notifying gamification service at ${GAMIFICATION_URL}/api/events/quiz-completed`
+      );
+      logger.info(
+        `📊 Points: ${score}, XP: ${experienceGained}, Percentage: ${percentage}%`
+      );
+
+      axios
+        .post(`${GAMIFICATION_URL}/api/events/quiz-completed`, {
+          userId: req.user.userId,
+          quizId,
+          resultData: {
+            percentage: percentage,
+            pointsEarned: score,
+            bonusPoints: bonusPoints,
+            totalTimeTaken: totalTimeSpent / 1000, // Convert to seconds
+            passed: percentage >= 60, // 60% passing
+            experienceGained: experienceGained,
+            category: quizMetadata?.category || "General",
+            difficulty: difficultyLevel,
+            difficultyMultiplier: difficultyMultiplier,
+          },
+        })
+        .then((response) => {
+          logger.info(
+            `✅ Gamification notification successful for user ${req.user.userId}`
+          );
+        })
+        .catch((err) => {
+          logger.error(
+            `❌ Gamification notification failed for user ${req.user.userId}:`,
+            err.message
+          );
+          logger.error(`   URL: ${GAMIFICATION_URL}/api/events/quiz-completed`);
+          if (err.response) {
+            logger.error(
+              `   Status: ${err.response.status}, Data:`,
+              err.response.data
+            );
+          }
+        });
+
+      // Invalidate related caches asynchronously (don't block response)
+      cacheManager
+        .invalidateResultCaches(req.user.userId, quizId)
+        .catch((err) => logger.error("Cache invalidation error:", err));
+
+      return ApiResponse.created(res, {
+        result: result.getSummary(),
+        analysis: result.getDetailedAnalysis(),
+      });
+    } catch (error) {
+      logger.error("Submit result error:", error);
+      return ApiResponse.error(res, "Failed to submit result", 500);
+    }
   }
-});
+);
 
 /**
  * @route   POST /api/results/batch-submit
  * @desc    Batch submit results (for multiplayer sessions)
  * @access  Private (Server-to-server)
  */
-router.post('/batch-submit', authenticateToken, async (req, res) => {
+router.post("/batch-submit", authenticateToken, async (req, res) => {
   try {
     const { results } = req.body;
 
     if (!results || !Array.isArray(results) || results.length === 0) {
-      return ApiResponse.badRequest(res, 'Results array required');
+      return ApiResponse.badRequest(res, "Results array required");
     }
 
     // Validate and prepare results
-    const preparedResults = results.map(r => {
+    const preparedResults = results.map((r) => {
       const totalQuestions = r.answers.length;
-      const correctAnswers = r.answers.filter(ans => ans.isCorrect).length;
+      const correctAnswers = r.answers.filter((ans) => ans.isCorrect).length;
       const score = r.answers.reduce((sum, ans) => sum + (ans.points || 0), 0);
-      const maxScore = r.answers.reduce((sum, ans) => sum + (ans.points || 10), 0);
+      const maxScore = r.answers.reduce(
+        (sum, ans) => sum + (ans.points || 10),
+        0
+      );
       const totalTimeSpent = new Date(r.completedAt) - new Date(r.startedAt);
-      const percentage = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
-      const averageTimePerQuestion = totalQuestions > 0 ? totalTimeSpent / totalQuestions : 0;
-      
+      const percentage =
+        totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+      const averageTimePerQuestion =
+        totalQuestions > 0 ? totalTimeSpent / totalQuestions : 0;
+
       return {
         userId: r.userId,
         quizId: r.quizId,
@@ -212,31 +258,36 @@ router.post('/batch-submit', authenticateToken, async (req, res) => {
     logger.info(`Batch inserted ${savedResults.length} results`);
 
     // Notify gamification service about batch results (non-blocking)
-    const axios = require('axios');
-    const GAMIFICATION_URL = process.env.GAMIFICATION_SERVICE_URL || 'http://localhost:3007';
+    const axios = require("axios");
+    const GAMIFICATION_URL =
+      process.env.GAMIFICATION_SERVICE_URL || "http://localhost:3007";
     for (const result of results) {
-      axios.post(`${GAMIFICATION_URL}/api/events/result-saved`, {
-        userId: result.userId,
-        resultId: result._id,
-        resultData: {
-          category: result.quizMetadata?.category || 'General',
-          totalPoints: result.score
-        }
-      }).catch(err => {
-        logger.error('Gamification leaderboard update failed:', err.message);
-      });
+      axios
+        .post(`${GAMIFICATION_URL}/api/events/result-saved`, {
+          userId: result.userId,
+          resultId: result._id,
+          resultData: {
+            category: result.quizMetadata?.category || "General",
+            totalPoints: result.score,
+          },
+        })
+        .catch((err) => {
+          logger.error("Gamification leaderboard update failed:", err.message);
+        });
     }
 
     // Invalidate caches for affected quizzes and users
-    const uniqueQuizIds = [...new Set(results.map(r => r.quizId))];
-    const uniqueUserIds = [...new Set(results.map(r => r.userId))];
-    
+    const uniqueQuizIds = [...new Set(results.map((r) => r.quizId))];
+    const uniqueUserIds = [...new Set(results.map((r) => r.userId))];
+
     Promise.all([
-      ...uniqueQuizIds.map(qid => cacheManager.invalidateQuizLeaderboard(qid)),
-      ...uniqueQuizIds.map(qid => cacheManager.invalidateQuizAnalytics(qid)),
-      ...uniqueUserIds.map(uid => cacheManager.invalidateUserStats(uid)),
+      ...uniqueQuizIds.map((qid) =>
+        cacheManager.invalidateQuizLeaderboard(qid)
+      ),
+      ...uniqueQuizIds.map((qid) => cacheManager.invalidateQuizAnalytics(qid)),
+      ...uniqueUserIds.map((uid) => cacheManager.invalidateUserStats(uid)),
       cacheManager.invalidateGlobalLeaderboard(),
-    ]).catch(err => logger.error('Batch cache invalidation error:', err));
+    ]).catch((err) => logger.error("Batch cache invalidation error:", err));
 
     res.status(201).json(
       ApiResponse.created({
@@ -245,8 +296,8 @@ router.post('/batch-submit', authenticateToken, async (req, res) => {
       })
     );
   } catch (error) {
-    logger.error('Batch submit error:', error);
-    return ApiResponse.error(res, 'Failed to batch submit results', 500);
+    logger.error("Batch submit error:", error);
+    return ApiResponse.error(res, "Failed to batch submit results", 500);
   }
 });
 
@@ -255,25 +306,26 @@ router.post('/batch-submit', authenticateToken, async (req, res) => {
  * @desc    Get user's quiz results
  * @access  Private
  */
-router.get('/my-results', authenticateToken, async (req, res) => {
+router.get("/my-results", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const mongoose = require('mongoose');
+    const mongoose = require("mongoose");
 
     // Query database using microservice field names 'userId' and 'quizId'
-    const results = await mongoose.connection.db.collection('results')
+    const results = await mongoose.connection.db
+      .collection("results")
       .aggregate([
         { $match: { userId: new mongoose.Types.ObjectId(userId) } },
         { $sort: { createdAt: -1 } },
         {
           $lookup: {
-            from: 'quizzes',
-            localField: 'quizId',
-            foreignField: '_id',
-            as: 'quiz'
-          }
+            from: "quizzes",
+            localField: "quizId",
+            foreignField: "_id",
+            as: "quiz",
+          },
         },
-        { $unwind: { path: '$quiz', preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: "$quiz", preserveNullAndEmptyArrays: true } },
         {
           $project: {
             quiz: { _id: 1, title: 1 },
@@ -281,15 +333,16 @@ router.get('/my-results', authenticateToken, async (req, res) => {
             totalQuestions: 1,
             percentage: 1,
             createdAt: 1,
-            updatedAt: 1
-          }
-        }
-      ]).toArray();
+            updatedAt: 1,
+          },
+        },
+      ])
+      .toArray();
 
     res.json(results);
   } catch (error) {
-    logger.error('Fetch my-results error:', error);
-    return ApiResponse.error(res, 'Failed to fetch results', 500);
+    logger.error("Fetch my-results error:", error);
+    return ApiResponse.error(res, "Failed to fetch results", 500);
   }
 });
 

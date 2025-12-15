@@ -19,12 +19,12 @@ class StatsManager {
    */
   async updateStats(userId, resultData) {
     try {
-      console.log('📈 Updating stats for user:', userId, {
+      console.log("📈 Updating stats for user:", userId, {
         pointsEarned: resultData.pointsEarned,
         experienceGained: resultData.experienceGained,
-        passed: resultData.passed
+        passed: resultData.passed,
       });
-      
+
       // Calculate updates
       const updates = {
         totalQuizzesTaken: 1,
@@ -33,8 +33,8 @@ class StatsManager {
         totalTimeSpent: Math.round((resultData.totalTimeTaken || 0) / 60), // Convert to minutes
         experience: resultData.experienceGained || 0,
       };
-      
-      console.log('📊 Calculated updates:', updates);
+
+      console.log("📊 Calculated updates:", updates);
 
       // Handle streak logic
       if (resultData.passed) {
@@ -54,7 +54,7 @@ class StatsManager {
       try {
         await incrementUserStats(userId, updates);
         cachedStats = await getUserStatsFromCache(userId);
-        
+
         // Update leaderboards
         if (cachedStats) {
           await updateLeaderboard(
@@ -63,8 +63,11 @@ class StatsManager {
             cachedStats.totalPoints
           );
 
-          // Calculate and update level
-          const level = Math.floor(cachedStats.experience / 100) + 1;
+          // Calculate and update level with progressive scaling
+          // Formula: Level = floor(sqrt(XP / 25)) + 1
+          // This makes each level progressively harder:
+          // L1: 0-24 XP, L2: 25-99 XP (+75), L3: 100-224 XP (+125), L4: 225-399 XP (+175), etc.
+          const level = Math.floor(Math.sqrt(cachedStats.experience / 25)) + 1;
           if (level !== cachedStats.level) {
             await this.updateLevel(userId, level);
           }
@@ -72,11 +75,14 @@ class StatsManager {
 
         // Queue stats sync to MongoDB (non-blocking)
         await queueStatsSync(userId);
-        
-        console.log('✅ Stats updated in Redis for user:', userId);
+
+        console.log("✅ Stats updated in Redis for user:", userId);
       } catch (redisError) {
-        console.warn('⚠️ Redis unavailable, updating MongoDB directly:', redisError.message);
-        
+        console.warn(
+          "⚠️ Redis unavailable, updating MongoDB directly:",
+          redisError.message
+        );
+
         // Direct MongoDB update as fallback
         const mongoUpdates = {
           $inc: {
@@ -84,26 +90,30 @@ class StatsManager {
             totalPoints: updates.totalPoints || 0,
             totalTimeSpent: updates.totalTimeSpent || 0,
             experience: updates.experience || 0,
-          }
+          },
         };
-        
+
         if (updates.currentStreak !== undefined) {
           mongoUpdates.$set = mongoUpdates.$set || {};
           mongoUpdates.$set.currentStreak = updates.currentStreak;
         }
-        
+
         if (updates.longestStreak !== undefined) {
           mongoUpdates.$set = mongoUpdates.$set || {};
           mongoUpdates.$set.longestStreak = updates.longestStreak;
         }
-        
+
         cachedStats = await UserStats.findOneAndUpdate(
           { user: userId },
           mongoUpdates,
           { new: true, upsert: true }
         ).lean();
-        
-        console.log('✅ Stats updated in MongoDB directly for user:', userId, cachedStats);
+
+        console.log(
+          "✅ Stats updated in MongoDB directly for user:",
+          userId,
+          cachedStats
+        );
       }
 
       return cachedStats;
@@ -137,6 +147,31 @@ class StatsManager {
           await newStats.save();
           await cacheUserStats(userId, newStats.toObject());
           stats = newStats.toObject();
+        }
+      }
+
+      // Always recalculate level based on current XP
+      // Progressive Formula: Level = floor(sqrt(XP / 25)) + 1
+      // Each level requires progressively more XP to achieve
+      if (stats && stats.experience !== undefined) {
+        const calculatedLevel =
+          Math.floor(Math.sqrt(stats.experience / 25)) + 1;
+
+        // Update level if it changed
+        if (calculatedLevel !== stats.level) {
+          console.log(
+            `📊 Level recalculated for user ${userId}: ${stats.level} -> ${calculatedLevel} (XP: ${stats.experience})`
+          );
+          stats.level = calculatedLevel;
+
+          // Update in cache/DB
+          await this.updateLevel(userId, calculatedLevel);
+
+          // Also update MongoDB
+          await UserStats.findOneAndUpdate(
+            { user: userId },
+            { $set: { level: calculatedLevel } }
+          );
         }
       }
 
