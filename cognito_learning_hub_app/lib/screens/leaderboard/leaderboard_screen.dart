@@ -112,11 +112,11 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
       itemBuilder: (context, index) {
         final rank = index + 4; // Start from 4th place
         return _LeaderboardItem(
-              rank: rank,
-              name: 'User ${rank}',
-              points: 2000 - (index * 80),
-              isCurrentUser: index == 5,
-            )
+          rank: rank,
+          name: 'User ${rank}',
+          points: 2000 - (index * 80),
+          isCurrentUser: index == 5,
+        )
             .animate()
             .fadeIn(delay: Duration(milliseconds: index * 50))
             .slideX(begin: 0.1);
@@ -222,7 +222,6 @@ class _TopRankItem extends StatelessWidget {
             fontSize: isFirst ? 12 : 10,
           ),
         ),
-        SizedBox(height: height - 80),
       ],
     );
   }

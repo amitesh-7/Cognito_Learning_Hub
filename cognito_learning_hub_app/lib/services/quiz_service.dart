@@ -59,9 +59,7 @@ class QuizService {
   // Get quiz by ID
   Future<Quiz?> getQuizById(String id) async {
     try {
-      print('📥 Fetching quiz by ID: $id');
       final response = await _api.get(Endpoints.quizById(id));
-      print('📥 Quiz response: ${response.data}');
 
       // Handle both formats: {quiz: {...}} or direct quiz object
       final quizData =
@@ -69,10 +67,8 @@ class QuizService {
       if (quizData != null && quizData is Map<String, dynamic>) {
         return Quiz.fromJson(quizData);
       }
-      print('❌ Quiz data is null or invalid format');
       return null;
     } catch (e) {
-      print('❌ Error fetching quiz: $e');
       return null;
     }
   }

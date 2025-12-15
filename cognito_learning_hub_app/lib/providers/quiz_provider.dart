@@ -97,9 +97,16 @@ class QuizFilter {
 }
 
 // Quiz filter state provider
-final quizFilterProvider = StateProvider<QuizFilter>((ref) {
-  return const QuizFilter();
+final quizFilterProvider = NotifierProvider<QuizFilterNotifier, QuizFilter>(() {
+  return QuizFilterNotifier();
 });
+
+class QuizFilterNotifier extends Notifier<QuizFilter> {
+  @override
+  QuizFilter build() => const QuizFilter();
+
+  void update(QuizFilter filter) => state = filter;
+}
 
 // Quiz taking state
 class QuizTakingState {
@@ -199,8 +206,9 @@ class QuizTakingState {
   }
 }
 
-class QuizTakingNotifier extends StateNotifier<QuizTakingState> {
-  QuizTakingNotifier() : super(const QuizTakingState());
+class QuizTakingNotifier extends Notifier<QuizTakingState> {
+  @override
+  QuizTakingState build() => const QuizTakingState();
 
   void startQuiz(Quiz quiz) {
     state = QuizTakingState(quiz: quiz, startTime: DateTime.now());
@@ -264,6 +272,6 @@ class QuizTakingNotifier extends StateNotifier<QuizTakingState> {
 }
 
 final quizTakingProvider =
-    StateNotifierProvider<QuizTakingNotifier, QuizTakingState>((ref) {
+    NotifierProvider<QuizTakingNotifier, QuizTakingState>(() {
   return QuizTakingNotifier();
 });

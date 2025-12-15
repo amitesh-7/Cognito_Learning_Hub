@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ThemeNotifier extends StateNotifier<ThemeMode> {
-  ThemeNotifier() : super(ThemeMode.system) {
-    _loadTheme();
-  }
-
+class ThemeNotifier extends Notifier<ThemeMode> {
   static const String _themeKey = 'theme_mode';
+
+  @override
+  ThemeMode build() {
+    _loadTheme();
+    return ThemeMode.system;
+  }
 
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
@@ -41,13 +43,14 @@ class ThemeNotifier extends StateNotifier<ThemeMode> {
   bool get isSystemMode => state == ThemeMode.system;
 }
 
-final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeMode>((ref) {
+final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(() {
   return ThemeNotifier();
 });
 
 // Helper to get actual brightness based on theme mode and system settings
 final isDarkModeProvider = Provider.family<bool, BuildContext>((ref, context) {
   final themeMode = ref.watch(themeProvider);
+  return false;
 
   switch (themeMode) {
     case ThemeMode.dark:

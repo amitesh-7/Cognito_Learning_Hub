@@ -32,28 +32,18 @@ class ApiService {
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
-          print('🌐 REQUEST[${options.method}] => ${options.path}');
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          print(
-            '✅ RESPONSE[${response.statusCode}] => ${response.requestOptions.path}',
-          );
           return handler.next(response);
         },
         onError: (error, handler) async {
-          print(
-            '❌ ERROR[${error.response?.statusCode}] => ${error.requestOptions.path}',
-          );
-
           // Handle 429 - Too Many Requests (Rate Limited by server or Cloudflare)
           if (error.response?.statusCode == 429) {
             final retryCount = error.requestOptions.extra['retryCount'] ?? 0;
             if (retryCount < 3) {
               // Wait with exponential backoff: 3s, 6s, 12s (longer for Cloudflare)
               final delay = Duration(seconds: 3 * (1 << retryCount));
-              print(
-                  '⏳ Rate limited. Retrying in ${delay.inSeconds}s (attempt ${retryCount + 1}/3)');
               await Future.delayed(delay);
 
               final opts = error.requestOptions;
@@ -66,8 +56,6 @@ class ApiService {
                 return handler.next(error);
               }
             }
-            print(
-                '❌ Rate limit exceeded after 3 retries. Please wait a moment and try again.');
           }
 
           // Handle 401 - Token expired

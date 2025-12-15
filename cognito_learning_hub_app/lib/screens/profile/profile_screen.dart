@@ -105,7 +105,7 @@ class ProfileScreen extends ConsumerWidget {
           child: _StatCard(
             icon: Icons.quiz,
             label: 'Quizzes',
-            value: '${user.stats?['quizzesTaken'] ?? 0}',
+            value: '${user.quizzesTaken ?? 0}',
             color: AppTheme.primaryColor,
           ),
         ),
@@ -114,7 +114,7 @@ class ProfileScreen extends ConsumerWidget {
           child: _StatCard(
             icon: Icons.check_circle,
             label: 'Correct',
-            value: '${user.stats?['correctAnswers'] ?? 0}',
+            value: '${(user.quizzesTaken * user.averageScore / 100).round()}',
             color: AppTheme.successColor,
           ),
         ),
@@ -123,7 +123,7 @@ class ProfileScreen extends ConsumerWidget {
           child: _StatCard(
             icon: Icons.sports_esports,
             label: 'Duels Won',
-            value: '${user.stats?['duelsWon'] ?? 0}',
+            value: '0',
             color: AppTheme.accentColor,
           ),
         ),
@@ -252,20 +252,34 @@ class _ProfileHeader extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundImage: user.picture != null
-                        ? NetworkImage(user.picture)
-                        : null,
                     backgroundColor: Colors.white.withOpacity(0.2),
-                    child: user.picture == null
-                        ? Text(
+                    child: user.picture != null && user.picture!.isNotEmpty
+                        ? ClipOval(
+                            child: Image.network(
+                              user.picture!,
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Text(
+                                  (user.name ?? 'U')[0].toUpperCase(),
+                                  style: const TextStyle(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        : Text(
                             (user.name ?? 'U')[0].toUpperCase(),
                             style: const TextStyle(
                               fontSize: 36,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
-                          )
-                        : null,
+                          ),
                   ),
                   Positioned(
                     bottom: 0,

@@ -16,7 +16,8 @@ class SignupScreen extends ConsumerStatefulWidget {
   ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends ConsumerState<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen>
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -24,11 +25,33 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _confirmPasswordController = TextEditingController();
   String _selectedRole = 'Student';
   bool _isLoading = false;
+  late AnimationController _confettiController;
 
   final List<Map<String, dynamic>> _roles = [
-    {'value': 'Student', 'label': 'Student', 'icon': Icons.school},
-    {'value': 'Teacher', 'label': 'Teacher', 'icon': Icons.person},
+    {
+      'value': 'Student',
+      'label': 'Student',
+      'icon': Icons.school,
+      'emoji': '🎓',
+      'color': Colors.blue
+    },
+    {
+      'value': 'Teacher',
+      'label': 'Teacher',
+      'icon': Icons.person,
+      'emoji': '👨‍🏫',
+      'color': Colors.purple
+    },
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+  }
 
   @override
   void dispose() {
@@ -36,6 +59,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _confettiController.dispose();
     super.dispose();
   }
 
@@ -44,9 +68,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     setState(() => _isLoading = true);
 
-    final success = await ref
-        .read(authProvider.notifier)
-        .register(
+    final success = await ref.read(authProvider.notifier).register(
           _nameController.text.trim(),
           _emailController.text.trim(),
           _passwordController.text,
@@ -90,8 +112,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Text(
                   'Create Account',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                   textAlign: TextAlign.center,
                 ).animate().fadeIn().slideY(begin: 0.2),
 
@@ -107,50 +129,81 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                 const SizedBox(height: 32),
 
-                // Role Selection
+                // Role Selection with Gamified Cards
                 Text(
-                  'I am a',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  '🎯 Choose Your Role',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                  textAlign: TextAlign.center,
                 ).animate().fadeIn(delay: 200.ms),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 Row(
                   children: _roles.map((role) {
                     final isSelected = _selectedRole == role['value'];
+                    final color = role['color'] as Color;
                     return Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: InkWell(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: GestureDetector(
                           onTap: () {
                             setState(() => _selectedRole = role['value']);
                           },
-                          borderRadius: BorderRadius.circular(12),
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
                             padding: const EdgeInsets.symmetric(
-                              vertical: 16,
+                              vertical: 20,
                               horizontal: 12,
                             ),
                             decoration: BoxDecoration(
+                              gradient: isSelected
+                                  ? LinearGradient(
+                                      colors: [
+                                        color.withOpacity(0.3),
+                                        color.withOpacity(0.1),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : null,
                               color: isSelected
-                                  ? AppTheme.primaryColor.withOpacity(0.1)
-                                  : Colors.transparent,
+                                  ? null
+                                  : Colors.grey.withOpacity(0.1),
                               border: Border.all(
                                 color: isSelected
-                                    ? AppTheme.primaryColor
-                                    : Colors.grey.shade300,
+                                    ? color
+                                    : Colors.grey.withOpacity(0.3),
                                 width: isSelected ? 2 : 1,
                               ),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: color.withOpacity(0.4),
+                                        blurRadius: 12,
+                                        spreadRadius: 2,
+                                      ),
+                                    ]
+                                  : [],
                             ),
                             child: Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
+                                AnimatedScale(
+                                  scale: isSelected ? 1.2 : 1.0,
+                                  duration: const Duration(milliseconds: 300),
+                                  child: Text(
+                                    role['emoji'],
+                                    style: const TextStyle(fontSize: 32),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
                                 Icon(
                                   role['icon'],
-                                  color: isSelected
-                                      ? AppTheme.primaryColor
-                                      : Colors.grey,
+                                  color: isSelected ? color : Colors.grey,
                                   size: 28,
                                 ),
                                 const SizedBox(height: 8),
@@ -158,13 +211,22 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   role['label'],
                                   style: TextStyle(
                                     color: isSelected
-                                        ? AppTheme.primaryColor
+                                        ? color
                                         : Colors.grey.shade700,
+                                    fontSize: 14,
                                     fontWeight: isSelected
-                                        ? FontWeight.w600
+                                        ? FontWeight.bold
                                         : FontWeight.normal,
                                   ),
                                 ),
+                                if (isSelected) ...[
+                                  const SizedBox(height: 6),
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: color,
+                                    size: 18,
+                                  ),
+                                ],
                               ],
                             ),
                           ),

@@ -50,9 +50,8 @@ class User {
       picture: json['picture'],
       googleId: json['googleId'],
       status: json['status'] ?? 'offline',
-      lastSeen: json['lastSeen'] != null
-          ? DateTime.parse(json['lastSeen'])
-          : null,
+      lastSeen:
+          json['lastSeen'] != null ? DateTime.parse(json['lastSeen']) : null,
       points: json['points'] ?? 0,
       level: json['level'] ?? 1,
       rank: json['rank'] ?? 'Beginner',
@@ -69,25 +68,25 @@ class User {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'email': email,
-    'role': role,
-    'picture': picture,
-    'googleId': googleId,
-    'status': status,
-    'lastSeen': lastSeen?.toIso8601String(),
-    'points': points,
-    'level': level,
-    'rank': rank,
-    'badges': badges,
-    'quizzesTaken': quizzesTaken,
-    'quizzesCreated': quizzesCreated,
-    'averageScore': averageScore,
-    'currentStreak': currentStreak,
-    'longestStreak': longestStreak,
-    'createdAt': createdAt.toIso8601String(),
-  };
+        'id': id,
+        'name': name,
+        'email': email,
+        'role': role,
+        'picture': picture,
+        'googleId': googleId,
+        'status': status,
+        'lastSeen': lastSeen?.toIso8601String(),
+        'points': points,
+        'level': level,
+        'rank': rank,
+        'badges': badges,
+        'quizzesTaken': quizzesTaken,
+        'quizzesCreated': quizzesCreated,
+        'averageScore': averageScore,
+        'currentStreak': currentStreak,
+        'longestStreak': longestStreak,
+        'createdAt': createdAt.toIso8601String(),
+      };
 
   User copyWith({
     String? id,
@@ -135,4 +134,12 @@ class User {
       role == 'Teacher' || role == 'Admin' || role == 'Moderator';
   bool get isAdmin => role == 'Admin';
   bool get isModerator => role == 'Moderator' || role == 'Admin';
+
+  // Stats getter for backward compatibility
+  Map<String, dynamic> get stats => {
+        'quizzesTaken': quizzesTaken,
+        'correctAnswers': (quizzesTaken * averageScore / 100).round(),
+        'duelsWon':
+            0, // This would need to be added to the User model if tracked
+      };
 }

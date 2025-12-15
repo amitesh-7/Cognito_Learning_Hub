@@ -212,7 +212,10 @@ export default function Dashboard() {
     userStats?.averageScore ||
     (results.length > 0
       ? results.reduce(
-          (acc, r) => acc + (r.score / r.totalQuestions) * 100,
+          (acc, r) =>
+            acc +
+            (r.percentage ||
+              ((r.correctAnswers || 0) / (r.totalQuestions || 1)) * 100),
           0
         ) / results.length
       : 0);

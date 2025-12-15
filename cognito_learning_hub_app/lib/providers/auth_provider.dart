@@ -29,11 +29,14 @@ class AuthState {
 }
 
 // Auth notifier
-class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthService _authService;
+class AuthNotifier extends Notifier<AuthState> {
+  late final AuthService _authService;
 
-  AuthNotifier(this._authService) : super(const AuthState(isLoading: true)) {
+  @override
+  AuthState build() {
+    _authService = ref.read(authServiceProvider);
     _init();
+    return const AuthState(isLoading: true);
   }
 
   Future<void> _init() async {
@@ -121,8 +124,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 // Providers
 final authServiceProvider = Provider((ref) => AuthService());
 
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(ref.watch(authServiceProvider));
+final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {
+  return AuthNotifier();
 });
 
 // Convenience providers

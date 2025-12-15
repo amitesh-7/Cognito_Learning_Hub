@@ -231,7 +231,8 @@ class _QuizTakerScreenState extends ConsumerState<QuizTakerScreen>
                         )
                             .animate()
                             .fadeIn(
-                              delay: Duration(milliseconds: 100 * (index + 1)),
+                              delay: Duration(
+                                  milliseconds: (100 * (index + 1)).toInt()),
                             )
                             .slideX(begin: 0.2);
                       }),

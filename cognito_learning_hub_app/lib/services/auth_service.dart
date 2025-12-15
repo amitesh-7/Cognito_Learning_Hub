@@ -9,20 +9,17 @@ import 'api_service.dart';
 class AuthService {
   final _api = ApiService();
   final _storage = const FlutterSecureStorage();
-  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
 
   // Email/Password Login
   Future<AuthResult> login(String email, String password) async {
     try {
-      print('🔐 Attempting login for: $email');
-      print('🌐 API URL: ${ApiConfig.apiUrl}');
-
       final response = await _api.post(
         Endpoints.login,
         data: {'email': email, 'password': password},
       );
-
-      print('📥 Login response: ${response.data}');
 
       // Response structure: { success, message, data: { user, accessToken, refreshToken } }
       final responseData = response.data;
@@ -37,7 +34,6 @@ class AuthService {
       final userData = data['user'] ?? responseData['user'];
 
       if (token == null) {
-        print('❌ No token in response. Data structure: $responseData');
         return AuthResult(
             success: false, error: 'No token received from server');
       }
@@ -45,10 +41,8 @@ class AuthService {
       await _api.saveToken(token, refreshToken: refreshToken);
 
       final user = User.fromJson(userData);
-      print('✅ Login successful for: ${user.email}');
       return AuthResult(success: true, user: user, token: token);
     } catch (e) {
-      print('❌ Login error: $e');
       return AuthResult(success: false, error: _getErrorMessage(e));
     }
   }
@@ -61,8 +55,6 @@ class AuthService {
     String role,
   ) async {
     try {
-      print('📝 Attempting registration for: $email');
-
       final response = await _api.post(
         Endpoints.register,
         data: {
@@ -73,8 +65,6 @@ class AuthService {
         },
       );
 
-      print('📥 Register response: ${response.data}');
-
       // Response structure: { success, message, data: { user, accessToken, refreshToken } }
       final responseData = response.data;
       final data = responseData['data'] ?? responseData;
@@ -94,10 +84,8 @@ class AuthService {
       await _api.saveToken(token, refreshToken: refreshToken);
 
       final user = User.fromJson(userData);
-      print('✅ Registration successful for: ${user.email}');
       return AuthResult(success: true, user: user, token: token);
     } catch (e) {
-      print('❌ Registration error: $e');
       return AuthResult(success: false, error: _getErrorMessage(e));
     }
   }
@@ -105,15 +93,12 @@ class AuthService {
   // Google Sign In
   Future<AuthResult> signInWithGoogle() async {
     try {
-      print('🔐 Starting Google Sign In...');
-
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         return AuthResult(success: false, error: 'Google sign in cancelled');
       }
 
       final googleAuth = await googleUser.authentication;
-      print('📱 Got Google auth, sending to backend...');
 
       // Backend expects 'credential' with the idToken
       final response = await _api.post(
@@ -123,8 +108,6 @@ class AuthService {
         },
       );
 
-      print('📥 Google auth response: ${response.data}');
-
       // Response structure: { success, message, data: { user, accessToken, refreshToken } }
       final responseData = response.data;
       final data = responseData['data'] ?? responseData;
@@ -144,10 +127,8 @@ class AuthService {
       await _api.saveToken(token, refreshToken: refreshToken);
 
       final user = User.fromJson(userData);
-      print('✅ Google sign in successful for: ${user.email}');
       return AuthResult(success: true, user: user, token: token);
     } catch (e) {
-      print('❌ Google sign in error: $e');
       return AuthResult(success: false, error: _getErrorMessage(e));
     }
   }
@@ -156,19 +137,16 @@ class AuthService {
   Future<User?> getCurrentUser() async {
     try {
       final token = await _storage.read(key: 'auth_token');
-      print('🔍 Checking current user, token exists: ${token != null}');
 
       if (token == null) return null;
 
       // Check if token is expired
       if (JwtDecoder.isExpired(token)) {
-        print('⏰ Token expired, clearing...');
         await _api.clearTokens();
         return null;
       }
 
       // Get fresh user data from server using /api/auth/me endpoint
-      print('📡 Fetching user profile...');
       final response = await _api.get('/api/auth/me');
 
       // Handle nested data structure
@@ -177,10 +155,14 @@ class AuthService {
       final userData = data['user'] ?? responseData['user'] ?? data;
 
       final user = User.fromJson(userData);
-      print('✅ Got user: ${user.email}');
       return user;
     } catch (e) {
-      print('❌ getCurrentUser error: $e');
+      // If we get a 500 error or any auth error, clear the invalid token
+      if (e.toString().contains('500') ||
+          e.toString().contains('401') ||
+          e.toString().contains('403')) {
+        await _api.clearTokens();
+      }
       return null;
     }
   }

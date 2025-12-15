@@ -159,13 +159,25 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 16),
 
-          // Delete Account
-          TextButton(
-            onPressed: () => _showDeleteAccountDialog(context, ref),
-            child: const Text(
-              'Delete Account',
-              style: TextStyle(color: Colors.grey),
-            ),
+          // Delete Account (hidden for students)
+          Consumer(
+            builder: (context, ref, child) {
+              final authState = ref.watch(authProvider);
+              final user = authState.user;
+
+              // Only show delete account for non-students
+              if (user?.role == 'Student') {
+                return const SizedBox.shrink();
+              }
+
+              return TextButton(
+                onPressed: () => _showDeleteAccountDialog(context, ref),
+                child: const Text(
+                  'Delete Account',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              );
+            },
           ),
 
           const SizedBox(height: 32),
