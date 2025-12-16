@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { useAccessibility } from "../context/AccessibilityContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -14,6 +15,9 @@ import {
   Star,
   Zap,
   Users,
+  Volume2,
+  Keyboard,
+  AlertCircle,
 } from "lucide-react";
 import {
   Card,
@@ -128,6 +132,17 @@ export default function Login() {
 
   const navigate = useNavigate();
   const { login, user, isAuthenticated } = useContext(AuthContext);
+  const { settings } = useAccessibility();
+
+  // Voice announcement for VI users
+  useEffect(() => {
+    if (settings?.visuallyImpairedMode && window.speechSynthesis) {
+      const announcement = "Login page. Enter your email and password to sign in. For full accessibility support, press Alt plus A to enable voice guidance.";
+      const utterance = new SpeechSynthesisUtterance(announcement);
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+  }, [settings?.visuallyImpairedMode]);
 
   // Google OAuth handlers
   const handleGoogleSuccess = async (credentialResponse) => {
@@ -479,21 +494,61 @@ export default function Login() {
             onSubmit={handleSubmit}
             className="space-y-6"
             variants={staggerItem}
+            role="form"
+            aria-label="Login form"
           >
+            {/* Accessibility Banner */}
+            {!settings?.visuallyImpairedMode && (
+              <motion.div
+                className="p-4 bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 border-2 border-violet-200 dark:border-violet-800 rounded-xl"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <Volume2 className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-violet-900 dark:text-violet-100 mb-1">
+                      ♿ Accessibility Features Available
+                    </h4>
+                    <p className="text-sm text-violet-700 dark:text-violet-300 mb-2">
+                      For visually impaired users: Press <kbd className="px-2 py-1 bg-violet-200 dark:bg-violet-800 rounded font-mono text-xs">Alt+A</kbd> for voice guidance
+                    </p>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <span className="flex items-center gap-1 text-violet-600 dark:text-violet-400">
+                        <Keyboard className="w-3 h-3" />
+                        Full keyboard support
+                      </span>
+                      <span className="flex items-center gap-1 text-violet-600 dark:text-violet-400">
+                        <Volume2 className="w-3 h-3" />
+                        Screen reader optimized
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {error && (
               <motion.div
-                className="p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-center"
+                className="p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-center flex items-center justify-center gap-2"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: "spring", stiffness: 300 }}
+                role="alert"
+                aria-live="assertive"
               >
+                <AlertCircle className="w-5 h-5" />
                 {error}
               </motion.div>
             )}
 
             <div className="space-y-4">
               <div className="relative">
+                <label htmlFor="email" className="sr-only">Email address</label>
                 <Input
+                  id="email"
                   type="email"
                   name="email"
                   placeholder="Enter your email"
@@ -502,11 +557,15 @@ export default function Login() {
                   required
                   icon={Mail}
                   className="pl-12"
+                  aria-label="Email address"
+                  aria-required="true"
                 />
               </div>
 
               <div className="relative">
+                <label htmlFor="password" className="sr-only">Password</label>
                 <Input
+                  id="password"
                   type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Enter your password"
@@ -515,11 +574,14 @@ export default function Login() {
                   required
                   icon={Lock}
                   className="pl-12 pr-12"
+                  aria-label="Password"
+                  aria-required="true"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />

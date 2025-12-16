@@ -1,4 +1,4 @@
-import React, { useContext, Suspense, lazy } from "react";
+import React, { useContext, Suspense, lazy, useState, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ToastProvider } from "./components/ui/Toast";
@@ -11,6 +11,9 @@ import { useTheme } from "./hooks/useTheme";
 import { useIsMobile } from "./hooks/useReducedMotion";
 import NetworkStatusIndicator from "./components/ui/NetworkStatusIndicator";
 import PWAInstallPrompt from "./components/ui/PWAInstallPrompt";
+import OnboardingTour from "./components/OnboardingTour";
+import HelpWidget from "./components/HelpWidget";
+import { AuthContext } from "./context/AuthContext";
 
 // Accessibility Components
 import {
@@ -76,6 +79,8 @@ const AIQuizOpponent = lazy(() => import("./pages/AIQuizOpponent"));
 const QuizHistory = lazy(() => import("./pages/QuizHistory"));
 const QuizResultDetail = lazy(() => import("./pages/QuizResultDetail"));
 const MyQuizzes = lazy(() => import("./pages/MyQuizzes"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
 
 // Avatar Routes
 const AvatarCustomization = lazy(() => import("./pages/AvatarCustomization"));
@@ -96,6 +101,7 @@ function App() {
   const [theme] = useTheme();
   const isMobile = useIsMobile();
   const location = useLocation();
+  const { user } = useContext(AuthContext);
 
   // Routes that need full-screen layout without navbar/padding
   const fullScreenRoutes = ["/doubt-solver", "/meeting", "/live/join"];
@@ -125,6 +131,12 @@ function App() {
 
                   {/* Real-time Achievement Notifications */}
                   <AchievementNotification />
+
+                  {/* Onboarding Tour for New Users */}
+                  {user && <OnboardingTour />}
+
+                  {/* Help Widget - Always Available */}
+                  <HelpWidget />
 
                   {/* Animated Background Layers - Disabled on mobile for performance */}
                   {!isMobile && (
@@ -179,6 +191,22 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <Dashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/profile"
+                            element={
+                              <ProtectedRoute>
+                                <Profile />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/settings"
+                            element={
+                              <ProtectedRoute>
+                                <Settings />
                               </ProtectedRoute>
                             }
                           />
