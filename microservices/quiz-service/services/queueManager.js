@@ -73,20 +73,20 @@ try {
   quizGenerationQueue = new Queue("quiz-generation", {
     redis: redisConfig,
     defaultJobOptions: {
-      attempts: parseInt(process.env.QUEUE_MAX_ATTEMPTS) || 3,
+      attempts: parseInt(process.env.QUEUE_MAX_ATTEMPTS) || 5, // Increased from 3 to 5
       backoff: {
         type: "exponential",
         delay: parseInt(process.env.QUEUE_BACKOFF_DELAY) || 5000,
       },
       removeOnComplete: 100, // Keep last 100 completed jobs
       removeOnFail: 500, // Keep last 500 failed jobs
-      timeout: 30000, // 30 seconds max per job
+      timeout: 200000, // 200 seconds max per job (increased for AI retries)
     },
   });
 
   // Queue event listeners for monitoring
   quizGenerationQueue.on("active", (job) => {
-    logger.info(`Job ${job.id} started: ${job.data.method}`);
+    logger.info(`Job ${job.id} started: ${job.data.method} (Attempt ${job.attemptsMade + 1})`);
   });
 
   quizGenerationQueue.on("completed", (job, result) => {
@@ -94,14 +94,18 @@ try {
       method: job.data.method,
       quizId: result.quizId,
       duration: Date.now() - job.timestamp,
+      attempts: job.attemptsMade + 1,
+      apiKey: result.apiKey || 'unknown',
     });
   });
 
   quizGenerationQueue.on("failed", (job, error) => {
-    logger.error(`Job ${job.id} failed:`, {
+    const willRetry = job.attemptsMade < (parseInt(process.env.QUEUE_MAX_ATTEMPTS) || 5);
+    logger.error(`Job ${job.id} failed${willRetry ? ' (will retry)' : ' (final)'}:`, {
       method: job.data.method,
       error: error.message,
       attempts: job.attemptsMade,
+      maxAttempts: parseInt(process.env.QUEUE_MAX_ATTEMPTS) || 5,
     });
   });
 

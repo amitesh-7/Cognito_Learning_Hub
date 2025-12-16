@@ -157,7 +157,7 @@ const VideoBackground = ({
       )}
 
       {/* Accessibility: Reduced Motion Support */}
-      <style jsx>{`
+      <style>{`
         @media (prefers-reduced-motion: reduce) {
           video {
             animation: none !important;

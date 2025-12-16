@@ -40,14 +40,14 @@ async function initialize() {
 }
 
 /**
- * Process quiz generation job
+ * Process quiz generation job with enhanced error handling
  */
 quizGenerationQueue.process(
   parseInt(process.env.QUEUE_CONCURRENT_JOBS) || 3,
   async (job) => {
     const { method, userId, userRole, data } = job.data;
 
-    logger.info(`Processing job ${job.id}: ${method}`, { userId });
+    logger.info(`Processing job ${job.id}: ${method} (Attempt ${job.attemptsMade + 1})`, { userId });
 
     try {
       let result;
@@ -68,15 +68,29 @@ quizGenerationQueue.process(
           throw new Error(`Unknown generation method: ${method}`);
       }
 
-      // Increment user's generation count
-      await cacheManager.incrementUserGenerationCount(userId);
+      // Increment user's generation count (only on first successful attempt)
+      if (job.attemptsMade === 0) {
+        await cacheManager.incrementUserGenerationCount(userId);
+      }
 
       await job.progress(100);
 
-      logger.info(`Job ${job.id} completed successfully`);
+      logger.info(`Job ${job.id} completed successfully on attempt ${job.attemptsMade + 1}`);
       return result;
     } catch (error) {
-      logger.error(`Job ${job.id} failed:`, error);
+      const willRetry = job.attemptsMade + 1 < (parseInt(process.env.QUEUE_MAX_ATTEMPTS) || 5);
+      logger.error(`Job ${job.id} failed on attempt ${job.attemptsMade + 1}${willRetry ? ' (will retry)' : ' (final)'}:`, {
+        error: error.message,
+        stack: error.stack?.substring(0, 500),
+      });
+      
+      // Add error context to job for better debugging
+      job.data.lastError = {
+        message: error.message,
+        attempt: job.attemptsMade + 1,
+        timestamp: new Date().toISOString(),
+      };
+      
       throw error;
     }
   }
@@ -97,7 +111,7 @@ async function processTopicGeneration(job, data) {
 
   await job.progress(20);
 
-  // Generate quiz with AI
+  // Generate quiz with AI (includes automatic retry and fallback)
   const aiResult = await aiService.generateQuizFromTopic({
     topic,
     numQuestions,
@@ -125,9 +139,11 @@ async function processTopicGeneration(job, data) {
       method: "ai-topic",
       prompt: topic,
       model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      apiKey: aiResult.apiKey || "unknown", // Track which API key was used
       wasAdaptive: useAdaptive,
       generatedAt: new Date(),
       generationTime: aiResult.generationTime,
+      attempts: job.attemptsMade + 1,
     },
   });
 
@@ -135,7 +151,7 @@ async function processTopicGeneration(job, data) {
 
   await job.progress(90);
 
-  logger.info(`Topic quiz saved: ${savedQuiz._id}`);
+  logger.info(`Topic quiz saved: ${savedQuiz._id} (API Key: ${aiResult.apiKey || 'unknown'})`);
 
   return {
     success: true,
@@ -144,6 +160,7 @@ async function processTopicGeneration(job, data) {
     fromCache: aiResult.fromCache,
     adaptiveInfo: aiResult.adaptiveInfo,
     generationTime: aiResult.generationTime,
+    apiKey: aiResult.apiKey, // Return which API key was successful
   };
 }
 
@@ -163,7 +180,7 @@ async function processFileGeneration(job, data) {
 
   await job.progress(20);
 
-  // Generate quiz with AI
+  // Generate quiz with AI (includes automatic retry and fallback)
   const aiResult = await aiService.generateQuizFromFile({
     extractedText,
     numQuestions,
@@ -192,9 +209,11 @@ async function processFileGeneration(job, data) {
       method: "ai-file",
       sourceFile: fileName,
       model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      apiKey: aiResult.apiKey || "unknown", // Track which API key was used
       wasAdaptive: useAdaptive,
       generatedAt: new Date(),
       generationTime: aiResult.generationTime,
+      attempts: job.attemptsMade + 1,
     },
   });
 
@@ -202,7 +221,7 @@ async function processFileGeneration(job, data) {
 
   await job.progress(90);
 
-  logger.info(`File quiz saved: ${savedQuiz._id}`);
+  logger.info(`File quiz saved: ${savedQuiz._id} (API Key: ${aiResult.apiKey || 'unknown'})`);
 
   return {
     success: true,
@@ -211,6 +230,7 @@ async function processFileGeneration(job, data) {
     fromCache: aiResult.fromCache,
     adaptiveInfo: aiResult.adaptiveInfo,
     generationTime: aiResult.generationTime,
+    apiKey: aiResult.apiKey, // Return which API key was successful
   };
 }
 

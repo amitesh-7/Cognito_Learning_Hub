@@ -11,6 +11,7 @@ const compression = require("compression");
 
 // Shared utilities
 const createLogger = require("../shared/utils/logger");
+const { createLogger: createServiceLogger } = require("../shared/utils/serviceLogger");
 const ApiResponse = require("../shared/utils/response");
 const { errorHandler } = require("../shared/middleware/errorHandler");
 const { generalLimiter } = require("../shared/middleware/rateLimiter");
@@ -23,6 +24,7 @@ const userRoutes = require("./routes/user");
 // Initialize
 const app = express();
 const logger = createLogger("auth-service");
+const serviceLogger = createServiceLogger("Auth Service", process.env.ADMIN_SERVICE_URL);
 const PORT = process.env.PORT || 3001;
 
 // Trust proxy - Required for rate limiter to work correctly
@@ -270,11 +272,13 @@ async function startServer() {
 // Handle uncaught exceptions
 process.on("uncaughtException", (error) => {
   logger.error("Uncaught Exception:", error);
+  serviceLogger.error("Uncaught Exception", { error: error.message }, error.stack);
   process.exit(1);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
   logger.error("Unhandled Rejection at:", promise, "reason:", reason);
+  serviceLogger.error("Unhandled Rejection", { reason: reason?.message || reason });
   process.exit(1);
 });
 

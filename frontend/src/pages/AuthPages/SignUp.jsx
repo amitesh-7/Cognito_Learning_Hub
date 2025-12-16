@@ -851,7 +851,7 @@ export default function SignUp() {
       </div>
 
       {/* Add shimmer animation */}
-      <style jsx>{`
+      <style>{`
         @keyframes shimmer {
           0% { background-position: 200% 0; }
           100% { background-position: -200% 0; }

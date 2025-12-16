@@ -10,12 +10,14 @@ const cors = require("cors");
 const compression = require("compression");
 const mongoose = require("mongoose");
 const createLogger = require("../shared/utils/logger");
+const { createLogger: createServiceLogger } = require("../shared/utils/serviceLogger");
 const ApiResponse = require("../shared/utils/response");
 const cacheManager = require("./services/cacheManager");
 const queueManager = require("./services/queueManager");
 
 const app = express();
 const logger = createLogger("quiz-service");
+const serviceLogger = createServiceLogger("Quiz Service", process.env.ADMIN_SERVICE_URL);
 const PORT = process.env.PORT || 3002;
 
 // Trust proxy - Required for Render/Heroku/AWS deployments behind load balancers
@@ -81,6 +83,7 @@ app.get("/", (req, res) => {
 // Health check
 app.get("/health", async (req, res) => {
   try {
+    const aiService = require("./services/aiService");
     const memUsage = process.memoryUsage();
     const health = {
       status: "healthy",
@@ -102,6 +105,9 @@ app.get("/health", async (req, res) => {
 
     const queueStats = await queueManager.getQueueStats();
     health.queue = queueStats;
+
+    // Add AI service health (circuit breaker & API keys)
+    health.aiService = aiService.getCircuitBreakerStats();
 
     res.json(health);
   } catch (error) {

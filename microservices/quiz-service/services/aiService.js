@@ -1,6 +1,6 @@
 /**
- * AI Generation Service with Circuit Breaker and Caching
- * Addresses: AI timeout, circuit breaker, and caching optimizations
+ * AI Generation Service with Circuit Breaker, Caching, and API Key Fallback
+ * Enhanced with: Multiple API key fallback, Smart retry logic, Better error handling
  */
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -11,38 +11,229 @@ const cacheManager = require("./cacheManager");
 
 const logger = createLogger("ai-service");
 
-// Validate API key on startup
-const apiKey = process.env.GOOGLE_API_KEY;
-if (!apiKey) {
-  logger.error("GOOGLE_API_KEY environment variable is not set!");
-  throw new Error("GOOGLE_API_KEY is required for quiz generation");
+// API Key Management with Fallback
+class APIKeyManager {
+  constructor() {
+    this.keys = [];
+    this.currentKeyIndex = 0;
+    this.keyHealthStatus = new Map(); // Track health of each key
+    this.loadAPIKeys();
+  }
+
+  loadAPIKeys() {
+    // Primary API key
+    if (process.env.GOOGLE_API_KEY) {
+      this.keys.push({
+        key: process.env.GOOGLE_API_KEY,
+        name: "PRIMARY",
+        priority: 0
+      });
+      this.keyHealthStatus.set("PRIMARY", { healthy: true, lastError: null, errorCount: 0 });
+    }
+
+    // Fallback API keys
+    if (process.env.GOOGLE_API_KEY_FALLBACK_1) {
+      this.keys.push({
+        key: process.env.GOOGLE_API_KEY_FALLBACK_1,
+        name: "FALLBACK_1",
+        priority: 1
+      });
+      this.keyHealthStatus.set("FALLBACK_1", { healthy: true, lastError: null, errorCount: 0 });
+    }
+
+    if (process.env.GOOGLE_API_KEY_FALLBACK_2) {
+      this.keys.push({
+        key: process.env.GOOGLE_API_KEY_FALLBACK_2,
+        name: "FALLBACK_2",
+        priority: 2
+      });
+      this.keyHealthStatus.set("FALLBACK_2", { healthy: true, lastError: null, errorCount: 0 });
+    }
+
+    if (this.keys.length === 0) {
+      logger.error("No GOOGLE_API_KEY configured!");
+      throw new Error("At least one GOOGLE_API_KEY is required");
+    }
+
+    logger.info(`Loaded ${this.keys.length} API key(s) for fallback support`);
+  }
+
+  getCurrentKey() {
+    if (this.keys.length === 0) return null;
+    return this.keys[this.currentKeyIndex];
+  }
+
+  markKeyUnhealthy(keyName, error) {
+    const status = this.keyHealthStatus.get(keyName);
+    if (status) {
+      status.healthy = false;
+      status.lastError = error.message;
+      status.errorCount++;
+      logger.warn(`API Key ${keyName} marked unhealthy. Error count: ${status.errorCount}`);
+    }
+  }
+
+  markKeyHealthy(keyName) {
+    const status = this.keyHealthStatus.get(keyName);
+    if (status) {
+      status.healthy = true;
+      status.errorCount = 0;
+      logger.info(`API Key ${keyName} marked healthy`);
+    }
+  }
+
+  switchToNextKey() {
+    const startIndex = this.currentKeyIndex;
+    
+    // Try to find a healthy key
+    for (let i = 0; i < this.keys.length; i++) {
+      this.currentKeyIndex = (this.currentKeyIndex + 1) % this.keys.length;
+      const key = this.keys[this.currentKeyIndex];
+      const status = this.keyHealthStatus.get(key.name);
+      
+      if (status && status.healthy) {
+        logger.info(`Switched to API Key: ${key.name}`);
+        return key;
+      }
+    }
+
+    // If no healthy key found, return to start and try anyway
+    this.currentKeyIndex = startIndex;
+    logger.warn("No healthy API keys available, retrying with all keys");
+    return this.keys[this.currentKeyIndex];
+  }
+
+  getHealthStatus() {
+    return {
+      currentKey: this.keys[this.currentKeyIndex].name,
+      totalKeys: this.keys.length,
+      healthStatus: Array.from(this.keyHealthStatus.entries()).map(([name, status]) => ({
+        name,
+        healthy: status.healthy,
+        errorCount: status.errorCount,
+        lastError: status.lastError
+      }))
+    };
+  }
 }
 
-// Initialize Google Gemini AI
-const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({
-  model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
-});
+// Initialize API Key Manager
+const apiKeyManager = new APIKeyManager();
+
+// Initialize Google Gemini AI with current key
+function getAIModel() {
+  const currentKey = apiKeyManager.getCurrentKey();
+  if (!currentKey) {
+    throw new Error("No API key available");
+  }
+  
+  const genAI = new GoogleGenerativeAI(currentKey.key);
+  return genAI.getGenerativeModel({
+    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+  });
+}
 
 /**
- * Core AI generation function (to be wrapped in circuit breaker)
+ * Core AI generation function with enhanced retry and fallback logic
  */
-async function generateQuizWithAI(prompt) {
+async function generateQuizWithAI(prompt, retryCount = 0) {
+  const maxRetries = parseInt(process.env.AI_MAX_RETRIES) || 5;
+  const retryDelay = parseInt(process.env.AI_RETRY_DELAY) || 2000;
+  
   try {
     const startTime = Date.now();
+    const currentKey = apiKeyManager.getCurrentKey();
 
+    logger.info(`AI generation attempt ${retryCount + 1}/${maxRetries + 1} using key: ${currentKey.name}`);
+
+    const model = getAIModel();
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
 
     const duration = Date.now() - startTime;
-    logger.info(`AI generation completed in ${duration}ms`);
+    logger.info(`AI generation completed in ${duration}ms using ${currentKey.name}`);
 
-    return { text, duration };
+    // Mark key as healthy on success
+    apiKeyManager.markKeyHealthy(currentKey.name);
+
+    return { text, duration, apiKey: currentKey.name };
   } catch (error) {
-    logger.error("AI generation failed:", error);
+    const currentKey = apiKeyManager.getCurrentKey();
+    logger.error(`AI generation failed on attempt ${retryCount + 1} with ${currentKey.name}:`, error.message);
+
+    // Categorize error types
+    const errorType = categorizeError(error);
+    
+    // Handle different error types
+    if (errorType === 'RATE_LIMIT' || errorType === 'QUOTA_EXCEEDED') {
+      logger.warn(`${errorType} error detected, switching API key...`);
+      apiKeyManager.markKeyUnhealthy(currentKey.name, error);
+      
+      // Try switching to next available key
+      const nextKey = apiKeyManager.switchToNextKey();
+      if (nextKey && nextKey.name !== currentKey.name && retryCount < maxRetries) {
+        await sleep(retryDelay);
+        return generateQuizWithAI(prompt, retryCount + 1);
+      }
+    }
+
+    // For transient errors, retry with exponential backoff
+    if (errorType === 'TIMEOUT' || errorType === 'NETWORK' || errorType === 'SERVER_ERROR') {
+      if (retryCount < maxRetries) {
+        const backoffDelay = retryDelay * Math.pow(2, retryCount);
+        logger.info(`Retrying in ${backoffDelay}ms due to ${errorType}...`);
+        await sleep(backoffDelay);
+        return generateQuizWithAI(prompt, retryCount + 1);
+      }
+    }
+
+    // Mark current key as potentially unhealthy
+    if (errorType !== 'INVALID_INPUT' && errorType !== 'CONTENT_FILTER') {
+      apiKeyManager.markKeyUnhealthy(currentKey.name, error);
+    }
+
+    // All retries exhausted
     throw error;
   }
+}
+
+/**
+ * Categorize error for appropriate handling
+ */
+function categorizeError(error) {
+  const message = error.message?.toLowerCase() || '';
+  
+  if (message.includes('rate limit') || message.includes('429')) {
+    return 'RATE_LIMIT';
+  }
+  if (message.includes('quota') || message.includes('exceeded')) {
+    return 'QUOTA_EXCEEDED';
+  }
+  if (message.includes('timeout') || message.includes('timed out')) {
+    return 'TIMEOUT';
+  }
+  if (message.includes('network') || message.includes('econnrefused') || message.includes('enotfound')) {
+    return 'NETWORK';
+  }
+  if (message.includes('500') || message.includes('502') || message.includes('503')) {
+    return 'SERVER_ERROR';
+  }
+  if (message.includes('invalid') || message.includes('400')) {
+    return 'INVALID_INPUT';
+  }
+  if (message.includes('content') || message.includes('safety')) {
+    return 'CONTENT_FILTER';
+  }
+  
+  return 'UNKNOWN';
+}
+
+/**
+ * Sleep utility for retry delays
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
@@ -69,27 +260,62 @@ const protectedAIGeneration = new CircuitBreaker(
 
 // Circuit breaker event listeners
 protectedAIGeneration.on("open", () => {
-  logger.error("Circuit breaker OPENED - AI service unavailable");
+  logger.error("Circuit breaker OPENED - AI service experiencing issues, attempting fallback keys");
+  // When circuit opens, try to switch to a different API key
+  apiKeyManager.switchToNextKey();
 });
 
 protectedAIGeneration.on("halfOpen", () => {
-  logger.warn("Circuit breaker HALF-OPEN - Testing AI service");
+  logger.warn("Circuit breaker HALF-OPEN - Testing AI service with current key");
 });
 
 protectedAIGeneration.on("close", () => {
   logger.info("Circuit breaker CLOSED - AI service restored");
+  const currentKey = apiKeyManager.getCurrentKey();
+  apiKeyManager.markKeyHealthy(currentKey.name);
 });
 
 protectedAIGeneration.on("timeout", () => {
-  logger.warn("AI generation TIMEOUT");
+  logger.warn("AI generation TIMEOUT - Request exceeded time limit");
+  const currentKey = apiKeyManager.getCurrentKey();
+  apiKeyManager.markKeyUnhealthy(currentKey.name, new Error("Timeout"));
 });
 
 protectedAIGeneration.on("failure", (error) => {
   logger.error("AI generation FAILURE:", error.message);
 });
 
-protectedAIGeneration.fallback((prompt) => {
-  logger.error("Circuit breaker FALLBACK triggered");
+// Enhanced fallback with API key rotation
+protectedAIGeneration.fallback(async (prompt) => {
+  logger.error("Circuit breaker FALLBACK triggered - Attempting with alternate API keys");
+  
+  // Try all available keys one more time
+  const originalKeyIndex = apiKeyManager.currentKeyIndex;
+  const totalKeys = apiKeyManager.keys.length;
+  
+  for (let i = 0; i < totalKeys; i++) {
+    try {
+      apiKeyManager.switchToNextKey();
+      const currentKey = apiKeyManager.getCurrentKey();
+      logger.info(`Fallback attempt ${i + 1}/${totalKeys} with key: ${currentKey.name}`);
+      
+      // Try direct generation bypassing circuit breaker
+      const result = await generateQuizWithAI(prompt, 0);
+      logger.info(`Fallback successful with ${currentKey.name}`);
+      return result;
+    } catch (error) {
+      logger.warn(`Fallback failed with key attempt ${i + 1}:`, error.message);
+      if (i === totalKeys - 1) {
+        // Last attempt failed
+        throw new Error(
+          "AI service is currently unavailable across all API keys. Please try again later."
+        );
+      }
+    }
+  }
+  
+  // Restore original key index if all failed
+  apiKeyManager.currentKeyIndex = originalKeyIndex;
   throw new Error(
     "AI service is currently unavailable. Please try again later."
   );
@@ -382,21 +608,24 @@ async function generateQuizFromFile({
 }
 
 /**
- * Get circuit breaker stats
+ * Get circuit breaker stats and API key health
  */
 function getCircuitBreakerStats() {
   return {
-    state: protectedAIGeneration.opened
-      ? "OPEN"
-      : protectedAIGeneration.halfOpen
-      ? "HALF-OPEN"
-      : "CLOSED",
-    stats: protectedAIGeneration.stats,
-    options: {
-      timeout: circuitBreakerOptions.timeout,
-      errorThreshold: circuitBreakerOptions.errorThresholdPercentage,
-      resetTimeout: circuitBreakerOptions.resetTimeout,
+    circuitBreaker: {
+      state: protectedAIGeneration.opened
+        ? "OPEN"
+        : protectedAIGeneration.halfOpen
+        ? "HALF-OPEN"
+        : "CLOSED",
+      stats: protectedAIGeneration.stats,
+      options: {
+        timeout: circuitBreakerOptions.timeout,
+        errorThreshold: circuitBreakerOptions.errorThresholdPercentage,
+        resetTimeout: circuitBreakerOptions.resetTimeout,
+      },
     },
+    apiKeys: apiKeyManager.getHealthStatus(),
   };
 }
 
@@ -437,4 +666,5 @@ module.exports = {
   generateFileHash,
   getCircuitBreakerStats,
   protectedAIGeneration,
+  apiKeyManager, // Export for monitoring/debugging
 };

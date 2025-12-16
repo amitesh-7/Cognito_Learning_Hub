@@ -26,6 +26,7 @@ const getServiceUrl = (serviceName) => {
     gamification: PORTS.GAMIFICATION_SERVICE,
     moderation: PORTS.MODERATION_SERVICE,
     avatar: PORTS.AVATAR_SERVICE,
+    admin: PORTS.ADMIN_SERVICE || 3011,
     // ai_study_buddy moved to main backend service
   };
 
@@ -43,6 +44,7 @@ const SERVICES = {
   GAMIFICATION: getServiceUrl("gamification"),
   MODERATION: getServiceUrl("moderation"),
   AVATAR: getServiceUrl("avatar"),
+  ADMIN: getServiceUrl("admin"),
   // AI_STUDY_BUDDY now integrated in main backend
 };
 

@@ -39,7 +39,6 @@ const GoogleAuthButton = ({
         text={text === "Continue with Google" ? "continue_with" : "signin_with"}
         shape="rectangular"
         logo_alignment="left"
-        width="100%"
       />
     </div>
   );

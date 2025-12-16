@@ -21,8 +21,10 @@ const mediasoupHandlers = require("./socket/mediasoupHandlers");
 const meetingRoutes = require("./routes/meetings");
 const connectDB = require("./models");
 const createLogger = require("../shared/utils/logger");
+const { createLogger: createServiceLogger } = require("../shared/utils/serviceLogger");
 
 const logger = createLogger("meeting-service");
+const serviceLogger = createServiceLogger("Meeting Service", process.env.ADMIN_SERVICE_URL);
 
 const app = express();
 const server = http.createServer(app);

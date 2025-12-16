@@ -11,12 +11,14 @@ const helmet = require("helmet");
 const compression = require("compression");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const createLogger = require("../shared/utils/logger");
+const { createLogger: createServiceLogger } = require("../shared/utils/serviceLogger");
 const { SERVICES } = require("../shared/config/services");
 const { generalLimiter } = require("../shared/middleware/rateLimiter");
 const errorHandler = require("../shared/middleware/errorHandler");
 
 const app = express();
 const logger = createLogger("API-GATEWAY");
+const serviceLogger = createServiceLogger("API Gateway", process.env.ADMIN_SERVICE_URL);
 const PORT = process.env.GATEWAY_PORT || 3000;
 
 // Trust proxy for rate limiting behind reverse proxy
@@ -293,6 +295,16 @@ app.use(
     ...proxyOptions,
     target: SERVICES.AUTH,
     pathRewrite: { "^/api/auth": "/api/auth" },
+  })
+);
+
+// Route to Admin Service
+app.use(
+  "/api/admin",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.ADMIN || "http://localhost:3011",
+    pathRewrite: { "^/api/admin": "/api/admin" },
   })
 );
 

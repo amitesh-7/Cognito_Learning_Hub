@@ -87,6 +87,7 @@ module.exports = {
     GAMIFICATION_SERVICE: 3007,
     MODERATION_SERVICE: 3008,
     AVATAR_SERVICE: 3010,
+    ADMIN_SERVICE: 3011,
     // AI_STUDY_BUDDY_SERVICE: 5016, // Now integrated in main backend
   },
 

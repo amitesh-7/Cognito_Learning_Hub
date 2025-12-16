@@ -18,6 +18,11 @@ const dailyQuestRoutes = require("./routes/quest"); // Daily quests for avatar i
 const avatarRoutes = require("./routes/avatar");
 const { startStreakCronJob } = require("./jobs/streakChecker");
 const { startStatsSyncJob } = require("./jobs/statsSync");
+const createLogger = require("../../shared/utils/logger");
+const { createLogger: createServiceLogger } = require("../../shared/utils/serviceLogger");
+
+const logger = createLogger("gamification-service");
+const serviceLogger = createServiceLogger("Gamification Service", process.env.ADMIN_SERVICE_URL);
 
 const app = express();
 const PORT = process.env.PORT || 3007;

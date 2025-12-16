@@ -18,6 +18,9 @@ const router = express.Router();
 const logger = createLogger('auth-service');
 const User = require('../models/User');
 
+// Email service
+const emailService = require('../services/emailService');
+
 /**
  * @route   GET /api/users/search
  * @desc    Search users by name or email
@@ -193,6 +196,9 @@ router.put(
 
       logger.info(`Password changed for user: ${user.email}`);
 
+      // Send password changed confirmation email
+      await emailService.sendPasswordChangedEmail(user);
+
       res.json(
         ApiResponse.success({
           message: 'Password changed successfully. Please login again.',
@@ -246,10 +252,15 @@ router.post(
       await user.save();
 
       logger.info(`Password reset requested for: ${email}`);
-      logger.info(`Reset token: ${resetToken}`);
 
-      // TODO: Send email with resetToken
-      // For development, we'll return the token
+      // Send password reset email
+      const emailResult = await emailService.sendPasswordResetEmail(user, resetToken);
+      if (!emailResult.success) {
+        logger.warn(`Failed to send password reset email to ${email}: ${emailResult.error || emailResult.message}`);
+      } else {
+        logger.info(`Password reset email sent to ${email}`);
+      }
+
       res.json(
         ApiResponse.success({
           message: 'If the email exists, a password reset link has been sent.',
@@ -306,6 +317,9 @@ router.post(
       await user.save();
 
       logger.info(`Password reset successful for: ${user.email}`);
+
+      // Send password changed confirmation email
+      await emailService.sendPasswordChangedEmail(user);
 
       res.json(
         ApiResponse.success({

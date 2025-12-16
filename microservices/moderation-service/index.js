@@ -6,6 +6,8 @@ const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 
 const logger = require("./utils/logger");
+const { createLogger: createServiceLogger } = require("../shared/utils/serviceLogger");
+const serviceLogger = createServiceLogger("Moderation Service", process.env.ADMIN_SERVICE_URL);
 const authMiddleware = require("./middleware/authMiddleware");
 
 const app = express();

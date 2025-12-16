@@ -11,6 +11,7 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const compression = require("compression");
 const createLogger = require("../shared/utils/logger");
+const { createLogger: createServiceLogger } = require("../shared/utils/serviceLogger");
 const ApiResponse = require("../shared/utils/response");
 const { connectDB } = require("./models");
 const sessionManager = require("./services/sessionManager");
@@ -23,6 +24,7 @@ const { initializeDuelHandlers } = require("./socket/duelHandlers");
 const app = express();
 const httpServer = createServer(app);
 const logger = createLogger("live-service");
+const serviceLogger = createServiceLogger("Live Service", process.env.ADMIN_SERVICE_URL);
 const PORT = process.env.PORT || 3004;
 
 // Socket.IO configuration

@@ -19,6 +19,7 @@ const queueManager = require("./workers/queueManager");
 const socketHandlers = require("./socket/handlers");
 const connectDB = require("./models");
 const createLogger = require("../shared/utils/logger");
+const { createLogger: createServiceLogger } = require("../shared/utils/serviceLogger");
 
 // Routes
 const postRoutes = require("./routes/posts");
@@ -32,6 +33,7 @@ const userRoutes = require("./routes/users");
 const chatRoutes = require("./routes/chat");
 
 const logger = createLogger("social-service");
+const serviceLogger = createServiceLogger("Social Service", process.env.ADMIN_SERVICE_URL);
 
 const app = express();
 const server = http.createServer(app);

@@ -9,6 +9,9 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { OAuth2Client } = require("google-auth-library");
 
+// Email service
+const emailService = require("../services/emailService");
+
 // Shared utilities
 const ApiResponse = require("../../shared/utils/response");
 const createLogger = require("../../shared/utils/logger");
@@ -119,9 +122,13 @@ router.post(
 
       logger.info(`User registered: ${email}`);
 
-      // TODO: Send verification email with verificationToken
-      // For now, we'll just log it
-      logger.info(`Verification token: ${verificationToken}`);
+      // Send verification email
+      const emailResult = await emailService.sendVerificationEmail(user, verificationToken);
+      if (!emailResult.success) {
+        logger.warn(`Failed to send verification email to ${email}: ${emailResult.error || emailResult.message}`);
+      } else {
+        logger.info(`Verification email sent to ${email}`);
+      }
 
       return ApiResponse.created(
         res,
@@ -303,13 +310,21 @@ router.post("/google", authLimiter, async (req, res) => {
       await user.save();
       isNewUser = true;
       logger.info(`New Google user created: ${email} with role: ${userRole}`);
-    } else if (!user.googleId) {
-      // Link Google account to existing user
-      user.googleId = googleId;
-      user.picture = picture;
-      user.isEmailVerified = true;
-      await user.save();
-      logger.info(`Google account linked: ${email}`);
+    } else {
+      // Validate and fix role for existing users (migrate from old schema)
+      const validRoles = ["Student", "Teacher", "Moderator", "Admin"];
+      if (!validRoles.includes(user.role)) {
+        logger.warn(`Invalid role "${user.role}" found for user ${email}, correcting to Student`);
+        user.role = "Student";
+      }
+      
+      // Link Google account if not already linked
+      if (!user.googleId) {
+        user.googleId = googleId;
+        user.picture = picture;
+        user.isEmailVerified = true;
+        logger.info(`Google account linked: ${email}`);
+      }
     }
 
     // Generate tokens
@@ -629,6 +644,9 @@ router.post("/verify-email/:token", async (req, res) => {
     await user.save();
 
     logger.info(`Email verified for user: ${user.email}`);
+
+    // Send email verification success confirmation
+    await emailService.sendEmailVerifiedEmail(user);
 
     return ApiResponse.success(res, "Email verified successfully");
   } catch (error) {

@@ -10,12 +10,14 @@ const cors = require("cors");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 const createLogger = require("../shared/utils/logger");
+const { createLogger: createServiceLogger } = require("../shared/utils/serviceLogger");
 const ApiResponse = require("../shared/utils/response");
 const { connectDB } = require("./models");
 const cacheManager = require("./services/cacheManager");
 
 const app = express();
 const logger = createLogger("result-service");
+const serviceLogger = createServiceLogger("Result Service", process.env.ADMIN_SERVICE_URL);
 const PORT = process.env.PORT || 3003;
 
 // Trust proxy - Required for rate limiter to work correctly
