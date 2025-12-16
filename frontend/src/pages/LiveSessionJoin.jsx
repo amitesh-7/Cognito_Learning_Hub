@@ -31,6 +31,12 @@ import {
   Camera,
   Upload,
 } from "lucide-react";
+import { useQuizAccessibility } from "../hooks/useQuizAccessibility";
+import {
+  QuizKeyboardHelp,
+  QuizAccessibilityBar,
+  AccessibleOptionButton,
+} from "../components/Accessibility/QuizAccessibility";
 
 const LiveSessionJoin = () => {
   const navigate = useNavigate();
@@ -62,8 +68,31 @@ const LiveSessionJoin = () => {
   const [myAnswers, setMyAnswers] = useState([]); // Track all answers for analysis
   const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false); // Show fullscreen entry prompt
   const [isInFullscreen, setIsInFullscreen] = useState(false); // Track fullscreen state
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false); // Show keyboard shortcuts help
   const qrScannerRef = useRef(null);
   const fullscreenRef = useRef(null); // Fullscreen enforcement API
+
+  // Quiz Accessibility Integration
+  const { isSpeaking, handleKeyPress } = useQuizAccessibility({
+    questions: session?.quiz?.questions || [],
+    currentQuestionIndex,
+    selectedAnswers: myAnswers,
+    timeLeft,
+    onSelectAnswer: (optionIndex) => {
+      if (!hasAnswered && currentQuestion?.options?.[optionIndex]) {
+        handleAnswerSubmit(currentQuestion.options[optionIndex]);
+      }
+    },
+    onNextQuestion: () => {
+      // In live session, questions advance automatically
+      console.log("Next question triggered by keyboard");
+    },
+    onPreviousQuestion: () => {
+      // In live session, can't go back
+      console.log("Previous question not available in live session");
+    },
+    onShowHelp: () => setShowKeyboardHelp(true),
+  });
 
   // Handle QR code from file upload
   const handleQRImageUpload = async (file) => {
@@ -1192,8 +1221,24 @@ const LiveSessionJoin = () => {
         </div>
       )}
 
+      {/* Keyboard Shortcuts Help Modal */}
+      <AnimatePresence>
+        {showKeyboardHelp && (
+          <QuizKeyboardHelp onClose={() => setShowKeyboardHelp(false)} />
+        )}
+      </AnimatePresence>
+
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900 dark:to-indigo-900 py-8 px-4">
         <div className="max-w-4xl mx-auto">
+          {/* Quiz Accessibility Status Bar */}
+          <QuizAccessibilityBar
+            isSpeaking={isSpeaking}
+            currentQuestion={currentQuestionIndex + 1}
+            totalQuestions={totalQuestions}
+            timeLeft={timeLeft}
+            onShowHelp={() => setShowKeyboardHelp(true)}
+          />
+
           {/* Header */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 mb-6">
             <div className="flex items-center justify-between">
@@ -1254,58 +1299,17 @@ const LiveSessionJoin = () => {
                 // Only show result after we get server response
                 const showResult = hasAnswered && answerResult;
 
-                let buttonClass =
-                  "p-6 rounded-xl border-2 transition-all transform hover:scale-105 cursor-pointer ";
-
-                if (showResult) {
-                  if (isCorrect) {
-                    buttonClass +=
-                      "border-green-500 bg-green-50 dark:bg-green-900/20";
-                  } else if (isSelected && !isCorrect) {
-                    buttonClass +=
-                      "border-red-500 bg-red-50 dark:bg-red-900/20";
-                  } else {
-                    buttonClass +=
-                      "border-gray-300 dark:border-gray-600 opacity-60";
-                  }
-                } else {
-                  buttonClass += isSelected
-                    ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20 scale-105"
-                    : "border-gray-300 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-700";
-                }
-
                 return (
-                  <button
+                  <AccessibleOptionButton
                     key={index}
+                    option={option}
+                    index={index}
+                    isSelected={isSelected}
+                    isCorrect={isCorrect}
+                    showResult={showResult}
                     onClick={() => handleAnswerClick(option)}
                     disabled={hasAnswered}
-                    className={buttonClass}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
-                          showResult && isCorrect
-                            ? "bg-green-500 text-white"
-                            : showResult && isSelected && !isCorrect
-                            ? "bg-red-500 text-white"
-                            : isSelected
-                            ? "bg-purple-500 text-white"
-                            : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                        }`}
-                      >
-                        {String.fromCharCode(65 + index)}
-                      </div>
-                      <span className="text-lg font-medium text-gray-800 dark:text-white flex-1 text-left">
-                        {option}
-                      </span>
-                      {showResult && isCorrect && (
-                        <CheckCircle className="w-6 h-6 text-green-500" />
-                      )}
-                      {showResult && isSelected && !isCorrect && (
-                        <XCircle className="w-6 h-6 text-red-500" />
-                      )}
-                    </div>
-                  </button>
+                  />
                 );
               })}
             </div>

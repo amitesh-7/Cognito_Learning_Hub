@@ -15,6 +15,12 @@ import {
 } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import Confetti from "react-confetti";
+import { useQuizAccessibility } from "../hooks/useQuizAccessibility";
+import {
+  QuizKeyboardHelp,
+  QuizAccessibilityBar,
+  AccessibleOptionButton,
+} from "../components/Accessibility/QuizAccessibility";
 
 const DuelBattle = () => {
   const { quizId } = useParams();
@@ -71,9 +77,32 @@ const DuelBattle = () => {
   const [winner, setWinner] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [waitingForOpponent, setWaitingForOpponent] = useState(false);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   const questionStartTime = useRef(null);
   const timerInterval = useRef(null);
+
+  // Quiz Accessibility Integration
+  const { isSpeaking, handleKeyPress } = useQuizAccessibility({
+    questions: quiz?.questions || [],
+    currentQuestionIndex: questionIndex,
+    selectedAnswers: hasAnswered ? [{ questionIndex, selectedAnswer }] : [],
+    timeLeft,
+    onSelectAnswer: (optionIndex) => {
+      if (!hasAnswered && currentQuestion?.options?.[optionIndex]) {
+        handleSubmitAnswer(currentQuestion.options[optionIndex]);
+      }
+    },
+    onNextQuestion: () => {
+      // In duel mode, questions advance automatically
+      console.log("Next question triggered by keyboard");
+    },
+    onPreviousQuestion: () => {
+      // In duel mode, can't go back
+      console.log("Previous question not available in duel mode");
+    },
+    onShowHelp: () => setShowKeyboardHelp(true),
+  });
 
   // Socket event listeners - SETUP FIRST before emitting any events
   useEffect(() => {
@@ -609,7 +638,23 @@ const DuelBattle = () => {
   if (matchState === "active" && currentQuestion) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-red-50 to-orange-50 dark:from-gray-900 dark:via-purple-900 dark:to-red-900 py-8 px-4">
+        {/* Keyboard Shortcuts Help Modal */}
+        <AnimatePresence>
+          {showKeyboardHelp && (
+            <QuizKeyboardHelp onClose={() => setShowKeyboardHelp(false)} />
+          )}
+        </AnimatePresence>
+
         <div className="max-w-4xl mx-auto">
+          {/* Quiz Accessibility Status Bar */}
+          <QuizAccessibilityBar
+            isSpeaking={isSpeaking}
+            currentQuestion={questionIndex + 1}
+            totalQuestions={quiz?.totalQuestions || 0}
+            timeLeft={timeLeft}
+            onShowHelp={() => setShowKeyboardHelp(true)}
+          />
+
           {/* Score Bar */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="bg-blue-500 text-white rounded-xl p-4 text-center">
@@ -654,20 +699,16 @@ const DuelBattle = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {currentQuestion.options.map((option, idx) => (
-                <button
+                <AccessibleOptionButton
                   key={idx}
+                  option={option}
+                  index={idx}
+                  isSelected={selectedAnswer === option}
+                  isCorrect={false}
+                  showResult={hasAnswered}
                   onClick={() => handleSubmitAnswer(option)}
                   disabled={hasAnswered}
-                  className={`p-6 rounded-xl text-left font-semibold transition shadow-lg hover:shadow-xl ${
-                    hasAnswered
-                      ? selectedAnswer === option
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
-                      : "bg-gray-100 dark:bg-gray-700 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-gray-800 dark:text-white"
-                  } disabled:cursor-not-allowed`}
-                >
-                  {option}
-                </button>
+                />
               ))}
             </div>
 

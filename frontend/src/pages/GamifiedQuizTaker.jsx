@@ -39,6 +39,12 @@ import { LoadingSpinner } from "../components/ui/Loading";
 import { useToast } from "../components/ui/Toast";
 import TextToSpeech from "../components/TextToSpeech";
 import { QuizAvatarCompanion } from "../components/Avatar";
+import { useQuizAccessibility } from "../hooks/useQuizAccessibility";
+import {
+  QuizKeyboardHelp,
+  QuizAccessibilityBar,
+  AccessibleOptionButton,
+} from "../components/Accessibility/QuizAccessibility";
 
 const QuestionCard = ({
   question,
@@ -114,42 +120,19 @@ const QuestionCard = ({
 
       <CardContent>
         {question.type === "multiple-choice" && (
-          <div className="space-y-3">
+          <div className="space-y-3" role="radiogroup" aria-label="Answer options">
             {question.options.map((option, index) => (
-              <motion.button
+              <AccessibleOptionButton
                 key={index}
-                onClick={() => !isAnswered && onAnswer(option)}
-                disabled={isAnswered}
-                className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${
-                  selectedAnswer === option
-                    ? isAnswered
-                      ? option === question.correct_answer
-                        ? "border-green-500 bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300"
-                        : "border-red-500 bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300"
-                      : "border-indigo-500 bg-indigo-50 dark:bg-indigo-900"
-                    : isAnswered && option === question.correct_answer
-                    ? "border-green-500 bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300"
-                    : "border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600"
-                }`}
-                whileHover={!isAnswered ? { scale: 1.02 } : {}}
-                whileTap={!isAnswered ? { scale: 0.98 } : {}}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{option}</span>
-                  {isAnswered &&
-                    selectedAnswer === option &&
-                    (option === question.correct_answer ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-500" />
-                    ))}
-                  {isAnswered &&
-                    selectedAnswer !== option &&
-                    option === question.correct_answer && (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    )}
-                </div>
-              </motion.button>
+                option={option}
+                index={index}
+                isSelected={selectedAnswer === option}
+                isCorrect={isAnswered && option === question.correct_answer}
+                isIncorrect={isAnswered && selectedAnswer === option && option !== question.correct_answer}
+                isDisabled={isAnswered}
+                onClick={onAnswer}
+                questionId={question._id}
+              />
             ))}
           </div>
         )}
@@ -356,6 +339,7 @@ export default function GamifiedQuizTaker() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [avatarMinimized, setAvatarMinimized] = useState(false);
   const [avatarMood, setAvatarMood] = useState("idle");
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   // Game stats
   const [gameStats, setGameStats] = useState({
@@ -375,6 +359,36 @@ export default function GamifiedQuizTaker() {
 
   const currentQuestion = quiz?.questions[currentQuestionIndex];
   const isAnswered = answers[currentQuestionIndex] !== undefined;
+
+  // Quiz Accessibility Hook - provides keyboard shortcuts and text-to-speech
+  const {
+    isSpeaking,
+    readQuestion,
+    readOptions,
+    readProgress,
+  } = useQuizAccessibility({
+    questions: quiz?.questions || [],
+    currentQuestionIndex,
+    selectedAnswers: answers,
+    onSelectAnswer: (questionId, answer) => {
+      const question = quiz?.questions.find(q => q._id === questionId);
+      if (question) {
+        handleAnswer(answer);
+      }
+    },
+    onNextQuestion: () => {
+      if (currentQuestionIndex < (quiz?.questions.length || 0) - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+      }
+    },
+    onPreviousQuestion: () => {
+      if (currentQuestionIndex > 0) {
+        setCurrentQuestionIndex(currentQuestionIndex - 1);
+      }
+    },
+    onSubmitQuiz: handleSubmit,
+    timeLeft,
+  });
 
   useEffect(() => {
     fetchQuiz();
@@ -772,6 +786,11 @@ export default function GamifiedQuizTaker() {
             onClose={() => setShowAchievement(null)}
           />
         )}
+        
+        {/* Keyboard Shortcuts Help Modal */}
+        {showKeyboardHelp && (
+          <QuizKeyboardHelp onClose={() => setShowKeyboardHelp(false)} />
+        )}
       </AnimatePresence>
 
       <div className="max-w-7xl mx-auto">
@@ -790,6 +809,15 @@ export default function GamifiedQuizTaker() {
             Exit Quiz
           </Button>
         </div>
+
+        {/* Quiz Accessibility Status Bar */}
+        <QuizAccessibilityBar
+          isSpeaking={isSpeaking}
+          currentQuestion={currentQuestionIndex + 1}
+          totalQuestions={quiz.questions.length}
+          timeLeft={timeLeft}
+          onShowHelp={() => setShowKeyboardHelp(true)}
+        />
 
         {/* Progress Bar */}
         <div className="mb-8">

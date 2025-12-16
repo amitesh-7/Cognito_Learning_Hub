@@ -12,6 +12,15 @@ import { useIsMobile } from "./hooks/useReducedMotion";
 import NetworkStatusIndicator from "./components/ui/NetworkStatusIndicator";
 import PWAInstallPrompt from "./components/ui/PWAInstallPrompt";
 
+// Accessibility Components
+import {
+  AccessibilityProvider,
+  ScreenReaderAnnouncer,
+  KeyboardNavigation,
+  SkipLinks,
+  KeyboardShortcutsModal,
+} from "./components/Accessibility";
+
 // Import route wrapper components (never lazy load these)
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -34,7 +43,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const QuickActions = lazy(() => import("./pages/QuickActions"));
 const QuizList = lazy(() => import("./pages/QuizList"));
 const QuestPage = lazy(() => import("./pages/QuestPage"));
-const QuizTaker = lazy(() => import("./pages/QuizTaker"));
+const SmartQuizRouter = lazy(() => import("./pages/SmartQuizRouter"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const ModeratorDashboard = lazy(() => import("./pages/ModeratorDashboard"));
@@ -95,45 +104,46 @@ function App() {
   );
 
   return (
-    <SocketProvider>
-      <GamificationProvider>
-        <AvatarProvider>
-          <ToastProvider>
-            <LenisScroll>
-              <div className="min-h-screen bg-white dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300 relative overflow-x-hidden">
-                {/* Network Status Indicator */}
-                <NetworkStatusIndicator />
+    <AccessibilityProvider>
+      <SocketProvider>
+        <GamificationProvider>
+          <AvatarProvider>
+            <ToastProvider>
+              <LenisScroll>
+                <div className="min-h-screen bg-white dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-200 transition-all duration-300 relative overflow-x-hidden">
+                  {/* Accessibility Components */}
+                  <SkipLinks />
+                  <KeyboardNavigation />
+                  <ScreenReaderAnnouncer />
+                  <KeyboardShortcutsModal />
 
-                {/* PWA Install Prompt */}
-                <PWAInstallPrompt />
+                  {/* Network Status Indicator */}
+                  <NetworkStatusIndicator />
 
-                {/* Real-time Achievement Notifications */}
-                <AchievementNotification />
+                  {/* PWA Install Prompt */}
+                  <PWAInstallPrompt />
 
-                {/* Animated Background Layers - Disabled on mobile for performance */}
-                {!isMobile && (
-                  <>
-                    <ParticleBackground isDark={theme === "dark"} />
-                    <FloatingShapes />
-                  </>
-                )}
+                  {/* Real-time Achievement Notifications */}
+                  <AchievementNotification />
 
-                {/* Modern Glassmorphism Navbar with Scroll Behavior */}
-                {!isFullScreen && <Navbar />}
+                  {/* Animated Background Layers - Disabled on mobile for performance */}
+                  {!isMobile && (
+                    <>
+                      <ParticleBackground isDark={theme === "dark"} />
+                      <FloatingShapes />
+                    </>
+                  )}
 
-                {/* Skip to main content for accessibility */}
-                <a
-                  href="#main-content"
-                  className="sr-only focus:not-sr-only focus:absolute focus:top-20 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-lg z-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Skip to main content
-                </a>
+                  {/* Modern Glassmorphism Navbar with Scroll Behavior */}
+                  {!isFullScreen && <Navbar />}
 
-                {/* Main Content */}
-                <main
-                  id="main-content"
-                  className={isFullScreen ? "" : "relative z-10"}
-                >
+                  {/* Main Content */}
+                  <main
+                    id="main-content"
+                    className={isFullScreen ? "" : "relative z-10"}
+                    role="main"
+                    aria-label="Main content"
+                  >
                   <Suspense
                     fallback={
                       <div className="flex items-center justify-center min-h-[60vh]">
@@ -224,7 +234,7 @@ function App() {
                             path="/quiz/:quizId"
                             element={
                               <ProtectedRoute>
-                                <QuizTaker />
+                                <SmartQuizRouter />
                               </ProtectedRoute>
                             }
                           />
@@ -569,6 +579,7 @@ function App() {
         </AvatarProvider>
       </GamificationProvider>
     </SocketProvider>
+    </AccessibilityProvider>
   );
 }
 

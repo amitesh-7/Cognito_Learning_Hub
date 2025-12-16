@@ -36,12 +36,17 @@ import {
   User,
   History,
   Map,
+  Eye,
+  EyeOff,
+  Settings,
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useGamification } from "../context/GamificationContext";
+import { useAccessibility } from "../context/AccessibilityContext";
 import { useTheme } from "../hooks/useTheme";
 import { useReducedMotion, useIsMobile } from "../hooks/useReducedMotion";
 import Button from "./ui/Button";
+import AccessibilityModal from "./AccessibilityModal";
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -50,10 +55,12 @@ const Navbar = () => {
     totalXP,
     currentStreak: gamificationStreak,
   } = useGamification();
+  const { settings, toggleVisuallyImpairedMode } = useAccessibility();
   const [theme, toggleTheme] = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
+  const [isAccessibilityModalOpen, setIsAccessibilityModalOpen] = useState(false);
   const { scrollY } = useScroll();
   const navigate = useNavigate();
   const location = useLocation();
@@ -972,6 +979,51 @@ const Navbar = () => {
                 </>
               )}
 
+              {/* Accessibility Quick Toggle (Alt+A) */}
+              <motion.div variants={staggerItem}>
+                <motion.button
+                  onClick={toggleVisuallyImpairedMode}
+                  className="ml-2 p-2.5 rounded-xl bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 dark:from-slate-800 dark:via-emerald-900/50 dark:to-teal-900/50 hover:from-green-200 hover:via-emerald-200 hover:to-teal-200 dark:hover:from-emerald-800/60 dark:hover:via-teal-800/60 dark:hover:to-green-800/60 transition-all duration-500 shadow-md hover:shadow-lg border border-white/60 dark:border-emerald-400/30 backdrop-blur-xl relative overflow-hidden group"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  title="Toggle Visually Impaired Mode (Alt+A)"
+                  aria-label="Toggle Visually Impaired Mode. Keyboard shortcut: Alt + A"
+                >
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-emerald-400/20 to-transparent"
+                    animate={{ x: ["-100%", "100%"] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 4 }}
+                  />
+                  {settings.visuallyImpairedMode ? (
+                    <Eye className="w-5 h-5 text-emerald-700 dark:text-emerald-400 drop-shadow-md relative z-10" />
+                  ) : (
+                    <EyeOff className="w-5 h-5 text-gray-600 dark:text-gray-400 relative z-10" />
+                  )}
+                  {/* Alt+A Badge */}
+                  <span className="absolute -bottom-1 -right-1 px-1 py-0.5 text-[8px] font-bold bg-emerald-600 dark:bg-emerald-500 text-white rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                    Alt+A
+                  </span>
+                </motion.button>
+              </motion.div>
+
+              {/* Accessibility Settings Button */}
+              <motion.div variants={staggerItem}>
+                <motion.button
+                  onClick={() => setIsAccessibilityModalOpen(true)}
+                  className="ml-2 p-2.5 rounded-xl bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 dark:from-indigo-900/50 dark:via-purple-900/50 dark:to-pink-900/50 hover:from-indigo-200 hover:via-purple-200 hover:to-pink-200 dark:hover:from-indigo-800/60 dark:hover:via-purple-800/60 dark:hover:to-pink-800/60 transition-all duration-500 shadow-md hover:shadow-lg border border-white/60 dark:border-indigo-400/30 backdrop-blur-xl relative overflow-hidden group"
+                  whileHover={{ scale: 1.1, rotate: [0, 5, -5, 5, 0] }}
+                  whileTap={{ scale: 0.9 }}
+                  title="Accessibility Settings"
+                >
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-purple-400/20 to-transparent"
+                    animate={{ x: ["-100%", "100%"] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 4 }}
+                  />
+                  <Settings className="w-5 h-5 text-indigo-700 dark:text-indigo-300 drop-shadow-md relative z-10" />
+                </motion.button>
+              </motion.div>
+
               {/* Enhanced Theme Toggle */}
               <motion.div variants={staggerItem}>
                 <motion.button
@@ -1003,6 +1055,27 @@ const Navbar = () => {
 
             {/* Enhanced Mobile Menu Button */}
             <div className="lg:hidden flex items-center space-x-2">
+              {/* Accessibility Toggle (Mobile) */}
+              <motion.button
+                onClick={toggleVisuallyImpairedMode}
+                className="p-2 rounded-xl bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 dark:from-slate-800 dark:via-emerald-900/50 dark:to-teal-900/50 border border-white/60 dark:border-emerald-400/30 shadow-md backdrop-blur-xl relative overflow-hidden"
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+                title="Toggle Visually Impaired Mode (Alt+A)"
+                aria-label="Toggle Visually Impaired Mode"
+              >
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  animate={{ x: ["-100%", "100%"] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                />
+                {settings.visuallyImpairedMode ? (
+                  <Eye className="w-5 h-5 text-emerald-700 dark:text-emerald-400 relative z-10" />
+                ) : (
+                  <EyeOff className="w-5 h-5 text-gray-600 dark:text-gray-400 relative z-10" />
+                )}
+              </motion.button>
+              
               <motion.button
                 onClick={toggleTheme}
                 className="p-2 rounded-xl bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 dark:from-slate-800 dark:via-indigo-900/50 dark:to-purple-900/50 border border-white/60 dark:border-indigo-400/30 shadow-md backdrop-blur-xl relative overflow-hidden"
@@ -1321,6 +1394,12 @@ const Navbar = () => {
           </>
         )}
       </AnimatePresence>
+
+      {/* Accessibility Modal */}
+      <AccessibilityModal 
+        isOpen={isAccessibilityModalOpen}
+        onClose={() => setIsAccessibilityModalOpen(false)}
+      />
     </>
   );
 };

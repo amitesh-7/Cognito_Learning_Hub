@@ -1110,79 +1110,26 @@ export default function QuizTaker() {
                           visible: { opacity: 1, y: 0 },
                         }}
                       >
-                        <motion.button
+                        <Button
+                          variant={isSelected ? "default" : "outline"}
+                          className={cn(
+                            "w-full h-auto text-left justify-start transition-all duration-300 shadow-md hover:shadow-lg",
+                            "px-6 py-5 text-base font-medium",
+                            isSelected && !showResult && "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 ring-2 ring-purple-400 ring-offset-2",
+                            isSelected && showResult && isCorrect && "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 ring-2 ring-green-400 ring-offset-2",
+                            isSelected && showResult && !isCorrect && "bg-gradient-to-r from-red-500 to-rose-500 text-white border-0 ring-2 ring-red-400 ring-offset-2",
+                            !isSelected && "hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-950 dark:hover:to-pink-950"
+                          )}
                           onClick={() => handleAnswerSelect(option)}
                           disabled={!!selectedAnswer}
-                          whileHover={
-                            !selectedAnswer ? { scale: 1.02, x: 8 } : {}
-                          }
-                          whileTap={!selectedAnswer ? { scale: 0.98 } : {}}
-                          className={cn(
-                            "w-full h-auto p-5 md:p-6 text-left rounded-2xl border-2 transition-all duration-300 flex items-center justify-between group",
-                            showResult
-                              ? isCorrect
-                                ? "border-green-500 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/40 dark:to-emerald-900/40 shadow-lg shadow-green-500/20"
-                                : isSelected
-                                ? "border-red-500 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/40 dark:to-pink-900/40 shadow-lg shadow-red-500/20"
-                                : "border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50 opacity-60"
-                              : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:shadow-xl"
-                          )}
                         >
-                          <div className="flex items-center gap-4">
-                            <span
-                              className={cn(
-                                "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all",
-                                showResult
-                                  ? isCorrect
-                                    ? "bg-green-500 text-white"
-                                    : isSelected
-                                    ? "bg-red-500 text-white"
-                                    : "bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
-                                  : "bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 text-indigo-600 dark:text-indigo-400 group-hover:from-indigo-500 group-hover:to-purple-600 group-hover:text-white"
-                              )}
-                            >
+                          <span className="flex items-center gap-4">
+                            <span className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-white/20 font-bold">
                               {String.fromCharCode(65 + index)}
                             </span>
-                            <span
-                              className={cn(
-                                "text-base md:text-lg font-medium",
-                                showResult
-                                  ? isCorrect
-                                    ? "text-green-800 dark:text-green-200"
-                                    : isSelected
-                                    ? "text-red-800 dark:text-red-200"
-                                    : "text-gray-500 dark:text-gray-400"
-                                  : "text-gray-800 dark:text-gray-200"
-                              )}
-                            >
-                              {option}
-                            </span>
-                          </div>
-
-                          {showResult && (
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ type: "spring", stiffness: 300 }}
-                            >
-                              {isCorrect ? (
-                                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                                  <CheckCircle className="w-6 h-6" />
-                                  <span className="font-bold text-sm hidden md:inline">
-                                    Correct!
-                                  </span>
-                                </div>
-                              ) : isSelected ? (
-                                <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                                  <XCircle className="w-6 h-6" />
-                                  <span className="font-bold text-sm hidden md:inline">
-                                    Wrong
-                                  </span>
-                                </div>
-                              ) : null}
-                            </motion.div>
-                          )}
-                        </motion.button>
+                            <span className="flex-1">{option}</span>
+                          </span>
+                        </Button>
                       </motion.div>
                     );
                   })}
