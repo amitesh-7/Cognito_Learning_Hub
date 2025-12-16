@@ -142,7 +142,7 @@ router.post(
         experienceGained += timeBonus;
       }
 
-      // Notify gamification service (non-blocking)
+      // Notify gamification service (non-blocking with retry)
       const axios = require("axios");
       const GAMIFICATION_URL =
         process.env.GAMIFICATION_SERVICE_URL || "http://localhost:3007";
@@ -154,40 +154,62 @@ router.post(
         `📊 Points: ${score}, XP: ${experienceGained}, Percentage: ${percentage}%`
       );
 
-      axios
-        .post(`${GAMIFICATION_URL}/api/events/quiz-completed`, {
-          userId: req.user.userId,
-          quizId,
-          resultData: {
-            percentage: percentage,
-            pointsEarned: score,
-            bonusPoints: bonusPoints,
-            totalTimeTaken: totalTimeSpent / 1000, // Convert to seconds
-            passed: percentage >= 60, // 60% passing
-            experienceGained: experienceGained,
-            category: quizMetadata?.category || "General",
-            difficulty: difficultyLevel,
-            difficultyMultiplier: difficultyMultiplier,
-          },
-        })
-        .then((response) => {
-          logger.info(
-            `✅ Gamification notification successful for user ${req.user.userId}`
-          );
-        })
-        .catch((err) => {
-          logger.error(
-            `❌ Gamification notification failed for user ${req.user.userId}:`,
-            err.message
-          );
-          logger.error(`   URL: ${GAMIFICATION_URL}/api/events/quiz-completed`);
-          if (err.response) {
-            logger.error(
-              `   Status: ${err.response.status}, Data:`,
-              err.response.data
+      // Retry logic with exponential backoff to handle rate limiting
+      const notifyGamification = async (retries = 3, delay = 1000) => {
+        for (let i = 0; i < retries; i++) {
+          try {
+            const response = await axios.post(
+              `${GAMIFICATION_URL}/api/events/quiz-completed`,
+              {
+                userId: req.user.userId,
+                quizId,
+                resultData: {
+                  percentage: percentage,
+                  pointsEarned: score,
+                  bonusPoints: bonusPoints,
+                  totalTimeTaken: totalTimeSpent / 1000,
+                  passed: percentage >= 60,
+                  experienceGained: experienceGained,
+                  category: quizMetadata?.category || "General",
+                  difficulty: difficultyLevel,
+                  difficultyMultiplier: difficultyMultiplier,
+                },
+              },
+              { timeout: 5000 }
             );
+            logger.info(
+              `✅ Gamification notification successful for user ${req.user.userId}`
+            );
+            return;
+          } catch (err) {
+            if (err.response?.status === 429 && i < retries - 1) {
+              // Rate limited, retry with exponential backoff
+              const waitTime = delay * Math.pow(2, i);
+              logger.warn(
+                `⚠️ Rate limited, retrying in ${waitTime}ms (attempt ${
+                  i + 1
+                }/${retries})`
+              );
+              await new Promise((resolve) => setTimeout(resolve, waitTime));
+            } else if (i === retries - 1) {
+              // Final failure
+              logger.error(
+                `❌ Gamification notification failed after ${retries} attempts for user ${req.user.userId}:`,
+                err.message
+              );
+              if (err.response) {
+                logger.error(
+                  `   Status: ${err.response.status}, URL: ${GAMIFICATION_URL}/api/events/quiz-completed`
+                );
+              }
+            }
           }
-        });
+        }
+      };
+
+      notifyGamification().catch((err) =>
+        logger.error("Gamification notification error:", err)
+      );
 
       // Invalidate related caches asynchronously (don't block response)
       cacheManager

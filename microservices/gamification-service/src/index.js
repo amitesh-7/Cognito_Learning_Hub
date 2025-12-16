@@ -127,8 +127,10 @@ async function initialize() {
     startStreakCronJob();
     console.log("✅ Streak checker cron job started");
 
-    startStatsSyncJob();
-    console.log("✅ Stats sync job started");
+    // DISABLED: Stats sync was overwriting MongoDB with zeros from Redis
+    // startStatsSyncJob();
+    // console.log("✅ Stats sync job started");
+    console.log("⚠️ Stats sync job DISABLED (was causing data loss)");
 
     // Start server
     app.listen(PORT, () => {

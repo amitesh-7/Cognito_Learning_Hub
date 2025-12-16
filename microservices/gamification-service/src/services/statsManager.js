@@ -132,22 +132,38 @@ class StatsManager {
       let stats = await getUserStatsFromCache(userId);
 
       if (!stats) {
-        // Fallback to MongoDB
-        const dbStats = await UserStats.findOne({ user: userId })
+        // Fallback to MongoDB - ensure userId is ObjectId
+        const mongoose = require("mongoose");
+        const userObjectId = mongoose.Types.ObjectId.isValid(userId)
+          ? new mongoose.Types.ObjectId(userId)
+          : userId;
+
+        console.log(`🔍 Querying MongoDB for user: ${userId}`);
+        const dbStats = await UserStats.findOne({ user: userObjectId })
           .populate("achievements")
           .lean();
 
         if (dbStats) {
+          console.log(
+            `✅ Found stats in MongoDB: Level ${dbStats.level}, Points ${dbStats.totalPoints}`
+          );
           // Cache to Redis
           await cacheUserStats(userId, dbStats);
           stats = dbStats;
         } else {
+          console.log(
+            `❌ No stats found in MongoDB for user ${userId}, creating new...`
+          );
           // Create new stats document
-          const newStats = new UserStats({ user: userId });
+          const newStats = new UserStats({ user: userObjectId });
           await newStats.save();
           await cacheUserStats(userId, newStats.toObject());
           stats = newStats.toObject();
         }
+      } else {
+        console.log(
+          `✅ Stats loaded from Redis cache: Level ${stats.level}, Points ${stats.totalPoints}`
+        );
       }
 
       // Always recalculate level based on current XP
