@@ -50,7 +50,6 @@ final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(() {
 // Helper to get actual brightness based on theme mode and system settings
 final isDarkModeProvider = Provider.family<bool, BuildContext>((ref, context) {
   final themeMode = ref.watch(themeProvider);
-  return false;
 
   switch (themeMode) {
     case ThemeMode.dark:

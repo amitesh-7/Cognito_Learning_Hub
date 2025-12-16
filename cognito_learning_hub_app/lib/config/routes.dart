@@ -19,6 +19,11 @@ import '../screens/live/live_session_join.dart';
 import '../screens/duel/duel_mode_screen.dart';
 import '../screens/meeting/meeting_room_screen.dart';
 import '../screens/ai_tutor/ai_tutor_screen.dart';
+import '../screens/ai_tutor/study_buddy_chat_screen.dart';
+import '../screens/ai_tutor/study_goals_screen.dart';
+import '../screens/gamification/achievements_screen.dart';
+import '../screens/gamification/quests_screen.dart';
+import '../screens/gamification/stats_dashboard_screen.dart';
 
 // Route names
 class AppRoutes {
@@ -35,10 +40,14 @@ class AppRoutes {
   static const duelMode = '/duel';
   static const meetingRoom = '/meeting/:roomId';
   static const aiTutor = '/ai-tutor';
+  static const studyBuddy = '/study-buddy';
+  static const studyGoals = '/study-goals';
+  static const achievements = '/achievements';
+  static const quests = '/quests';
+  static const stats = '/stats';
   static const settings = '/settings';
   static const profile = '/profile';
   static const leaderboard = '/leaderboard';
-  static const achievements = '/achievements';
 }
 
 // Auth state notifier for router refresh
@@ -214,6 +223,50 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.aiTutor,
         name: 'aiTutor',
         builder: (context, state) => const AITutorScreen(),
+      ),
+
+      // Study Buddy
+      GoRoute(
+        path: AppRoutes.studyBuddy,
+        name: 'studyBuddy',
+        builder: (context, state) {
+          final quizId = state.uri.queryParameters['quizId'];
+          final quizTitle = state.uri.queryParameters['quizTitle'];
+          final topic = state.uri.queryParameters['topic'];
+          return StudyBuddyChatScreen(
+            quizId: quizId,
+            quizTitle: quizTitle,
+            topic: topic,
+          );
+        },
+      ),
+
+      // Study Goals
+      GoRoute(
+        path: AppRoutes.studyGoals,
+        name: 'studyGoals',
+        builder: (context, state) => const StudyGoalsScreen(),
+      ),
+
+      // Achievements
+      GoRoute(
+        path: AppRoutes.achievements,
+        name: 'achievements',
+        builder: (context, state) => const AchievementsScreen(),
+      ),
+
+      // Quests
+      GoRoute(
+        path: AppRoutes.quests,
+        name: 'quests',
+        builder: (context, state) => const QuestsScreen(),
+      ),
+
+      // Stats Dashboard
+      GoRoute(
+        path: AppRoutes.stats,
+        name: 'stats',
+        builder: (context, state) => const StatsDashboardScreen(),
       ),
 
       // Settings

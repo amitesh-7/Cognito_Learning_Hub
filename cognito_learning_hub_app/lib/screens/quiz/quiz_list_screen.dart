@@ -66,9 +66,9 @@ class _QuizListScreenState extends ConsumerState<QuizListScreen>
               controller: _searchController,
               hint: 'Search quizzes...',
               onSubmitted: (value) {
-                ref.read(quizFilterProvider.notifier).state = QuizFilter(
-                  search: value,
-                );
+                ref.read(quizFilterProvider.notifier).update(
+                      QuizFilter(search: value),
+                    );
               },
             ),
           ),

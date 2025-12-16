@@ -65,6 +65,13 @@ dependencies:
   path_provider: ^2.1.5
   google_fonts: ^6.2.1
 
+  # ----- MARKDOWN & TEXT -----
+  flutter_markdown: ^0.7.4+1
+
+  # ----- SPEECH -----
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.2.0
+
   # ----- HAPTIC FEEDBACK -----
   vibration: ^3.1.4
 

@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/routes.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/gamification_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -34,6 +35,14 @@ class DashboardScreen extends ConsumerWidget {
                   user?.name ?? 'Student',
                   user?.picture,
                 ).animate().fadeIn().slideX(begin: -0.1),
+
+                const SizedBox(height: 20),
+
+                // Gamification Stats Banner
+                _buildGamificationBanner(context, ref)
+                    .animate()
+                    .fadeIn(delay: 100.ms)
+                    .slideY(begin: 0.1),
 
                 const SizedBox(height: 24),
 
@@ -181,40 +190,181 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildQuickActions(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _ActionCard(
-            icon: Icons.play_arrow,
-            title: 'Take Quiz',
-            color: AppTheme.primaryColor,
-            onTap: () => context.go(AppRoutes.quizList),
+    return GridView.count(
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 0.9,
+      children: [
+        _ActionCard(
+          icon: Icons.psychology,
+          title: 'AI Study Buddy',
+          color: AppTheme.primaryColor,
+          onTap: () => context.push(AppRoutes.studyBuddy),
+        ),
+        _ActionCard(
+          icon: Icons.emoji_events,
+          title: 'Achievements',
+          color: AppTheme.warningColor,
+          onTap: () => context.push(AppRoutes.achievements),
+        ),
+        _ActionCard(
+          icon: Icons.map,
+          title: 'Quests',
+          color: Colors.purple,
+          onTap: () => context.push(AppRoutes.quests),
+        ),
+        _ActionCard(
+          icon: Icons.flag,
+          title: 'Study Goals',
+          color: AppTheme.successColor,
+          onTap: () => context.push(AppRoutes.studyGoals),
+        ),
+        _ActionCard(
+          icon: Icons.bar_chart,
+          title: 'Statistics',
+          color: Colors.blue,
+          onTap: () => context.push(AppRoutes.stats),
+        ),
+        _ActionCard(
+          icon: Icons.play_arrow,
+          title: 'Take Quiz',
+          color: AppTheme.primaryColor,
+          onTap: () => context.go(AppRoutes.quizList),
+        ),
+        _ActionCard(
+          icon: Icons.live_tv,
+          title: 'Join Live',
+          color: AppTheme.successColor,
+          onTap: () => context.push(AppRoutes.liveJoin),
+        ),
+        _ActionCard(
+          icon: Icons.sports_esports,
+          title: 'Duel Mode',
+          color: AppTheme.accentColor,
+          onTap: () => context.push(AppRoutes.duelMode),
+        ),
+        _ActionCard(
+          icon: Icons.psychology_outlined,
+          title: 'AI Tutor',
+          color: AppTheme.secondaryColor,
+          onTap: () => context.push(AppRoutes.aiTutor),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGamificationBanner(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(userStatsProvider);
+
+    return statsAsync.when(
+      data: (stats) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.primaryColor,
+              AppTheme.primaryColor.withOpacity(0.7),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          const SizedBox(width: 12),
-          _ActionCard(
-            icon: Icons.live_tv,
-            title: 'Join Live',
-            color: AppTheme.successColor,
-            onTap: () => context.push(AppRoutes.liveJoin),
-          ),
-          const SizedBox(width: 12),
-          _ActionCard(
-            icon: Icons.sports_esports,
-            title: 'Duel Mode',
-            color: AppTheme.accentColor,
-            onTap: () => context.push(AppRoutes.duelMode),
-          ),
-          const SizedBox(width: 12),
-          _ActionCard(
-            icon: Icons.psychology,
-            title: 'AI Tutor',
-            color: AppTheme.secondaryColor,
-            onTap: () => context.push(AppRoutes.aiTutor),
-          ),
-          const SizedBox(width: 12),
-        ],
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildBannerStat(Icons.stars, 'Points', '${stats.totalPoints}'),
+                _buildBannerStat(
+                  Icons.trending_up,
+                  'Level',
+                  '${stats.level}',
+                ),
+                _buildBannerStat(
+                  Icons.emoji_events,
+                  'Achievements',
+                  '${stats.achievementsUnlocked}',
+                ),
+              ],
+            ),
+            if (stats.streak > 0) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.local_fire_department,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${stats.streak}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'day streak',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
+      loading: () => const SizedBox(
+        height: 120,
+        child: Center(child: CircularProgressIndicator(color: Colors.white)),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildBannerStat(IconData icon, String label, String value) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white, size: 28),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 10),
+        ),
+      ],
     );
   }
 
