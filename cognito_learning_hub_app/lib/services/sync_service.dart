@@ -2,9 +2,8 @@
 
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dio/dio.dart';
-import '../config/api_config.dart';
 import 'database_service.dart';
+import 'api_service.dart';
 
 enum SyncStatus {
   idle,
@@ -14,11 +13,7 @@ enum SyncStatus {
 }
 
 class SyncService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.apiUrl,
-    connectTimeout: const Duration(seconds: 30),
-    receiveTimeout: const Duration(seconds: 30),
-  ));
+  final _api = ApiService();
 
   SyncStatus _status = SyncStatus.idle;
   DateTime? _lastSyncTime;
@@ -78,7 +73,7 @@ class SyncService {
     for (final result in results) {
       try {
         final data = json.decode(result['data'] as String? ?? '{}');
-        await _dio.post('/results', data: data);
+        await _api.post('/results', data: data);
         await DatabaseService.markAsSynced(
           DatabaseService.resultsTable,
           result['id'] as String,
@@ -100,7 +95,7 @@ class SyncService {
     for (final post in posts) {
       try {
         final data = json.decode(post['data'] as String? ?? '{}');
-        await _dio.post('/social/posts', data: data);
+        await _api.post('/social/posts', data: data);
         await DatabaseService.markAsSynced(
           DatabaseService.socialPostsTable,
           post['id'] as String,
@@ -122,7 +117,7 @@ class SyncService {
     for (final quiz in quizzes) {
       try {
         final data = json.decode(quiz['data'] as String? ?? '{}');
-        await _dio.post('/quizzes', data: data);
+        await _api.post('/quizzes', data: data);
         await DatabaseService.markAsSynced(
           DatabaseService.quizzesTable,
           quiz['id'] as String,
@@ -144,7 +139,7 @@ class SyncService {
     for (final material in materials) {
       try {
         final data = json.decode(material['data'] as String? ?? '{}');
-        await _dio.post('/materials', data: data);
+        await _api.post('/materials', data: data);
         await DatabaseService.markAsSynced(
           DatabaseService.materialsTable,
           material['id'] as String,
@@ -166,7 +161,7 @@ class SyncService {
     for (final badge in badges) {
       try {
         final data = json.decode(badge['data'] as String? ?? '{}');
-        await _dio.post('/badges', data: data);
+        await _api.post('/badges', data: data);
         await DatabaseService.markAsSynced(
           DatabaseService.badgesTable,
           badge['id'] as String,
@@ -189,13 +184,13 @@ class SyncService {
 
         switch (operation) {
           case 'CREATE':
-            await _dio.post('/$tableName', data: data);
+            await _api.post('/$tableName', data: data);
             break;
           case 'UPDATE':
-            await _dio.put('/$tableName/${data['id']}', data: data);
+            await _api.put('/$tableName/${data['id']}', data: data);
             break;
           case 'DELETE':
-            await _dio.delete('/$tableName/${data['id']}');
+            await _api.delete('/$tableName/${data['id']}');
             break;
         }
 
@@ -246,7 +241,7 @@ class SyncService {
 
   Future<void> _downloadQuizzes() async {
     try {
-      final response = await _dio.get('/quizzes', queryParameters: {
+      final response = await _api.get('/quizzes', queryParameters: {
         'limit': 50,
         'includeQuestions': true,
       });
@@ -293,7 +288,7 @@ class SyncService {
 
   Future<void> _downloadMaterials() async {
     try {
-      final response = await _dio.get('/materials', queryParameters: {
+      final response = await _api.get('/materials', queryParameters: {
         'limit': 50,
       });
 
@@ -322,7 +317,7 @@ class SyncService {
 
   Future<void> _downloadBadges() async {
     try {
-      final response = await _dio.get('/badges/user');
+      final response = await _api.get('/badges/user');
 
       final badges = response.data['badges'] as List? ?? [];
       for (final badge in badges) {

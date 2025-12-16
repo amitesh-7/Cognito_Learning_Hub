@@ -3,19 +3,10 @@
 import 'package:dio/dio.dart';
 import '../config/api_config.dart';
 import '../models/live_session.dart';
+import 'api_service.dart';
 
 class LiveSessionService {
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: ApiConfig.apiUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ),
-  );
-
-  void setAuthToken(String token) {
-    _dio.options.headers['Authorization'] = 'Bearer $token';
-  }
+  final _api = ApiService();
 
   // Create a new live session
   Future<LiveSession> createSession({
@@ -23,7 +14,7 @@ class LiveSessionService {
     String? quizTitle,
   }) async {
     try {
-      final response = await _dio.post(
+      final response = await _api.post(
         Endpoints.createSession,
         data: {
           'quizId': quizId,
@@ -40,7 +31,7 @@ class LiveSessionService {
   // Join an existing session with code
   Future<LiveSession> joinSession(String code) async {
     try {
-      final response = await _dio.post(
+      final response = await _api.post(
         Endpoints.joinSession(code),
       );
 
@@ -53,7 +44,7 @@ class LiveSessionService {
   // Get session details
   Future<LiveSession> getSession(String sessionId) async {
     try {
-      final response = await _dio.get(
+      final response = await _api.get(
         '${Endpoints.liveSessions}/$sessionId',
       );
 
@@ -66,7 +57,7 @@ class LiveSessionService {
   // Get active sessions
   Future<List<LiveSession>> getActiveSessions() async {
     try {
-      final response = await _dio.get(
+      final response = await _api.get(
         '${Endpoints.liveSessions}/active',
       );
 
@@ -82,7 +73,7 @@ class LiveSessionService {
   // Leave a session
   Future<void> leaveSession(String sessionId) async {
     try {
-      await _dio.post(
+      await _api.post(
         '${Endpoints.liveSessions}/$sessionId/leave',
       );
     } catch (e) {
@@ -93,7 +84,7 @@ class LiveSessionService {
   // End session (host only)
   Future<void> endSession(String sessionId) async {
     try {
-      await _dio.post(
+      await _api.post(
         '${Endpoints.liveSessions}/$sessionId/end',
       );
     } catch (e) {
@@ -108,7 +99,7 @@ class LiveSessionService {
     required int answerIndex,
   }) async {
     try {
-      final response = await _dio.post(
+      final response = await _api.post(
         '${Endpoints.liveSessions}/$sessionId/answer',
         data: {
           'questionIndex': questionIndex,
@@ -126,7 +117,7 @@ class LiveSessionService {
   // Get leaderboard for session
   Future<List<LiveLeaderboardEntry>> getLeaderboard(String sessionId) async {
     try {
-      final response = await _dio.get(
+      final response = await _api.get(
         '${Endpoints.liveSessions}/$sessionId/leaderboard',
       );
 

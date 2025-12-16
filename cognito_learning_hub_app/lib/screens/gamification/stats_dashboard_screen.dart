@@ -142,7 +142,7 @@ class StatsDashboardScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              Container(
+              SizedBox(
                 width: 80,
                 height: 80,
                 child: Stack(

@@ -1,15 +1,10 @@
 // lib/services/study_materials_service.dart
 
-import 'package:dio/dio.dart';
-import '../config/api_config.dart';
 import '../models/study_material.dart';
+import 'api_service.dart';
 
 class StudyMaterialsService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.apiUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-  ));
+  final _api = ApiService();
 
   /// Get all study materials with filters
   Future<List<StudyMaterial>> getMaterials({
@@ -21,7 +16,7 @@ class StudyMaterialsService {
     int limit = 20,
   }) async {
     try {
-      final response = await _dio.get('/materials', queryParameters: {
+      final response = await _api.get('/materials', queryParameters: {
         if (categoryId != null) 'categoryId': categoryId,
         if (type != null) 'type': type.name,
         if (difficulty != null) 'difficulty': difficulty.name,
@@ -40,7 +35,7 @@ class StudyMaterialsService {
   /// Get material by ID
   Future<StudyMaterial> getMaterialById(String materialId) async {
     try {
-      final response = await _dio.get('/materials/$materialId');
+      final response = await _api.get('/materials/$materialId');
       return StudyMaterial.fromJson(response.data['material']);
     } catch (e) {
       throw Exception('Failed to fetch material: $e');
@@ -50,7 +45,7 @@ class StudyMaterialsService {
   /// Get bookmarked materials
   Future<List<StudyMaterial>> getBookmarkedMaterials() async {
     try {
-      final response = await _dio.get('/materials/bookmarks');
+      final response = await _api.get('/materials/bookmarks');
       final List materialsData = response.data['materials'] ?? [];
       return materialsData.map((m) => StudyMaterial.fromJson(m)).toList();
     } catch (e) {
@@ -61,7 +56,7 @@ class StudyMaterialsService {
   /// Toggle bookmark
   Future<void> toggleBookmark(String materialId) async {
     try {
-      await _dio.post('/materials/$materialId/bookmark');
+      await _api.post('/materials/$materialId/bookmark');
     } catch (e) {
       throw Exception('Failed to toggle bookmark: $e');
     }
@@ -70,7 +65,7 @@ class StudyMaterialsService {
   /// Get material progress
   Future<MaterialProgress> getProgress(String materialId) async {
     try {
-      final response = await _dio.get('/materials/$materialId/progress');
+      final response = await _api.get('/materials/$materialId/progress');
       return MaterialProgress.fromJson(response.data['progress']);
     } catch (e) {
       throw Exception('Failed to fetch progress: $e');
@@ -84,7 +79,7 @@ class StudyMaterialsService {
     required int timeSpentSeconds,
   }) async {
     try {
-      await _dio.put('/materials/$materialId/progress', data: {
+      await _api.put('/materials/$materialId/progress', data: {
         'progressPercentage': progressPercentage,
         'timeSpentSeconds': timeSpentSeconds,
       });
@@ -96,7 +91,7 @@ class StudyMaterialsService {
   /// Mark material as completed
   Future<void> markCompleted(String materialId) async {
     try {
-      await _dio.post('/materials/$materialId/complete');
+      await _api.post('/materials/$materialId/complete');
     } catch (e) {
       throw Exception('Failed to mark as completed: $e');
     }
@@ -105,7 +100,7 @@ class StudyMaterialsService {
   /// Rate material
   Future<void> rateMaterial(String materialId, double rating) async {
     try {
-      await _dio.post('/materials/$materialId/rate', data: {
+      await _api.post('/materials/$materialId/rate', data: {
         'rating': rating,
       });
     } catch (e) {
@@ -116,7 +111,7 @@ class StudyMaterialsService {
   /// Track material view
   Future<void> trackView(String materialId) async {
     try {
-      await _dio.post('/materials/$materialId/view');
+      await _api.post('/materials/$materialId/view');
     } catch (e) {
       throw Exception('Failed to track view: $e');
     }
@@ -125,7 +120,7 @@ class StudyMaterialsService {
   /// Download material
   Future<void> downloadMaterial(String materialId) async {
     try {
-      await _dio.post('/materials/$materialId/download');
+      await _api.post('/materials/$materialId/download');
     } catch (e) {
       throw Exception('Failed to download material: $e');
     }
@@ -134,7 +129,7 @@ class StudyMaterialsService {
   /// Get recommended materials
   Future<List<StudyMaterial>> getRecommendedMaterials() async {
     try {
-      final response = await _dio.get('/materials/recommended');
+      final response = await _api.get('/materials/recommended');
       final List materialsData = response.data['materials'] ?? [];
       return materialsData.map((m) => StudyMaterial.fromJson(m)).toList();
     } catch (e) {
@@ -145,7 +140,7 @@ class StudyMaterialsService {
   /// Get recently viewed materials
   Future<List<StudyMaterial>> getRecentlyViewed() async {
     try {
-      final response = await _dio.get('/materials/recent');
+      final response = await _api.get('/materials/recent');
       final List materialsData = response.data['materials'] ?? [];
       return materialsData.map((m) => StudyMaterial.fromJson(m)).toList();
     } catch (e) {

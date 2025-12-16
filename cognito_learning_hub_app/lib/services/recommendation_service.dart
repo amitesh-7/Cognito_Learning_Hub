@@ -1,15 +1,10 @@
 // lib/services/recommendation_service.dart
 
-import 'package:dio/dio.dart';
-import '../config/api_config.dart';
 import '../models/recommendation.dart';
+import 'api_service.dart';
 
 class RecommendationService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.apiUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-  ));
+  final _api = ApiService();
 
   /// Get personalized quiz recommendations
   Future<List<RecommendedQuiz>> getQuizRecommendations({
@@ -19,7 +14,7 @@ class RecommendationService {
   }) async {
     try {
       final response =
-          await _dio.get('/recommendations/quizzes', queryParameters: {
+          await _api.get('/recommendations/quizzes', queryParameters: {
         'limit': limit,
         if (category != null) 'category': category,
         if (difficulty != null) 'difficulty': difficulty,
@@ -40,7 +35,7 @@ class RecommendationService {
   }) async {
     try {
       final response =
-          await _dio.get('/recommendations/materials', queryParameters: {
+          await _api.get('/recommendations/materials', queryParameters: {
         'limit': limit,
         if (type != null) 'type': type,
         if (category != null) 'category': category,
@@ -59,7 +54,7 @@ class RecommendationService {
   Future<List<DifficultyAdjustment>> getDifficultyAdjustments() async {
     try {
       final response =
-          await _dio.get('/recommendations/difficulty-adjustments');
+          await _api.get('/recommendations/difficulty-adjustments');
 
       final List adjustments = response.data['adjustments'] ?? [];
       return adjustments.map((a) => DifficultyAdjustment.fromJson(a)).toList();
@@ -71,7 +66,7 @@ class RecommendationService {
   /// Get personalized learning paths
   Future<List<LearningPath>> getLearningPaths() async {
     try {
-      final response = await _dio.get('/recommendations/learning-paths');
+      final response = await _api.get('/recommendations/learning-paths');
 
       final List paths = response.data['paths'] ?? [];
       return paths.map((p) => LearningPath.fromJson(p)).toList();
@@ -83,7 +78,7 @@ class RecommendationService {
   /// Get recommendation insights
   Future<RecommendationInsights> getInsights() async {
     try {
-      final response = await _dio.get('/recommendations/insights');
+      final response = await _api.get('/recommendations/insights');
 
       return RecommendationInsights.fromJson(response.data['insights'] ?? {});
     } catch (e) {
@@ -94,7 +89,7 @@ class RecommendationService {
   /// Get next recommended quiz based on current performance
   Future<RecommendedQuiz?> getNextQuiz() async {
     try {
-      final response = await _dio.get('/recommendations/next-quiz');
+      final response = await _api.get('/recommendations/next-quiz');
 
       if (response.data['quiz'] != null) {
         return RecommendedQuiz.fromJson(response.data['quiz']);
@@ -109,7 +104,7 @@ class RecommendationService {
   Future<List<RecommendedQuiz>> getSimilarQuizzes(String quizId,
       {int limit = 5}) async {
     try {
-      final response = await _dio.get(
+      final response = await _api.get(
         '/recommendations/similar-quizzes/$quizId',
         queryParameters: {'limit': limit},
       );
@@ -125,7 +120,7 @@ class RecommendationService {
   Future<List<RecommendedMaterial>> getTopicMaterials(String topic,
       {int limit = 10}) async {
     try {
-      final response = await _dio.get(
+      final response = await _api.get(
         '/recommendations/topic-materials',
         queryParameters: {
           'topic': topic,
@@ -145,7 +140,7 @@ class RecommendationService {
   /// Get weak areas that need improvement
   Future<List<String>> getWeakAreas() async {
     try {
-      final response = await _dio.get('/recommendations/weak-areas');
+      final response = await _api.get('/recommendations/weak-areas');
 
       return List<String>.from(response.data['weakAreas'] ?? []);
     } catch (e) {
@@ -156,7 +151,7 @@ class RecommendationService {
   /// Get strong areas where user excels
   Future<List<String>> getStrongAreas() async {
     try {
-      final response = await _dio.get('/recommendations/strong-areas');
+      final response = await _api.get('/recommendations/strong-areas');
 
       return List<String>.from(response.data['strongAreas'] ?? []);
     } catch (e) {
@@ -167,7 +162,7 @@ class RecommendationService {
   /// Get recommended daily study plan
   Future<Map<String, dynamic>> getDailyStudyPlan() async {
     try {
-      final response = await _dio.get('/recommendations/daily-study-plan');
+      final response = await _api.get('/recommendations/daily-study-plan');
 
       return response.data['plan'] ?? {};
     } catch (e) {
@@ -183,7 +178,7 @@ class RecommendationService {
     String? comment,
   }) async {
     try {
-      await _dio.post('/recommendations/feedback', data: {
+      await _api.post('/recommendations/feedback', data: {
         'recommendationId': recommendationId,
         'type': type,
         'helpful': helpful,
@@ -197,7 +192,7 @@ class RecommendationService {
   /// Accept a recommendation
   Future<void> acceptRecommendation(String recommendationId) async {
     try {
-      await _dio.post('/recommendations/$recommendationId/accept');
+      await _api.post('/recommendations/$recommendationId/accept');
     } catch (e) {
       throw Exception('Failed to accept recommendation: $e');
     }
@@ -206,7 +201,7 @@ class RecommendationService {
   /// Dismiss a recommendation
   Future<void> dismissRecommendation(String recommendationId) async {
     try {
-      await _dio.post('/recommendations/$recommendationId/dismiss');
+      await _api.post('/recommendations/$recommendationId/dismiss');
     } catch (e) {
       throw Exception('Failed to dismiss recommendation: $e');
     }

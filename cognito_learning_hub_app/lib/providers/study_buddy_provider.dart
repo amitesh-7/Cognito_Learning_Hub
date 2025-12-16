@@ -24,7 +24,7 @@ class ConversationsNotifier extends AsyncNotifier<List<Conversation>> {
     try {
       return await _service.getConversations();
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 

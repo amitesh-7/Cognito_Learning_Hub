@@ -113,7 +113,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
         final rank = index + 4; // Start from 4th place
         return _LeaderboardItem(
           rank: rank,
-          name: 'User ${rank}',
+          name: 'User $rank',
           points: 2000 - (index * 80),
           isCurrentUser: index == 5,
         )

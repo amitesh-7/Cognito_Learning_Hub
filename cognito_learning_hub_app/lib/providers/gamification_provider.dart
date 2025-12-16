@@ -22,7 +22,24 @@ class UserStatsNotifier extends AsyncNotifier<GamificationStats> {
   }
 
   Future<GamificationStats> _loadStats() async {
-    return await _service.getUserStats();
+    try {
+      return await _service.getUserStats();
+    } catch (e) {
+      print('⚠️ Failed to load gamification stats: $e');
+      // Return default stats instead of throwing
+      return GamificationStats(
+        totalPoints: 0,
+        level: 1,
+        currentLevelPoints: 0,
+        nextLevelPoints: 100,
+        streak: 0,
+        longestStreak: 0,
+        quizzesCompleted: 0,
+        questsCompleted: 0,
+        achievementsUnlocked: 0,
+        totalAchievements: 0,
+      );
+    }
   }
 
   Future<void> refresh() async {

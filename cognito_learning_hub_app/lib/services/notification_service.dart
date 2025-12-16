@@ -1,16 +1,11 @@
 // lib/services/notification_service.dart
 
-import 'package:dio/dio.dart';
-import '../config/api_config.dart';
 import '../models/notification.dart';
 import 'local_notification_service.dart';
+import 'api_service.dart';
 
 class NotificationService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.apiUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-  ));
+  final _api = ApiService();
 
   /// Get user notifications
   Future<List<AppNotification>> getNotifications({
@@ -19,7 +14,7 @@ class NotificationService {
     bool? isRead,
   }) async {
     try {
-      final response = await _dio.get('/notifications', queryParameters: {
+      final response = await _api.get('/notifications', queryParameters: {
         'page': page,
         'limit': limit,
         if (isRead != null) 'isRead': isRead,
@@ -94,7 +89,7 @@ class NotificationService {
   /// Get unread notification count
   Future<int> getUnreadCount() async {
     try {
-      final response = await _dio.get('/notifications/unread/count');
+      final response = await _api.get('/notifications/unread/count');
       return response.data['count'] ?? 0;
     } catch (e) {
       throw Exception('Failed to fetch unread count: $e');
@@ -104,7 +99,7 @@ class NotificationService {
   /// Mark notification as read
   Future<void> markAsRead(String notificationId) async {
     try {
-      await _dio.put('/notifications/$notificationId/read');
+      await _api.put('/notifications/$notificationId/read');
     } catch (e) {
       throw Exception('Failed to mark notification as read: $e');
     }
@@ -113,7 +108,7 @@ class NotificationService {
   /// Mark all notifications as read
   Future<void> markAllAsRead() async {
     try {
-      await _dio.put('/notifications/read-all');
+      await _api.put('/notifications/read-all');
     } catch (e) {
       throw Exception('Failed to mark all as read: $e');
     }
@@ -122,7 +117,7 @@ class NotificationService {
   /// Delete notification
   Future<void> deleteNotification(String notificationId) async {
     try {
-      await _dio.delete('/notifications/$notificationId');
+      await _api.delete('/notifications/$notificationId');
     } catch (e) {
       throw Exception('Failed to delete notification: $e');
     }
@@ -131,7 +126,7 @@ class NotificationService {
   /// Delete all notifications
   Future<void> deleteAllNotifications() async {
     try {
-      await _dio.delete('/notifications/all');
+      await _api.delete('/notifications/all');
     } catch (e) {
       throw Exception('Failed to delete all notifications: $e');
     }
@@ -140,7 +135,7 @@ class NotificationService {
   /// Get notification settings
   Future<NotificationSettings> getSettings() async {
     try {
-      final response = await _dio.get('/notifications/settings');
+      final response = await _api.get('/notifications/settings');
       return NotificationSettings.fromJson(response.data['settings'] ?? {});
     } catch (e) {
       throw Exception('Failed to fetch notification settings: $e');
@@ -150,7 +145,7 @@ class NotificationService {
   /// Update notification settings
   Future<void> updateSettings(NotificationSettings settings) async {
     try {
-      await _dio.put('/notifications/settings', data: settings.toJson());
+      await _api.put('/notifications/settings', data: settings.toJson());
     } catch (e) {
       throw Exception('Failed to update notification settings: $e');
     }
@@ -169,7 +164,7 @@ class NotificationService {
   /// Send test notification (for debugging)
   Future<void> sendTestNotification() async {
     try {
-      await _dio.post('/notifications/test');
+      await _api.post('/notifications/test');
     } catch (e) {
       throw Exception('Failed to send test notification: $e');
     }
@@ -183,7 +178,7 @@ class NotificationService {
   }) async {
     try {
       // Notify backend to track the reminder
-      await _dio.post('/notifications/schedule/quiz-reminder', data: {
+      await _api.post('/notifications/schedule/quiz-reminder', data: {
         'quizId': quizId,
         'reminderTime': reminderTime.toIso8601String(),
       });
@@ -203,7 +198,7 @@ class NotificationService {
   /// Cancel a scheduled reminder
   Future<void> cancelScheduledNotification(String notificationId) async {
     try {
-      await _dio.delete('/notifications/schedule/$notificationId');
+      await _api.delete('/notifications/schedule/$notificationId');
     } catch (e) {
       throw Exception('Failed to cancel notification: $e');
     }

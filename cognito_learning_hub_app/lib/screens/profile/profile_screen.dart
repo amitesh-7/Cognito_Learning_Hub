@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/routes.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/gamification_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -99,35 +100,103 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildStatsSection(BuildContext context, user) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatCard(
-            icon: Icons.quiz,
-            label: 'Quizzes',
-            value: '${user.quizzesTaken ?? 0}',
-            color: AppTheme.primaryColor,
+    return Consumer(
+      builder: (context, ref, child) {
+        final statsAsync = ref.watch(userStatsProvider);
+
+        return statsAsync.when(
+          data: (stats) => Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.quiz,
+                  label: 'Quizzes',
+                  value: '${stats.quizzesCompleted}',
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.emoji_events,
+                  label: 'Points',
+                  value: '${stats.totalPoints}',
+                  color: AppTheme.successColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.local_fire_department,
+                  label: 'Streak',
+                  value: '${stats.streak}',
+                  color: AppTheme.accentColor,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatCard(
-            icon: Icons.check_circle,
-            label: 'Correct',
-            value: '${(user.quizzesTaken * user.averageScore / 100).round()}',
-            color: AppTheme.successColor,
+          loading: () => Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.quiz,
+                  label: 'Quizzes',
+                  value: '...',
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.emoji_events,
+                  label: 'Points',
+                  value: '...',
+                  color: AppTheme.successColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.local_fire_department,
+                  label: 'Streak',
+                  value: '...',
+                  color: AppTheme.accentColor,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatCard(
-            icon: Icons.sports_esports,
-            label: 'Duels Won',
-            value: '0',
-            color: AppTheme.accentColor,
+          error: (error, stack) => Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.quiz,
+                  label: 'Quizzes',
+                  value: '0',
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.emoji_events,
+                  label: 'Points',
+                  value: '0',
+                  color: AppTheme.successColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.local_fire_department,
+                  label: 'Streak',
+                  value: '0',
+                  color: AppTheme.accentColor,
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -232,13 +301,15 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _ProfileHeader extends StatelessWidget {
+class _ProfileHeader extends ConsumerWidget {
   final dynamic user;
 
   const _ProfileHeader({required this.user});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(userStatsProvider);
+
     return Container(
       decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
       child: SafeArea(
@@ -290,12 +361,31 @@ class _ProfileHeader extends StatelessWidget {
                         color: AppTheme.successColor,
                         shape: BoxShape.circle,
                       ),
-                      child: Text(
-                        '${user.level ?? 1}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                      child: statsAsync.when(
+                        data: (stats) => Text(
+                          '${stats.level}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        loading: () => const SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                        error: (_, __) => Text(
+                          '${user.level ?? 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -352,27 +442,65 @@ class _ProfileHeader extends StatelessWidget {
               const SizedBox(height: 12),
 
               // Points & Rank
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.emoji_events, color: Colors.amber, size: 20),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${user.points ?? 0} points',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  const SizedBox(width: 16),
-                  const Icon(
-                    Icons.leaderboard,
-                    color: Colors.white70,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Rank #${user.rank ?? '--'}',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ],
+              statsAsync.when(
+                data: (stats) => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.emoji_events,
+                        color: Colors.amber, size: 20),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${stats.totalPoints} points',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    const SizedBox(width: 16),
+                    const Icon(
+                      Icons.leaderboard,
+                      color: Colors.white70,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Rank #${user.rank ?? '--'}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+                loading: () => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.emoji_events,
+                        color: Colors.amber, size: 20),
+                    const SizedBox(width: 4),
+                    const Text(
+                      '... points',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+                error: (_, __) => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.emoji_events,
+                        color: Colors.amber, size: 20),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${user.points ?? 0} points',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    const SizedBox(width: 16),
+                    const Icon(
+                      Icons.leaderboard,
+                      color: Colors.white70,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Rank #${user.rank ?? '--'}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

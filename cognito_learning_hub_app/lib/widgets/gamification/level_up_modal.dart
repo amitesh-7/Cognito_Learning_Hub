@@ -124,7 +124,7 @@ class _LevelUpModalState extends State<LevelUpModal>
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Trophy/Star Animation
-                Container(
+                SizedBox(
                   width: 120,
                   height: 120,
                   child: const Icon(

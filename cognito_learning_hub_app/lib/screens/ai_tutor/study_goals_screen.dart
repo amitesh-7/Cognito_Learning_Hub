@@ -46,7 +46,7 @@ class _StudyGoalsScreenState extends ConsumerState<StudyGoalsScreen> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: category,
+                  initialValue: category,
                   decoration: const InputDecoration(
                     labelText: 'Category',
                     border: OutlineInputBorder(),

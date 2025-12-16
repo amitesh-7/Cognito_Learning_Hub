@@ -1,20 +1,15 @@
 // lib/services/analytics_service.dart
 
-import 'package:dio/dio.dart';
-import '../config/api_config.dart';
 import '../models/analytics.dart';
+import 'api_service.dart';
 
 class AnalyticsService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.apiUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-  ));
+  final _api = ApiService();
 
   /// Get overall learning analytics
   Future<LearningAnalytics> getLearningAnalytics() async {
     try {
-      final response = await _dio.get('/analytics/overview');
+      final response = await _api.get('/analytics/overview');
       return LearningAnalytics.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to fetch analytics: $e');
@@ -28,7 +23,7 @@ class AnalyticsService {
     String period = 'day', // 'day', 'week', 'month'
   }) async {
     try {
-      final response = await _dio.get('/analytics/trends', queryParameters: {
+      final response = await _api.get('/analytics/trends', queryParameters: {
         'startDate': startDate.toIso8601String(),
         'endDate': endDate.toIso8601String(),
         'period': period,
@@ -44,7 +39,7 @@ class AnalyticsService {
   /// Get category-wise analytics
   Future<List<CategoryAnalysis>> getCategoryAnalytics() async {
     try {
-      final response = await _dio.get('/analytics/categories');
+      final response = await _api.get('/analytics/categories');
 
       final List categoriesData = response.data['categories'] ?? [];
       return categoriesData.map((c) => CategoryAnalysis.fromJson(c)).toList();
@@ -60,7 +55,7 @@ class AnalyticsService {
     DateTime? endDate,
   }) async {
     try {
-      final response = await _dio.get('/analytics/insights', queryParameters: {
+      final response = await _api.get('/analytics/insights', queryParameters: {
         'period': period,
         if (startDate != null) 'startDate': startDate.toIso8601String(),
         if (endDate != null) 'endDate': endDate.toIso8601String(),
@@ -102,7 +97,7 @@ class AnalyticsService {
   }) async {
     try {
       final response =
-          await _dio.get('/analytics/comparison', queryParameters: {
+          await _api.get('/analytics/comparison', queryParameters: {
         'period': period,
       });
 
@@ -115,7 +110,7 @@ class AnalyticsService {
   /// Get learning streak information
   Future<Map<String, dynamic>> getStreakInfo() async {
     try {
-      final response = await _dio.get('/analytics/streak');
+      final response = await _api.get('/analytics/streak');
       return response.data;
     } catch (e) {
       throw Exception('Failed to fetch streak info: $e');
@@ -125,7 +120,7 @@ class AnalyticsService {
   /// Get study time distribution
   Future<Map<String, dynamic>> getStudyTimeDistribution() async {
     try {
-      final response = await _dio.get('/analytics/study-time');
+      final response = await _api.get('/analytics/study-time');
       return response.data;
     } catch (e) {
       throw Exception('Failed to fetch study time distribution: $e');
@@ -135,7 +130,7 @@ class AnalyticsService {
   /// Get predictive analytics (recommended topics, difficulty adjustments)
   Future<Map<String, dynamic>> getPredictiveAnalytics() async {
     try {
-      final response = await _dio.get('/analytics/predictions');
+      final response = await _api.get('/analytics/predictions');
       return response.data;
     } catch (e) {
       throw Exception('Failed to fetch predictive analytics: $e');

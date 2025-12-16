@@ -1,29 +1,46 @@
 // lib/services/gamification_service.dart
 
 import 'package:dio/dio.dart';
-import '../config/api_config.dart';
 import '../models/achievement.dart';
 import '../models/quest.dart';
+import 'api_service.dart';
 
 class GamificationService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.apiUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-  ));
+  final _api = ApiService();
 
   // Get user stats
   Future<GamificationStats> getUserStats() async {
     try {
-      final response = await _dio.get('/api/gamification/stats');
+      print('🎮 Fetching gamification stats from /api/stats/me');
+      final response = await _api.get('/api/stats/me');
+
+      print('🎮 Gamification response: ${response.data}');
+      print('🎮 Success: ${response.data['success']}');
 
       if (response.data['success'] == true) {
-        return GamificationStats.fromJson(response.data['data']);
+        // Backend returns: { success, userId, stats }
+        final statsData = response.data['stats'];
+        print('🎮 Stats data: $statsData');
+
+        if (statsData == null) {
+          throw Exception('Stats data is null in response');
+        }
+
+        final stats = GamificationStats.fromJson(statsData);
+        print(
+            '🎮 Parsed stats - Points: ${stats.totalPoints}, Level: ${stats.level}, Quizzes: ${stats.quizzesCompleted}');
+        return stats;
       } else {
         throw Exception(response.data['message'] ?? 'Failed to fetch stats');
       }
     } on DioException catch (e) {
+      print(
+          '🎮 ERROR fetching stats: ${e.response?.statusCode} - ${e.response?.data}');
+      print('🎮 ERROR message: ${e.message}');
       throw _handleError(e);
+    } catch (e) {
+      print('🎮 UNEXPECTED ERROR: $e');
+      rethrow;
     }
   }
 
@@ -35,7 +52,7 @@ class GamificationService {
       if (category != null) queryParams['category'] = category;
       if (unlocked != null) queryParams['unlocked'] = unlocked;
 
-      final response = await _dio.get(
+      final response = await _api.get(
         '/api/gamification/achievements',
         queryParameters: queryParams,
       );
@@ -57,7 +74,7 @@ class GamificationService {
   // Claim achievement reward
   Future<void> claimAchievement(String achievementId) async {
     try {
-      final response = await _dio.post(
+      final response = await _api.post(
         '/api/gamification/achievements/$achievementId/claim',
       );
 
@@ -76,7 +93,7 @@ class GamificationService {
       final queryParams = <String, dynamic>{};
       if (status != null) queryParams['status'] = status;
 
-      final response = await _dio.get(
+      final response = await _api.get(
         '/api/quests',
         queryParameters: queryParams,
       );
@@ -95,7 +112,7 @@ class GamificationService {
   // Get quest details
   Future<Quest> getQuest(String questId) async {
     try {
-      final response = await _dio.get('/api/quests/$questId');
+      final response = await _api.get('/api/quests/$questId');
 
       if (response.data['success'] == true) {
         return Quest.fromJson(response.data['data']);
@@ -110,7 +127,7 @@ class GamificationService {
   // Start quest
   Future<void> startQuest(String questId) async {
     try {
-      final response = await _dio.post('/api/quests/$questId/start');
+      final response = await _api.post('/api/quests/$questId/start');
 
       if (response.data['success'] != true) {
         throw Exception(response.data['message'] ?? 'Failed to start quest');
@@ -123,7 +140,7 @@ class GamificationService {
   // Claim quest reward
   Future<void> claimQuestReward(String questId) async {
     try {
-      final response = await _dio.post('/api/quests/$questId/claim');
+      final response = await _api.post('/api/quests/$questId/claim');
 
       if (response.data['success'] != true) {
         throw Exception(
@@ -140,7 +157,7 @@ class GamificationService {
     int limit = 50,
   }) async {
     try {
-      final response = await _dio.get(
+      final response = await _api.get(
         '/api/gamification/leaderboard',
         queryParameters: {
           'period': period,

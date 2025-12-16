@@ -1,15 +1,10 @@
 // lib/services/badges_service.dart
 
-import 'package:dio/dio.dart';
 import '../models/badge.dart';
-import '../config/api_config.dart';
+import 'api_service.dart';
 
 class BadgesService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.apiUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-  ));
+  final _api = ApiService();
 
   // Get all available badges
   Future<List<Badge>> getAllBadges({
@@ -21,7 +16,7 @@ class BadgesService {
       if (rarity != null) queryParams['rarity'] = rarity.name;
       if (category != null) queryParams['category'] = category.name;
 
-      final response = await _dio.get(
+      final response = await _api.get(
         '/gamification/badges',
         queryParameters: queryParams,
       );
@@ -36,7 +31,7 @@ class BadgesService {
   // Get user's badge collection
   Future<BadgeCollection> getUserBadges(String userId) async {
     try {
-      final response = await _dio.get('/gamification/badges/user/$userId');
+      final response = await _api.get('/gamification/badges/user/$userId');
       return BadgeCollection.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to fetch user badges: $e');
@@ -46,7 +41,7 @@ class BadgesService {
   // Get badge by ID
   Future<Badge> getBadgeById(String badgeId) async {
     try {
-      final response = await _dio.get('/gamification/badges/$badgeId');
+      final response = await _api.get('/gamification/badges/$badgeId');
       return Badge.fromJson(response.data['badge']);
     } catch (e) {
       throw Exception('Failed to fetch badge: $e');
@@ -56,7 +51,7 @@ class BadgesService {
   // Get user's showcased badges
   Future<List<Badge>> getShowcaseBadges(String userId) async {
     try {
-      final response = await _dio.get('/gamification/badges/showcase/$userId');
+      final response = await _api.get('/gamification/badges/showcase/$userId');
       return (response.data['badges'] as List)
           .map((badge) => Badge.fromJson(badge))
           .toList();
@@ -68,7 +63,7 @@ class BadgesService {
   // Update showcased badges
   Future<void> updateShowcase(List<String> badgeIds) async {
     try {
-      await _dio.put(
+      await _api.put(
         '/gamification/badges/showcase',
         data: {'badgeIds': badgeIds},
       );
@@ -84,7 +79,7 @@ class BadgesService {
     String? message,
   }) async {
     try {
-      final response = await _dio.post(
+      final response = await _api.post(
         '/gamification/badges/trade',
         data: {
           'badgeId': badgeId,
@@ -101,7 +96,7 @@ class BadgesService {
   // Accept trade request
   Future<void> acceptTrade(String tradeId) async {
     try {
-      await _dio.put('/gamification/badges/trade/$tradeId/accept');
+      await _api.put('/gamification/badges/trade/$tradeId/accept');
     } catch (e) {
       throw Exception('Failed to accept trade: $e');
     }
@@ -110,7 +105,7 @@ class BadgesService {
   // Reject trade request
   Future<void> rejectTrade(String tradeId) async {
     try {
-      await _dio.put('/gamification/badges/trade/$tradeId/reject');
+      await _api.put('/gamification/badges/trade/$tradeId/reject');
     } catch (e) {
       throw Exception('Failed to reject trade: $e');
     }
@@ -119,7 +114,7 @@ class BadgesService {
   // Cancel trade request
   Future<void> cancelTrade(String tradeId) async {
     try {
-      await _dio.delete('/gamification/badges/trade/$tradeId');
+      await _api.delete('/gamification/badges/trade/$tradeId');
     } catch (e) {
       throw Exception('Failed to cancel trade: $e');
     }
@@ -128,7 +123,7 @@ class BadgesService {
   // Get pending trade requests
   Future<List<BadgeTrade>> getPendingTrades() async {
     try {
-      final response = await _dio.get('/gamification/badges/trades/pending');
+      final response = await _api.get('/gamification/badges/trades/pending');
       return (response.data['trades'] as List)
           .map((trade) => BadgeTrade.fromJson(trade))
           .toList();
@@ -140,7 +135,7 @@ class BadgesService {
   // Get trade history
   Future<List<BadgeTrade>> getTradeHistory() async {
     try {
-      final response = await _dio.get('/gamification/badges/trades/history');
+      final response = await _api.get('/gamification/badges/trades/history');
       return (response.data['trades'] as List)
           .map((trade) => BadgeTrade.fromJson(trade))
           .toList();
@@ -156,7 +151,7 @@ class BadgesService {
     String? message,
   }) async {
     try {
-      await _dio.post(
+      await _api.post(
         '/gamification/badges/gift',
         data: {
           'badgeId': badgeId,
@@ -172,7 +167,7 @@ class BadgesService {
   // Get badge statistics
   Future<Map<String, dynamic>> getBadgeStats(String userId) async {
     try {
-      final response = await _dio.get('/gamification/badges/stats/$userId');
+      final response = await _api.get('/gamification/badges/stats/$userId');
       return response.data;
     } catch (e) {
       throw Exception('Failed to fetch badge stats: $e');

@@ -149,43 +149,106 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildStatsGrid(BuildContext context, user) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.5,
-      children: [
-        _StatCard(
-          icon: Icons.emoji_events,
-          iconColor: AppTheme.warningColor,
-          title: 'Points',
-          value: '${user?.points ?? 0}',
-          gradient: AppTheme.accentGradient,
-        ),
-        _StatCard(
-          icon: Icons.trending_up,
-          iconColor: AppTheme.successColor,
-          title: 'Level',
-          value: '${user?.level ?? 1}',
-          gradient: AppTheme.successGradient,
-        ),
-        _StatCard(
-          icon: Icons.quiz,
-          iconColor: AppTheme.primaryColor,
-          title: 'Quizzes Taken',
-          value: '${user?.quizzesTaken ?? 0}',
-          gradient: AppTheme.primaryGradient,
-        ),
-        _StatCard(
-          icon: Icons.leaderboard,
-          iconColor: AppTheme.accentColor,
-          title: 'Global Rank',
-          value: '#${user?.rank ?? '--'}',
-          gradient: AppTheme.secondaryGradient,
-        ),
-      ],
+    return Consumer(
+      builder: (context, ref, child) {
+        final statsAsync = ref.watch(userStatsProvider);
+
+        return statsAsync.when(
+          data: (stats) => GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.5,
+            children: [
+              _StatCard(
+                icon: Icons.emoji_events,
+                iconColor: AppTheme.warningColor,
+                title: 'Points',
+                value: '${stats.totalPoints}',
+                gradient: AppTheme.accentGradient,
+              ),
+              _StatCard(
+                icon: Icons.trending_up,
+                iconColor: AppTheme.successColor,
+                title: 'Level',
+                value: '${stats.level}',
+                gradient: AppTheme.successGradient,
+              ),
+              _StatCard(
+                icon: Icons.quiz,
+                iconColor: AppTheme.primaryColor,
+                title: 'Quizzes Taken',
+                value: '${stats.quizzesCompleted}',
+                gradient: AppTheme.primaryGradient,
+              ),
+              _StatCard(
+                icon: Icons.leaderboard,
+                iconColor: AppTheme.accentColor,
+                title: 'Global Rank',
+                value: '#${user?.rank ?? '--'}',
+                gradient: AppTheme.secondaryGradient,
+              ),
+            ],
+          ),
+          loading: () => GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.5,
+            children: List.generate(
+              4,
+              (index) => Card(
+                child: Center(
+                  child:
+                      CircularProgressIndicator(color: AppTheme.primaryColor),
+                ),
+              ),
+            ),
+          ),
+          error: (error, stack) => GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.5,
+            children: [
+              _StatCard(
+                icon: Icons.emoji_events,
+                iconColor: AppTheme.warningColor,
+                title: 'Points',
+                value: '0',
+                gradient: AppTheme.accentGradient,
+              ),
+              _StatCard(
+                icon: Icons.trending_up,
+                iconColor: AppTheme.successColor,
+                title: 'Level',
+                value: '1',
+                gradient: AppTheme.successGradient,
+              ),
+              _StatCard(
+                icon: Icons.quiz,
+                iconColor: AppTheme.primaryColor,
+                title: 'Quizzes Taken',
+                value: '0',
+                gradient: AppTheme.primaryGradient,
+              ),
+              _StatCard(
+                icon: Icons.leaderboard,
+                iconColor: AppTheme.accentColor,
+                title: 'Global Rank',
+                value: '#--',
+                gradient: AppTheme.secondaryGradient,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

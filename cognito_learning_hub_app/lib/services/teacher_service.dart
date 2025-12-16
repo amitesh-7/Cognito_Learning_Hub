@@ -1,26 +1,16 @@
 // lib/services/teacher_service.dart
 
 import 'package:dio/dio.dart';
-import '../config/api_config.dart';
 import '../models/teacher_stats.dart';
+import 'api_service.dart';
 
 class TeacherService {
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: ApiConfig.apiUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ),
-  );
-
-  void setAuthToken(String token) {
-    _dio.options.headers['Authorization'] = 'Bearer $token';
-  }
+  final _api = ApiService();
 
   /// Get teacher dashboard statistics
   Future<TeacherStats> getTeacherStats() async {
     try {
-      final response = await _dio.get('/teacher/stats');
+      final response = await _api.get('/teacher/stats');
       return TeacherStats.fromJson(response.data);
     } on DioException catch (e) {
       if (e.response != null) {
@@ -37,7 +27,7 @@ class TeacherService {
     String? search,
   }) async {
     try {
-      final response = await _dio.get(
+      final response = await _api.get(
         '/teacher/students',
         queryParameters: {
           'page': page,
@@ -61,7 +51,7 @@ class TeacherService {
   /// Get individual student progress
   Future<StudentProgress> getStudentProgress(String studentId) async {
     try {
-      final response = await _dio.get('/teacher/students/$studentId');
+      final response = await _api.get('/teacher/students/$studentId');
       return StudentProgress.fromJson(response.data);
     } on DioException catch (e) {
       if (e.response != null) {
@@ -75,7 +65,7 @@ class TeacherService {
   /// Get quiz analytics
   Future<Map<String, dynamic>> getQuizAnalytics(String quizId) async {
     try {
-      final response = await _dio.get('/teacher/quizzes/$quizId/analytics');
+      final response = await _api.get('/teacher/quizzes/$quizId/analytics');
       return response.data;
     } on DioException catch (e) {
       if (e.response != null) {
@@ -93,7 +83,7 @@ class TeacherService {
     required DateTime dueDate,
   }) async {
     try {
-      await _dio.post(
+      await _api.post(
         '/teacher/assignments',
         data: {
           'quizId': quizId,
@@ -116,7 +106,7 @@ class TeacherService {
     int limit = 20,
   }) async {
     try {
-      final response = await _dio.get(
+      final response = await _api.get(
         '/teacher/quizzes',
         queryParameters: {
           'page': page,
@@ -137,7 +127,7 @@ class TeacherService {
   /// Delete a quiz
   Future<void> deleteQuiz(String quizId) async {
     try {
-      await _dio.delete('/teacher/quizzes/$quizId');
+      await _api.delete('/teacher/quizzes/$quizId');
     } on DioException catch (e) {
       if (e.response != null) {
         throw Exception(e.response!.data['message'] ?? 'Failed to delete quiz');
@@ -152,7 +142,7 @@ class TeacherService {
     required bool isPublic,
   }) async {
     try {
-      await _dio.patch(
+      await _api.patch(
         '/teacher/quizzes/$quizId',
         data: {'isPublic': isPublic},
       );

@@ -173,10 +173,19 @@ class AuthService {
 
       // Handle nested data structure
       final responseData = response.data;
+      print('🔍 Full response data: $responseData');
+
       final data = responseData['data'] ?? responseData;
+      print('🔍 Data level: $data');
+
       final userData = data['user'] ?? responseData['user'] ?? data;
+      print('🔍 User data: $userData');
+      print(
+          '🔍 Points: ${userData['points']}, Level: ${userData['level']}, Quizzes: ${userData['quizzesTaken']}');
 
       final user = User.fromJson(userData);
+      print(
+          '🔍 Parsed User - Points: ${user.points}, Level: ${user.level}, Quizzes: ${user.quizzesTaken}');
       return user;
     } catch (e) {
       // If we get a 500 error or any auth error, clear the invalid token

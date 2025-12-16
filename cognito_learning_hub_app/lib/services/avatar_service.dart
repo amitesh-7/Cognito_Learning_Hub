@@ -1,26 +1,16 @@
 // lib/services/avatar_service.dart
 
 import 'package:dio/dio.dart';
-import '../config/api_config.dart';
 import '../models/avatar.dart';
+import 'api_service.dart';
 
 class AvatarService {
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: ApiConfig.apiUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ),
-  );
-
-  void setAuthToken(String token) {
-    _dio.options.headers['Authorization'] = 'Bearer $token';
-  }
+  final _api = ApiService();
 
   /// Get user's current avatar
   Future<Avatar> getAvatar() async {
     try {
-      final response = await _dio.get('/avatar');
+      final response = await _api.get('/avatar');
       return Avatar.fromJson(response.data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
@@ -43,7 +33,7 @@ class AvatarService {
   /// Update avatar components
   Future<Avatar> updateAvatar(AvatarComponents components) async {
     try {
-      final response = await _dio.put(
+      final response = await _api.put(
         '/avatar',
         data: {'components': components.toJson()},
       );
@@ -60,7 +50,7 @@ class AvatarService {
   /// Get available avatar options
   Future<Map<String, List<AvatarOption>>> getAvatarOptions() async {
     try {
-      final response = await _dio.get('/avatar/options');
+      final response = await _api.get('/avatar/options');
       final data = response.data as Map<String, dynamic>;
 
       return data.map((key, value) => MapEntry(
@@ -79,7 +69,7 @@ class AvatarService {
   /// Unlock avatar item (using coins or XP)
   Future<void> unlockAvatarItem(String itemId) async {
     try {
-      await _dio.post('/avatar/unlock', data: {'itemId': itemId});
+      await _api.post('/avatar/unlock', data: {'itemId': itemId});
     } on DioException catch (e) {
       if (e.response != null) {
         throw Exception(e.response!.data['message'] ?? 'Failed to unlock item');
@@ -91,7 +81,7 @@ class AvatarService {
   /// Get randomized avatar
   Future<AvatarComponents> getRandomAvatar() async {
     try {
-      final response = await _dio.get('/avatar/random');
+      final response = await _api.get('/avatar/random');
       return AvatarComponents.fromJson(response.data);
     } on DioException {
       // If API fails, generate random locally

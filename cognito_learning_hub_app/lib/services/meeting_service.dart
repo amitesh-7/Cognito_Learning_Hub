@@ -1,15 +1,10 @@
 // lib/services/meeting_service.dart
 
-import 'package:dio/dio.dart';
-import '../config/api_config.dart';
 import '../models/meeting.dart';
+import 'api_service.dart';
 
 class MeetingService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.apiUrl,
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-  ));
+  final _api = ApiService();
 
   // Meeting Room APIs
   Future<MeetingRoom> createMeeting({
@@ -18,7 +13,7 @@ class MeetingService {
     int maxParticipants = 50,
   }) async {
     try {
-      final response = await _dio.post(
+      final response = await _api.post(
         '/meeting/create',
         data: {
           'title': title,
@@ -34,7 +29,7 @@ class MeetingService {
 
   Future<MeetingRoom> joinMeeting(String roomId) async {
     try {
-      final response = await _dio.post('/meeting/$roomId/join');
+      final response = await _api.post('/meeting/$roomId/join');
       return MeetingRoom.fromJson(response.data['meeting']);
     } catch (e) {
       throw Exception('Failed to join meeting: $e');
@@ -43,7 +38,7 @@ class MeetingService {
 
   Future<void> leaveMeeting(String roomId) async {
     try {
-      await _dio.post('/meeting/$roomId/leave');
+      await _api.post('/meeting/$roomId/leave');
     } catch (e) {
       throw Exception('Failed to leave meeting: $e');
     }
@@ -51,7 +46,7 @@ class MeetingService {
 
   Future<MeetingRoom> getMeetingDetails(String roomId) async {
     try {
-      final response = await _dio.get('/meeting/$roomId');
+      final response = await _api.get('/meeting/$roomId');
       return MeetingRoom.fromJson(response.data['meeting']);
     } catch (e) {
       throw Exception('Failed to get meeting details: $e');
@@ -61,7 +56,7 @@ class MeetingService {
   // Participant APIs
   Future<List<MeetingParticipant>> getParticipants(String roomId) async {
     try {
-      final response = await _dio.get('/meeting/$roomId/participants');
+      final response = await _api.get('/meeting/$roomId/participants');
       final List participantsData = response.data['participants'] ?? [];
       return participantsData
           .map((p) => MeetingParticipant.fromJson(p))
@@ -79,7 +74,7 @@ class MeetingService {
     bool? isScreenSharing,
   }) async {
     try {
-      await _dio.put('/meeting/$roomId/participant/status', data: {
+      await _api.put('/meeting/$roomId/participant/status', data: {
         if (isMuted != null) 'isMuted': isMuted,
         if (isVideoOff != null) 'isVideoOff': isVideoOff,
         if (isHandRaised != null) 'isHandRaised': isHandRaised,
@@ -92,7 +87,7 @@ class MeetingService {
 
   Future<void> removeParticipant(String roomId, String participantId) async {
     try {
-      await _dio.delete('/meeting/$roomId/participant/$participantId');
+      await _api.delete('/meeting/$roomId/participant/$participantId');
     } catch (e) {
       throw Exception('Failed to remove participant: $e');
     }
@@ -101,7 +96,7 @@ class MeetingService {
   // Chat APIs
   Future<List<MeetingChatMessage>> getChatMessages(String roomId) async {
     try {
-      final response = await _dio.get('/meeting/$roomId/chat');
+      final response = await _api.get('/meeting/$roomId/chat');
       final List messagesData = response.data['messages'] ?? [];
       return messagesData.map((m) => MeetingChatMessage.fromJson(m)).toList();
     } catch (e) {
@@ -114,7 +109,7 @@ class MeetingService {
     required String message,
   }) async {
     try {
-      final response = await _dio.post(
+      final response = await _api.post(
         '/meeting/$roomId/chat',
         data: {'message': message},
       );
@@ -127,7 +122,7 @@ class MeetingService {
   // Screen Sharing APIs
   Future<void> startScreenShare(String roomId) async {
     try {
-      await _dio.post('/meeting/$roomId/screen-share/start');
+      await _api.post('/meeting/$roomId/screen-share/start');
     } catch (e) {
       throw Exception('Failed to start screen sharing: $e');
     }
@@ -135,7 +130,7 @@ class MeetingService {
 
   Future<void> stopScreenShare(String roomId) async {
     try {
-      await _dio.post('/meeting/$roomId/screen-share/stop');
+      await _api.post('/meeting/$roomId/screen-share/stop');
     } catch (e) {
       throw Exception('Failed to stop screen sharing: $e');
     }
@@ -144,7 +139,7 @@ class MeetingService {
   // Hand Raise APIs
   Future<void> raiseHand(String roomId) async {
     try {
-      await _dio.post('/meeting/$roomId/hand-raise');
+      await _api.post('/meeting/$roomId/hand-raise');
     } catch (e) {
       throw Exception('Failed to raise hand: $e');
     }
@@ -152,7 +147,7 @@ class MeetingService {
 
   Future<void> lowerHand(String roomId) async {
     try {
-      await _dio.delete('/meeting/$roomId/hand-raise');
+      await _api.delete('/meeting/$roomId/hand-raise');
     } catch (e) {
       throw Exception('Failed to lower hand: $e');
     }
@@ -161,7 +156,7 @@ class MeetingService {
   // Recording APIs
   Future<void> startRecording(String roomId) async {
     try {
-      await _dio.post('/meeting/$roomId/recording/start');
+      await _api.post('/meeting/$roomId/recording/start');
     } catch (e) {
       throw Exception('Failed to start recording: $e');
     }
@@ -169,7 +164,7 @@ class MeetingService {
 
   Future<void> stopRecording(String roomId) async {
     try {
-      await _dio.post('/meeting/$roomId/recording/stop');
+      await _api.post('/meeting/$roomId/recording/stop');
     } catch (e) {
       throw Exception('Failed to stop recording: $e');
     }
@@ -178,7 +173,7 @@ class MeetingService {
   // Meeting Controls
   Future<void> lockMeeting(String roomId) async {
     try {
-      await _dio.post('/meeting/$roomId/lock');
+      await _api.post('/meeting/$roomId/lock');
     } catch (e) {
       throw Exception('Failed to lock meeting: $e');
     }
@@ -186,7 +181,7 @@ class MeetingService {
 
   Future<void> unlockMeeting(String roomId) async {
     try {
-      await _dio.post('/meeting/$roomId/unlock');
+      await _api.post('/meeting/$roomId/unlock');
     } catch (e) {
       throw Exception('Failed to unlock meeting: $e');
     }
@@ -194,7 +189,7 @@ class MeetingService {
 
   Future<void> endMeeting(String roomId) async {
     try {
-      await _dio.post('/meeting/$roomId/end');
+      await _api.post('/meeting/$roomId/end');
     } catch (e) {
       throw Exception('Failed to end meeting: $e');
     }

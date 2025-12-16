@@ -52,7 +52,7 @@ class SettingsScreen extends ConsumerWidget {
               onChanged: (value) {
                 ref.read(themeProvider.notifier).toggleTheme();
               },
-              activeColor: AppTheme.primaryColor,
+              activeThumbColor: AppTheme.primaryColor,
             ),
           ),
           _SettingsTile(
@@ -78,7 +78,7 @@ class SettingsScreen extends ConsumerWidget {
               onChanged: (value) {
                 // TODO: Toggle sound effects
               },
-              activeColor: AppTheme.primaryColor,
+              activeThumbColor: AppTheme.primaryColor,
             ),
           ),
 
@@ -141,7 +141,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // Logout Button
-          Container(
+          SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () => _showLogoutDialog(context, ref),
