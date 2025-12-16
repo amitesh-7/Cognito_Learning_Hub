@@ -6,12 +6,16 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'config/routes.dart';
 import 'config/theme.dart';
 import 'providers/theme_provider.dart';
+import 'services/local_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Hive for local storage
   await Hive.initFlutter();
+
+  // Initialize local notifications
+  await LocalNotificationService.initialize();
 
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([

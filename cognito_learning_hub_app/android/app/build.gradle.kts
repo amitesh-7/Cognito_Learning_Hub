@@ -43,3 +43,8 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Multidex support (for WebRTC and other large dependencies)
+    implementation("androidx.multidex:multidex:2.0.1")
+}

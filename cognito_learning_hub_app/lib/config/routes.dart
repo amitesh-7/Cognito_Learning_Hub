@@ -15,8 +15,14 @@ import '../screens/leaderboard/leaderboard_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/live/live_session_host.dart';
-import '../screens/live/live_session_join.dart';
+import '../screens/live/live_quiz_lobby_screen.dart';
+import '../screens/live/live_quiz_join_screen.dart';
+import '../screens/live/live_quiz_play_screen.dart';
+import '../screens/live/live_quiz_results_screen.dart';
 import '../screens/duel/duel_mode_screen.dart';
+import '../screens/duel/duel_matchmaking_screen.dart';
+import '../screens/duel/duel_play_screen.dart';
+import '../screens/duel/duel_result_screen.dart';
 import '../screens/meeting/meeting_room_screen.dart';
 import '../screens/ai_tutor/ai_tutor_screen.dart';
 import '../screens/ai_tutor/study_buddy_chat_screen.dart';
@@ -24,6 +30,16 @@ import '../screens/ai_tutor/study_goals_screen.dart';
 import '../screens/gamification/achievements_screen.dart';
 import '../screens/gamification/quests_screen.dart';
 import '../screens/gamification/stats_dashboard_screen.dart';
+import '../screens/teacher/teacher_dashboard_screen.dart';
+import '../screens/teacher/students_list_screen.dart';
+import '../screens/avatar/avatar_customization_screen.dart';
+import '../screens/social/social_feed_screen.dart';
+import '../screens/social/add_friend_screen.dart';
+import '../screens/social/comments_screen.dart';
+import '../screens/analytics/analytics_dashboard_screen.dart';
+import '../screens/study_materials/materials_list_screen.dart';
+import '../screens/study_materials/material_detail_screen.dart';
+import '../screens/badges/badge_showcase_screen.dart';
 
 // Route names
 class AppRoutes {
@@ -37,6 +53,9 @@ class AppRoutes {
   static const quizCreate = '/quiz/create';
   static const liveHost = '/live/host/:quizId';
   static const liveJoin = '/live/join';
+  static const liveLobby = '/live/lobby';
+  static const livePlay = '/live/play';
+  static const liveResults = '/live/results';
   static const duelMode = '/duel';
   static const meetingRoom = '/meeting/:roomId';
   static const aiTutor = '/ai-tutor';
@@ -48,6 +67,18 @@ class AppRoutes {
   static const settings = '/settings';
   static const profile = '/profile';
   static const leaderboard = '/leaderboard';
+  static const teacherDashboard = '/teacher';
+  static const teacherStudents = '/teacher/students';
+  static const teacherQuizzes = '/teacher/quizzes';
+  static const teacherAnalytics = '/teacher/analytics';
+  static const avatarCustomize = '/avatar/customize';
+  static const socialFeed = '/social';
+  static const addFriend = '/social/add-friend';
+  static const postComments = '/social/post/:postId/comments';
+  static const analytics = '/analytics';
+  static const materials = '/materials';
+  static const materialDetail = '/materials/:materialId';
+  static const badgeShowcase = '/badges';
 }
 
 // Auth state notifier for router refresh
@@ -198,7 +229,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.liveJoin,
         name: 'liveJoin',
-        builder: (context, state) => const LiveSessionJoin(),
+        builder: (context, state) => const LiveQuizJoinScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.liveLobby,
+        name: 'liveLobby',
+        builder: (context, state) {
+          final isHost = state.uri.queryParameters['isHost'] == 'true';
+          final quizId = state.uri.queryParameters['quizId'];
+          final quizTitle = state.uri.queryParameters['quizTitle'];
+          return LiveQuizLobbyScreen(
+            isHost: isHost,
+            quizId: quizId,
+            quizTitle: quizTitle,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.livePlay,
+        name: 'livePlay',
+        builder: (context, state) => const LiveQuizPlayScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.liveResults,
+        name: 'liveResults',
+        builder: (context, state) => const LiveQuizResultsScreen(),
       ),
 
       // Duel Mode
@@ -206,6 +261,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.duelMode,
         name: 'duelMode',
         builder: (context, state) => const DuelModeScreen(),
+      ),
+      GoRoute(
+        path: '/duel/matchmaking',
+        name: 'duelMatchmaking',
+        builder: (context, state) => const DuelMatchmakingScreen(),
+      ),
+      GoRoute(
+        path: '/duel/:duelId',
+        name: 'duelPlay',
+        builder: (context, state) {
+          final duelId = state.pathParameters['duelId']!;
+          return DuelPlayScreen(duelId: duelId);
+        },
+      ),
+      GoRoute(
+        path: '/duel/:duelId/result',
+        name: 'duelResult',
+        builder: (context, state) {
+          final duelId = state.pathParameters['duelId']!;
+          return DuelResultScreen(duelId: duelId);
+        },
       ),
 
       // Meeting Room
@@ -274,6 +350,80 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.settings,
         name: 'settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+
+      // Teacher Dashboard
+      GoRoute(
+        path: AppRoutes.teacherDashboard,
+        name: 'teacherDashboard',
+        builder: (context, state) => const TeacherDashboardScreen(),
+      ),
+
+      // Teacher Students List
+      GoRoute(
+        path: AppRoutes.teacherStudents,
+        name: 'teacherStudents',
+        builder: (context, state) => const StudentsListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.avatarCustomize,
+        name: 'avatarCustomize',
+        builder: (context, state) => const AvatarCustomizationScreen(),
+      ),
+
+      // Social Features
+      GoRoute(
+        path: AppRoutes.socialFeed,
+        name: 'socialFeed',
+        builder: (context, state) => const SocialFeedScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.addFriend,
+        name: 'addFriend',
+        builder: (context, state) => const AddFriendScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.postComments,
+        name: 'postComments',
+        builder: (context, state) {
+          final postId = state.pathParameters['postId']!;
+          return CommentsScreen(postId: postId);
+        },
+      ),
+
+      // Analytics Dashboard
+      GoRoute(
+        path: AppRoutes.analytics,
+        name: 'analytics',
+        builder: (context, state) => const AnalyticsDashboardScreen(),
+      ),
+
+      // Study Materials
+      GoRoute(
+        path: AppRoutes.materials,
+        name: 'materials',
+        builder: (context, state) {
+          final categoryId = state.uri.queryParameters['categoryId'];
+          return MaterialsListScreen(categoryId: categoryId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.materialDetail,
+        name: 'materialDetail',
+        builder: (context, state) {
+          final materialId = state.pathParameters['materialId']!;
+          return MaterialDetailScreen(materialId: materialId);
+        },
+      ),
+
+      // Badge Showcase
+      GoRoute(
+        path: AppRoutes.badgeShowcase,
+        name: 'badgeShowcase',
+        builder: (context, state) {
+          final userId = state.uri.queryParameters['userId'];
+          return BadgeShowcaseScreen(userId: userId);
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

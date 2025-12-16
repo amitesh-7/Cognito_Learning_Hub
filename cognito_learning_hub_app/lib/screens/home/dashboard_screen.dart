@@ -252,6 +252,12 @@ class DashboardScreen extends ConsumerWidget {
           color: AppTheme.secondaryColor,
           onTap: () => context.push(AppRoutes.aiTutor),
         ),
+        _ActionCard(
+          icon: Icons.school,
+          title: 'Teacher Dashboard',
+          color: Colors.purple,
+          onTap: () => context.push(AppRoutes.teacherDashboard),
+        ),
       ],
     );
   }

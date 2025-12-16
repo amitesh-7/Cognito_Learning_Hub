@@ -302,6 +302,24 @@ class _ProfileHeader extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
+
+              // Customize Avatar Button
+              ElevatedButton.icon(
+                onPressed: () => context.push(AppRoutes.avatarCustomize),
+                icon: const Icon(Icons.edit, size: 16),
+                label: const Text('Customize Avatar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.2),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 12),
 
               // Name
