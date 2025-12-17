@@ -725,60 +725,27 @@ export default function HelpWidget() {
   if (typeof document === "undefined") return null;
 
   const widget = (
-    <div
-      style={{
-        position: "fixed",
-        bottom: "24px",
-        right: "24px",
-        zIndex: 2147483647,
-        pointerEvents: "auto",
-      }}
-    >
-      {!isOpen ? (
-        <motion.button
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.2 }}
-          style={{
-            width: '64px',
-            height: '64px',
-            background: 'linear-gradient(to right, #7c3aed, #c026d3)',
-            borderRadius: '50%',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            border: 'none'
-          }}
-          onClick={() => setIsOpen(true)}
-          aria-label="Open help center"
-          className="group hover:scale-110 transition-transform"
+    <AnimatePresence>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[9999]"
+          onClick={() => setIsOpen(false)}
         >
-          <HelpCircle style={{ width: '32px', height: '32px', color: 'white' }} className="group-hover:rotate-12 transition-transform" />
-          <span style={{
-            position: 'absolute',
-            top: '-4px',
-            right: '-4px',
-            width: '16px',
-            height: '16px',
-            background: '#ef4444',
-            borderRadius: '50%'
-          }} className="animate-pulse" />
-        </motion.button>
-      ) : (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ 
               opacity: 1, 
+              y: 0,
               scale: 1,
               height: isMinimized ? 60 : 600
             }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="w-[420px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col"
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute top-16 right-4 w-[420px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col"
             style={{ 
               maxHeight: 'calc(100vh - 80px)'
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 p-4 flex items-center justify-between">
@@ -1207,8 +1174,9 @@ export default function HelpWidget() {
         </>
       )}
           </motion.div>
-        )}
-    </div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 
   return createPortal(widget, document.body);
