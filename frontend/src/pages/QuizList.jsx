@@ -77,6 +77,7 @@ export default function QuizList() {
   const [viewMode, setViewMode] = useState("grid"); // grid or list
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [activeTab, setActiveTab] = useState("all"); // all, realm, ai, featured
 
   useEffect(() => {
     const fetchQuizzes = async () => {
@@ -112,10 +113,35 @@ export default function QuizList() {
   // Reset page to 1 when filters change
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, sortBy, filterDifficulty]);
+  }, [searchTerm, sortBy, filterDifficulty, activeTab]);
+
+  // Categorize quizzes
+  const realmQuizzes = quizzes.filter(q => 
+    q.category && !["General", "AI Generated"].includes(q.category)
+  );
+  const aiGeneratedQuizzes = quizzes.filter(q => 
+    q.category === "AI Generated" || q.title?.includes("[AI]") || q.description?.includes("AI Generated")
+  );
+  const featuredQuizzes = quizzes.filter(q => 
+    (q.stats?.timesTaken || 0) >= 10 || (q.stats?.averageScore || 0) >= 70
+  ).sort((a, b) => (b.stats?.timesTaken || 0) - (a.stats?.timesTaken || 0));
+
+  // Get quizzes based on active tab
+  const getTabQuizzes = () => {
+    switch(activeTab) {
+      case "realm":
+        return realmQuizzes;
+      case "ai":
+        return aiGeneratedQuizzes;
+      case "featured":
+        return featuredQuizzes;
+      default:
+        return quizzes;
+    }
+  };
 
   // Filter and sort quizzes
-  const filteredQuizzes = quizzes
+  const filteredQuizzes = getTabQuizzes()
     .filter(
       (quiz) =>
         (quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -261,6 +287,100 @@ export default function QuizList() {
           </div>
         </motion.div>
 
+        {/* Tab Navigation */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.25 }}
+          className="bg-white/20 dark:bg-slate-800/40 backdrop-blur-xl rounded-2xl border border-white/30 dark:border-slate-700/50 p-2 shadow-lg mb-6"
+        >
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveTab("all")}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold whitespace-nowrap transition-all ${
+                activeTab === "all"
+                  ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg"
+                  : "bg-white/50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-violet-100 dark:hover:bg-violet-900/30"
+              }`}
+            >
+              <LayoutGrid className="w-5 h-5" />
+              <span>All Quizzes</span>
+              <span className={`px-2 py-1 rounded-full text-xs font-black ${
+                activeTab === "all" 
+                  ? "bg-white/20 text-white" 
+                  : "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300"
+              }`}>
+                {quizzes.length}
+              </span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveTab("realm")}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold whitespace-nowrap transition-all ${
+                activeTab === "realm"
+                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg"
+                  : "bg-white/50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
+              }`}
+            >
+              <Target className="w-5 h-5" />
+              <span>Realm Quizzes</span>
+              <span className={`px-2 py-1 rounded-full text-xs font-black ${
+                activeTab === "realm" 
+                  ? "bg-white/20 text-white" 
+                  : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+              }`}>
+                {realmQuizzes.length}
+              </span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveTab("ai")}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold whitespace-nowrap transition-all ${
+                activeTab === "ai"
+                  ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg"
+                  : "bg-white/50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-cyan-100 dark:hover:bg-cyan-900/30"
+              }`}
+            >
+              <Bot className="w-5 h-5" />
+              <span>AI Generated</span>
+              <span className={`px-2 py-1 rounded-full text-xs font-black ${
+                activeTab === "ai" 
+                  ? "bg-white/20 text-white" 
+                  : "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300"
+              }`}>
+                {aiGeneratedQuizzes.length}
+              </span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveTab("featured")}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold whitespace-nowrap transition-all ${
+                activeTab === "featured"
+                  ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg"
+                  : "bg-white/50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+              }`}
+            >
+              <Star className="w-5 h-5" />
+              <span>Featured</span>
+              <span className={`px-2 py-1 rounded-full text-xs font-black ${
+                activeTab === "featured" 
+                  ? "bg-white/20 text-white" 
+                  : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
+              }`}>
+                {featuredQuizzes.length}
+              </span>
+            </motion.button>
+          </div>
+        </motion.div>
+
         {/* Search and Filter - Enhanced Glassmorphism */}
         <motion.div
           className="bg-white/20 dark:bg-slate-800/40 backdrop-blur-xl rounded-2xl border border-white/30 dark:border-slate-700/50 p-4 sm:p-6 shadow-lg mb-6"
@@ -376,13 +496,22 @@ export default function QuizList() {
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 backdrop-blur-sm flex items-center justify-center mx-auto mb-6 border border-violet-200/50 dark:border-violet-500/30">
-              <BookOpen className="w-10 h-10 text-violet-400" />
+              {activeTab === "realm" ? <Target className="w-10 h-10 text-emerald-400" /> :
+               activeTab === "ai" ? <Bot className="w-10 h-10 text-cyan-400" /> :
+               activeTab === "featured" ? <Star className="w-10 h-10 text-amber-400" /> :
+               <BookOpen className="w-10 h-10 text-violet-400" />}
             </div>
             <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-3">
-              {searchTerm || selectedCategory ? "No quizzes found" : "No quizzes available"}
+              {activeTab === "realm" ? "No Realm Quizzes Found" :
+               activeTab === "ai" ? "No AI Generated Quizzes" :
+               activeTab === "featured" ? "No Featured Quizzes Yet" :
+               searchTerm || filterDifficulty !== "all" ? "No quizzes found" : "No quizzes available"}
             </h3>
             <p className="text-slate-600 dark:text-slate-300 font-medium">
-              {searchTerm || selectedCategory
+              {activeTab === "realm" ? "Realm quizzes are topic-specific quizzes created by educators. Check back soon!" :
+               activeTab === "ai" ? "AI-powered quizzes will appear here. Try creating one or check back later!" :
+               activeTab === "featured" ? "Popular quizzes with high engagement will be featured here" :
+               searchTerm || filterDifficulty !== "all"
                 ? "Try adjusting your filters or search to find what you're looking for"
                 : "Be the first to create a quiz or check back soon for new content"}
             </p>
@@ -503,12 +632,26 @@ export default function QuizList() {
                           <BookOpen className="h-7 w-7 text-white" />
                         </motion.div>
                         <div className="flex flex-col items-end gap-2">
+                          {/* Category Badge */}
+                          {quiz.category && quiz.category !== "General" && (
+                            <span className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 shadow-md flex items-center gap-1 ${
+                              quiz.category === "AI Generated"
+                                ? "bg-gradient-to-r from-cyan-100 to-blue-100 dark:from-cyan-900/50 dark:to-blue-900/50 text-cyan-700 dark:text-cyan-300 border-cyan-300/50 dark:border-cyan-500/50"
+                                : "bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/50 dark:to-teal-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-300/50 dark:border-emerald-500/50"
+                            }`}>
+                              {quiz.category === "AI Generated" ? <Bot className="w-3 h-3" /> : <Target className="w-3 h-3" />}
+                              {quiz.category}
+                            </span>
+                          )}
+                          {/* Difficulty Badge */}
                           <span className="px-3 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-violet-100 to-fuchsia-100 dark:from-violet-900/50 dark:to-fuchsia-900/50 text-violet-700 dark:text-violet-300 border-2 border-violet-300/50 dark:border-violet-500/50 shadow-md">
                             {quiz.difficulty || "Medium"}
                           </span>
-                          {quiz.timesTaken > 10 && (
+                          {/* Popular Badge */}
+                          {(quiz.stats?.timesTaken || 0) > 10 && (
                             <span className="px-3 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/50 dark:to-red-900/50 text-orange-700 dark:text-orange-300 border-2 border-orange-300/50 dark:border-orange-500/50 shadow-md flex items-center gap-1">
-                              🔥 Popular
+                              <Flame className="w-3 h-3" />
+                              Popular
                             </span>
                           )}
                         </div>

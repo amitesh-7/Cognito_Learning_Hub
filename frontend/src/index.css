@@ -6,6 +6,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Help Widget - Absolutely Position Fixed Override */
+#help-widget-portal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  pointer-events: none !important;
+  z-index: 2147483647 !important;
+}
+
+#help-widget-portal * {
+  pointer-events: auto !important;
+}
+
 /* Custom Scrollbar for Bento Dashboard */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;

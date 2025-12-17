@@ -1,4 +1,4 @@
-import React, { useContext, Suspense, lazy } from "react";
+import React, { useContext, Suspense, lazy, useState, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ToastProvider } from "./components/ui/Toast";
@@ -11,6 +11,9 @@ import { useTheme } from "./hooks/useTheme";
 import { useIsMobile } from "./hooks/useReducedMotion";
 import NetworkStatusIndicator from "./components/ui/NetworkStatusIndicator";
 import PWAInstallPrompt from "./components/ui/PWAInstallPrompt";
+import OnboardingTour from "./components/OnboardingTour";
+import HelpWidget from "./components/HelpWidget";
+import { AuthContext } from "./context/AuthContext";
 
 // Accessibility Components
 import {
@@ -29,6 +32,7 @@ import { SocketProvider } from "./context/SocketContext";
 import { GamificationProvider } from "./context/GamificationContext";
 import { AvatarProvider } from "./context/AvatarContext";
 import { AchievementNotification } from "./components/Gamification";
+import { FeatureUnlockNotificationWrapper } from "./components/Gamification/FeatureUnlockNotificationWrapper";
 
 // Lazy load pages for better performance (code splitting)
 // Critical pages - load immediately
@@ -57,6 +61,7 @@ const ChatSystem = lazy(() => import("./pages/ChatSystem"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const ReportsDashboard = lazy(() => import("./pages/ReportsDashboard"));
 const AchievementDashboard = lazy(() => import("./pages/AchievementDashboard"));
+const RewardsPage = lazy(() => import("./pages/RewardsPage"));
 const EnhancedQuizCreator = lazy(() => import("./pages/EnhancedQuizCreator"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const GamifiedQuizTaker = lazy(() => import("./pages/GamifiedQuizTaker"));
@@ -76,6 +81,8 @@ const AIQuizOpponent = lazy(() => import("./pages/AIQuizOpponent"));
 const QuizHistory = lazy(() => import("./pages/QuizHistory"));
 const QuizResultDetail = lazy(() => import("./pages/QuizResultDetail"));
 const MyQuizzes = lazy(() => import("./pages/MyQuizzes"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
 
 // Avatar Routes
 const AvatarCustomization = lazy(() => import("./pages/AvatarCustomization"));
@@ -96,6 +103,7 @@ function App() {
   const [theme] = useTheme();
   const isMobile = useIsMobile();
   const location = useLocation();
+  const { user } = useContext(AuthContext);
 
   // Routes that need full-screen layout without navbar/padding
   const fullScreenRoutes = ["/doubt-solver", "/meeting", "/live/join"];
@@ -125,6 +133,15 @@ function App() {
 
                   {/* Real-time Achievement Notifications */}
                   <AchievementNotification />
+
+                  {/* Feature Unlock Notifications */}
+                  <FeatureUnlockNotificationWrapper />
+
+                  {/* Onboarding Tour for New Users */}
+                  {user && <OnboardingTour />}
+
+                  {/* Help Widget - Always Available */}
+                  <HelpWidget />
 
                   {/* Animated Background Layers - Disabled on mobile for performance */}
                   {!isMobile && (
@@ -179,6 +196,22 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <Dashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/profile"
+                            element={
+                              <ProtectedRoute>
+                                <Profile />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/settings"
+                            element={
+                              <ProtectedRoute>
+                                <Settings />
                               </ProtectedRoute>
                             }
                           />
@@ -363,6 +396,14 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <AchievementDashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/rewards"
+                            element={
+                              <ProtectedRoute>
+                                <RewardsPage />
                               </ProtectedRoute>
                             }
                           />

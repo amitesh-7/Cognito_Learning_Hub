@@ -39,6 +39,7 @@ import {
   Eye,
   EyeOff,
   Settings,
+  HelpCircle,
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useGamification } from "../context/GamificationContext";
@@ -61,6 +62,7 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [isAccessibilityModalOpen, setIsAccessibilityModalOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const { scrollY } = useScroll();
   const navigate = useNavigate();
   const location = useLocation();
@@ -979,29 +981,28 @@ const Navbar = () => {
                 </>
               )}
 
-              {/* Accessibility Quick Toggle (Alt+A) */}
+              {/* Help Center Button (Alt+H) */}
               <motion.div variants={staggerItem}>
                 <motion.button
-                  onClick={toggleVisuallyImpairedMode}
-                  className="ml-2 p-2.5 rounded-xl bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 dark:from-slate-800 dark:via-emerald-900/50 dark:to-teal-900/50 hover:from-green-200 hover:via-emerald-200 hover:to-teal-200 dark:hover:from-emerald-800/60 dark:hover:via-teal-800/60 dark:hover:to-green-800/60 transition-all duration-500 shadow-md hover:shadow-lg border border-white/60 dark:border-emerald-400/30 backdrop-blur-xl relative overflow-hidden group"
+                  onClick={() => {
+                    const event = new CustomEvent('openHelpWidget');
+                    window.dispatchEvent(event);
+                  }}
+                  className="ml-2 p-2.5 rounded-xl bg-gradient-to-br from-violet-100 via-fuchsia-100 to-purple-100 dark:from-slate-800 dark:via-violet-900/50 dark:to-fuchsia-900/50 hover:from-violet-200 hover:via-fuchsia-200 hover:to-purple-200 dark:hover:from-violet-800/60 dark:hover:via-fuchsia-800/60 dark:hover:to-purple-800/60 transition-all duration-500 shadow-md hover:shadow-lg border border-white/60 dark:border-violet-400/30 backdrop-blur-xl relative overflow-hidden group"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  title="Toggle Visually Impaired Mode (Alt+A)"
-                  aria-label="Toggle Visually Impaired Mode. Keyboard shortcut: Alt + A"
+                  title="Open Help Center (Alt+H)"
+                  aria-label="Open Help Center. Keyboard shortcut: Alt + H"
                 >
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-emerald-400/20 to-transparent"
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-violet-400/20 to-transparent"
                     animate={{ x: ["-100%", "100%"] }}
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 4 }}
                   />
-                  {settings.visuallyImpairedMode ? (
-                    <Eye className="w-5 h-5 text-emerald-700 dark:text-emerald-400 drop-shadow-md relative z-10" />
-                  ) : (
-                    <EyeOff className="w-5 h-5 text-gray-600 dark:text-gray-400 relative z-10" />
-                  )}
-                  {/* Alt+A Badge */}
-                  <span className="absolute -bottom-1 -right-1 px-1 py-0.5 text-[8px] font-bold bg-emerald-600 dark:bg-emerald-500 text-white rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-                    Alt+A
+                  <HelpCircle className="w-5 h-5 text-violet-700 dark:text-violet-400 drop-shadow-md relative z-10" />
+                  {/* Alt+H Badge */}
+                  <span className="absolute -bottom-1 -right-1 px-1 py-0.5 text-[8px] font-bold bg-violet-600 dark:bg-violet-500 text-white rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                    Alt+H
                   </span>
                 </motion.button>
               </motion.div>
@@ -1055,25 +1056,24 @@ const Navbar = () => {
 
             {/* Enhanced Mobile Menu Button */}
             <div className="lg:hidden flex items-center space-x-2">
-              {/* Accessibility Toggle (Mobile) */}
+              {/* Help Center (Mobile) */}
               <motion.button
-                onClick={toggleVisuallyImpairedMode}
-                className="p-2 rounded-xl bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 dark:from-slate-800 dark:via-emerald-900/50 dark:to-teal-900/50 border border-white/60 dark:border-emerald-400/30 shadow-md backdrop-blur-xl relative overflow-hidden"
+                onClick={() => {
+                  const event = new CustomEvent('openHelpWidget');
+                  window.dispatchEvent(event);
+                }}
+                className="p-2 rounded-xl bg-gradient-to-br from-violet-100 via-fuchsia-100 to-purple-100 dark:from-slate-800 dark:via-violet-900/50 dark:to-fuchsia-900/50 border border-white/60 dark:border-violet-400/30 shadow-md backdrop-blur-xl relative overflow-hidden"
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.92 }}
-                title="Toggle Visually Impaired Mode (Alt+A)"
-                aria-label="Toggle Visually Impaired Mode"
+                title="Open Help Center (Alt+H)"
+                aria-label="Open Help Center"
               >
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
                   animate={{ x: ["-100%", "100%"] }}
                   transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                 />
-                {settings.visuallyImpairedMode ? (
-                  <Eye className="w-5 h-5 text-emerald-700 dark:text-emerald-400 relative z-10" />
-                ) : (
-                  <EyeOff className="w-5 h-5 text-gray-600 dark:text-gray-400 relative z-10" />
-                )}
+                <HelpCircle className="w-5 h-5 text-violet-700 dark:text-violet-400 relative z-10" />
               </motion.button>
               
               <motion.button
@@ -1323,6 +1323,29 @@ const Navbar = () => {
                         </Link>
                       </>
                     )}
+
+                    {/* User Settings & Profile */}
+                    <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
+                      <p className="px-4 py-2 text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+                        Account
+                      </p>
+                      <Link
+                        onClick={closeMenu}
+                        to="/profile"
+                        className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all duration-200 text-base font-medium"
+                      >
+                        <User className="w-5 h-5" />
+                        <span>My Profile</span>
+                      </Link>
+                      <Link
+                        onClick={closeMenu}
+                        to="/settings"
+                        className="flex items-center gap-4 px-4 py-3.5 text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all duration-200 text-base font-medium"
+                      >
+                        <Settings className="w-5 h-5" />
+                        <span>Settings</span>
+                      </Link>
+                    </div>
 
                     {/* Logout Button */}
                     <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
