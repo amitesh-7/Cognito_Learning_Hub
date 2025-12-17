@@ -21,12 +21,13 @@ class AIStudyBuddyService {
 
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    // Fallback model chain for reliability
+    // Fallback model chain for reliability - using only currently available models
+    // Based on Gemini API v1beta (Dec 2024)
     this.modelChain = [
       process.env.AI_MODEL || "gemini-2.5-flash",
-      "gemini-1.5-pro",
-      "gemini-1.5-flash",
-      "gemini-pro",
+      "gemini-2.5-pro", // More stable, higher capacity
+      "gemini-2.5-flash-lite", // Lighter, faster alternative
+      "gemini-1.5-flash-latest", // Latest 1.5 flash variant
     ];
 
     this.currentModelIndex = 0;
