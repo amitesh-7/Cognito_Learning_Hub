@@ -681,7 +681,7 @@ export const RealTimeStats = ({ variant = "full", className = "" }) => {
         >
           <Trophy className="w-5 h-5 text-yellow-500 mx-auto" />
           <p className="text-xl font-black text-gray-900 dark:text-white mt-1">
-            {unlockedCount}
+            {userStats?.achievementsUnlocked ?? unlockedCount}
           </p>
           <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
             Badges

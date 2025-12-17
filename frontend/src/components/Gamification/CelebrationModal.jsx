@@ -62,7 +62,8 @@ const CelebrationModal = ({
     } else {
       setShowContent(false);
     }
-  }, [isOpen, type, onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, type]); // Don't include onClose to avoid infinite loop
 
   const getRandomColor = () => {
     const colors = [
@@ -170,7 +171,11 @@ const CelebrationModal = ({
 
   const getRarityLabel = (rarity) => {
     const labels = {
-      legendary: { text: "LEGENDARY", color: "text-amber-400", bg: "bg-amber-500/20" },
+      legendary: {
+        text: "LEGENDARY",
+        color: "text-amber-400",
+        bg: "bg-amber-500/20",
+      },
       epic: { text: "EPIC", color: "text-purple-400", bg: "bg-purple-500/20" },
       rare: { text: "RARE", color: "text-blue-400", bg: "bg-blue-500/20" },
       common: { text: "COMMON", color: "text-gray-400", bg: "bg-gray-500/20" },
@@ -288,8 +293,12 @@ const CelebrationModal = ({
                     />
 
                     {/* Icon container */}
-                    <div className={`relative w-32 h-32 bg-gradient-to-br ${config.gradient} rounded-full flex items-center justify-center shadow-2xl`}>
-                      <span className="text-6xl filter drop-shadow-lg">{config.icon}</span>
+                    <div
+                      className={`relative w-32 h-32 bg-gradient-to-br ${config.gradient} rounded-full flex items-center justify-center shadow-2xl`}
+                    >
+                      <span className="text-6xl filter drop-shadow-lg">
+                        {config.icon}
+                      </span>
                     </div>
 
                     {/* Sparkles around icon */}
@@ -326,7 +335,11 @@ const CelebrationModal = ({
                   transition={{ delay: 0.3 }}
                   className="mb-4"
                 >
-                  <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${getRarityLabel(data.rarity).bg} ${getRarityLabel(data.rarity).color}`}>
+                  <span
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                      getRarityLabel(data.rarity).bg
+                    } ${getRarityLabel(data.rarity).color}`}
+                  >
                     ✨ {getRarityLabel(data.rarity).text}
                   </span>
                 </motion.div>
@@ -372,13 +385,21 @@ const CelebrationModal = ({
                 >
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
                   >
                     <Star className="w-8 h-8 text-yellow-400 fill-yellow-400" />
                   </motion.div>
                   <div className="text-left">
-                    <p className="text-yellow-400 text-xs font-medium uppercase tracking-wide">Reward</p>
-                    <p className="text-2xl font-black text-white">+{config.points} XP</p>
+                    <p className="text-yellow-400 text-xs font-medium uppercase tracking-wide">
+                      Reward
+                    </p>
+                    <p className="text-2xl font-black text-white">
+                      +{config.points} XP
+                    </p>
                   </div>
                 </motion.div>
               )}

@@ -23,23 +23,46 @@ router.get("/me", authenticateToken, async (req, res, next) => {
 
     const stats = await statsManager.getStats(userId);
 
+    // Convert to plain object if it's a MongoDB document
+    const plainStats = stats?.toObject ? stats.toObject() : stats;
+    console.log(
+      `📊 Base stats for user ${userId}:`,
+      JSON.stringify(plainStats, null, 2)
+    );
+
     // Add achievement counts to stats
     const { Achievement, UserAchievement } = require("../models/Achievement");
-    const totalAchievements = await Achievement.countDocuments({
-      isActive: true,
-    });
-    const achievementsUnlocked = await UserAchievement.countDocuments({
-      user: userId,
-      isCompleted: true,
-    });
 
-    // Enrich stats with achievement data
+    let totalAchievements = 0;
+    let achievementsUnlocked = 0;
+
+    try {
+      totalAchievements = await Achievement.countDocuments({
+        isActive: true,
+      });
+      console.log(`🏆 Total achievements in system: ${totalAchievements}`);
+    } catch (error) {
+      console.error("Error counting total achievements:", error);
+    }
+
+    try {
+      achievementsUnlocked = await UserAchievement.countDocuments({
+        user: userId,
+        isCompleted: true,
+      });
+      console.log(`🏆 User achievements unlocked: ${achievementsUnlocked}`);
+    } catch (error) {
+      console.error("Error counting user achievements:", error);
+    }
+
+    // Enrich stats with achievement data - ensure plain object
     const enrichedStats = {
-      ...stats,
-      totalAchievements,
+      ...plainStats,
       achievementsUnlocked,
       unlockedAchievements: achievementsUnlocked, // Alias for compatibility
     };
+
+    console.log(`✅ Enriched stats:`, enrichedStats);
 
     // Prevent browser caching of stats data
     res.setHeader(

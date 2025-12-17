@@ -273,8 +273,11 @@ export default function Dashboard() {
 
   // Use gamification userAchievements if available, otherwise calculate from results
   if (userAchievements && userAchievements.length > 0) {
-    // Map gamification achievements to display format
-    userAchievements.slice(0, 5).forEach((ua) => {
+    // Map gamification achievements to display format - ONLY show completed achievements
+    const completedAchievements = userAchievements.filter(
+      (ua) => ua.isCompleted
+    );
+    completedAchievements.slice(0, 5).forEach((ua) => {
       const ach = ua.achievement || ua;
       achievements.push({
         icon: Award, // Can map icon based on type later
@@ -966,14 +969,16 @@ export default function Dashboard() {
                           Achievements
                         </h3>
                       </div>
-                      {achievements.length > 0 && (
+                      {(userStats || achievements.length > 0) && (
                         <Link to="/achievements">
                           <motion.div
                             className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 cursor-pointer"
                             whileHover={{ x: 3 }}
                           >
                             <span className="text-xs font-semibold">
-                              {achievements.length} total
+                              {userStats?.achievementsUnlocked ??
+                                achievements.length}
+                              /{userStats?.totalAchievements ?? "?"} unlocked
                             </span>
                             <ChevronRight className="w-4 h-4" />
                           </motion.div>
