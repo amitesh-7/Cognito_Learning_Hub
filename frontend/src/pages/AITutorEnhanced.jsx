@@ -783,7 +783,7 @@ const AITutorEnhanced = () => {
             )}
             
             {/* Mode Selector - Responsive */}
-            <div className="flex gap-1 lg:gap-2 overflow-x-auto scrollbar-none flex-1 min-w-0">
+            <div className="flex gap-1 sm:gap-2 overflow-x-auto scrollbar-none flex-1 min-w-0 pb-1">
               {modes.map((mode) => {
                 const Icon = mode.icon;
                 return (
@@ -1155,10 +1155,10 @@ const AITutorEnhanced = () => {
         </div>
 
         {/* Input Area */}
-        <div className="flex-shrink-0 p-3 lg:p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-10">
+        <div className="flex-shrink-0 p-2 sm:p-3 lg:p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-10">
           {/* File Attachments */}
           {attachedFiles.length > 0 && (
-            <div className="flex gap-2 mb-3 flex-wrap">
+            <div className="flex gap-1 sm:gap-2 mb-2 sm:mb-3 flex-wrap overflow-x-auto scrollbar-thin">
               {attachedFiles.map((file, index) => (
                 <motion.div
                   key={index}
