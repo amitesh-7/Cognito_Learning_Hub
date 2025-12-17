@@ -33,6 +33,7 @@ import { GamificationProvider } from "./context/GamificationContext";
 import { AvatarProvider } from "./context/AvatarContext";
 import { AchievementNotification } from "./components/Gamification";
 import { FeatureUnlockNotificationWrapper } from "./components/Gamification/FeatureUnlockNotificationWrapper";
+import { RouteFeatureGate } from "./components/FeatureGate";
 
 // Lazy load pages for better performance (code splitting)
 // Critical pages - load immediately
@@ -56,6 +57,7 @@ const QuizMaker = lazy(() => import("./pages/QuizMaker"));
 const TopicQuizGenerator = lazy(() => import("./pages/TopicQuizGenerator"));
 const ManualQuizCreator = lazy(() => import("./pages/ManualQuizCreator"));
 const FileQuizGenerator = lazy(() => import("./pages/FileQuizGenerator"));
+const StudentQuizCreator = lazy(() => import("./pages/StudentQuizCreator"));
 const AITutor = lazy(() => import("./pages/AITutorNew"));
 const ChatSystem = lazy(() => import("./pages/ChatSystem"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
@@ -83,6 +85,7 @@ const QuizResultDetail = lazy(() => import("./pages/QuizResultDetail"));
 const MyQuizzes = lazy(() => import("./pages/MyQuizzes"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
+const FeatureRoadmapPage = lazy(() => import("./pages/FeatureRoadmapPage"));
 
 // Avatar Routes
 const AvatarCustomization = lazy(() => import("./pages/AvatarCustomization"));
@@ -216,6 +219,14 @@ function App() {
                             }
                           />
                           <Route
+                            path="/roadmap"
+                            element={
+                              <ProtectedRoute>
+                                <FeatureRoadmapPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
                             path="/quick-actions"
                             element={
                               <ProtectedRoute>
@@ -251,7 +262,9 @@ function App() {
                             path="/quests"
                             element={
                               <ProtectedRoute>
-                                <QuestPage />
+                                <RouteFeatureGate featureId="questSystem">
+                                  <QuestPage />
+                                </RouteFeatureGate>
                               </ProtectedRoute>
                             }
                           />
@@ -328,10 +341,20 @@ function App() {
                             }
                           />
                           <Route
+                            path="/student-quiz-creator"
+                            element={
+                              <ProtectedRoute>
+                                <StudentQuizCreator />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
                             path="/quiz-maker/topic"
                             element={
                               <ProtectedRoute>
-                                <TopicQuizGenerator />
+                                <RouteFeatureGate featureId="aiQuizGeneration">
+                                  <TopicQuizGenerator />
+                                </RouteFeatureGate>
                               </ProtectedRoute>
                             }
                           />
@@ -339,7 +362,9 @@ function App() {
                             path="/quiz-maker/manual"
                             element={
                               <ProtectedRoute>
-                                <ManualQuizCreator />
+                                <RouteFeatureGate featureId="studentQuizCreation">
+                                  <ManualQuizCreator />
+                                </RouteFeatureGate>
                               </ProtectedRoute>
                             }
                           />
@@ -347,7 +372,9 @@ function App() {
                             path="/quiz-maker/enhanced"
                             element={
                               <ProtectedRoute>
-                                <EnhancedQuizCreator />
+                                <RouteFeatureGate featureId="aiQuizGeneration">
+                                  <EnhancedQuizCreator />
+                                </RouteFeatureGate>
                               </ProtectedRoute>
                             }
                           />
@@ -355,7 +382,9 @@ function App() {
                             path="/quiz-maker/file"
                             element={
                               <ProtectedRoute>
-                                <FileQuizGenerator />
+                                <RouteFeatureGate featureId="pdfQuizGeneration">
+                                  <FileQuizGenerator />
+                                </RouteFeatureGate>
                               </ProtectedRoute>
                             }
                           />
@@ -363,7 +392,9 @@ function App() {
                             path="/pdf-quiz-generator"
                             element={
                               <ProtectedRoute>
-                                <PDFQuizGenerator />
+                                <RouteFeatureGate featureId="pdfQuizGeneration">
+                                  <PDFQuizGenerator />
+                                </RouteFeatureGate>
                               </ProtectedRoute>
                             }
                           />
@@ -411,7 +442,9 @@ function App() {
                             path="/avatar/customize"
                             element={
                               <ProtectedRoute>
-                                <AvatarCustomization />
+                                <RouteFeatureGate featureId="avatarCustomization">
+                                  <AvatarCustomization />
+                                </RouteFeatureGate>
                               </ProtectedRoute>
                             }
                           />
@@ -419,7 +452,9 @@ function App() {
                             path="/doubt-solver"
                             element={
                               <ProtectedRoute>
-                                <AITutor />
+                                <RouteFeatureGate featureId="aiTutor">
+                                  <AITutor />
+                                </RouteFeatureGate>
                               </ProtectedRoute>
                             }
                           />
@@ -445,7 +480,9 @@ function App() {
                             path="/live/host/:quizId"
                             element={
                               <ProtectedRoute>
-                                <LiveSessionHost />
+                                <RouteFeatureGate featureId="hostLiveSessions">
+                                  <LiveSessionHost />
+                                </RouteFeatureGate>
                               </ProtectedRoute>
                             }
                           />
@@ -477,7 +514,9 @@ function App() {
                             path="/live/start"
                             element={
                               <ProtectedRoute>
-                                <LiveSessionSelector />
+                                <RouteFeatureGate featureId="hostLiveSessions">
+                                  <LiveSessionSelector />
+                                </RouteFeatureGate>
                               </ProtectedRoute>
                             }
                           />
@@ -487,7 +526,9 @@ function App() {
                             path="/duel"
                             element={
                               <ProtectedRoute>
-                                <DuelMode />
+                                <RouteFeatureGate featureId="duelMode">
+                                  <DuelMode />
+                                </RouteFeatureGate>
                               </ProtectedRoute>
                             }
                           />
@@ -495,7 +536,9 @@ function App() {
                             path="/duel/:quizId"
                             element={
                               <ProtectedRoute>
-                                <DuelBattle />
+                                <RouteFeatureGate featureId="duelMode">
+                                  <DuelBattle />
+                                </RouteFeatureGate>
                               </ProtectedRoute>
                             }
                           />

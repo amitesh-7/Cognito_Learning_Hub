@@ -22,6 +22,7 @@ module.exports = {
         spotlight: "spotlight 2s ease .75s 1 forwards",
         gradient: "gradient 8s linear infinite",
         glow: "glow 2s ease-in-out infinite alternate",
+        shimmer: "shimmer 2s linear infinite",
       },
       keyframes: {
         spotlight: {
@@ -50,6 +51,14 @@ module.exports = {
           },
           "100%": {
             "box-shadow": "0 0 40px rgba(139, 92, 246, 0.6)",
+          },
+        },
+        shimmer: {
+          "0%": {
+            "background-position": "-200% center",
+          },
+          "100%": {
+            "background-position": "200% center",
           },
         },
       },

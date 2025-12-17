@@ -428,6 +428,23 @@ export const FEATURE_UNLOCKS = {
     category: 'meetings',
     tier: 'silver',
   },
+
+  // === QUEST SYSTEM ===
+  questSystem: {
+    id: 'quest-system',
+    name: 'Quest Realms',
+    description: 'Embark on narrative-driven learning quests',
+    icon: '🗺️',
+    criteria: {
+      type: 'level',
+      value: 4,
+    },
+    category: 'quests',
+    tier: 'bronze',
+    reward: {
+      xpBonus: 100,
+    }
+  },
 };
 
 // Tier configuration

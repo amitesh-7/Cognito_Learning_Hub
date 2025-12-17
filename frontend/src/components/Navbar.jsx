@@ -44,6 +44,7 @@ import {
 import { AuthContext } from "../context/AuthContext";
 import { useGamification } from "../context/GamificationContext";
 import { useAccessibility } from "../context/AccessibilityContext";
+import { useFeatureUnlock } from "./FeatureGate";
 import { useTheme } from "../hooks/useTheme";
 import { useReducedMotion, useIsMobile } from "../hooks/useReducedMotion";
 import Button from "./ui/Button";
@@ -56,6 +57,7 @@ const Navbar = () => {
     totalXP,
     currentStreak: gamificationStreak,
   } = useGamification();
+  const { unlocked: isQuizCreationUnlocked } = useFeatureUnlock('studentQuizCreation');
   const { settings, toggleVisuallyImpairedMode } = useAccessibility();
   const [theme, toggleTheme] = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -141,6 +143,7 @@ const Navbar = () => {
             { to: "/doubt-solver", label: "AI Tutor", icon: Bot },
             { to: "/duel", label: "1v1 Duel", icon: Swords },
             { to: "/live", label: "Live Sessions", icon: Radio },
+            ...(user?.role === "Student" && isQuizCreationUnlocked ? [{ to: "/student-quiz-creator", label: "Create Quiz", icon: Sparkles, badge: true }] : []),
           ],
         },
         {
@@ -148,6 +151,7 @@ const Navbar = () => {
           label: "Compete",
           icon: Trophy,
           items: [
+            { to: "/roadmap", label: "Feature Roadmap", icon: Map, badge: true },
             { to: "/achievements", label: "Achievements", icon: Trophy, badge: true },
             { to: "/avatar/customize", label: "My Avatar", icon: User },
             { to: "/social", label: "Social Hub", icon: Users },
