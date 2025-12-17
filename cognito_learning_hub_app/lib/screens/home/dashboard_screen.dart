@@ -7,6 +7,7 @@ import '../../config/routes.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/gamification_provider.dart';
+import '../../services/api_service.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -37,14 +38,6 @@ class DashboardScreen extends ConsumerWidget {
                 ).animate().fadeIn().slideX(begin: -0.1),
 
                 const SizedBox(height: 20),
-
-                // Gamification Stats Banner
-                _buildGamificationBanner(context, ref)
-                    .animate()
-                    .fadeIn(delay: 100.ms)
-                    .slideY(begin: 0.1),
-
-                const SizedBox(height: 24),
 
                 // Stats Cards
                 _buildStatsGrid(
@@ -315,12 +308,6 @@ class DashboardScreen extends ConsumerWidget {
           color: AppTheme.secondaryColor,
           onTap: () => context.push(AppRoutes.aiTutor),
         ),
-        _ActionCard(
-          icon: Icons.school,
-          title: 'Teacher Dashboard',
-          color: Colors.purple,
-          onTap: () => context.push(AppRoutes.teacherDashboard),
-        ),
       ],
     );
   }
@@ -438,33 +425,109 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildRecentActivity(BuildContext context) {
-    // TODO: Replace with actual data
-    return Card(
-      child: Column(
-        children: [
-          _ActivityItem(
-            icon: Icons.check_circle,
-            iconColor: AppTheme.successColor,
-            title: 'Completed "Math Basics"',
-            subtitle: 'Score: 85% • 2 hours ago',
-          ),
-          const Divider(height: 1),
-          _ActivityItem(
-            icon: Icons.star,
-            iconColor: AppTheme.warningColor,
-            title: 'Earned "Quick Learner" badge',
-            subtitle: 'Achievement unlocked • Yesterday',
-          ),
-          const Divider(height: 1),
-          _ActivityItem(
-            icon: Icons.leaderboard,
-            iconColor: AppTheme.primaryColor,
-            title: 'Ranked #5 in Weekly Challenge',
-            subtitle: '+200 points • 2 days ago',
-          ),
-        ],
-      ),
+    return Consumer(
+      builder: (context, ref, child) {
+        return FutureBuilder(
+          future: ApiService().get('/api/results/my-results'),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(40.0),
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              );
+            }
+
+            if (snapshot.hasError || !snapshot.hasData) {
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'No recent activity',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey,
+                        ),
+                  ),
+                ),
+              );
+            }
+
+            final response = snapshot.data?.data;
+            final results = response is List ? response : [];
+
+            if (results.isEmpty) {
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'No recent activity',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey,
+                        ),
+                  ),
+                ),
+              );
+            }
+
+            final recentActivities = results.take(5).toList();
+
+            return Card(
+              child: Column(
+                children: [
+                  for (int i = 0; i < recentActivities.length; i++) ...[
+                    _buildActivityItemFromResult(recentActivities[i]),
+                    if (i < recentActivities.length - 1)
+                      const Divider(height: 1),
+                  ],
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
+  }
+
+  Widget _buildActivityItemFromResult(dynamic result) {
+    final percentage = result['percentage'] ?? 0.0;
+    final quizTitle = result['quiz']?['title'] ?? 'Quiz';
+    final createdAt = result['createdAt'] != null
+        ? DateTime.parse(result['createdAt'])
+        : DateTime.now();
+
+    final timeAgo = _getTimeAgo(createdAt);
+    final passed = percentage >= 60;
+
+    return _ActivityItem(
+      icon: passed ? Icons.check_circle : Icons.cancel,
+      iconColor: passed ? AppTheme.successColor : AppTheme.errorColor,
+      title: 'Completed "$quizTitle"',
+      subtitle: 'Score: ${percentage.toStringAsFixed(0)}% • $timeAgo',
+    );
+  }
+
+  String _getTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 365) {
+      final years = (difference.inDays / 365).floor();
+      return '$years ${years == 1 ? 'year' : 'years'} ago';
+    } else if (difference.inDays > 30) {
+      final months = (difference.inDays / 30).floor();
+      return '$months ${months == 1 ? 'month' : 'months'} ago';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+    } else {
+      return 'Just now';
+    }
   }
 }
 

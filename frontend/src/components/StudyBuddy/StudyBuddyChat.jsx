@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 import {
   Send,
   Bot,
@@ -390,7 +391,69 @@ const StudyBuddyChat = ({ context = {} }) => {
                       : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  {message.role === "assistant" && !message.isError ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown
+                        components={{
+                          h1: ({ node, ...props }) => (
+                            <h1
+                              className="text-xl font-bold mt-4 mb-2"
+                              {...props}
+                            />
+                          ),
+                          h2: ({ node, ...props }) => (
+                            <h2
+                              className="text-lg font-semibold mt-3 mb-2"
+                              {...props}
+                            />
+                          ),
+                          h3: ({ node, ...props }) => (
+                            <h3
+                              className="text-base font-semibold mt-2 mb-1"
+                              {...props}
+                            />
+                          ),
+                          p: ({ node, ...props }) => (
+                            <p className="mb-2" {...props} />
+                          ),
+                          ul: ({ node, ...props }) => (
+                            <ul className="list-disc ml-4 mb-2" {...props} />
+                          ),
+                          ol: ({ node, ...props }) => (
+                            <ol className="list-decimal ml-4 mb-2" {...props} />
+                          ),
+                          li: ({ node, ...props }) => (
+                            <li className="mb-1" {...props} />
+                          ),
+                          code: ({ node, inline, ...props }) =>
+                            inline ? (
+                              <code
+                                className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm"
+                                {...props}
+                              />
+                            ) : (
+                              <code
+                                className="block bg-gray-200 dark:bg-gray-700 p-2 rounded my-2 overflow-x-auto"
+                                {...props}
+                              />
+                            ),
+                          strong: ({ node, ...props }) => (
+                            <strong
+                              className="font-bold text-indigo-700 dark:text-indigo-300"
+                              {...props}
+                            />
+                          ),
+                          em: ({ node, ...props }) => (
+                            <em className="italic" {...props} />
+                          ),
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  )}
                   {message.metadata && (
                     <div className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600 text-xs opacity-70">
                       {message.metadata.memoriesUsed > 0 && (

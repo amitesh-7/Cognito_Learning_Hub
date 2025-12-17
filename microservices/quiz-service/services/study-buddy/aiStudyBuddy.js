@@ -5,11 +5,105 @@ const StudyGoal = require("../../models/study-buddy/StudyGoal");
 
 class AIStudyBuddyService {
   constructor() {
+    // Validate API key exists
+    if (!process.env.GEMINI_API_KEY) {
+      console.error(
+        "❌ GEMINI_API_KEY is not configured in environment variables"
+      );
+      console.error(
+        "📝 Please add a valid Gemini API key to your .env.local file"
+      );
+      console.error(
+        "🔗 Get a free key at: https://aistudio.google.com/app/apikey"
+      );
+      throw new Error("GEMINI_API_KEY is required for AI Study Buddy");
+    }
+
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+    // Fallback model chain for reliability
+    this.modelChain = [
+      process.env.AI_MODEL || "gemini-2.5-flash",
+      "gemini-1.5-pro",
+      "gemini-1.5-flash",
+      "gemini-pro",
+    ];
+
+    this.currentModelIndex = 0;
+    const modelName = this.modelChain[0];
+    console.log(`🤖 Initializing AI Study Buddy with model: ${modelName}`);
+    console.log(`📋 Fallback models: ${this.modelChain.slice(1).join(", ")}`);
+
     this.model = this.genAI.getGenerativeModel({
-      model: process.env.AI_MODEL || "gemini-2.5-flash",
+      model: modelName,
     });
     this.conversationCache = new Map();
+  }
+
+  /**
+   * Get model with automatic fallback on failure
+   */
+  getModel(modelIndex = this.currentModelIndex) {
+    const modelName = this.modelChain[modelIndex];
+    return this.genAI.getGenerativeModel({ model: modelName });
+  }
+
+  /**
+   * Retry with exponential backoff and model fallback
+   */
+  async retryWithFallback(operation, maxRetries = 3) {
+    let lastError;
+
+    for (
+      let modelIndex = 0;
+      modelIndex < this.modelChain.length;
+      modelIndex++
+    ) {
+      const modelName = this.modelChain[modelIndex];
+      console.log(`🔄 Trying model: ${modelName}`);
+
+      for (let retry = 0; retry < maxRetries; retry++) {
+        try {
+          const model = this.getModel(modelIndex);
+          return await operation(model, modelName);
+        } catch (error) {
+          lastError = error;
+
+          // If it's a 503 (overloaded) or 429 (rate limit), retry with backoff
+          if (error.status === 503 || error.status === 429) {
+            if (retry < maxRetries - 1) {
+              const delay = Math.pow(2, retry) * 1000; // Exponential backoff: 1s, 2s, 4s
+              console.log(
+                `⏳ Model ${modelName} overloaded, retrying in ${delay}ms... (attempt ${
+                  retry + 1
+                }/${maxRetries})`
+              );
+              await new Promise((resolve) => setTimeout(resolve, delay));
+              continue;
+            } else {
+              console.log(
+                `❌ Model ${modelName} failed after ${maxRetries} retries, trying next model...`
+              );
+              break; // Try next model
+            }
+          }
+
+          // For other errors (404, 400), try next model immediately
+          if (error.status === 404 || error.status === 400) {
+            console.log(
+              `❌ Model ${modelName} error (${error.status}), trying next model...`
+            );
+            break; // Try next model
+          }
+
+          // For unexpected errors, throw immediately
+          throw error;
+        }
+      }
+    }
+
+    // All models and retries failed
+    throw lastError;
   }
 
   /**
@@ -43,20 +137,26 @@ class AIStudyBuddyService {
         parts: [{ text: msg.content }],
       }));
 
-      // Start chat with history
-      const chat = this.model.startChat({
-        history: chatHistory,
-        generationConfig: {
-          maxOutputTokens: 1000,
-          temperature: 0.7,
-        },
+      // Use retry with fallback for reliability
+      const result = await this.retryWithFallback(async (model, modelName) => {
+        console.log(`💬 Generating response with ${modelName}...`);
+
+        const chat = model.startChat({
+          history: chatHistory,
+          generationConfig: {
+            maxOutputTokens: 1000,
+            temperature: 0.7,
+          },
+        });
+
+        const result = await chat.sendMessage(
+          systemPrompt + "\n\nUser: " + message
+        );
+
+        return result.response.text();
       });
 
-      // Send message with context
-      const result = await chat.sendMessage(
-        systemPrompt + "\n\nUser: " + message
-      );
-      const response = result.response.text();
+      const response = result;
 
       // Store conversation
       await this.saveConversation(
@@ -80,7 +180,27 @@ class AIStudyBuddyService {
       };
     } catch (error) {
       console.error("Error generating AI response:", error);
-      throw new Error("Failed to generate response");
+
+      // More helpful error messages
+      if (error.status === 400 && error.message?.includes("API key")) {
+        throw new Error(
+          "Invalid API key. Please configure a valid GEMINI_API_KEY in your environment variables. Get one at: https://aistudio.google.com/app/apikey"
+        );
+      }
+
+      if (error.status === 503 || error.status === 429) {
+        throw new Error(
+          "AI service is currently overloaded. Please try again in a few moments."
+        );
+      }
+
+      if (error.status === 404 && error.message?.includes("not found")) {
+        throw new Error(
+          "AI model not available. Please contact support or try again later."
+        );
+      }
+
+      throw new Error("Failed to generate response. Please try again.");
     }
   }
 
@@ -88,14 +208,49 @@ class AIStudyBuddyService {
    * Build system prompt with context and memories
    */
   buildSystemPrompt(memories, goals, context) {
-    let prompt = `You are an AI Study Buddy for Cognito Learning Hub. You are supportive, encouraging, and use the Socratic method to guide students rather than giving direct answers.
+    let prompt = `You are an AI Study Buddy for Cognito Learning Hub. You are supportive, helpful, and adaptive to student needs.
 
 Your personality:
 - Patient and understanding
-- Encouraging without being condescending
-- Ask probing questions to help students think
+- Encouraging and clear
+- Balance between guiding and explaining
 - Use analogies and real-world examples
 - Celebrate progress and learn from mistakes
+
+Teaching approach:
+- When a student asks for definitions or explanations directly (e.g., "tell me about", "define", "explain"), provide clear, concise answers FIRST, then optionally follow up with guiding questions
+- When a student is exploring or seems stuck, use the Socratic method with guiding questions
+- If a student shows frustration or explicitly asks for direct answers, provide them immediately
+- Adapt your approach based on the student's tone and questions
+
+RESPONSE FORMATTING RULES:
+- Use clear headings with "#" for main topics
+- Use "##" for subtopics
+- Use bullet points with "-" for lists
+- Use numbered lists "1." "2." etc. for ordered steps
+- Use **bold** for emphasis on key terms
+- Use *italic* for subtle emphasis
+- Use code blocks with triple backticks for formulas or code
+- Keep paragraphs short and readable
+- Add blank lines between sections for clarity
+
+Example good format:
+# Integration in Calculus
+
+Integration is primarily about two big ideas:
+
+## 1. Finding the Area
+Imagine you have a wiggly line on a graph (a function). Integration allows us to find the exact area between that line and the x-axis.
+
+**Key concept**: Think of it like taking tiny, infinitely thin slices and adding all their areas together.
+
+## 2. The Reverse of Differentiation
+You might remember differentiation (finding the rate of change). Integration is the *inverse* operation.
+
+- If you differentiate a function → you get another function
+- If you integrate that second function → you get back the original (plus a constant)
+
+This is why it's called the "antiderivative."
 
 `;
 
@@ -124,7 +279,12 @@ Your personality:
       prompt += `\n📊 Recent quiz performance: ${context.recentQuizPerformance}\n`;
     }
 
-    prompt += `\nRemember: Guide the student to discover answers themselves. Ask questions like "What do you think happens when...?" or "Can you explain why...?" before providing explanations.\n`;
+    prompt += `\nKey Rules:
+1. When students ask direct questions, give them well-formatted, clear answers
+2. Always use markdown formatting as shown in the example
+3. Break down complex topics into digestible sections with headings
+4. Use analogies and examples to illustrate concepts
+5. Save the Socratic method for when they're exploring or need deeper understanding\n`;
 
     return prompt;
   }

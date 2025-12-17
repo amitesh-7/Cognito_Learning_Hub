@@ -16,19 +16,29 @@ class StudyBuddyService {
     String? topic,
   }) async {
     try {
+      print('📤 Sending message to AI Study Buddy:');
+      print('Message: $message');
+      print('SessionId: $sessionId');
+
+      final requestData = {
+        'message': message,
+        if (sessionId != null) 'sessionId': sessionId,
+        if (quizId != null || quizTitle != null || topic != null)
+          'context': {
+            if (quizId != null) 'quizId': quizId,
+            if (quizTitle != null) 'quizTitle': quizTitle,
+            if (topic != null) 'topic': topic,
+          },
+      };
+
+      print('Request data: $requestData');
+
       final response = await _apiService.post(
-        '/study-buddy/chat',
-        data: {
-          'message': message,
-          if (sessionId != null) 'sessionId': sessionId,
-          if (quizId != null)
-            'context': {
-              'quizId': quizId,
-              if (quizTitle != null) 'quizTitle': quizTitle,
-              if (topic != null) 'topic': topic,
-            },
-        },
+        '/api/study-buddy/chat/message',
+        data: requestData,
       );
+
+      print('✅ Response received: ${response.data}');
 
       return {
         'response': response.data['data']['response'] as String,
@@ -47,7 +57,7 @@ class StudyBuddyService {
   }) async {
     try {
       final response = await _apiService.get(
-        '/study-buddy/conversations',
+        '/api/study-buddy/chat/conversations',
         queryParameters: {
           'limit': limit,
           'status': status,
@@ -68,7 +78,7 @@ class StudyBuddyService {
   Future<Conversation> getConversation(String sessionId) async {
     try {
       final response = await _apiService.get(
-        '/study-buddy/conversation/$sessionId',
+        '/api/study-buddy/chat/conversation/$sessionId',
       );
 
       return Conversation.fromJson(
@@ -83,7 +93,7 @@ class StudyBuddyService {
   Future<void> deleteConversation(String sessionId) async {
     try {
       await _apiService.delete(
-        '/study-buddy/conversation/$sessionId',
+        '/api/study-buddy/chat/conversation/$sessionId',
       );
     } catch (e) {
       throw _handleError(e);
@@ -98,7 +108,7 @@ class StudyBuddyService {
   }) async {
     try {
       final response = await _apiService.post(
-        '/study-buddy/goals',
+        '/api/study-buddy/goals',
         data: {
           'goalText': goalText,
           'category': category,
@@ -117,7 +127,7 @@ class StudyBuddyService {
   /// Get all learning goals
   Future<List<StudyGoal>> getGoals() async {
     try {
-      final response = await _apiService.get('/study-buddy/goals');
+      final response = await _apiService.get('/api/study-buddy/goals');
 
       final goals = (response.data['data']['goals'] as List)
           .map((json) => StudyGoal.fromJson(json as Map<String, dynamic>))
@@ -133,7 +143,7 @@ class StudyBuddyService {
   Future<void> completeGoal(String goalId) async {
     try {
       await _apiService.patch(
-        '/study-buddy/goals/$goalId/complete',
+        '/api/study-buddy/goals/$goalId/complete',
       );
     } catch (e) {
       throw _handleError(e);
@@ -153,6 +163,11 @@ class StudyBuddyService {
 
   String _handleError(dynamic error) {
     if (error is DioException) {
+      print('🔴 Study Buddy Error:');
+      print('Status Code: ${error.response?.statusCode}');
+      print('Request URL: ${error.requestOptions.uri}');
+      print('Response: ${error.response?.data}');
+
       if (error.response?.data != null) {
         final data = error.response!.data;
         if (data is Map && data.containsKey('error')) {
@@ -167,6 +182,12 @@ class StudyBuddyService {
       }
       if (error.type == DioExceptionType.receiveTimeout) {
         return 'Server is taking too long to respond.';
+      }
+      if (error.response?.statusCode == 404) {
+        return 'Service not found. Please ensure the quiz service is running.';
+      }
+      if (error.response?.statusCode == 500) {
+        return 'Server error. The AI service may be unavailable.';
       }
       return error.message ?? 'An error occurred';
     }

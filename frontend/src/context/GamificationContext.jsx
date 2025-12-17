@@ -389,33 +389,59 @@ export const GamificationProvider = ({ children }) => {
 
   // Check for newly unlocked features when stats change
   useEffect(() => {
-    if (!userStats || unlockedFeatures.length === 0) return;
+    if (!userStats) return;
 
-    const currentUnlockedIds = new Set(unlockedFeatures.map((f) => f.id));
+    const currentUnlockedIds = getUnlockedFeatures({
+      ...userStats,
+      level: userStats.level || 1,
+      experience: userStats.experience || 0,
+    }).map((f) => f.id);
 
-    // Find newly unlocked features
-    const newlyUnlocked = unlockedFeatures.filter(
-      (f) => !previousUnlockedFeatures.has(f.id)
+    if (currentUnlockedIds.length === 0) return;
+
+    const currentUnlockedSet = new Set(currentUnlockedIds);
+
+    // Convert to sorted string for comparison
+    const currentIds = currentUnlockedIds.sort().join(",");
+    const previousIds = Array.from(previousUnlockedFeatures).sort().join(",");
+
+    // Only proceed if the set of unlocked features actually changed
+    if (currentIds === previousIds) return;
+
+    // Find newly unlocked features (not in previous set)
+    const newlyUnlocked = currentUnlockedIds.filter(
+      (id) => !previousUnlockedFeatures.has(id)
     );
 
     // If we have newly unlocked features and this isn't the initial load
     if (newlyUnlocked.length > 0 && previousUnlockedFeatures.size > 0) {
-      // Show notification for the first newly unlocked feature
-      setFeatureUnlockNotification(newlyUnlocked[0].id);
+      // Get full feature objects for notifications
+      const features = getUnlockedFeatures({
+        ...userStats,
+        level: userStats.level || 1,
+        experience: userStats.experience || 0,
+      });
 
-      // If multiple features unlocked, queue them
-      if (newlyUnlocked.length > 1) {
-        newlyUnlocked.slice(1).forEach((feature, index) => {
-          setTimeout(() => {
-            setFeatureUnlockNotification(feature.id);
-          }, (index + 1) * 3000);
-        });
+      const newFeatures = features.filter((f) => newlyUnlocked.includes(f.id));
+
+      if (newFeatures.length > 0) {
+        // Show notification for the first newly unlocked feature
+        setFeatureUnlockNotification(newFeatures[0].id);
+
+        // If multiple features unlocked, queue them
+        if (newFeatures.length > 1) {
+          newFeatures.slice(1).forEach((feature, index) => {
+            setTimeout(() => {
+              setFeatureUnlockNotification(feature.id);
+            }, (index + 1) * 3000);
+          });
+        }
       }
     }
 
-    // Update previous unlocked features set
-    setPreviousUnlockedFeatures(currentUnlockedIds);
-  }, [unlockedFeatures, previousUnlockedFeatures]);
+    // Update the previous set
+    setPreviousUnlockedFeatures(currentUnlockedSet);
+  }, [userStats]); // Only depend on userStats, not the memoized array
 
   // Check if a specific feature is unlocked
   const isFeatureUnlocked = useCallback(

@@ -115,10 +115,28 @@ class _StudyBuddyChatScreenState extends ConsumerState<StudyBuddyChatScreen> {
       ref.read(conversationsProvider.notifier).refresh();
     } catch (e) {
       if (mounted) {
+        final errorMessage = e.toString();
+        final isServerError = errorMessage.contains('500') ||
+            errorMessage.contains('Server error') ||
+            errorMessage.contains('Failed to process message');
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(isServerError
+                ? 'AI service is temporarily unavailable. Please try again later or contact support.'
+                : 'Error: $errorMessage'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () {
+                // Retry sending the last message
+                if (_messageController.text.isEmpty) {
+                  _sendMessage();
+                }
+              },
+            ),
           ),
         );
       }
