@@ -1,28 +1,45 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Unlock, Star, Sparkles, TrendingUp, ChevronRight, X } from 'lucide-react';
-import { useGamification } from '../context/GamificationContext';
-import { 
-  FEATURE_UNLOCKS, 
-  TIERS, 
+import React, { useState, useContext } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Lock,
+  Unlock,
+  Star,
+  Sparkles,
+  TrendingUp,
+  ChevronRight,
+  X,
+} from "lucide-react";
+import { useGamification } from "../context/GamificationContext";
+import { AuthContext } from "../context/AuthContext";
+import {
+  FEATURE_UNLOCKS,
+  TIERS,
   checkFeatureUnlock,
-  getUpcomingFeatures 
-} from '../config/featureUnlocks';
+  getUpcomingFeatures,
+} from "../config/featureUnlocks";
 
 /**
  * FeatureGate Component
  * Wraps features that require unlocking based on gamification progress
  * Shows lock overlay for locked features with progress and requirements
+ * BYPASSED for Teachers, Admins, and Moderators - they can access all features
  */
-export function FeatureGate({ 
-  featureId, 
-  children, 
+export function FeatureGate({
+  featureId,
+  children,
   fallback = null,
   showLockOverlay = true,
   onLockedClick = null,
 }) {
   const { userStats, currentLevel, totalXP } = useGamification();
+  const { user } = useContext(AuthContext);
   const [showModal, setShowModal] = useState(false);
+
+  // Bypass feature gating for non-students (teachers, admins, moderators)
+  const isStudent = user?.role === "Student" || !user?.role;
+  if (!isStudent) {
+    return <>{children}</>;
+  }
 
   const feature = FEATURE_UNLOCKS[featureId];
   if (!feature) {
@@ -53,7 +70,7 @@ export function FeatureGate({
 
   return (
     <>
-      <div 
+      <div
         className="relative cursor-pointer group"
         onClick={() => {
           setShowModal(true);
@@ -65,47 +82,49 @@ export function FeatureGate({
           <div className="filter blur-sm opacity-50 pointer-events-none">
             {children}
           </div>
-          
+
           {/* Lock overlay */}
-          <motion.div 
+          <motion.div
             className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900/80 via-slate-800/70 to-slate-900/80 backdrop-blur-sm rounded-xl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
             <motion.div
               className={`w-16 h-16 rounded-full bg-gradient-to-br ${tier.color} flex items-center justify-center shadow-lg mb-3`}
-              animate={{ 
+              animate={{
                 scale: [1, 1.1, 1],
                 boxShadow: [
-                  '0 0 20px rgba(255,255,255,0.1)',
-                  '0 0 30px rgba(255,255,255,0.2)',
-                  '0 0 20px rgba(255,255,255,0.1)',
-                ]
+                  "0 0 20px rgba(255,255,255,0.1)",
+                  "0 0 30px rgba(255,255,255,0.2)",
+                  "0 0 20px rgba(255,255,255,0.1)",
+                ],
               }}
               transition={{ duration: 2, repeat: Infinity }}
             >
               <Lock className="w-8 h-8 text-white" />
             </motion.div>
-            
-            <h3 className="text-white font-bold text-lg mb-1">{feature.name}</h3>
+
+            <h3 className="text-white font-bold text-lg mb-1">
+              {feature.name}
+            </h3>
             <p className="text-slate-300 text-sm text-center px-4 mb-3">
               {feature.description}
             </p>
-            
+
             {/* Progress bar */}
             <div className="w-48 h-2 bg-slate-700 rounded-full overflow-hidden mb-2">
-              <motion.div 
+              <motion.div
                 className={`h-full bg-gradient-to-r ${tier.color}`}
                 initial={{ width: 0 }}
                 animate={{ width: `${status.progress}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
               />
             </div>
-            
+
             <p className="text-slate-400 text-xs">
               {Math.round(status.progress)}% complete
             </p>
-            
+
             <motion.button
               className="mt-3 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm font-medium flex items-center gap-2 transition-colors"
               whileHover={{ scale: 1.05 }}
@@ -121,7 +140,7 @@ export function FeatureGate({
       {/* Unlock requirements modal */}
       <AnimatePresence>
         {showModal && (
-          <FeatureUnlockModal 
+          <FeatureUnlockModal
             feature={feature}
             status={status}
             tier={tier}
@@ -139,10 +158,13 @@ export function FeatureGate({
  */
 function FeatureUnlockModal({ feature, status, tier, onClose }) {
   const { userStats, currentLevel } = useGamification();
-  const upcomingFeatures = getUpcomingFeatures({
-    ...userStats,
-    level: currentLevel,
-  }, 3);
+  const upcomingFeatures = getUpcomingFeatures(
+    {
+      ...userStats,
+      level: currentLevel,
+    },
+    3
+  );
 
   return (
     <motion.div
@@ -157,7 +179,7 @@ function FeatureUnlockModal({ feature, status, tier, onClose }) {
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
@@ -168,18 +190,20 @@ function FeatureUnlockModal({ feature, status, tier, onClose }) {
         </button>
 
         {/* Header with gradient */}
-        <div className={`p-6 bg-gradient-to-br ${tier.color} relative overflow-hidden`}>
+        <div
+          className={`p-6 bg-gradient-to-br ${tier.color} relative overflow-hidden`}
+        >
           <motion.div
             className="absolute inset-0 bg-white/10"
             animate={{
               background: [
-                'linear-gradient(45deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)',
-                'linear-gradient(45deg, transparent 100%, rgba(255,255,255,0.1) 150%, transparent 200%)',
+                "linear-gradient(45deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)",
+                "linear-gradient(45deg, transparent 100%, rgba(255,255,255,0.1) 150%, transparent 200%)",
               ],
             }}
             transition={{ duration: 3, repeat: Infinity }}
           />
-          
+
           <div className="relative z-10">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-16 h-16 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-3xl">
@@ -191,7 +215,9 @@ function FeatureUnlockModal({ feature, status, tier, onClose }) {
                     {tier.icon} {tier.name}
                   </span>
                 </div>
-                <h2 className="text-2xl font-bold text-white">{feature.name}</h2>
+                <h2 className="text-2xl font-bold text-white">
+                  {feature.name}
+                </h2>
               </div>
             </div>
             <p className="text-white/90">{feature.description}</p>
@@ -206,7 +232,7 @@ function FeatureUnlockModal({ feature, status, tier, onClose }) {
               <Lock className="w-4 h-4 text-amber-400" />
               Unlock Requirement
             </h3>
-            
+
             <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-slate-300">{status.remaining}</span>
@@ -214,16 +240,16 @@ function FeatureUnlockModal({ feature, status, tier, onClose }) {
                   {status.currentValue} / {status.targetValue}
                 </span>
               </div>
-              
+
               <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
-                <motion.div 
+                <motion.div
                   className={`h-full bg-gradient-to-r ${tier.color}`}
                   initial={{ width: 0 }}
                   animate={{ width: `${status.progress}%` }}
                   transition={{ duration: 1, ease: "easeOut" }}
                 />
               </div>
-              
+
               <p className="text-right text-sm text-slate-400 mt-2">
                 {Math.round(status.progress)}% complete
               </p>
@@ -237,18 +263,22 @@ function FeatureUnlockModal({ feature, status, tier, onClose }) {
                 <Star className="w-4 h-4 text-yellow-400" />
                 Unlock Rewards
               </h3>
-              
+
               <div className="flex flex-wrap gap-2">
                 {feature.reward.xpBonus && (
                   <div className="px-3 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded-lg flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-amber-400" />
-                    <span className="text-amber-300 font-medium">+{feature.reward.xpBonus} XP</span>
+                    <span className="text-amber-300 font-medium">
+                      +{feature.reward.xpBonus} XP
+                    </span>
                   </div>
                 )}
                 {feature.reward.badge && (
                   <div className="px-3 py-1.5 bg-violet-500/20 border border-violet-500/30 rounded-lg flex items-center gap-2">
                     <Star className="w-4 h-4 text-violet-400" />
-                    <span className="text-violet-300 font-medium">Special Badge</span>
+                    <span className="text-violet-300 font-medium">
+                      Special Badge
+                    </span>
                   </div>
                 )}
               </div>
@@ -262,31 +292,38 @@ function FeatureUnlockModal({ feature, status, tier, onClose }) {
                 <TrendingUp className="w-4 h-4 text-green-400" />
                 Almost Unlocked
               </h3>
-              
+
               <div className="space-y-2">
-                {upcomingFeatures.filter(f => f.id !== feature.id).slice(0, 2).map(f => {
-                  const fTier = TIERS[f.tier];
-                  return (
-                    <div 
-                      key={f.id}
-                      className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/30"
-                    >
-                      <div className="text-xl">{f.icon}</div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white font-medium text-sm truncate">{f.name}</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full bg-gradient-to-r ${fTier.color}`}
-                              style={{ width: `${f.progress}%` }}
-                            />
+                {upcomingFeatures
+                  .filter((f) => f.id !== feature.id)
+                  .slice(0, 2)
+                  .map((f) => {
+                    const fTier = TIERS[f.tier];
+                    return (
+                      <div
+                        key={f.id}
+                        className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/30"
+                      >
+                        <div className="text-xl">{f.icon}</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-medium text-sm truncate">
+                            {f.name}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full bg-gradient-to-r ${fTier.color}`}
+                                style={{ width: `${f.progress}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-slate-400">
+                              {Math.round(f.progress)}%
+                            </span>
                           </div>
-                          <span className="text-xs text-slate-400">{Math.round(f.progress)}%</span>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             </div>
           )}
@@ -310,7 +347,7 @@ function FeatureUnlockModal({ feature, status, tier, onClose }) {
  * Locked Feature Card
  * A standalone card showing a locked feature
  */
-export function LockedFeatureCard({ featureId, className = '' }) {
+export function LockedFeatureCard({ featureId, className = "" }) {
   const { userStats, currentLevel, totalXP } = useGamification();
   const [showModal, setShowModal] = useState(false);
 
@@ -343,31 +380,41 @@ export function LockedFeatureCard({ featureId, className = '' }) {
             }}
             transition={{ duration: 2, repeat: Infinity }}
           />
-          
+
           <div className="relative z-10">
             <div className="flex items-start gap-3 mb-3">
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tier.color} flex items-center justify-center text-xl shadow-lg`}>
+              <div
+                className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tier.color} flex items-center justify-center text-xl shadow-lg`}
+              >
                 {feature.icon}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <Lock className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-xs font-medium text-slate-400 uppercase">Locked</span>
+                  <span className="text-xs font-medium text-slate-400 uppercase">
+                    Locked
+                  </span>
                 </div>
-                <h3 className="text-white font-bold truncate">{feature.name}</h3>
+                <h3 className="text-white font-bold truncate">
+                  {feature.name}
+                </h3>
               </div>
             </div>
-            
-            <p className="text-slate-400 text-sm mb-3 line-clamp-2">{feature.description}</p>
-            
+
+            <p className="text-slate-400 text-sm mb-3 line-clamp-2">
+              {feature.description}
+            </p>
+
             {/* Progress */}
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs">
                 <span className="text-slate-500">{status.remaining}</span>
-                <span className="text-slate-400 font-medium">{Math.round(status.progress)}%</span>
+                <span className="text-slate-400 font-medium">
+                  {Math.round(status.progress)}%
+                </span>
               </div>
               <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                <motion.div 
+                <motion.div
                   className={`h-full bg-gradient-to-r ${tier.color}`}
                   initial={{ width: 0 }}
                   animate={{ width: `${status.progress}%` }}
@@ -381,7 +428,7 @@ export function LockedFeatureCard({ featureId, className = '' }) {
 
       <AnimatePresence>
         {showModal && (
-          <FeatureUnlockModal 
+          <FeatureUnlockModal
             feature={feature}
             status={status}
             tier={tier}
@@ -397,7 +444,7 @@ export function LockedFeatureCard({ featureId, className = '' }) {
  * Feature Unlock Badge
  * Small badge showing lock status
  */
-export function FeatureUnlockBadge({ featureId, className = '' }) {
+export function FeatureUnlockBadge({ featureId, className = "" }) {
   const { userStats, currentLevel, totalXP } = useGamification();
 
   const feature = FEATURE_UNLOCKS[featureId];
@@ -425,9 +472,13 @@ export function FeatureUnlockBadge({ featureId, className = '' }) {
   }
 
   return (
-    <div className={`inline-flex items-center gap-1.5 px-2 py-1 bg-slate-700/50 border border-slate-600/30 rounded-full ${className}`}>
+    <div
+      className={`inline-flex items-center gap-1.5 px-2 py-1 bg-slate-700/50 border border-slate-600/30 rounded-full ${className}`}
+    >
       <Lock className="w-3 h-3 text-slate-400" />
-      <span className="text-xs font-medium text-slate-400">{Math.round(status.progress)}%</span>
+      <span className="text-xs font-medium text-slate-400">
+        {Math.round(status.progress)}%
+      </span>
     </div>
   );
 }
@@ -441,11 +492,11 @@ export function useFeatureUnlock(featureId) {
 
   const feature = FEATURE_UNLOCKS[featureId];
   if (!feature) {
-    return { 
-      unlocked: true, 
-      progress: 100, 
+    return {
+      unlocked: true,
+      progress: 100,
       feature: null,
-      status: null 
+      status: null,
     };
   }
 
@@ -469,36 +520,23 @@ export function useFeatureUnlock(featureId) {
  * Used to wrap entire routes/pages and show a locked page if user doesn't have access
  * Unlike FeatureGate which shows a lock overlay, this shows a full-page locked message
  */
-export function RouteFeatureGate({ 
-  featureId, 
+export function RouteFeatureGate({
+  featureId,
   children,
-  bypassRoles = ['Teacher', 'Admin', 'Moderator'] // Roles that bypass the gate
+  bypassRoles = ["Teacher", "Admin", "Moderator"], // Roles that bypass the gate
 }) {
   const { userStats, currentLevel, totalXP } = useGamification();
-  const [userRole, setUserRole] = React.useState(null);
-
-  React.useEffect(() => {
-    // Get user role from localStorage
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      try {
-        const parsed = JSON.parse(userData);
-        setUserRole(parsed.role);
-      } catch (e) {
-        console.error('Error parsing user data:', e);
-      }
-    }
-  }, []);
+  const { user } = useContext(AuthContext);
 
   const feature = FEATURE_UNLOCKS[featureId];
-  
+
   // If feature not in config, allow access
   if (!feature) {
     return <>{children}</>;
   }
 
-  // Check if user role bypasses the gate
-  if (bypassRoles.includes(userRole)) {
+  // Check if user role bypasses the gate (teachers, admins, moderators can access all features)
+  if (user?.role && bypassRoles.includes(user.role)) {
     return <>{children}</>;
   }
 
@@ -529,10 +567,10 @@ export function RouteFeatureGate({
           animate={{
             scale: [1, 1.05, 1],
             boxShadow: [
-              '0 0 30px rgba(255,255,255,0.1)',
-              '0 0 50px rgba(255,255,255,0.2)',
-              '0 0 30px rgba(255,255,255,0.1)',
-            ]
+              "0 0 30px rgba(255,255,255,0.1)",
+              "0 0 50px rgba(255,255,255,0.2)",
+              "0 0 30px rgba(255,255,255,0.1)",
+            ],
           }}
           transition={{ duration: 2, repeat: Infinity }}
         >
@@ -544,7 +582,9 @@ export function RouteFeatureGate({
         <p className="text-slate-400 mb-6">{feature.description}</p>
 
         {/* Tier badge */}
-        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${tier.color} text-white text-sm font-bold mb-6`}>
+        <div
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${tier.color} text-white text-sm font-bold mb-6`}
+        >
           <span>{tier.icon}</span>
           <span>{tier.name} Feature</span>
         </div>
@@ -574,29 +614,57 @@ export function RouteFeatureGate({
               const criterion = feature.criteria;
               let currentValue = 0;
               switch (criterion.type) {
-                case 'level': currentValue = currentLevel || 1; break;
-                case 'quizzes': currentValue = userStats?.totalQuizzesTaken || 0; break;
-                case 'streak': currentValue = userStats?.currentStreak || 0; break;
-                case 'duels': currentValue = userStats?.duelsPlayed || 0; break;
-                case 'xp': currentValue = totalXP || 0; break;
-                case 'achievement': currentValue = userStats?.unlockedAchievements?.length || 0; break;
-                case 'score': currentValue = userStats?.averageScore || 0; break;
-                default: currentValue = 0;
+                case "level":
+                  currentValue = currentLevel || 1;
+                  break;
+                case "quizzes":
+                  currentValue = userStats?.totalQuizzesTaken || 0;
+                  break;
+                case "streak":
+                  currentValue = userStats?.currentStreak || 0;
+                  break;
+                case "duels":
+                  currentValue = userStats?.duelsPlayed || 0;
+                  break;
+                case "xp":
+                  currentValue = totalXP || 0;
+                  break;
+                case "achievement":
+                  currentValue = userStats?.unlockedAchievements?.length || 0;
+                  break;
+                case "score":
+                  currentValue = userStats?.averageScore || 0;
+                  break;
+                default:
+                  currentValue = 0;
               }
               const isMet = currentValue >= criterion.value;
-              
+
               return (
-                <div className={`flex items-center justify-between p-2 rounded-lg ${isMet ? 'bg-green-500/20' : 'bg-slate-700/50'}`}>
+                <div
+                  className={`flex items-center justify-between p-2 rounded-lg ${
+                    isMet ? "bg-green-500/20" : "bg-slate-700/50"
+                  }`}
+                >
                   <span className="text-slate-300 text-sm capitalize">
-                    {criterion.type === 'quizzes' ? 'Quizzes Taken' : 
-                     criterion.type === 'xp' ? 'Total XP' : 
-                     criterion.type === 'achievement' ? 'Achievements' :
-                     criterion.type === 'score' ? 'Average Score' :
-                     criterion.type}
+                    {criterion.type === "quizzes"
+                      ? "Quizzes Taken"
+                      : criterion.type === "xp"
+                      ? "Total XP"
+                      : criterion.type === "achievement"
+                      ? "Achievements"
+                      : criterion.type === "score"
+                      ? "Average Score"
+                      : criterion.type}
                   </span>
-                  <span className={`text-sm font-bold ${isMet ? 'text-green-400' : 'text-slate-400'}`}>
-                    {currentValue} / {criterion.value}{criterion.type === 'score' ? '%' : ''}
-                    {isMet && ' ✓'}
+                  <span
+                    className={`text-sm font-bold ${
+                      isMet ? "text-green-400" : "text-slate-400"
+                    }`}
+                  >
+                    {currentValue} / {criterion.value}
+                    {criterion.type === "score" ? "%" : ""}
+                    {isMet && " ✓"}
                   </span>
                 </div>
               );

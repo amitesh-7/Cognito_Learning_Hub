@@ -32,6 +32,9 @@ export const GamificationProvider = ({ children }) => {
   const { socket, isConnected } = useSocket();
   const { user } = useContext(AuthContext);
 
+  // Check if user is a student (only students should see feature unlocking)
+  const isStudent = user?.role === "Student" || !user?.role;
+
   // Real-time state
   const [userStats, setUserStats] = useState(null);
   const [achievements, setAchievements] = useState([]);
@@ -42,7 +45,7 @@ export const GamificationProvider = ({ children }) => {
   const [xpAnimation, setXpAnimation] = useState(null);
   const [achievementNotification, setAchievementNotification] = useState(null);
 
-  // Feature unlock state
+  // Feature unlock state - disabled for non-students (teachers, admins, moderators)
   const [featureUnlockNotification, setFeatureUnlockNotification] =
     useState(null);
   const [previousUnlockedFeatures, setPreviousUnlockedFeatures] = useState(
@@ -388,8 +391,9 @@ export const GamificationProvider = ({ children }) => {
   }, [userStats]);
 
   // Check for newly unlocked features when stats change
+  // Skip feature unlocking for non-students (teachers, admins, moderators)
   useEffect(() => {
-    if (!userStats) return;
+    if (!userStats || !isStudent) return;
 
     const currentUnlockedIds = getUnlockedFeatures({
       ...userStats,
@@ -441,7 +445,7 @@ export const GamificationProvider = ({ children }) => {
 
     // Update the previous set
     setPreviousUnlockedFeatures(currentUnlockedSet);
-  }, [userStats]); // Only depend on userStats, not the memoized array
+  }, [userStats, isStudent]); // Include isStudent in dependencies
 
   // Check if a specific feature is unlocked
   const isFeatureUnlocked = useCallback(

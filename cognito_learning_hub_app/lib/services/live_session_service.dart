@@ -31,8 +31,9 @@ class LiveSessionService {
   // Join an existing session with code
   Future<LiveSession> joinSession(String code) async {
     try {
-      final response = await _api.post(
-        Endpoints.joinSession(code),
+      // Use GET to fetch session details by code (POST endpoint doesn't exist)
+      final response = await _api.get(
+        '${Endpoints.liveSessions}/$code',
       );
 
       return LiveSession.fromJson(response.data['session'] ?? response.data);
