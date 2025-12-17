@@ -530,15 +530,18 @@ export default function HelpWidget() {
     { title: "Troubleshooting", count: `${knowledgeBase["troubleshooting"].length} articles`, icon: Shield }
   ];
 
-  // Render directly without portal - simpler approach
-  return (
-    <div 
+  // Use a portal so `position: fixed` stays relative to the viewport
+  // even if ancestors (e.g., smooth-scroll containers) apply transforms.
+  if (typeof document === "undefined") return null;
+
+  const widget = (
+    <div
       style={{
-        position: 'fixed',
-        bottom: '24px',
-        right: '24px',
+        position: "fixed",
+        bottom: "24px",
+        right: "24px",
         zIndex: 2147483647,
-        pointerEvents: 'auto'
+        pointerEvents: "auto",
       }}
     >
       {!isOpen ? (
@@ -573,7 +576,7 @@ export default function HelpWidget() {
             borderRadius: '50%'
           }} className="animate-pulse" />
         </motion.button>
-        ) : (
+      ) : (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ 
@@ -1020,5 +1023,7 @@ export default function HelpWidget() {
         )}
     </div>
   );
+
+  return createPortal(widget, document.body);
 }
   

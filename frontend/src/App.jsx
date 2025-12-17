@@ -114,6 +114,11 @@ function App() {
     location.pathname.startsWith(route)
   );
 
+  // Hide floating help widget on quiz-taker experiences
+  const hideHelpWidget =
+    /^\/quiz\/[^/]+$/.test(location.pathname) ||
+    /^\/quiz\/[^/]+\/gamified$/.test(location.pathname);
+
   return (
     <AccessibilityProvider>
       <SocketProvider>
@@ -144,7 +149,7 @@ function App() {
                   {user && <OnboardingTour />}
 
                   {/* Help Widget - Always Available */}
-                  <HelpWidget />
+                  {!hideHelpWidget && <HelpWidget />}
 
                   {/* Animated Background Layers - Disabled on mobile for performance */}
                   {!isMobile && (
