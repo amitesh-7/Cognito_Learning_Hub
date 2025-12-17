@@ -5,9 +5,16 @@ import React, {
   useState,
   useCallback,
   useRef,
+  useMemo,
 } from "react";
 import { useSocket } from "./SocketContext";
 import { AuthContext } from "./AuthContext";
+import { 
+  getUnlockedFeatures, 
+  checkFeatureUnlock,
+  getUpcomingFeatures,
+  FEATURE_UNLOCKS 
+} from "../config/featureUnlocks";
 
 const GamificationContext = createContext(null);
 
@@ -34,6 +41,10 @@ export const GamificationProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [xpAnimation, setXpAnimation] = useState(null);
   const [achievementNotification, setAchievementNotification] = useState(null);
+  
+  // Feature unlock state
+  const [featureUnlockNotification, setFeatureUnlockNotification] = useState(null);
+  const [previousUnlockedFeatures, setPreviousUnlockedFeatures] = useState(new Set());
 
   // Refs to prevent stale closures
   const userStatsRef = useRef(userStats);
@@ -335,6 +346,89 @@ export const GamificationProvider = ({ children }) => {
     };
   }, [userStats]);
 
+  // Compute unlocked features based on user stats
+  const unlockedFeatures = useMemo(() => {
+    if (!userStats) return [];
+    
+    return getUnlockedFeatures({
+      ...userStats,
+      level: userStats.level || 1,
+      experience: userStats.experience || 0,
+    });
+  }, [userStats]);
+
+  // Compute upcoming features (close to unlocking)
+  const upcomingFeatures = useMemo(() => {
+    if (!userStats) return [];
+    
+    return getUpcomingFeatures({
+      ...userStats,
+      level: userStats.level || 1,
+      experience: userStats.experience || 0,
+    }, 5);
+  }, [userStats]);
+
+  // Check for newly unlocked features when stats change
+  useEffect(() => {
+    if (!userStats || unlockedFeatures.length === 0) return;
+
+    const currentUnlockedIds = new Set(unlockedFeatures.map(f => f.id));
+    
+    // Find newly unlocked features
+    const newlyUnlocked = unlockedFeatures.filter(
+      f => !previousUnlockedFeatures.has(f.id)
+    );
+
+    // If we have newly unlocked features and this isn't the initial load
+    if (newlyUnlocked.length > 0 && previousUnlockedFeatures.size > 0) {
+      // Show notification for the first newly unlocked feature
+      setFeatureUnlockNotification(newlyUnlocked[0].id);
+      
+      // If multiple features unlocked, queue them
+      if (newlyUnlocked.length > 1) {
+        newlyUnlocked.slice(1).forEach((feature, index) => {
+          setTimeout(() => {
+            setFeatureUnlockNotification(feature.id);
+          }, (index + 1) * 3000);
+        });
+      }
+    }
+
+    // Update previous unlocked features set
+    setPreviousUnlockedFeatures(currentUnlockedIds);
+  }, [unlockedFeatures, previousUnlockedFeatures]);
+
+  // Check if a specific feature is unlocked
+  const isFeatureUnlocked = useCallback((featureId) => {
+    if (!userStats) return false;
+    
+    const status = checkFeatureUnlock(featureId, {
+      ...userStats,
+      level: userStats.level || 1,
+      experience: userStats.experience || 0,
+    });
+    
+    return status.unlocked;
+  }, [userStats]);
+
+  // Get feature unlock status with progress
+  const getFeatureUnlockStatus = useCallback((featureId) => {
+    if (!userStats) {
+      return { unlocked: false, progress: 0, remaining: 'Loading...' };
+    }
+    
+    return checkFeatureUnlock(featureId, {
+      ...userStats,
+      level: userStats.level || 1,
+      experience: userStats.experience || 0,
+    });
+  }, [userStats]);
+
+  // Clear feature unlock notification
+  const clearFeatureUnlockNotification = useCallback(() => {
+    setFeatureUnlockNotification(null);
+  }, []);
+
   const value = {
     // State
     userStats,
@@ -345,12 +439,20 @@ export const GamificationProvider = ({ children }) => {
     loading,
     xpAnimation,
     achievementNotification,
+    featureUnlockNotification,
 
     // Actions
     checkAchievements,
     awardXP,
     refreshData,
     clearAchievementNotification,
+    clearFeatureUnlockNotification,
+
+    // Feature unlock functions
+    isFeatureUnlocked,
+    getFeatureUnlockStatus,
+    unlockedFeatures,
+    upcomingFeatures,
 
     // Computed
     getLevelProgress,
@@ -361,6 +463,8 @@ export const GamificationProvider = ({ children }) => {
     currentLevel: userStats?.level || 1,
     totalXP: userStats?.experience || userStats?.totalPoints || 0,
     currentStreak: userStats?.currentStreak || 0,
+    quizzesCompleted: userStats?.quizzesCompleted || 0,
+    duelsWon: userStats?.duelsWon || 0,
   };
 
   return (

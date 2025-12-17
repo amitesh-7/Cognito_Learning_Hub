@@ -32,6 +32,7 @@ import { SocketProvider } from "./context/SocketContext";
 import { GamificationProvider } from "./context/GamificationContext";
 import { AvatarProvider } from "./context/AvatarContext";
 import { AchievementNotification } from "./components/Gamification";
+import { FeatureUnlockNotificationWrapper } from "./components/Gamification/FeatureUnlockNotificationWrapper";
 
 // Lazy load pages for better performance (code splitting)
 // Critical pages - load immediately
@@ -60,6 +61,7 @@ const ChatSystem = lazy(() => import("./pages/ChatSystem"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const ReportsDashboard = lazy(() => import("./pages/ReportsDashboard"));
 const AchievementDashboard = lazy(() => import("./pages/AchievementDashboard"));
+const RewardsPage = lazy(() => import("./pages/RewardsPage"));
 const EnhancedQuizCreator = lazy(() => import("./pages/EnhancedQuizCreator"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const GamifiedQuizTaker = lazy(() => import("./pages/GamifiedQuizTaker"));
@@ -131,6 +133,9 @@ function App() {
 
                   {/* Real-time Achievement Notifications */}
                   <AchievementNotification />
+
+                  {/* Feature Unlock Notifications */}
+                  <FeatureUnlockNotificationWrapper />
 
                   {/* Onboarding Tour for New Users */}
                   {user && <OnboardingTour />}
@@ -391,6 +396,14 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <AchievementDashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/rewards"
+                            element={
+                              <ProtectedRoute>
+                                <RewardsPage />
                               </ProtectedRoute>
                             }
                           />

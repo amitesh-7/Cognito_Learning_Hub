@@ -16,12 +16,24 @@ import {
   BarChart3,
   Sparkles,
   Lock,
+  Unlock,
   CheckCircle2,
   RefreshCw,
+  Gift,
+  ChevronRight,
 } from "lucide-react";
 import Badge from "../components/ui/Badge";
 import Progress from "../components/ui/Progress";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { FeatureProgressDashboard, FeatureProgressList } from "../components/Gamification/FeatureProgressDashboard";
+import { 
+  FEATURE_UNLOCKS, 
+  TIERS, 
+  LEVEL_MILESTONES, 
+  QUIZ_MILESTONES, 
+  STREAK_MILESTONES,
+  checkFeatureUnlock 
+} from "../config/featureUnlocks";
 
 const AchievementCard = ({ achievement, isUnlocked = false, progress = 0 }) => {
   const rarityColors = {
@@ -1804,7 +1816,7 @@ export default function AchievementDashboard() {
         {/* Tabs */}
         <div className="mb-8">
           <div className="bg-white/70 backdrop-blur-2xl border-2 border-white/80 rounded-2xl p-2 shadow-lg">
-            <nav className="flex gap-2">
+            <nav className="flex gap-2 overflow-x-auto">
               {[
                 {
                   id: "overview",
@@ -1820,6 +1832,16 @@ export default function AchievementDashboard() {
                   id: "locked",
                   label: "Locked",
                   icon: <Target className="w-5 h-5" />,
+                },
+                {
+                  id: "features",
+                  label: "Feature Unlocks",
+                  icon: <Unlock className="w-5 h-5" />,
+                },
+                {
+                  id: "milestones",
+                  label: "Milestones",
+                  icon: <Gift className="w-5 h-5" />,
                 },
               ].map((tab) => (
                 <button
@@ -2211,6 +2233,9 @@ export default function AchievementDashboard() {
                   </div>
                 </motion.div>
               </div>
+
+              {/* Upcoming Feature Unlocks */}
+              <UpcomingFeatureUnlocks userStats={userStats} currentLevel={currentLevel} />
             </motion.div>
           )}
 
@@ -2272,8 +2297,297 @@ export default function AchievementDashboard() {
               </div>
             </motion.div>
           )}
+
+          {/* Feature Unlocks Tab */}
+          {activeTab === "features" && (
+            <motion.div
+              key="features"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <FeatureProgressDashboard lightMode={true} compact={true} />
+            </motion.div>
+          )}
+
+          {/* Milestones Tab */}
+          {activeTab === "milestones" && (
+            <motion.div
+              key="milestones"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <MilestonesSection userStats={{ ...userStats, level: currentLevel, quizzesCompleted: userStats?.quizzesCompleted || userStats?.totalQuizzesTaken || 0, currentStreak }} />
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+/**
+ * Milestones Section Component - Integrated from feature unlock system
+ */
+function MilestonesSection({ userStats }) {
+  const currentLevel = userStats?.level || 1;
+  const quizzesCompleted = userStats?.quizzesCompleted || userStats?.totalQuizzesTaken || 0;
+  const currentStreak = userStats?.currentStreak || 0;
+
+  return (
+    <div className="space-y-8">
+      {/* Level Milestones */}
+      <div className="bg-white/70 backdrop-blur-2xl border-2 border-white/80 rounded-2xl p-6 shadow-lg">
+        <h3 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+          <Crown className="w-6 h-6 text-amber-500" />
+          Level Milestones
+        </h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {LEVEL_MILESTONES.map((milestone) => {
+            const isUnlocked = currentLevel >= milestone.level;
+            const progress = isUnlocked ? 100 : (currentLevel / milestone.level) * 100;
+            return (
+              <MilestoneCard 
+                key={milestone.level}
+                title={`Level ${milestone.level}`}
+                description={milestone.title}
+                reward={milestone.reward}
+                isUnlocked={isUnlocked}
+                progress={progress}
+                icon={<Crown className="w-5 h-5" />}
+                color="amber"
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Quiz Milestones */}
+      <div className="bg-white/70 backdrop-blur-2xl border-2 border-white/80 rounded-2xl p-6 shadow-lg">
+        <h3 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+          <BookOpen className="w-6 h-6 text-cyan-500" />
+          Quiz Milestones
+        </h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {QUIZ_MILESTONES.map((milestone) => {
+            const isUnlocked = quizzesCompleted >= milestone.quizzes;
+            const progress = isUnlocked ? 100 : (quizzesCompleted / milestone.quizzes) * 100;
+            return (
+              <MilestoneCard 
+                key={milestone.quizzes}
+                title={`${milestone.quizzes} Quizzes`}
+                description={milestone.title}
+                reward={milestone.reward}
+                isUnlocked={isUnlocked}
+                progress={progress}
+                icon={<BookOpen className="w-5 h-5" />}
+                color="cyan"
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Streak Milestones */}
+      <div className="bg-white/70 backdrop-blur-2xl border-2 border-white/80 rounded-2xl p-6 shadow-lg">
+        <h3 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+          <Flame className="w-6 h-6 text-orange-500" />
+          Streak Milestones
+        </h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {STREAK_MILESTONES.map((milestone) => {
+            const isUnlocked = currentStreak >= milestone.days;
+            const progress = isUnlocked ? 100 : (currentStreak / milestone.days) * 100;
+            return (
+              <MilestoneCard 
+                key={milestone.days}
+                title={`${milestone.days} Day Streak`}
+                description={milestone.title}
+                reward={milestone.reward}
+                isUnlocked={isUnlocked}
+                progress={progress}
+                icon={<Flame className="w-5 h-5" />}
+                color="orange"
+              />
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Milestone Card Component
+ */
+function MilestoneCard({ title, description, reward, isUnlocked, progress, icon, color = "violet" }) {
+  const colorClasses = {
+    amber: { bg: "from-amber-400 to-orange-500", border: "border-amber-300", text: "text-amber-600" },
+    cyan: { bg: "from-cyan-400 to-teal-500", border: "border-cyan-300", text: "text-cyan-600" },
+    orange: { bg: "from-orange-400 to-red-500", border: "border-orange-300", text: "text-orange-600" },
+    violet: { bg: "from-violet-400 to-purple-500", border: "border-violet-300", text: "text-violet-600" },
+  };
+
+  const colors = colorClasses[color] || colorClasses.violet;
+
+  // Format reward object to string
+  const formatReward = (r) => {
+    if (!r) return null;
+    const parts = [];
+    if (r.xpBonus) parts.push(`+${r.xpBonus} XP`);
+    if (r.badge) parts.push('🏅 Badge');
+    if (r.avatarItem) parts.push('🎨 Avatar Item');
+    return parts.length > 0 ? parts.join(' • ') : null;
+  };
+
+  const rewardText = formatReward(reward);
+
+  return (
+    <motion.div
+      className={`relative rounded-xl p-4 border-2 transition-all ${
+        isUnlocked 
+          ? `bg-gradient-to-br from-green-50 to-emerald-50 ${colors.border}` 
+          : 'bg-white/60 border-slate-200'
+      }`}
+      whileHover={{ y: -2, scale: 1.02 }}
+    >
+      <div className="flex items-start gap-3 mb-3">
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white ${
+          isUnlocked 
+            ? `bg-gradient-to-br ${colors.bg}` 
+            : 'bg-slate-300'
+        }`}>
+          {isUnlocked ? <CheckCircle2 className="w-5 h-5" /> : icon}
+        </div>
+        <div className="flex-1">
+          <h4 className={`font-bold ${isUnlocked ? 'text-slate-900' : 'text-slate-600'}`}>{title}</h4>
+          <p className="text-slate-500 text-sm">{description}</p>
+        </div>
+      </div>
+      
+      {!isUnlocked && (
+        <div className="mb-3">
+          <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+            <motion.div 
+              className={`h-full bg-gradient-to-r ${colors.bg}`}
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(progress, 100)}%` }}
+              transition={{ duration: 1 }}
+            />
+          </div>
+          <p className="text-xs text-slate-500 mt-1 text-right">{Math.round(progress)}% complete</p>
+        </div>
+      )}
+      
+      {rewardText && (
+        <div className={`flex items-center gap-2 text-xs font-semibold ${isUnlocked ? colors.text : 'text-slate-400'}`}>
+          <Gift className="w-3.5 h-3.5" />
+          <span>{rewardText}</span>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+/**
+ * Upcoming Feature Unlocks Component - Shows features close to unlocking
+ */
+function UpcomingFeatureUnlocks({ userStats, currentLevel }) {
+  const statsObject = {
+    ...userStats,
+    level: currentLevel || userStats?.level || 1,
+    experience: userStats?.experience || userStats?.totalPoints || 0,
+    quizzesCompleted: userStats?.quizzesCompleted || userStats?.totalQuizzesTaken || 0,
+    currentStreak: userStats?.currentStreak || 0,
+    duelsWon: userStats?.duelsWon || 0,
+  };
+
+  // Get features sorted by progress (closest to unlocking first)
+  const upcomingFeatures = Object.values(FEATURE_UNLOCKS)
+    .map(feature => ({
+      ...feature,
+      status: checkFeatureUnlock(feature.id, statsObject),
+    }))
+    .filter(f => !f.status.unlocked && f.status.progress > 0)
+    .sort((a, b) => b.status.progress - a.status.progress)
+    .slice(0, 4);
+
+  if (upcomingFeatures.length === 0) {
+    return null;
+  }
+
+  return (
+    <motion.div
+      className="group relative mt-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-500" />
+      <div className="relative bg-white/70 backdrop-blur-2xl border-2 border-white/80 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:shadow-violet-500/20 transition-all duration-500">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-black bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent flex items-center gap-2">
+            <Unlock className="w-6 h-6 text-violet-500" />
+            Upcoming Feature Unlocks
+          </h3>
+          <a 
+            href="#" 
+            onClick={(e) => { e.preventDefault(); }}
+            className="text-sm font-bold text-violet-600 hover:text-violet-700 flex items-center gap-1"
+          >
+            View All <ChevronRight className="w-4 h-4" />
+          </a>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {upcomingFeatures.map((feature) => {
+            const tier = TIERS[feature.tier];
+            return (
+              <motion.div
+                key={feature.id}
+                className="bg-white/60 backdrop-blur-md rounded-xl p-4 border-2 border-white/60 hover:border-violet-300/60 transition-all"
+                whileHover={{ y: -4, scale: 1.02 }}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-gradient-to-br ${tier.color} shadow-md`}>
+                    {feature.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-slate-900 text-sm truncate">{feature.name}</h4>
+                    <p className="text-xs text-slate-500 truncate">{feature.description}</p>
+                  </div>
+                </div>
+                
+                <div className="mb-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs text-slate-500">{feature.status.remaining}</span>
+                    <span className="text-xs font-bold text-violet-600">{Math.round(feature.status.progress)}%</span>
+                  </div>
+                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <motion.div
+                      className={`h-full bg-gradient-to-r ${tier.color} rounded-full`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${feature.status.progress}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className={`px-2 py-0.5 text-xs font-bold rounded-full bg-gradient-to-r ${tier.color} text-white`}>
+                    {tier.icon} {tier.name}
+                  </span>
+                  {feature.reward?.xpBonus && (
+                    <span className="text-xs font-bold text-amber-600 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      +{feature.reward.xpBonus} XP
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </motion.div>
   );
 }
