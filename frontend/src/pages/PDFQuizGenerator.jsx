@@ -19,6 +19,14 @@ import {
   Layout,
   Brain,
   Sparkles,
+  Image,
+  Mic,
+  Upload,
+  Globe,
+  Award,
+  Target,
+  BookMarked,
+  GraduationCap,
 } from "lucide-react";
 import {
   Card,
@@ -70,6 +78,59 @@ const questionTypes = [
   },
 ];
 
+// Indian Education Boards
+const indianBoards = [
+  { id: "CBSE", name: "CBSE" },
+  { id: "ICSE", name: "ICSE/ISC" },
+  { id: "Maharashtra", name: "Maharashtra State Board" },
+  { id: "Karnataka", name: "Karnataka State Board" },
+  { id: "TamilNadu", name: "Tamil Nadu State Board" },
+  { id: "UP", name: "UP Board" },
+  { id: "Kerala", name: "Kerala State Board" },
+];
+
+// Bloom's Taxonomy Levels
+const bloomsLevels = [
+  { id: "remember", name: "Remember", color: "bg-blue-100", desc: "Recall facts" },
+  { id: "understand", name: "Understand", color: "bg-green-100", desc: "Explain ideas" },
+  { id: "apply", name: "Apply", color: "bg-yellow-100", desc: "Use information" },
+  { id: "analyze", name: "Analyze", color: "bg-orange-100", desc: "Draw connections" },
+  { id: "evaluate", name: "Evaluate", color: "bg-red-100", desc: "Justify decisions" },
+  { id: "create", name: "Create", color: "bg-purple-100", desc: "Produce new work" },
+];
+
+// NEP 2020 Competencies
+const nepCompetencies = [
+  "Critical Thinking",
+  "Communication",
+  "Collaboration",
+  "Creativity",
+  "Digital Literacy",
+  "Problem Solving",
+  "Self-awareness",
+  "Empathy",
+];
+
+// Languages
+const languages = [
+  { id: "english", name: "English" },
+  { id: "hindi", name: "हिंदी (Hindi)" },
+  { id: "marathi", name: "मराठी (Marathi)" },
+  { id: "tamil", name: "தமிழ் (Tamil)" },
+  { id: "telugu", name: "తెలుగు (Telugu)" },
+  { id: "kannada", name: "ಕನ್ನಡ (Kannada)" },
+  { id: "bengali", name: "বাংলা (Bengali)" },
+];
+
+// Exam Patterns
+const examPatterns = [
+  { id: "standard", name: "Standard Format" },
+  { id: "jee", name: "JEE Pattern (Single/Multiple Correct)" },
+  { id: "neet", name: "NEET Pattern (180 MCQs)" },
+  { id: "board", name: "Board Exam Pattern" },
+  { id: "cbse-term", name: "CBSE Term Exam" },
+];
+
 export default function PDFQuizGenerator() {
   const { user } = useContext(AuthContext);
   const [quiz, setQuiz] = useState({
@@ -90,11 +151,33 @@ export default function PDFQuizGenerator() {
     explanation: "",
     difficulty: "medium", // easy, medium, hard
     tags: [],
+    image: null,
+    voiceNote: null,
+    bloomsLevel: "understand", // remember, understand, apply, analyze, evaluate, create
+    nepCompetency: "", // NEP 2020 competencies
+    ncertChapter: "",
+    curriculum: "CBSE", // CBSE, ICSE, State Board
+    language: "english", // english, hindi, regional
   });
 
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showExportConfig, setShowExportConfig] = useState(false);
+  const [showIndianCurriculum, setShowIndianCurriculum] = useState(false);
+  const [showMediaUpload, setShowMediaUpload] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  
+  // Indian Education System Config
+  const [curriculumConfig, setCurriculumConfig] = useState({
+    board: "CBSE", // CBSE, ICSE, Maharashtra, Karnataka, etc.
+    class: "10",
+    subject: "Mathematics",
+    language: "english",
+    ncertChapter: "",
+    examPattern: "standard", // standard, jee, neet, board
+    competencyBased: false, // NEP 2020
+  });
   const [exportOptions, setExportOptions] = useState({
     includeAnswerKey: true,
     separateAnswerKey: true,
@@ -123,13 +206,14 @@ export default function PDFQuizGenerator() {
 
   // Helper function to render markdown text component for PDF preview
   const MarkdownText = ({ children }) => (
-    <ReactMarkdown
-      remarkPlugins={[remarkMath]}
-      rehypePlugins={[rehypeKatex]}
-      className="prose prose-sm max-w-none dark:prose-invert"
-    >
-      {children}
-    </ReactMarkdown>
+    <div className="prose prose-sm max-w-none dark:prose-invert">
+      <ReactMarkdown
+        remarkPlugins={[remarkMath]}
+        rehypePlugins={[rehypeKatex]}
+      >
+        {children}
+      </ReactMarkdown>
+    </div>
   );
 
   // Helper to clean markdown for PDF text (preserves math formulas)
@@ -183,6 +267,11 @@ export default function PDFQuizGenerator() {
           numQuestions: aiQuestionCount,
           difficulty: aiDifficulty,
           questionTypes: aiQuestionTypes,
+          curriculum: curriculumConfig.board,
+          class: curriculumConfig.class,
+          language: curriculumConfig.language,
+          examPattern: curriculumConfig.examPattern,
+          ncertChapter: curriculumConfig.ncertChapter,
         }),
       });
 
@@ -220,6 +309,11 @@ export default function PDFQuizGenerator() {
         correctAnswer: q.correctAnswer || "",
         marks: parseInt(q.marks) || 2,
         explanation: q.explanation || "",
+        difficulty: q.difficulty || aiDifficulty,
+        bloomsLevel: q.bloomsLevel || "understand",
+        nepCompetency: q.nepCompetency || "",
+        curriculum: curriculumConfig.board,
+        language: curriculumConfig.language,
       }));
 
       setQuiz((prev) => ({
@@ -359,6 +453,199 @@ export default function PDFQuizGenerator() {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
+  };
+
+  // Image upload handler
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCurrentQuestion(prev => ({
+          ...prev,
+          image: { file, preview: reader.result }
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Voice recording
+  const startVoiceRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        setCurrentQuestion(prev => ({
+          ...prev,
+          voiceNote: { blob, url }
+        }));
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+    } catch (error) {
+      alert('Microphone access denied or not available');
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+    }
+  };
+
+  // Export to Moodle XML format
+  const exportToMoodle = () => {
+    if (quiz.questions.length === 0) {
+      alert('Please add questions first');
+      return;
+    }
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+`;
+
+    quiz.questions.forEach((q, index) => {
+      if (q.type === 'mcq') {
+        xml += `  <question type="multichoice">
+    <name>
+      <text>Question ${index + 1}</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[${q.question}]]></text>
+    </questiontext>
+    <defaultgrade>${q.marks}</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+`;
+        q.options.forEach((opt, i) => {
+          const fraction = opt === q.correctAnswer ? '100' : '0';
+          xml += `    <answer fraction="${fraction}">
+      <text><![CDATA[${opt}]]></text>
+    </answer>
+`;
+        });
+        xml += `  </question>
+`;
+      } else if (q.type === 'truefalse') {
+        xml += `  <question type="truefalse">
+    <name>
+      <text>Question ${index + 1}</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[${q.question}]]></text>
+    </questiontext>
+    <defaultgrade>${q.marks}</defaultgrade>
+    <answer fraction="${q.correctAnswer === 'True' ? '100' : '0'}">
+      <text>true</text>
+    </answer>
+    <answer fraction="${q.correctAnswer === 'False' ? '100' : '0'}">
+      <text>false</text>
+    </answer>
+  </question>
+`;
+      } else if (q.type === 'descriptive') {
+        xml += `  <question type="essay">
+    <name>
+      <text>Question ${index + 1}</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[${q.question}]]></text>
+    </questiontext>
+    <defaultgrade>${q.marks}</defaultgrade>
+  </question>
+`;
+      }
+    });
+
+    xml += `</quiz>`;
+
+    const blob = new Blob([xml], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${quiz.title || 'quiz'}_moodle.xml`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Export to Canvas QTI format
+  const exportToCanvas = () => {
+    if (quiz.questions.length === 0) {
+      alert('Please add questions first');
+      return;
+    }
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<questestinterop xmlns="http://www.imsglobal.org/xsd/ims_qtiasiv1p2">
+  <assessment title="${quiz.title || 'Quiz'}">
+    <section>
+`;
+
+    quiz.questions.forEach((q, index) => {
+      const qId = `q${index + 1}`;
+      xml += `      <item title="Question ${index + 1}" ident="${qId}">
+        <itemmetadata>
+          <qtimetadata>
+            <qtimetadatafield>
+              <fieldlabel>question_type</fieldlabel>
+              <fieldentry>${q.type === 'mcq' ? 'multiple_choice_question' : q.type === 'truefalse' ? 'true_false_question' : 'essay_question'}</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>points_possible</fieldlabel>
+              <fieldentry>${q.marks}</fieldentry>
+            </qtimetadatafield>
+          </qtimetadata>
+        </itemmetadata>
+        <presentation>
+          <material>
+            <mattext texttype="text/html">${q.question}</mattext>
+          </material>
+`;
+
+      if (q.type === 'mcq') {
+        xml += `          <response_lid ident="response1" rcardinality="Single">
+            <render_choice>
+`;
+        q.options.forEach((opt, i) => {
+          xml += `              <response_label ident="${i}">
+                <material>
+                  <mattext>${opt}</mattext>
+                </material>
+              </response_label>
+`;
+        });
+        xml += `            </render_choice>
+          </response_lid>
+`;
+      }
+
+      xml += `        </presentation>
+      </item>
+`;
+    });
+
+    xml += `    </section>
+  </assessment>
+</questestinterop>`;
+
+    const blob = new Blob([xml], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${quiz.title || 'quiz'}_canvas_qti.xml`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Generate PDF with advanced formatting
@@ -591,6 +878,20 @@ export default function PDFQuizGenerator() {
           pdf.text(line, margin + 3, yPosition);
           yPosition += exportOptions.layoutStyle === 'compact' ? 5 : 6;
         });
+
+        // Add image if present
+        if (question.image && question.image.preview) {
+          checkPageBreak(60);
+          yPosition += 5;
+          try {
+            const imgWidth = Math.min(80, contentWidth - 20);
+            const imgHeight = 50;
+            pdf.addImage(question.image.preview, 'JPEG', margin + 10, yPosition, imgWidth, imgHeight);
+            yPosition += imgHeight + 5;
+          } catch (error) {
+            console.error('Error adding image to PDF:', error);
+          }
+        }
 
         yPosition += exportOptions.layoutStyle === 'spacious' ? 8 : 5;
 
@@ -994,6 +1295,113 @@ export default function PDFQuizGenerator() {
             </CardContent>
           </Card>
 
+          {/* Indian Curriculum Configuration */}
+          <Card className="border-2 border-orange-200 dark:border-orange-800 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900 dark:to-amber-900">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="w-5 h-5 text-orange-600" />
+                  <span className="text-orange-900 dark:text-orange-100">Indian Education System</span>
+                </div>
+                <Button
+                  onClick={() => setShowIndianCurriculum(!showIndianCurriculum)}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white"
+                >
+                  {showIndianCurriculum ? "Hide" : "Configure"}
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            {showIndianCurriculum && (
+              <CardContent className="space-y-4 bg-white dark:bg-gray-800 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Board/Curriculum</label>
+                    <select
+                      value={curriculumConfig.board}
+                      onChange={(e) => setCurriculumConfig(prev => ({...prev, board: e.target.value}))}
+                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700"
+                    >
+                      {indianBoards.map(board => (
+                        <option key={board.id} value={board.id}>{board.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Class/Grade</label>
+                    <select
+                      value={curriculumConfig.class}
+                      onChange={(e) => setCurriculumConfig(prev => ({...prev, class: e.target.value}))}
+                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700"
+                    >
+                      {[6, 7, 8, 9, 10, 11, 12].map(cls => (
+                        <option key={cls} value={cls}>Class {cls}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Language</label>
+                    <select
+                      value={curriculumConfig.language}
+                      onChange={(e) => setCurriculumConfig(prev => ({...prev, language: e.target.value}))}
+                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700"
+                    >
+                      {languages.map(lang => (
+                        <option key={lang.id} value={lang.id}>{lang.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Exam Pattern</label>
+                    <select
+                      value={curriculumConfig.examPattern}
+                      onChange={(e) => setCurriculumConfig(prev => ({...prev, examPattern: e.target.value}))}
+                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700"
+                    >
+                      {examPatterns.map(pattern => (
+                        <option key={pattern.id} value={pattern.id}>{pattern.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">NCERT Chapter (Optional)</label>
+                    <input
+                      type="text"
+                      value={curriculumConfig.ncertChapter}
+                      onChange={(e) => setCurriculumConfig(prev => ({...prev, ncertChapter: e.target.value}))}
+                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700"
+                      placeholder="e.g., Chapter 5: Quadratic Equations"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={curriculumConfig.competencyBased}
+                      onChange={(e) => setCurriculumConfig(prev => ({...prev, competencyBased: e.target.checked}))}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm font-medium">NEP 2020 Competency-Based Assessment</span>
+                  </label>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900 p-3 rounded-lg">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>Note:</strong> AI will generate questions based on {curriculumConfig.board} syllabus,
+                    Class {curriculumConfig.class} level, in {languages.find(l => l.id === curriculumConfig.language)?.name} language,
+                    following {examPatterns.find(p => p.id === curriculumConfig.examPattern)?.name}.
+                  </p>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+
           {/* Question Types */}
           <Card>
             <CardHeader>
@@ -1206,6 +1614,97 @@ export default function PDFQuizGenerator() {
                   />
                 </div>
 
+                {/* Media Upload Section */}
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Add Media (Optional)</span>
+                    <Button
+                      onClick={() => setShowMediaUpload(!showMediaUpload)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {showMediaUpload ? "Hide" : "Show"} Media Options
+                    </Button>
+                  </div>
+
+                  {showMediaUpload && (
+                    <div className="space-y-3">
+                      {/* Image Upload */}
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg cursor-pointer hover:bg-blue-600">
+                          <Image className="w-4 h-4" />
+                          <span className="text-sm">Upload Image</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                        </label>
+                        {currentQuestion.image && (
+                          <div className="flex items-center gap-2 text-sm text-green-600">
+                            <CheckSquare className="w-4 h-4" />
+                            Image added
+                            <button
+                              onClick={() => setCurrentQuestion(prev => ({...prev, image: null}))}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Image Preview */}
+                      {currentQuestion.image && (
+                        <div className="relative">
+                          <img
+                            src={currentQuestion.image.preview}
+                            alt="Question"
+                            className="max-w-full h-32 object-contain border rounded"
+                          />
+                        </div>
+                      )}
+
+                      {/* Voice Recording */}
+                      <div className="flex items-center gap-3">
+                        {!isRecording ? (
+                          <button
+                            onClick={startVoiceRecording}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                          >
+                            <Mic className="w-4 h-4" />
+                            <span className="text-sm">Record Voice Note</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={stopVoiceRecording}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-700 text-white rounded-lg animate-pulse"
+                          >
+                            <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+                            <span className="text-sm">Stop Recording</span>
+                          </button>
+                        )}
+                        {currentQuestion.voiceNote && (
+                          <div className="flex items-center gap-2">
+                            <audio controls src={currentQuestion.voiceNote.url} className="h-8" />
+                            <button
+                              onClick={() => setCurrentQuestion(prev => ({...prev, voiceNote: null}))}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-gray-500">
+                        Add images for diagrams, graphs, or visual questions. Voice notes for pronunciation or instructions.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
                 {/* MCQ Options */}
                 {currentQuestion.type === "mcq" && (
                   <div>
@@ -1330,6 +1829,56 @@ export default function PDFQuizGenerator() {
                   </div>
                 </div>
 
+                {/* Bloom's Taxonomy & NEP Competency */}
+                <div className="border-t pt-4 space-y-3">
+                  <div>
+                    <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <Target className="w-4 h-4" />
+                      Bloom's Taxonomy Level
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {bloomsLevels.map(level => (
+                        <button
+                          key={level.id}
+                          onClick={() => setCurrentQuestion(prev => ({...prev, bloomsLevel: level.id}))}
+                          className={`p-2 rounded text-xs border-2 transition-all ${
+                            currentQuestion.bloomsLevel === level.id
+                              ? `${level.color} border-blue-500 font-bold`
+                              : 'bg-gray-50 border-gray-200'
+                          }`}
+                          title={level.desc}
+                        >
+                          {level.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {curriculumConfig.competencyBased && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                        <Award className="w-4 h-4" />
+                        NEP 2020 Competency
+                      </label>
+                      <select
+                        value={currentQuestion.nepCompetency}
+                        onChange={(e) =>
+                          setCurrentQuestion((prev) => ({
+                            ...prev,
+                            nepCompetency: e.target.value,
+                          }))
+                        }
+                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700"
+                      >
+                        <option value="">Select Competency</option>
+                        {nepCompetencies.map(comp => (
+                          <option key={comp} value={comp}>{comp}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
                 <Button onClick={addQuestion} className="w-full">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Question
@@ -1424,6 +1973,37 @@ export default function PDFQuizGenerator() {
                   <Eye className="w-4 h-4 mr-2" />
                   {isPreviewMode ? "Hide Preview" : "Preview Quiz"}
                 </Button>
+              </div>
+
+              {/* LMS Export Options */}
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  Export to LMS
+                </h3>
+                <div className="space-y-2">
+                  <Button
+                    onClick={exportToMoodle}
+                    disabled={quiz.questions.length === 0}
+                    variant="outline"
+                    className="w-full justify-start"
+                  >
+                    <BookMarked className="w-4 h-4 mr-2" />
+                    Export to Moodle XML
+                  </Button>
+                  <Button
+                    onClick={exportToCanvas}
+                    disabled={quiz.questions.length === 0}
+                    variant="outline"
+                    className="w-full justify-start"
+                  >
+                    <Globe className="w-4 h-4 mr-2" />
+                    Export to Canvas QTI
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Import directly into your Learning Management System
+                </p>
               </div>
             </CardContent>
           </Card>

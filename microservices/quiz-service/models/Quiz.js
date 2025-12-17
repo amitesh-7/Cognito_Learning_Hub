@@ -131,6 +131,33 @@ const QuizSchema = new mongoose.Schema(
       type: Number, // in minutes
       default: 0,
     },
+    // Quiz type (new field for speech-based quizzes)
+    quizType: {
+      type: String,
+      enum: ["standard", "speech", "pdf", "file", "adaptive"],
+      default: "standard",
+      index: true,
+    },
+    // Speech quiz settings (for speech-based quizzes)
+    speechSettings: {
+      voiceName: String,
+      speechRate: {
+        type: Number,
+        default: 0.9,
+        min: 0.5,
+        max: 2,
+      },
+      speechPitch: {
+        type: Number,
+        default: 1,
+        min: 0.5,
+        max: 2,
+      },
+      language: {
+        type: String,
+        default: "en-US",
+      },
+    },
     // Gamification settings
     gameSettings: {
       enableHints: {

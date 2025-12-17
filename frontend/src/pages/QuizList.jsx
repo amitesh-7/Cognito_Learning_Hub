@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Input } from "../components/ui/Input";
 import ReportModal from "../components/ReportModal";
+import QuizModeSelector from "../components/QuizModeSelector";
 import {
   BookOpen,
   HelpCircle,
@@ -65,6 +66,7 @@ const activityVariants = {
 };
 
 export default function QuizList() {
+  const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState([]);
   const [totalQuizzes, setTotalQuizzes] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -78,6 +80,10 @@ export default function QuizList() {
   const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
   const [activeTab, setActiveTab] = useState("all"); // all, realm, ai, featured
+  
+  // Quiz mode selector states
+  const [showModeSelector, setShowModeSelector] = useState(false);
+  const [quizForModeSelection, setQuizForModeSelection] = useState(null);
 
   useEffect(() => {
     const fetchQuizzes = async () => {
@@ -114,6 +120,20 @@ export default function QuizList() {
   useEffect(() => {
     setPage(1);
   }, [searchTerm, sortBy, filterDifficulty, activeTab]);
+
+  // Handle quiz mode selection
+  const handleModeSelect = (mode) => {
+    if (!quizForModeSelection) return;
+    
+    if (mode === "normal") {
+      navigate(`/quiz/${quizForModeSelection._id}`);
+    } else if (mode === "speech") {
+      navigate(`/quiz/${quizForModeSelection._id}/speech`);
+    }
+    
+    setShowModeSelector(false);
+    setQuizForModeSelection(null);
+  };
 
   // Categorize quizzes
   const realmQuizzes = quizzes.filter(q => 
@@ -574,22 +594,24 @@ export default function QuizList() {
                         {paginatedQuizzes[0].questions.length} questions
                       </span>
                     </p>
-                    <Link to={`/quiz/${paginatedQuizzes[0]._id}`}>
-                      <motion.button
-                        whileHover={{ scale: 1.05, x: 5 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="px-8 py-4 bg-white text-violet-600 hover:bg-white/95 rounded-xl font-black shadow-2xl hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)] transition-all duration-200 flex items-center gap-3 group/btn"
+                    <motion.button
+                      whileHover={{ scale: 1.05, x: 5 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        setQuizForModeSelection(paginatedQuizzes[0]);
+                        setShowModeSelector(true);
+                      }}
+                      className="px-8 py-4 bg-white text-violet-600 hover:bg-white/95 rounded-xl font-black shadow-2xl hover:shadow-[0_10px_40px_-10px_rgba(255,255,255,0.5)] transition-all duration-200 flex items-center gap-3 group/btn"
+                    >
+                      <Play className="w-6 h-6" />
+                      Start Quiz Now
+                      <motion.span
+                        animate={{ x: [0, 5, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
                       >
-                        <Play className="w-6 h-6" />
-                        Start Quiz Now
-                        <motion.span
-                          animate={{ x: [0, 5, 0] }}
-                          transition={{ duration: 1.5, repeat: Infinity }}
-                        >
-                          →
-                        </motion.span>
-                      </motion.button>
-                    </Link>
+                        →
+                      </motion.span>
+                    </motion.button>
                   </div>
                 </div>
               </motion.div>
@@ -723,16 +745,18 @@ export default function QuizList() {
                             <span className="hidden sm:inline">AI Battle</span>
                           </motion.button>
                         </Link>
-                        <Link to={`/quiz/${quiz._id}`} className="flex-1 min-w-[60px]">
-                          <motion.button
-                            whileHover={{ scale: 1.05, x: 3 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="w-full px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 rounded-xl transition-all duration-200 shadow-lg hover:shadow-violet-500/50 flex items-center justify-center gap-1 sm:gap-2"
-                          >
-                            <Play className="w-4 h-4" />
-                            Play
-                          </motion.button>
-                        </Link>
+                        <motion.button
+                          whileHover={{ scale: 1.05, x: 3 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            setQuizForModeSelection(quiz);
+                            setShowModeSelector(true);
+                          }}
+                          className="flex-1 min-w-[60px] w-full px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 rounded-xl transition-all duration-200 shadow-lg hover:shadow-violet-500/50 flex items-center justify-center gap-1 sm:gap-2"
+                        >
+                          <Play className="w-4 h-4" />
+                          Play
+                        </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.1, rotate: 5 }}
                           whileTap={{ scale: 0.9 }}
@@ -889,6 +913,17 @@ export default function QuizList() {
           questionText=""
         />
       )}
+
+      {/* Quiz Mode Selector */}
+      <QuizModeSelector
+        isOpen={showModeSelector}
+        onClose={() => {
+          setShowModeSelector(false);
+          setQuizForModeSelection(null);
+        }}
+        onSelect={handleModeSelect}
+        quizTitle={quizForModeSelection?.title || ""}
+      />
     </div>
   );
 }

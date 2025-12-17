@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
-import { Star, FileText } from "lucide-react";
+import { Star, FileText, Volume2 } from "lucide-react";
 
 // --- Animation Variants ---
 const containerVariants = {
@@ -223,6 +223,50 @@ export default function QuizMaker() {
                   <Star className="w-4 h-4 text-emerald-600 fill-emerald-600" />
                   <span className="text-sm font-bold text-emerald-700">
                     +100 XP per quiz
+                  </span>
+                </div>
+
+                {/* Shine effect */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                </div>
+              </div>
+            </motion.div>
+          </Link>
+
+          {/* Speech Quiz Card */}
+          <Link to="/quiz-maker/speech">
+            <motion.div
+              className="group relative cursor-pointer"
+              whileHover={{ scale: 1.02, y: -8 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500" />
+              <div className="relative bg-white/70 backdrop-blur-2xl border-2 border-white/80 rounded-3xl p-8 shadow-xl hover:shadow-2xl hover:shadow-purple-500/30 transition-all duration-500 overflow-hidden">
+                {/* Animated orb */}
+                <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-purple-400/30 to-pink-500/30 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
+
+                {/* Icon with rotation */}
+                <motion.div
+                  className="w-20 h-20 mb-6 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg"
+                  whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Volume2 className="w-12 h-12 text-white" />
+                </motion.div>
+
+                <h3 className="text-3xl font-black text-slate-900 mb-3 group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300">
+                  Speech Quiz 🎤
+                </h3>
+                <p className="text-slate-600 font-semibold text-lg mb-4">
+                  Interactive voice-enabled quizzes with speech recognition
+                </p>
+
+                {/* XP Badge */}
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-md border border-purple-300/50 rounded-full">
+                  <Star className="w-4 h-4 text-purple-600 fill-purple-600" />
+                  <span className="text-sm font-bold text-purple-700">
+                    +150 XP per quiz
                   </span>
                 </div>
 
