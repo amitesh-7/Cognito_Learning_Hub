@@ -69,29 +69,50 @@ class SocketService {
       print('Socket error: $error');
     });
 
-    // Live session events
-    _socket?.on('session:participant_joined', (data) {
+    // Live session events - Updated to match backend event names
+    _socket?.on('session-joined', (data) {
+      print('📥 Socket: session-joined event received');
+      _eventController.add({'event': 'session_joined', 'data': data});
+    });
+
+    _socket?.on('participant-joined', (data) {
+      print('📥 Socket: participant-joined event received: $data');
       _eventController.add({'event': 'participant_joined', 'data': data});
     });
 
-    _socket?.on('session:participant_left', (data) {
+    _socket?.on('participant-left', (data) {
+      print('📥 Socket: participant-left event received');
       _eventController.add({'event': 'participant_left', 'data': data});
     });
 
-    _socket?.on('session:question', (data) {
-      _eventController.add({'event': 'question', 'data': data});
+    _socket?.on('session-started', (data) {
+      print('📥 Socket: session-started event received');
+      _eventController.add({'event': 'session_started', 'data': data});
     });
 
-    _socket?.on('session:answer_submitted', (data) {
+    _socket?.on('question-started', (data) {
+      print('📥 Socket: question-started event received');
+      _eventController.add({'event': 'question_started', 'data': data});
+    });
+
+    _socket?.on('answer-submitted', (data) {
+      print('📥 Socket: answer-submitted event received');
       _eventController.add({'event': 'answer_submitted', 'data': data});
     });
 
-    _socket?.on('session:leaderboard', (data) {
-      _eventController.add({'event': 'leaderboard', 'data': data});
+    _socket?.on('leaderboard-updated', (data) {
+      print('📥 Socket: leaderboard-updated event received');
+      _eventController.add({'event': 'leaderboard_updated', 'data': data});
     });
 
-    _socket?.on('session:ended', (data) {
+    _socket?.on('session-ended', (data) {
+      print('📥 Socket: session-ended event received');
       _eventController.add({'event': 'session_ended', 'data': data});
+    });
+
+    _socket?.on('error', (data) {
+      print('❌ Socket: error event received: $data');
+      _eventController.add({'event': 'error', 'data': data});
     });
 
     // Duel events
@@ -134,8 +155,21 @@ class SocketService {
     _socket?.emit('session:create', {'quizId': quizId});
   }
 
-  void joinSession(String sessionCode) {
-    _socket?.emit('session:join', {'code': sessionCode});
+  void joinSession(
+    String sessionCode, {
+    required String userId,
+    required String userName,
+    String? userPicture,
+  }) {
+    print('🔵 Socket: Emitting join-session event');
+    print(
+        '🔵 Data: sessionCode=$sessionCode, userId=$userId, userName=$userName');
+    _socket?.emit('join-session', {
+      'sessionCode': sessionCode,
+      'userId': userId,
+      'userName': userName,
+      'userPicture': userPicture,
+    });
   }
 
   void leaveSession(String sessionId) {

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/live_session.dart';
 import '../services/live_session_service.dart';
 import '../services/socket_service.dart';
+import 'auth_provider.dart';
 
 // Service providers
 final liveSessionServiceProvider = Provider((ref) => LiveSessionService());
@@ -130,12 +131,26 @@ class CurrentLiveSessionNotifier extends Notifier<LiveSession?> {
 
   Future<void> joinSession(String code) async {
     try {
+      // Get user data from auth provider
+      final authState = ref.read(authProvider);
+      final user = authState.user;
+
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
       final session = await _service.joinSession(code);
 
       state = session;
 
-      // Connect to socket and join room
-      _socket.joinSession(code);
+      // Connect to socket and join room with user data
+      print('🔵 Provider: Calling socket.joinSession with user data');
+      _socket.joinSession(
+        code,
+        userId: user.id,
+        userName: user.name,
+        userPicture: user.picture,
+      );
     } catch (e) {
       rethrow;
     }

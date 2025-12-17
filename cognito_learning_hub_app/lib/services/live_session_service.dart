@@ -71,7 +71,7 @@ class LiveSessionService {
       }
 
       final session = LiveSession.fromJson(sessionData);
-      print('✅ Successfully parsed LiveSession: ${session.sessionCode}');
+      print('✅ Successfully parsed LiveSession: ${session.code}');
       return session;
     } catch (e, stackTrace) {
       print('❌ Join Session Error: $e');
