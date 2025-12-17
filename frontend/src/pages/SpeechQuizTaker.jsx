@@ -145,22 +145,32 @@ export default function SpeechQuizTaker() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState(false);
 
-  // Speech settings (using default voice)
+  // Speech settings (using saved preferences or defaults)
   const [availableVoices, setAvailableVoices] = useState([]);
   const [selectedVoice, setSelectedVoice] = useState(null);
-  const speechRate = 0.9;
-  const speechPitch = 1;
+  const speechRate = parseFloat(localStorage.getItem('speechRate')) || 0.9;
+  const speechPitch = parseFloat(localStorage.getItem('speechPitch')) || 1.0;
 
   // Refs
   const speechSynthesisRef = useRef(null);
   const recognitionRef = useRef(null);
 
-  // Load voices
+  // Load voices and apply saved preferences
   useEffect(() => {
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
       setAvailableVoices(voices);
-      if (voices.length > 0 && !selectedVoice) {
+      
+      // Try to load preferred voice from settings
+      const preferredVoiceName = localStorage.getItem('preferredVoice');
+      if (preferredVoiceName && voices.length > 0) {
+        const preferredVoice = voices.find(v => v.name === preferredVoiceName);
+        if (preferredVoice) {
+          setSelectedVoice(preferredVoice);
+        } else if (!selectedVoice) {
+          setSelectedVoice(voices[0]);
+        }
+      } else if (voices.length > 0 && !selectedVoice) {
         setSelectedVoice(voices[0]);
       }
     };

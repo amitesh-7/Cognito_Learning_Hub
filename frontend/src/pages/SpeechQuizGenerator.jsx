@@ -148,7 +148,7 @@ const itemVariants = {
 export default function SpeechQuizGenerator() {
   const { user } = useContext(AuthContext);
 
-  // Quiz configuration
+  // Quiz configuration (initialize with saved preferences)
   const [quizConfig, setQuizConfig] = useState({
     title: "",
     topic: "",
@@ -156,9 +156,9 @@ export default function SpeechQuizGenerator() {
     difficulty: "medium",
     questionCount: 5,
     timePerQuestion: 30,
-    voiceName: "",
-    speechRate: 0.9,
-    speechPitch: 1,
+    voiceName: localStorage.getItem('preferredVoice') || "",
+    speechRate: parseFloat(localStorage.getItem('speechRate')) || 0.9,
+    speechPitch: parseFloat(localStorage.getItem('speechPitch')) || 1.0,
   });
 
   // Voice options

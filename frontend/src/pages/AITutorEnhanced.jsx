@@ -51,6 +51,7 @@ const AITutorEnhanced = () => {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState([]);
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [copiedId, setCopiedId] = useState(null);
   const [favoriteMessages, setFavoriteMessages] = useState([]);
@@ -74,6 +75,19 @@ const AITutorEnhanced = () => {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };
+  }, []);
+
+  // Load available voices for speech synthesis
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      setAvailableVoices(voices);
+    };
+
+    loadVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
   }, []);
 
   // Keyboard Shortcuts
@@ -497,6 +511,23 @@ const AITutorEnhanced = () => {
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel(); // Stop any ongoing speech
       const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Apply saved voice preferences from localStorage
+      const preferredVoiceName = localStorage.getItem('preferredVoice');
+      const speechRate = parseFloat(localStorage.getItem('speechRate')) || 0.9;
+      const speechPitch = parseFloat(localStorage.getItem('speechPitch')) || 1.0;
+      
+      utterance.rate = speechRate;
+      utterance.pitch = speechPitch;
+      
+      // Set preferred voice if available
+      if (preferredVoiceName && availableVoices.length > 0) {
+        const preferredVoice = availableVoices.find(v => v.name === preferredVoiceName);
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+      }
+      
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = () => setIsSpeaking(false);
