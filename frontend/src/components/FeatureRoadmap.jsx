@@ -61,7 +61,7 @@ function FeatureUnlockModal({ feature, onClose, onNavigate }) {
       </div>
 
       <motion.div
-        className="relative w-full max-w-lg bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl border border-white/10 overflow-hidden"
+        className="relative w-full max-w-lg bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 rounded-3xl shadow-2xl border border-white/10 dark:border-white/5 overflow-hidden"
         initial={{ scale: 0.5, y: 50 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.5, y: 50 }}
@@ -105,8 +105,8 @@ function FeatureUnlockModal({ feature, onClose, onNavigate }) {
                 Feature Unlocked!
               </span>
             </div>
-            <h2 className="text-3xl font-black text-white mb-2">{feature.name}</h2>
-            <p className="text-slate-300 text-lg">{feature.description}</p>
+            <h2 className="text-3xl font-black text-white dark:text-slate-50 mb-2">{feature.name}</h2>
+            <p className="text-slate-300 dark:text-slate-400 text-lg">{feature.description}</p>
           </motion.div>
 
           {/* Tier badge */}
@@ -126,7 +126,7 @@ function FeatureUnlockModal({ feature, onClose, onNavigate }) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="bg-white/10 rounded-xl p-4 mb-6"
+              className="bg-white/10 dark:bg-white/5 rounded-xl p-4 mb-6"
             >
               <div className="flex items-center justify-center gap-3">
                 {feature.reward.xpBonus && (
@@ -149,7 +149,7 @@ function FeatureUnlockModal({ feature, onClose, onNavigate }) {
           <div className="flex gap-3">
             <motion.button
               onClick={onClose}
-              className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-white font-medium transition-colors"
+              className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 dark:bg-white/5 dark:hover:bg-white/10 rounded-xl text-white dark:text-slate-200 font-medium transition-colors"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -344,10 +344,10 @@ export default function FeatureRoadmap() {
               >
                 <div className={`relative p-4 rounded-xl border-2 transition-all duration-300 ${
                   isUnlocked 
-                    ? `border-green-500/50 bg-gradient-to-r ${tier.color} bg-opacity-10 hover:shadow-lg hover:scale-[1.02]` 
+                    ? `border-green-500/50 dark:border-green-400/40 bg-gradient-to-r ${tier.color} bg-opacity-10 hover:shadow-lg hover:scale-[1.02]` 
                     : progress > 0
-                      ? 'border-yellow-500/30 bg-yellow-500/5 hover:border-yellow-500/50'
-                      : 'border-gray-300/30 dark:border-gray-700/30 bg-gray-500/5'
+                      ? 'border-yellow-500/30 dark:border-yellow-400/30 bg-yellow-500/5 dark:bg-yellow-500/10 hover:border-yellow-500/50'
+                      : 'border-gray-300/30 dark:border-gray-700/30 bg-gray-500/5 dark:bg-gray-700/10'
                 }`}>
                   {/* Progress bar background */}
                   {!isUnlocked && (
@@ -452,12 +452,21 @@ export default function FeatureRoadmap() {
           background: rgba(0, 0, 0, 0.05);
           border-radius: 10px;
         }
+        :global(.dark) .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+        }
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background: rgba(139, 92, 246, 0.3);
           border-radius: 10px;
         }
+        :global(.dark) .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(139, 92, 246, 0.4);
+        }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(139, 92, 246, 0.5);
+        }
+        :global(.dark) .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(139, 92, 246, 0.6);
         }
       `}</style>
     </>

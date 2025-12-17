@@ -103,10 +103,32 @@ const Contact = lazy(() => import("./pages/PublicPages/Contact"));
 const Pricing = lazy(() => import("./pages/PublicPages/Pricing"));
 
 function App() {
-  const [theme] = useTheme();
+  const [theme, toggleTheme] = useTheme();
   const isMobile = useIsMobile();
   const location = useLocation();
   const { user } = useContext(AuthContext);
+
+  // Keyboard shortcut for theme toggle (Ctrl+Shift+D)
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        toggleTheme();
+        // Show brief toast notification
+        const toastDiv = document.createElement('div');
+        toastDiv.className = 'fixed bottom-24 right-6 z-[9999] px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-2xl shadow-2xl font-semibold animate-bounce';
+        toastDiv.textContent = `Switched to ${theme === 'light' ? 'Dark' : 'Light'} Mode`;
+        document.body.appendChild(toastDiv);
+        setTimeout(() => {
+          toastDiv.style.animation = 'fadeOut 0.3s ease-out';
+          toastDiv.style.opacity = '0';
+          setTimeout(() => document.body.removeChild(toastDiv), 300);
+        }, 2000);
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [toggleTheme, theme]);
 
   // Routes that need full-screen layout without navbar/padding
   const fullScreenRoutes = ["/doubt-solver", "/meeting", "/live/join"];

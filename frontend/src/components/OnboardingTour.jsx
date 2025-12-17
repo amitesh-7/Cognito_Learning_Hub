@@ -134,7 +134,7 @@ export default function OnboardingTour({ onComplete }) {
           className="fixed bottom-6 right-6 z-[9998] w-[380px] max-w-[calc(100vw-48px)]"
           style={{ pointerEvents: "auto" }}
         >
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700">
             {/* Header with gradient */}
             <div className={`bg-gradient-to-r ${step.gradient} p-4`}>
               <div className="flex items-center justify-between">
@@ -194,7 +194,7 @@ export default function OnboardingTour({ onComplete }) {
             </div>
 
             {/* Content */}
-            <div className="p-4">
+            <div className="p-4 overflow-y-auto max-h-[400px]" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
               <motion.p
                 key={`desc-${currentStep}`}
                 initial={{ opacity: 0, y: 10 }}

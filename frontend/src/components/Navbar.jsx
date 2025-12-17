@@ -1036,6 +1036,8 @@ const Navbar = () => {
                   className="ml-2 p-2.5 rounded-xl bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 dark:from-slate-800 dark:via-indigo-900/50 dark:to-purple-900/50 hover:from-blue-200 hover:via-purple-200 hover:to-indigo-200 dark:hover:from-indigo-800/60 dark:hover:via-purple-800/60 dark:hover:to-blue-800/60 transition-all duration-500 shadow-md hover:shadow-lg border border-white/60 dark:border-indigo-400/30 backdrop-blur-xl relative overflow-hidden group"
                   whileHover={{ scale: 1.1, rotate: [0, -10, 10, -10, 0] }}
                   whileTap={{ scale: 0.9 }}
+                  title="Toggle theme (Ctrl+Shift+D)"
+                  aria-label="Toggle theme (Ctrl+Shift+D)"
                 >
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-indigo-400/20 to-transparent"
@@ -1085,6 +1087,8 @@ const Navbar = () => {
                 className="p-2 rounded-xl bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 dark:from-slate-800 dark:via-indigo-900/50 dark:to-purple-900/50 border border-white/60 dark:border-indigo-400/30 shadow-md backdrop-blur-xl relative overflow-hidden"
                 whileHover={{ scale: 1.08, rotate: [0, -10, 10, 0] }}
                 whileTap={{ scale: 0.92 }}
+                title="Toggle theme (Ctrl+Shift+D)"
+                aria-label="Toggle theme (Ctrl+Shift+D)"
               >
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
