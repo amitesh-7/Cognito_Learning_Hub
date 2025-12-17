@@ -185,6 +185,34 @@ const userStatsSchema = new mongoose.Schema({
     name: String,
     earnedAt: Date,
   }],
+  // Duels tracking
+  duelsPlayed: {
+    type: Number,
+    default: 0,
+  },
+  duelsWon: {
+    type: Number,
+    default: 0,
+  },
+  // Feature unlock tracking
+  unlockedFeatures: [{
+    featureId: {
+      type: String,
+      required: true,
+    },
+    unlockedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    unlockedByAction: {
+      type: String, // e.g., 'level_up', 'quiz_completed', 'streak_achieved'
+    }
+  }],
+  // Last unlock check timestamp (for caching)
+  lastUnlockCheck: {
+    type: Date,
+    default: Date.now,
+  },
 }, {
   timestamps: true,
 });

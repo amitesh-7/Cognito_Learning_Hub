@@ -5,10 +5,201 @@ import {
   HelpCircle, X, Send, Search, Book, Zap, MessageCircle, 
   ChevronRight, Minimize2, Maximize2, Volume2, Sparkles, Bot,
   User, Clock, CheckCircle2, Play, Users, Trophy, Brain, 
-  Video, Gamepad2, Target, Shield, Award, TrendingUp, FileText
+  Video, Gamepad2, Target, Shield, Award, TrendingUp, FileText,
+  Code2, ListOrdered, List, AlertCircle, Info
 } from "lucide-react";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
+
+/**
+ * FormattedText Component - Renders markdown-like formatted text
+ */
+function FormattedText({ content }) {
+  if (!content) return null;
+
+  const formatText = (text) => {
+    const lines = text.split('\n');
+    const formatted = [];
+    let inCodeBlock = false;
+    let codeBlockContent = [];
+    let listItems = [];
+    let inList = false;
+
+    lines.forEach((line, index) => {
+      // Code blocks
+      if (line.trim().startsWith('```')) {
+        if (inCodeBlock) {
+          formatted.push(
+            <div key={`code-${index}`} className="my-3">
+              <div className="flex items-center gap-2 bg-slate-800 dark:bg-slate-950 px-3 py-2 rounded-t-lg">
+                <Code2 className="w-4 h-4 text-violet-400" />
+                <span className="text-xs font-mono text-slate-300">Code</span>
+              </div>
+              <pre className="bg-slate-900 dark:bg-black p-3 rounded-b-lg overflow-x-auto">
+                <code className="text-xs text-green-400 font-mono">
+                  {codeBlockContent.join('\n')}
+                </code>
+              </pre>
+            </div>
+          );
+          codeBlockContent = [];
+          inCodeBlock = false;
+        } else {
+          inCodeBlock = true;
+        }
+        return;
+      }
+
+      if (inCodeBlock) {
+        codeBlockContent.push(line);
+        return;
+      }
+
+      // Ordered lists
+      if (/^\d+\.\s/.test(line.trim())) {
+        if (!inList) {
+          inList = 'ordered';
+          listItems = [];
+        }
+        listItems.push(
+          <li key={`li-${index}`} className="text-sm leading-relaxed ml-1">
+            {formatInlineText(line.replace(/^\d+\.\s/, ''))}
+          </li>
+        );
+        return;
+      }
+
+      // Unordered lists
+      if (/^[-*]\s/.test(line.trim())) {
+        if (!inList) {
+          inList = 'unordered';
+          listItems = [];
+        }
+        listItems.push(
+          <li key={`li-${index}`} className="text-sm leading-relaxed flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+            <span>{formatInlineText(line.replace(/^[-*]\s/, ''))}</span>
+          </li>
+        );
+        return;
+      }
+
+      // Flush list if we're leaving it
+      if (inList && line.trim() !== '') {
+        formatted.push(
+          <div key={`list-${index}`} className="my-3">
+            {inList === 'ordered' ? (
+              <ol className="space-y-2 pl-6 list-decimal list-outside">{listItems}</ol>
+            ) : (
+              <ul className="space-y-2">{listItems}</ul>
+            )}
+          </div>
+        );
+        listItems = [];
+        inList = false;
+      }
+
+      // Headings
+      if (line.startsWith('### ')) {
+        formatted.push(
+          <h5 key={`h5-${index}`} className="text-base font-bold text-slate-900 dark:text-slate-100 mt-4 mb-2 flex items-center gap-2">
+            <Target className="w-4 h-4 text-violet-600" />
+            {line.replace('### ', '')}
+          </h5>
+        );
+        return;
+      }
+      if (line.startsWith('## ')) {
+        formatted.push(
+          <h4 key={`h4-${index}`} className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-4 mb-2">
+            {line.replace('## ', '')}
+          </h4>
+        );
+        return;
+      }
+      if (line.startsWith('# ')) {
+        formatted.push(
+          <h3 key={`h3-${index}`} className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-4 mb-3">
+            {line.replace('# ', '')}
+          </h3>
+        );
+        return;
+      }
+
+      // Info/Alert boxes
+      if (line.trim().startsWith('ℹ️') || line.trim().toLowerCase().startsWith('info:')) {
+        formatted.push(
+          <div key={`info-${index}`} className="my-3 p-3 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r-lg">
+            <div className="flex items-start gap-2">
+              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-blue-900 dark:text-blue-100">
+                {formatInlineText(line.replace(/^(ℹ️|info:)/i, '').trim())}
+              </p>
+            </div>
+          </div>
+        );
+        return;
+      }
+      if (line.trim().startsWith('⚠️') || line.trim().toLowerCase().startsWith('warning:')) {
+        formatted.push(
+          <div key={`warn-${index}`} className="my-3 p-3 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded-r-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-amber-900 dark:text-amber-100">
+                {formatInlineText(line.replace(/^(⚠️|warning:)/i, '').trim())}
+              </p>
+            </div>
+          </div>
+        );
+        return;
+      }
+
+      // Regular paragraphs
+      if (line.trim()) {
+        formatted.push(
+          <p key={`p-${index}`} className="text-sm leading-relaxed my-2">
+            {formatInlineText(line)}
+          </p>
+        );
+      }
+    });
+
+    // Flush remaining list
+    if (inList && listItems.length > 0) {
+      formatted.push(
+        <div key="list-end" className="my-3">
+          {inList === 'ordered' ? (
+            <ol className="space-y-2 pl-6 list-decimal list-outside">{listItems}</ol>
+          ) : (
+            <ul className="space-y-2">{listItems}</ul>
+          )}
+        </div>
+      );
+    }
+
+    return formatted;
+  };
+
+  const formatInlineText = (text) => {
+    // Inline code
+    text = text.replace(/`([^`]+)`/g, (_, code) => {
+      return `<code class="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 text-violet-600 dark:text-violet-400 rounded text-xs font-mono">${code}</code>`;
+    });
+
+    // Bold
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-slate-900 dark:text-slate-100">$1</strong>');
+
+    // Italic
+    text = text.replace(/\*([^*]+)\*/g, '<em class="italic text-slate-700 dark:text-slate-300">$1</em>');
+
+    // Links
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-violet-600 dark:text-violet-400 hover:underline font-medium" target="_blank" rel="noopener noreferrer">$1</a>');
+
+    return <span dangerouslySetInnerHTML={{ __html: text }} />;
+  };
+
+  return <div className="space-y-1">{formatText(content)}</div>;
+}
 
 /**
  * Advanced Help Widget with Chat Interface
@@ -68,7 +259,7 @@ export default function HelpWidget() {
       {
         id: 1,
         question: "How do I create my first quiz?",
-        answer: "Navigate to Dashboard → Click 'Create Quiz' button → Choose between 'AI Generate' (smart creation using AI) or 'Manual' (create questions yourself) → For AI: Enter a topic, paste text, upload document (PDF/Word), or paste YouTube URL → Set difficulty and question count → Click 'Generate' → Review and edit questions → Click 'Save & Publish'. Your quiz is now live!",
+        answer: "### Creating Your First Quiz\n\nFollow these simple steps to create your first quiz:\n\n**Step 1: Access Quiz Creator**\n- Navigate to **Dashboard**\n- Click the `Create Quiz` button\n\n**Step 2: Choose Creation Method**\n1. **AI Generate** - Smart creation using AI\n2. **Manual** - Create questions yourself\n\n**Step 3: For AI Generation**\n- Enter a topic\n- Paste text content\n- Upload document (PDF/Word)\n- Or paste YouTube URL\n\n**Step 4: Configure Settings**\n- Set difficulty level\n- Choose question count\n- Click `Generate`\n\n**Step 5: Review & Publish**\n- Review generated questions\n- Edit if needed\n- Click `Save & Publish`\n\n✅ Your quiz is now live and ready to share!",
         category: "Getting Started",
         icon: Play,
         tags: ["quiz", "create", "ai", "manual"]
@@ -103,7 +294,7 @@ export default function HelpWidget() {
       {
         id: 10,
         question: "How does AI quiz generation work?",
-        answer: "Cognito uses **Google Gemini AI** to analyze your content. Process: 1) Input text/document/YouTube URL 2) AI processes and identifies key concepts 3) Generates relevant multiple-choice questions 4) Creates plausible distractors 5) Adds explanations for each answer. You can set difficulty (Easy/Medium/Hard) and question count (5-30). The AI understands context and creates meaningful questions.",
+        answer: "### AI Quiz Generation Process\n\nCognito uses **Google Gemini AI** to analyze your content and generate high-quality quiz questions.\n\n**How It Works:**\n\n1. **Input Content**\n   - Text, documents, or YouTube URLs\n   - Supports multiple formats\n\n2. **AI Processing**\n   - Analyzes and identifies key concepts\n   - Understands context and relationships\n\n3. **Question Generation**\n   - Creates relevant multiple-choice questions\n   - Generates plausible distractors\n   - Adds detailed explanations\n\n**Configuration Options:**\n- **Difficulty:** Easy, Medium, or Hard\n- **Quantity:** 5-30 questions\n- **Topic Focus:** Custom topics\n\n```python\n# Example API Call\ngenerate_quiz(\n    content=\"Your content here\",\n    difficulty=\"medium\",\n    count=10\n)\n```\n\nℹ️ The AI understands context and creates meaningful, educational questions tailored to your content.",
         category: "Quiz Creation",
         icon: Brain,
         tags: ["ai", "generate", "gemini", "automatic"]
@@ -111,7 +302,7 @@ export default function HelpWidget() {
       {
         id: 11,
         question: "What file formats can I upload for AI quiz generation?",
-        answer: "Supported formats: **PDF** (.pdf) | **Word Documents** (.docx, .doc) | **Text Files** (.txt) | **YouTube URLs** (automatically transcribes video) | **Plain Text** (paste directly). Maximum file size: 10MB. For YouTube: Video must have captions enabled. AI extracts text and generates questions automatically.",
+        answer: "### Supported File Formats\n\nCognito AI Quiz Generator supports multiple input formats:\n\n**Document Formats:**\n- `PDF` files (.pdf)\n- `Word Documents` (.docx, .doc)\n- `Text Files` (.txt)\n- `Plain Text` (paste directly)\n\n**Video Content:**\n- `YouTube URLs` (auto-transcribes video)\n- ⚠️ Video must have captions enabled\n\n**Upload Limits:**\n- Maximum file size: **10MB**\n- Text length: Up to **50,000 characters**\n\n**Processing:**\n1. Upload your file\n2. AI extracts and analyzes text\n3. Generates relevant questions automatically\n\nℹ️ **Tip:** For best results, ensure your content is well-structured and clearly formatted.",
         category: "Quiz Creation",
         icon: FileText,
         tags: ["upload", "file", "pdf", "youtube", "document"]
@@ -447,7 +638,7 @@ export default function HelpWidget() {
     if (fallbacks.greeting.some(word => searchLower.includes(word))) {
       return {
         type: "answer",
-        text: "👋 Hello! I'm your Cognito Learning Hub AI assistant. I can help you with anything about the platform - from creating quizzes to troubleshooting issues. What would you like to know?",
+        text: "### 👋 Hello! Welcome to Cognito Learning Hub\n\nI'm your **AI assistant**, here to help you navigate the platform and answer any questions you have.\n\n**I can help you with:**\n- Quiz creation and AI generation\n- Competitive modes and battles\n- Gamification features\n- Accessibility options\n- Troubleshooting issues\n\nℹ️ **Tip:** You can use `Alt+H` to quickly toggle this help center anytime!",
         relatedQuestions: [
           "How do I create my first quiz?",
           "What is the difference between Student and Teacher accounts?",
@@ -459,7 +650,7 @@ export default function HelpWidget() {
     if (fallbacks.thanks.some(word => searchLower.includes(word))) {
       return {
         type: "answer",
-        text: "You're welcome! 😊 Feel free to ask if you have any other questions about Cognito Learning Hub. I'm here to help 24/7!",
+        text: "### You're welcome! 😊\n\nI'm glad I could help! Remember, I'm available **24/7** to assist you with any questions about Cognito Learning Hub.\n\n**Quick Tips:**\n- Press `Alt+H` to toggle this help center\n- Use the **Docs** tab to browse all topics\n- Check the **Home** tab for popular questions\n\nℹ️ Feel free to ask anything else!",
         relatedQuestions: [
           "How does the XP and leveling system work?",
           "How do I enable dark mode?",
@@ -469,10 +660,9 @@ export default function HelpWidget() {
     }
 
     // Generic helpful response
-    // Generic helpful response
     return {
       type: "answer",
-      text: "I couldn't find a specific answer for that, but I'm here to help! Could you rephrase your question or ask about:\n\n• **Quiz Creation**: AI generation, manual creation, editing\n• **Competitive Modes**: Duels, live sessions, battles\n• **Gamification**: XP, levels, achievements, leaderboards\n• **AI Features**: AI Tutor, quiz generation, smart features\n• **Accessibility**: Voice guidance, keyboard shortcuts\n• **Troubleshooting**: Common issues and fixes\n\nYou can also browse the 'Docs' tab for all available topics!",
+      text: "### 🔍 Couldn't Find Exact Match\n\nI couldn't find a specific answer for your question, but I'm here to help!\n\n**Popular Topics:**\n\n1. **Quiz Creation** - AI generation, manual creation, editing\n2. **Competitive Modes** - Duels, live sessions, battles  \n3. **Gamification** - XP, levels, achievements, leaderboards\n4. **AI Features** - AI Tutor, quiz generation, smart features\n5. **Accessibility** - Voice guidance, keyboard shortcuts\n6. **Troubleshooting** - Common issues and fixes\n\nℹ️ **Tip:** Try browsing the **Docs** tab for all available topics, or rephrase your question!",
       relatedQuestions: [
         "What are the main features of Cognito Learning Hub?",
         "How do I maximize my quiz score?",
@@ -530,63 +720,32 @@ export default function HelpWidget() {
     { title: "Troubleshooting", count: `${knowledgeBase["troubleshooting"].length} articles`, icon: Shield }
   ];
 
-  // Render directly without portal - simpler approach
-  return (
-    <div 
-      style={{
-        position: 'fixed',
-        bottom: '24px',
-        right: '24px',
-        zIndex: 2147483647,
-        pointerEvents: 'auto'
-      }}
-    >
-      {!isOpen ? (
-        <motion.button
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.2 }}
-          style={{
-            width: '64px',
-            height: '64px',
-            background: 'linear-gradient(to right, #7c3aed, #c026d3)',
-            borderRadius: '50%',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            border: 'none'
-          }}
-          onClick={() => setIsOpen(true)}
-          aria-label="Open help center"
-          className="group hover:scale-110 transition-transform"
+  // Use a portal so `position: fixed` stays relative to the viewport
+  // even if ancestors (e.g., smooth-scroll containers) apply transforms.
+  if (typeof document === "undefined") return null;
+
+  const widget = (
+    <AnimatePresence>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[9999]"
+          onClick={() => setIsOpen(false)}
         >
-          <HelpCircle style={{ width: '32px', height: '32px', color: 'white' }} className="group-hover:rotate-12 transition-transform" />
-          <span style={{
-            position: 'absolute',
-            top: '-4px',
-            right: '-4px',
-            width: '16px',
-            height: '16px',
-            background: '#ef4444',
-            borderRadius: '50%'
-          }} className="animate-pulse" />
-        </motion.button>
-        ) : (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ 
               opacity: 1, 
+              y: 0,
               scale: 1,
               height: isMinimized ? 60 : 600
             }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="w-[420px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col"
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute top-16 right-4 w-[420px] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col"
             style={{ 
-              maxHeight: 'calc(100vh - 80px)',
-              overflow: 'hidden'
+              maxHeight: 'calc(100vh - 80px)'
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 p-4 flex items-center justify-between">
@@ -655,7 +814,7 @@ export default function HelpWidget() {
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
             {/* Home View */}
             {activeView === "home" && (
               <div className="p-4 space-y-4">
@@ -810,11 +969,9 @@ export default function HelpWidget() {
                                 : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                             }`}>
                               {msg.type === "user" ? (
-                                <p className="text-sm">{msg.content}</p>
+                                <p className="text-sm leading-relaxed">{msg.content}</p>
                               ) : (
-                                <div className="text-sm space-y-2 whitespace-pre-wrap">
-                                  {msg.text || msg.content}
-                                </div>
+                                <FormattedText content={msg.text || msg.content} />
                               )}
                             </div>
                             {msg.relatedQuestions && msg.relatedQuestions.length > 0 && (
@@ -1017,8 +1174,11 @@ export default function HelpWidget() {
         </>
       )}
           </motion.div>
-        )}
-    </div>
+        </div>
+      )}
+    </AnimatePresence>
   );
+
+  return createPortal(widget, document.body);
 }
   

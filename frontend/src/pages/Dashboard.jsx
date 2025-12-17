@@ -46,6 +46,7 @@ import {
   Coffee,
   Rocket,
   Gamepad2,
+  Map as MapIcon,
 } from "lucide-react";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "../components/ui/PullToRefreshIndicator";
@@ -58,6 +59,7 @@ import {
 import { RealTimeStats } from "../components/Gamification";
 import StudyBuddyChat from "../components/StudyBuddy/StudyBuddyChat";
 import StudyGoals from "../components/StudyBuddy/StudyGoals";
+import { FEATURE_UNLOCKS } from "../config/featureUnlocks";
 import TimeTravelMode from "../components/TimeTravel/TimeTravelMode";
 
 // --- Animation Variants ---
@@ -1879,6 +1881,121 @@ export default function Dashboard() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Feature Unlock Progress */}
+        {userStats && (() => {
+          const allFeatures = Object.entries(FEATURE_UNLOCKS);
+          const unlockedCount = allFeatures.filter(([_, feature]) => {
+            const criteria = feature.criteria;
+            if (criteria?.type === 'level') return currentLevel >= criteria.value;
+            if (criteria?.type === 'quizzes') return userStats.quizzesCompleted >= criteria.value;
+            if (criteria?.type === 'duels') return (userStats.duelsWon || 0) >= criteria.value;
+            return false;
+          }).length;
+          const totalFeatures = allFeatures.length;
+          const progressPercent = Math.floor((unlockedCount / totalFeatures) * 100);
+
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8"
+            >
+              <Card className="bg-gradient-to-r from-purple-900/30 via-blue-900/30 to-indigo-900/30 border-purple-500/30 overflow-hidden">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-purple-400" />
+                        Feature Unlock Progress
+                      </h3>
+                      <p className="text-gray-400 text-sm">
+                        {unlockedCount} / {totalFeatures} Features Unlocked
+                      </p>
+                    </div>
+                    <Link to="/roadmap">
+                      <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600">
+                        <MapIcon className="w-4 h-4 mr-2" />
+                        View Roadmap
+                      </Button>
+                    </Link>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="relative h-4 bg-gray-800/50 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercent}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 rounded-full"
+                    >
+                      {/* Shimmer effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                    </motion.div>
+                  </div>
+
+                  {/* Progress Stats */}
+                  <div className="flex items-center justify-between mt-3">
+                    <p className="text-gray-400 text-sm">
+                      {progressPercent}% Complete
+                    </p>
+                    <p className="text-purple-400 text-sm font-medium">
+                      {totalFeatures - unlockedCount} features remaining
+                    </p>
+                  </div>
+
+                  {/* Next Unlock Preview */}
+                  {(() => {
+                    const nextUnlock = allFeatures.find(([_, feature]) => {
+                      const criteria = feature.criteria;
+                      if (!criteria) return false;
+                      
+                      if (criteria.type === 'level') return currentLevel < criteria.value;
+                      if (criteria.type === 'quizzes') return userStats.quizzesCompleted < criteria.value;
+                      if (criteria.type === 'duels') return (userStats.duelsWon || 0) < criteria.value;
+                      return false;
+                    });
+                    
+                    if (nextUnlock) {
+                      const [featureId, feature] = nextUnlock;
+                      const criteria = feature.criteria;
+                      let requirementText = '';
+                      
+                      if (criteria.type === 'level') {
+                        requirementText = `Reach Level ${criteria.value}`;
+                      } else if (criteria.type === 'quizzes') {
+                        requirementText = `Complete ${criteria.value} quizzes (${userStats.quizzesCompleted}/${criteria.value})`;
+                      } else if (criteria.type === 'duels') {
+                        requirementText = `Win ${criteria.value} duels (${userStats.duelsWon || 0}/${criteria.value})`;
+                      }
+                      
+                      return (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="mt-4 p-3 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/20"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-purple-500/20 rounded-lg">
+                                <Zap className="w-5 h-5 text-purple-400" />
+                              </div>
+                              <div>
+                                <p className="text-white font-medium text-sm">{feature.name}</p>
+                                <p className="text-gray-400 text-xs">{requirementText}</p>
+                              </div>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                          </div>
+                        </motion.div>
+                      );
+                    }
+                  })()}
+                </div>
+              </Card>
+            </motion.div>
+          );
+        })()}
       </div>
     </div>
   );
