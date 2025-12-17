@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../config/theme.dart';
 import '../../providers/live_session_provider.dart';
 import '../../widgets/common/app_button.dart';
@@ -61,11 +62,57 @@ class _LiveQuizJoinScreenState extends ConsumerState<LiveQuizJoinScreen> {
     }
   }
 
-  void _scanQRCode() {
-    // TODO: Implement QR code scanning
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('QR Scanner coming soon!')),
+  void _scanQRCode() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: const BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              title: const Text('Scan QR Code'),
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            Expanded(
+              child: MobileScanner(
+                onDetect: (capture) {
+                  final barcodes = capture.barcodes;
+                  for (final barcode in barcodes) {
+                    if (barcode.rawValue != null) {
+                      Navigator.pop(context);
+                      _handleScannedCode(barcode.rawValue!);
+                      break;
+                    }
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  void _handleScannedCode(String code) {
+    // Parse the code from QR (format: cognito://join/CODE or just CODE)
+    final uri = Uri.tryParse(code);
+    if (uri != null && uri.pathSegments.isNotEmpty) {
+      _codeController.text = uri.pathSegments.last.toUpperCase();
+    } else {
+      _codeController.text = code.trim().toUpperCase();
+    }
+    // Auto-submit after scanning
+    _joinSession();
   }
 
   void _browseActiveSessions() {

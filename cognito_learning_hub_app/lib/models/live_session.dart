@@ -32,14 +32,17 @@ class LiveSession {
   });
 
   factory LiveSession.fromJson(Map<String, dynamic> json) {
+    // Handle quizMetadata if present
+    final quizMetadata = json['quizMetadata'] as Map<String, dynamic>?;
+
     return LiveSession(
-      id: json['_id'] ?? json['id'] ?? '',
-      code: json['code'] ?? '',
+      id: json['_id'] ?? json['id'] ?? json['sessionCode'] ?? '',
+      code: json['code'] ?? json['sessionCode'] ?? '',
       quizId: json['quizId'] ?? json['quiz'] ?? '',
       hostId: json['hostId'] ?? json['host'] ?? '',
       hostName: json['hostName'] ?? 'Unknown Host',
-      quizTitle: json['quizTitle'] ?? 'Untitled Quiz',
-      quizTopic: json['quizTopic'],
+      quizTitle: quizMetadata?['title'] ?? json['quizTitle'] ?? 'Untitled Quiz',
+      quizTopic: quizMetadata?['topic'] ?? json['quizTopic'],
       status: _parseStatus(json['status']),
       participants: (json['participants'] as List<dynamic>?)
               ?.map((p) => LiveParticipant.fromJson(p))

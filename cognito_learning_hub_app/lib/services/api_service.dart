@@ -110,8 +110,24 @@ class ApiService {
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? options,
-  }) {
-    return _dio.get(path, queryParameters: queryParameters, options: options);
+  }) async {
+    try {
+      print('🌐 GET Request: ${_dio.options.baseUrl}$path');
+      print('🔑 Query Parameters: $queryParameters');
+      final response = await _dio.get(path,
+          queryParameters: queryParameters, options: options);
+      print('✅ GET Response: ${response.statusCode}');
+      return response;
+    } catch (e) {
+      print('❌ GET Error: $e');
+      if (e is DioException) {
+        print('📛 DioException Type: ${e.type}');
+        print('📛 Response Status: ${e.response?.statusCode}');
+        print('📛 Response Data: ${e.response?.data}');
+        print('📛 Error Message: ${e.message}');
+      }
+      rethrow;
+    }
   }
 
   // Generic POST request

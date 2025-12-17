@@ -11,7 +11,9 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const compression = require("compression");
 const createLogger = require("../shared/utils/logger");
-const { createLogger: createServiceLogger } = require("../shared/utils/serviceLogger");
+const {
+  createLogger: createServiceLogger,
+} = require("../shared/utils/serviceLogger");
 const ApiResponse = require("../shared/utils/response");
 const { connectDB } = require("./models");
 const sessionManager = require("./services/sessionManager");
@@ -24,7 +26,10 @@ const { initializeDuelHandlers } = require("./socket/duelHandlers");
 const app = express();
 const httpServer = createServer(app);
 const logger = createLogger("live-service");
-const serviceLogger = createServiceLogger("Live Service", process.env.ADMIN_SERVICE_URL);
+const serviceLogger = createServiceLogger(
+  "Live Service",
+  process.env.ADMIN_SERVICE_URL
+);
 const PORT = process.env.PORT || 3004;
 
 // Socket.IO configuration
@@ -45,6 +50,14 @@ app.use(cors());
 app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+// Add COOP headers to allow cross-origin communication
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
+  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  next();
+});
 
 // Input Sanitization (XSS & Injection Protection)
 const { sanitizeAll } = require("../shared/middleware/inputValidation");

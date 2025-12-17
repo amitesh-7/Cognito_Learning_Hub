@@ -31,13 +31,51 @@ class LiveSessionService {
   // Join an existing session with code
   Future<LiveSession> joinSession(String code) async {
     try {
+      print('🔵 Joining session with code: $code');
+      print('🌐 API URL: ${ApiConfig.apiUrl}${Endpoints.liveSessions}/$code');
+
       // Use GET to fetch session details by code (POST endpoint doesn't exist)
       final response = await _api.get(
         '${Endpoints.liveSessions}/$code',
       );
 
-      return LiveSession.fromJson(response.data['session'] ?? response.data);
-    } catch (e) {
+      print('📦 Raw Response Data: ${response.data}');
+      print('📊 Response Data Type: ${response.data.runtimeType}');
+      print('📈 Response Status Code: ${response.statusCode}');
+
+      // Check if response.data is a Map
+      if (response.data is! Map) {
+        print(
+            '❌ Response data is not a Map, it is: ${response.data.runtimeType}');
+        throw Exception('Invalid response format from server');
+      }
+
+      final data = response.data as Map<String, dynamic>;
+      print('🔍 Data keys: ${data.keys.toList()}');
+
+      // Backend returns { success: true, data: { session: {...} } }
+      final sessionData = response.data['data']?['session'] ??
+          response.data['session'] ??
+          response.data['data'] ??
+          response.data;
+
+      print('🎯 Session data: $sessionData');
+      print('🎯 Session data type: ${sessionData.runtimeType}');
+
+      if (sessionData == null) {
+        throw Exception('Invalid session data received from server');
+      }
+
+      if (sessionData is Map) {
+        print('🎯 Session data keys: ${(sessionData as Map).keys.toList()}');
+      }
+
+      final session = LiveSession.fromJson(sessionData);
+      print('✅ Successfully parsed LiveSession: ${session.sessionCode}');
+      return session;
+    } catch (e, stackTrace) {
+      print('❌ Join Session Error: $e');
+      print('📍 Stack Trace: $stackTrace');
       throw _handleError(e);
     }
   }
@@ -131,13 +169,16 @@ class LiveSessionService {
     }
   }
 
-  String _handleError(dynamic error) {
+  Exception _handleError(dynamic error) {
     if (error is DioException) {
       if (error.response != null) {
-        return error.response?.data['message'] ?? 'Server error occurred';
+        final message = error.response?.data['message'] ??
+            error.response?.data['error'] ??
+            'Server error occurred';
+        return Exception(message);
       }
-      return 'Network error: ${error.message}';
+      return Exception('Network error: ${error.message}');
     }
-    return error.toString();
+    return Exception(error.toString());
   }
 }

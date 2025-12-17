@@ -11,14 +11,19 @@ const helmet = require("helmet");
 const compression = require("compression");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const createLogger = require("../shared/utils/logger");
-const { createLogger: createServiceLogger } = require("../shared/utils/serviceLogger");
+const {
+  createLogger: createServiceLogger,
+} = require("../shared/utils/serviceLogger");
 const { SERVICES } = require("../shared/config/services");
 const { generalLimiter } = require("../shared/middleware/rateLimiter");
 const errorHandler = require("../shared/middleware/errorHandler");
 
 const app = express();
 const logger = createLogger("API-GATEWAY");
-const serviceLogger = createServiceLogger("API Gateway", process.env.ADMIN_SERVICE_URL);
+const serviceLogger = createServiceLogger(
+  "API Gateway",
+  process.env.ADMIN_SERVICE_URL
+);
 const PORT = process.env.GATEWAY_PORT || 3000;
 
 // Trust proxy for rate limiting behind reverse proxy
@@ -108,6 +113,10 @@ app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
   }
+  // Explicitly set COOP headers to allow cross-origin communication
+  res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
+  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
   next();
 });
 
