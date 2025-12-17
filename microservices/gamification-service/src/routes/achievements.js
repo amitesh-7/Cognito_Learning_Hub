@@ -1,30 +1,59 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const achievementProcessor = require('../services/achievementProcessor');
-const { Achievement } = require('../models/Achievement');
-const { authenticateToken, adminMiddleware } = require('../../../shared/middleware/auth');
+const achievementProcessor = require("../services/achievementProcessor");
+const { Achievement } = require("../models/Achievement");
+const {
+  authenticateToken,
+  adminMiddleware,
+} = require("../../../shared/middleware/auth");
 
 /**
  * GET /api/achievements
- * Get all available achievements
+ * Get all available achievements with user progress
  */
-router.get('/', authenticateToken, async (req, res, next) => {
+router.get("/", authenticateToken, async (req, res, next) => {
   try {
-    const { type, rarity, isActive = 'true' } = req.query;
+    const { type, rarity, isActive = "true" } = req.query;
+    const userId = req.user.userId || req.user.id || req.user._id;
 
     const filter = {};
     if (type) filter.type = type;
     if (rarity) filter.rarity = rarity;
-    if (isActive) filter.isActive = isActive === 'true';
+    if (isActive) filter.isActive = isActive === "true";
 
     const achievements = await Achievement.find(filter)
       .sort({ rarity: -1, points: -1 })
       .lean();
 
+    // Get user's achievement progress
+    const { UserAchievement } = require("../models/Achievement");
+    const userAchievements = await UserAchievement.find({
+      user: userId,
+    }).lean();
+
+    // Create a map of achievement progress
+    const progressMap = {};
+    userAchievements.forEach((ua) => {
+      progressMap[ua.achievement.toString()] = {
+        unlocked: ua.isCompleted,
+        currentProgress: ua.progress || 0,
+        unlockedAt: ua.unlockedAt,
+      };
+    });
+
+    // Merge achievement data with user progress
+    const enrichedAchievements = achievements.map((achievement) => ({
+      ...achievement,
+      unlocked: progressMap[achievement._id.toString()]?.unlocked || false,
+      currentProgress:
+        progressMap[achievement._id.toString()]?.currentProgress || 0,
+      unlockedAt: progressMap[achievement._id.toString()]?.unlockedAt,
+    }));
+
     res.json({
       success: true,
-      count: achievements.length,
-      achievements,
+      count: enrichedAchievements.length,
+      achievements: enrichedAchievements,
     });
   } catch (error) {
     next(error);
@@ -35,23 +64,26 @@ router.get('/', authenticateToken, async (req, res, next) => {
  * GET /api/achievements/:userId
  * Get user's achievements
  */
-router.get('/:userId', authenticateToken, async (req, res, next) => {
+router.get("/:userId", authenticateToken, async (req, res, next) => {
   try {
     const { userId } = req.params;
     const currentUserId = req.user.userId || req.user.id || req.user._id;
 
     // Authorization: Users can only view their own achievements unless admin
-    if (userId !== currentUserId && req.user.role !== 'Admin') {
+    if (userId !== currentUserId && req.user.role !== "Admin") {
       return res.status(403).json({
         success: false,
-        error: 'Unauthorized to view other users achievements',
+        error: "Unauthorized to view other users achievements",
       });
     }
     const { completedOnly } = req.query;
 
-    const achievements = await achievementProcessor.getUserAchievements(userId, {
-      completedOnly: completedOnly === 'true',
-    });
+    const achievements = await achievementProcessor.getUserAchievements(
+      userId,
+      {
+        completedOnly: completedOnly === "true",
+      }
+    );
 
     res.json({
       success: true,
@@ -68,28 +100,35 @@ router.get('/:userId', authenticateToken, async (req, res, next) => {
  * GET /api/achievements/:userId/:achievementId/progress
  * Get achievement progress for a user
  */
-router.get('/:userId/:achievementId/progress', authenticateToken, async (req, res, next) => {
-  try {
-    const { userId, achievementId } = req.params;
+router.get(
+  "/:userId/:achievementId/progress",
+  authenticateToken,
+  async (req, res, next) => {
+    try {
+      const { userId, achievementId } = req.params;
 
-    const progress = await achievementProcessor.getAchievementProgress(userId, achievementId);
+      const progress = await achievementProcessor.getAchievementProgress(
+        userId,
+        achievementId
+      );
 
-    res.json({
-      success: true,
-      userId,
-      achievementId,
-      progress,
-    });
-  } catch (error) {
-    next(error);
+      res.json({
+        success: true,
+        userId,
+        achievementId,
+        progress,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 /**
  * POST /api/achievements (Admin)
  * Create a new achievement
  */
-router.post('/', authenticateToken, adminMiddleware, async (req, res, next) => {
+router.post("/", authenticateToken, adminMiddleware, async (req, res, next) => {
   try {
     const achievement = await achievementProcessor.createAchievement(req.body);
 
@@ -106,73 +145,88 @@ router.post('/', authenticateToken, adminMiddleware, async (req, res, next) => {
  * POST /api/achievements/seed (Admin)
  * Seed default achievements
  */
-router.post('/seed', authenticateToken, adminMiddleware, async (req, res, next) => {
-  try {
-    await achievementProcessor.seedDefaultAchievements();
+router.post(
+  "/seed",
+  authenticateToken,
+  adminMiddleware,
+  async (req, res, next) => {
+    try {
+      await achievementProcessor.seedDefaultAchievements();
 
-    res.json({
-      success: true,
-      message: 'Default achievements seeded',
-    });
-  } catch (error) {
-    next(error);
+      res.json({
+        success: true,
+        message: "Default achievements seeded",
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 /**
  * PUT /api/achievements/:achievementId
  * Update achievement
  */
-router.put('/:achievementId', authenticateToken, adminMiddleware, async (req, res, next) => {
-  try {
-    const { achievementId } = req.params;
+router.put(
+  "/:achievementId",
+  authenticateToken,
+  adminMiddleware,
+  async (req, res, next) => {
+    try {
+      const { achievementId } = req.params;
 
-    const achievement = await Achievement.findByIdAndUpdate(
-      achievementId,
-      req.body,
-      { new: true }
-    );
+      const achievement = await Achievement.findByIdAndUpdate(
+        achievementId,
+        req.body,
+        { new: true }
+      );
 
-    if (!achievement) {
-      return res.status(404).json({
-        success: false,
-        message: 'Achievement not found',
+      if (!achievement) {
+        return res.status(404).json({
+          success: false,
+          message: "Achievement not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        achievement,
       });
+    } catch (error) {
+      next(error);
     }
-
-    res.json({
-      success: true,
-      achievement,
-    });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /**
  * DELETE /api/achievements/:achievementId
  * Delete achievement
  */
-router.delete('/:achievementId', authenticateToken, adminMiddleware, async (req, res, next) => {
-  try {
-    const { achievementId } = req.params;
+router.delete(
+  "/:achievementId",
+  authenticateToken,
+  adminMiddleware,
+  async (req, res, next) => {
+    try {
+      const { achievementId } = req.params;
 
-    const achievement = await Achievement.findByIdAndDelete(achievementId);
+      const achievement = await Achievement.findByIdAndDelete(achievementId);
 
-    if (!achievement) {
-      return res.status(404).json({
-        success: false,
-        message: 'Achievement not found',
+      if (!achievement) {
+        return res.status(404).json({
+          success: false,
+          message: "Achievement not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Achievement deleted",
       });
+    } catch (error) {
+      next(error);
     }
-
-    res.json({
-      success: true,
-      message: 'Achievement deleted',
-    });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 module.exports = router;

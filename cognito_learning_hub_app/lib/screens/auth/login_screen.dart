@@ -74,38 +74,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   Future<void> _handleGoogleSignIn() async {
+    print('🔐 LOGIN SCREEN: Starting Google Sign In');
     setState(() => _isLoading = true);
 
     try {
+      print('🔐 LOGIN SCREEN: Calling auth provider signInWithGoogle()');
       final success = await ref.read(authProvider.notifier).signInWithGoogle();
+      print('🔐 LOGIN SCREEN: signInWithGoogle returned: $success');
 
       if (!mounted) return;
       setState(() => _isLoading = false);
 
       if (success) {
+        print('🔐 LOGIN SCREEN: Login successful, navigating to home');
         // Add small delay to ensure token is saved
         await Future.delayed(const Duration(milliseconds: 500));
         if (!mounted) return;
         context.go(AppRoutes.home);
       } else {
         final error = ref.read(authProvider).error;
+        print('🔐 LOGIN SCREEN: Login failed with error: $error');
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(error ?? 'Google sign in failed. Please try again.'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 5),
           ),
         );
       }
     } catch (e) {
+      print('🔐 LOGIN SCREEN: Exception during Google Sign In: $e');
+      print('🔐 LOGIN SCREEN: Stack trace: ${StackTrace.current}');
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
           backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
+          duration: const Duration(seconds: 5),
         ),
       );
     }

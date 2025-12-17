@@ -28,13 +28,17 @@ class Achievement {
   factory Achievement.fromJson(Map<String, dynamic> json) {
     return Achievement(
       id: json['_id'] ?? json['id'] ?? '',
-      title: json['title'] ?? '',
+      title: json['name'] ?? json['title'] ?? '',
       description: json['description'] ?? '',
       icon: json['icon'] ?? '🏆',
-      category: json['category'] ?? 'general',
-      pointsRequired: json['pointsRequired'] ?? json['targetValue'] ?? 0,
+      category: json['type'] ?? json['category'] ?? 'general',
+      pointsRequired: json['points'] ??
+          json['pointsRequired'] ??
+          json['criteria']?['target'] ??
+          0,
       currentProgress: json['currentProgress'] ?? json['currentValue'] ?? 0,
-      unlocked: json['unlocked'] ?? json['earned'] ?? false,
+      unlocked:
+          json['unlocked'] ?? json['isCompleted'] ?? json['earned'] ?? false,
       unlockedAt: json['unlockedAt'] != null
           ? DateTime.parse(json['unlockedAt'])
           : json['earnedAt'] != null
@@ -119,15 +123,22 @@ class GamificationStats {
   });
 
   factory GamificationStats.fromJson(Map<String, dynamic> json) {
+    print('🔍 Parsing GamificationStats:');
+    print(
+        '  currentStreak: ${json['currentStreak']}, streak: ${json['streak']}');
+    print(
+        '  achievementsUnlocked: ${json['achievementsUnlocked']}, unlockedAchievements: ${json['unlockedAchievements']}');
+
     return GamificationStats(
       totalPoints: json['totalPoints'] ?? json['points'] ?? 0,
       level: json['level'] ?? 1,
       currentLevelPoints:
           json['currentLevelPoints'] ?? json['pointsToNextLevel'] ?? 0,
       nextLevelPoints: json['nextLevelPoints'] ?? 100,
-      streak: json['streak'] ?? json['currentStreak'] ?? 0,
+      streak: json['currentStreak'] ?? json['streak'] ?? 0,
       longestStreak: json['longestStreak'] ?? json['bestStreak'] ?? 0,
-      quizzesCompleted: json['quizzesCompleted'] ?? 0,
+      quizzesCompleted:
+          json['quizzesCompleted'] ?? json['totalQuizzesTaken'] ?? 0,
       questsCompleted: json['questsCompleted'] ?? 0,
       achievementsUnlocked:
           json['achievementsUnlocked'] ?? json['unlockedAchievements'] ?? 0,

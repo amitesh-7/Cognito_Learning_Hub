@@ -164,6 +164,9 @@ async function incrementUserStats(userId, updates) {
   if (updates.experience) {
     pipeline.hincrbyfloat(key, "experience", updates.experience);
   }
+  if (updates.lastQuizDate) {
+    pipeline.hset(key, "lastQuizDate", updates.lastQuizDate.toISOString());
+  }
 
   // Set expiry to 1 hour (will be synced to DB before expiry)
   pipeline.expire(key, 3600);
@@ -192,6 +195,7 @@ async function getUserStatsFromCache(userId) {
     experience: parseFloat(stats.experience) || 0,
     level: parseInt(stats.level) || 1,
     averageScore: parseFloat(stats.averageScore) || 0,
+    lastQuizDate: stats.lastQuizDate ? new Date(stats.lastQuizDate) : null,
   };
 }
 

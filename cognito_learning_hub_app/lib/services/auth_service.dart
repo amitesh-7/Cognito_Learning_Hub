@@ -9,10 +9,10 @@ import 'api_service.dart';
 class AuthService {
   final _api = ApiService();
   final _storage = const FlutterSecureStorage();
+
+  // Initialize Google Sign-In with Web Client ID for backend authentication
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    // IMPORTANT: Use Web Client ID here (NOT Android Client ID)
-    // Backend verifies idToken using this same Web Client ID
     serverClientId:
         '899719437468-o81tag3bm1h3470d98dtb5btfi906jki.apps.googleusercontent.com',
   );
@@ -97,8 +97,12 @@ class AuthService {
   // Google Sign In
   Future<AuthResult> signInWithGoogle() async {
     try {
+      print('🔐 Starting Google Sign In...');
+      print('🔐 Using API URL: ${ApiConfig.apiUrl}');
+
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
+        print('🔐 Google sign in cancelled by user');
         return AuthResult(success: false, error: 'Google sign in cancelled');
       }
 
@@ -115,6 +119,7 @@ class AuthService {
 
       if (googleAuth.idToken == null || googleAuth.idToken!.isEmpty) {
         // Without serverClientId, we won't get idToken - that's expected
+        print('🔐 ERROR: No idToken received from Google');
         return AuthResult(
             success: false,
             error:
@@ -123,12 +128,16 @@ class AuthService {
       }
 
       // Backend expects 'credential' with the idToken
+      print('🔐 Sending idToken to backend at ${Endpoints.googleAuth}');
       final response = await _api.post(
         Endpoints.googleAuth,
         data: {
           'credential': googleAuth.idToken,
         },
       );
+
+      print('🔐 Backend response received: ${response.statusCode}');
+      print('🔐 Response data: ${response.data}');
 
       // Response structure: { success, message, data: { user, accessToken, refreshToken } }
       final responseData = response.data;
@@ -142,6 +151,7 @@ class AuthService {
       final userData = data['user'] ?? responseData['user'];
 
       if (token == null) {
+        print('🔐 ERROR: No token in backend response');
         return AuthResult(
             success: false, error: 'No token received from server');
       }
@@ -149,8 +159,12 @@ class AuthService {
       await _api.saveToken(token, refreshToken: refreshToken);
 
       final user = User.fromJson(userData);
+      print(
+          '🔐 Google login successful! User: ${user.name}, Role: ${user.role}');
       return AuthResult(success: true, user: user, token: token);
     } catch (e) {
+      print('🔐 ERROR during Google sign in: $e');
+      print('🔐 Error type: ${e.runtimeType}');
       return AuthResult(success: false, error: _getErrorMessage(e));
     }
   }
@@ -173,15 +187,8 @@ class AuthService {
 
       // Handle nested data structure
       final responseData = response.data;
-      print('🔍 Full response data: $responseData');
-
       final data = responseData['data'] ?? responseData;
-      print('🔍 Data level: $data');
-
       final userData = data['user'] ?? responseData['user'] ?? data;
-      print('🔍 User data: $userData');
-      print(
-          '🔍 Points: ${userData['points']}, Level: ${userData['level']}, Quizzes: ${userData['quizzesTaken']}');
 
       final user = User.fromJson(userData);
       print(

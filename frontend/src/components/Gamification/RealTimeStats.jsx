@@ -325,7 +325,32 @@ export const RealTimeStats = ({ variant = "full", className = "" }) => {
     }
   }, [xpAnimation]);
 
-  // Sample daily challenges (in production, fetch from API)
+  // Real-time reset timer calculation
+  const [resetTimer, setResetTimer] = useState("");
+
+  useEffect(() => {
+    const updateResetTimer = () => {
+      const now = new Date();
+      const tomorrow = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1
+      );
+      const diff = tomorrow - now;
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+      setResetTimer(`${hours}h ${minutes}m`);
+    };
+
+    updateResetTimer();
+    const interval = setInterval(updateResetTimer, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Daily challenges based on actual user stats
   const dailyChallenges = [
     {
       id: 1,
@@ -345,17 +370,17 @@ export const RealTimeStats = ({ variant = "full", className = "" }) => {
 
   // Calculate challenge progress based on user stats
   const getChallengeProgress = (challenge) => {
+    if (!userStats) return 0;
+
     if (challenge.id === 1) {
       // Use total quizzes taken
-      const quizzesTaken = Math.min(
-        userStats?.totalQuizzesTaken || 0,
-        challenge.target
-      );
-      return Math.round((quizzesTaken / challenge.target) * 100);
+      const quizzesTaken = userStats.totalQuizzesTaken || 0;
+      const progress = Math.min(quizzesTaken, challenge.target);
+      return Math.round((progress / challenge.target) * 100);
     }
     if (challenge.id === 2) {
       // Use average score
-      const avgScore = userStats?.averageScore || 0;
+      const avgScore = userStats.averageScore || 0;
       return Math.min(Math.round((avgScore / challenge.target) * 100), 100);
     }
     return 0;
@@ -699,7 +724,7 @@ export const RealTimeStats = ({ variant = "full", className = "" }) => {
           </h4>
           <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            Resets in 12h
+            Resets in {resetTimer}
           </span>
         </div>
         <div className="space-y-2">

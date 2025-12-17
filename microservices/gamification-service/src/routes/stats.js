@@ -23,6 +23,24 @@ router.get("/me", authenticateToken, async (req, res, next) => {
 
     const stats = await statsManager.getStats(userId);
 
+    // Add achievement counts to stats
+    const { Achievement, UserAchievement } = require("../models/Achievement");
+    const totalAchievements = await Achievement.countDocuments({
+      isActive: true,
+    });
+    const achievementsUnlocked = await UserAchievement.countDocuments({
+      user: userId,
+      isCompleted: true,
+    });
+
+    // Enrich stats with achievement data
+    const enrichedStats = {
+      ...stats,
+      totalAchievements,
+      achievementsUnlocked,
+      unlockedAchievements: achievementsUnlocked, // Alias for compatibility
+    };
+
     // Prevent browser caching of stats data
     res.setHeader(
       "Cache-Control",
@@ -34,7 +52,7 @@ router.get("/me", authenticateToken, async (req, res, next) => {
     res.json({
       success: true,
       userId,
-      stats,
+      stats: enrichedStats,
     });
   } catch (error) {
     next(error);

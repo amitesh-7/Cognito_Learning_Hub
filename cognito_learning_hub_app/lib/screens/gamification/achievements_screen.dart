@@ -59,22 +59,12 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
       ),
       body: Stack(
         children: [
-          Column(
+          TabBarView(
+            controller: _tabController,
             children: [
-              // Stats Card
-              _buildStatsCard(),
-
-              // Achievements List
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildAchievementsList(achievementsAsync, null),
-                    _buildAchievementsList(achievementsAsync, true),
-                    _buildAchievementsList(achievementsAsync, false),
-                  ],
-                ),
-              ),
+              _buildAchievementsList(achievementsAsync, null),
+              _buildAchievementsList(achievementsAsync, true),
+              _buildAchievementsList(achievementsAsync, false),
             ],
           ),
 
@@ -93,88 +83,6 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStatsCard() {
-    final statsAsync = ref.watch(userStatsProvider);
-
-    return statsAsync.when(
-      data: (stats) => Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.primaryColor,
-              AppTheme.primaryColor.withOpacity(0.7),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildStatItem(
-              icon: Icons.emoji_events,
-              label: 'Unlocked',
-              value: '${stats.achievementsUnlocked}/${stats.totalAchievements}',
-            ),
-            _buildStatItem(
-              icon: Icons.stars,
-              label: 'Total Points',
-              value: '${stats.totalPoints}',
-            ),
-            _buildStatItem(
-              icon: Icons.trending_up,
-              label: 'Level',
-              value: '${stats.level}',
-            ),
-          ],
-        ),
-      ),
-      loading: () => const SizedBox(
-        height: 100,
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (_, __) => const SizedBox.shrink(),
-    );
-  }
-
-  Widget _buildStatItem({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Column(
-      children: [
-        Icon(icon, color: Colors.white, size: 32),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 12,
-          ),
-        ),
-      ],
     );
   }
 

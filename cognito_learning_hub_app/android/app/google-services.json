@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "899719437468",
+    "project_id": "cognito-learning-hub",
+    "storage_bucket": "cognito-learning-hub.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:899719437468:android:1234567890abcdef",
+        "android_client_info": {
+          "package_name": "com.cognitolearninghub.cognito_learning_hub_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "899719437468-o81tag3bm1h3470d98dtb5btfi906jki.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDummyKeyForLocalDevelopment"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "899719437468-o81tag3bm1h3470d98dtb5btfi906jki.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

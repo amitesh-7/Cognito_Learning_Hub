@@ -33,17 +33,17 @@ class ApiConfig {
   // ========================================
   // For Android emulator: 10.0.2.2 maps to host machine's localhost
   // For physical device: use your computer's local IP (e.g., 192.168.x.x)
-  static const String devApiUrl = 'http://10.0.2.2:3000';
-  static const String devAuthUrl = 'http://10.0.2.2:3001';
-  static const String devQuizUrl = 'http://10.0.2.2:3002';
-  static const String devResultUrl = 'http://10.0.2.2:3003';
-  static const String devLiveUrl = 'http://10.0.2.2:3004';
-  static const String devMeetingUrl = 'http://10.0.2.2:3009';
-  static const String devSocialUrl = 'http://10.0.2.2:3005';
-  static const String devGamificationUrl = 'http://10.0.2.2:3006';
-  static const String devModerationUrl = 'http://10.0.2.2:3007';
-  static const String devSocketUrl = 'http://10.0.2.2:3004';
-  static const String devMeetingWsUrl = 'http://10.0.2.2:3009';
+  static const String devApiUrl = 'http://172.20.9.132:3000';
+  static const String devAuthUrl = 'http://172.20.9.132:3001';
+  static const String devQuizUrl = 'http://172.20.9.132:3002';
+  static const String devResultUrl = 'http://172.20.9.132:3003';
+  static const String devLiveUrl = 'http://172.20.9.132:3004';
+  static const String devMeetingUrl = 'http://172.20.9.132:3009';
+  static const String devSocialUrl = 'http://172.20.9.132:3005';
+  static const String devGamificationUrl = 'http://172.20.9.132:3007';
+  static const String devModerationUrl = 'http://172.20.9.132:3008';
+  static const String devSocketUrl = 'http://172.20.9.132:3004';
+  static const String devMeetingWsUrl = 'http://172.20.9.132:3009';
 
   // ========================================
   // Environment Switch
