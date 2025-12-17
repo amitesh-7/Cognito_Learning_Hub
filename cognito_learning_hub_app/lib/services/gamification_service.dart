@@ -21,6 +21,11 @@ class GamificationService {
         // Backend returns: { success, userId, stats }
         final statsData = response.data['stats'];
         print('🎮 Stats data: $statsData');
+        print('🎮 RAW currentStreak: ${statsData['currentStreak']}');
+        print('🎮 RAW streak: ${statsData['streak']}');
+        print(
+            '🎮 RAW achievementsUnlocked: ${statsData['achievementsUnlocked']}');
+        print('🎮 RAW totalAchievements: ${statsData['totalAchievements']}');
 
         if (statsData == null) {
           throw Exception('Stats data is null in response');
@@ -29,6 +34,9 @@ class GamificationService {
         final stats = GamificationStats.fromJson(statsData);
         print(
             '🎮 Parsed stats - Points: ${stats.totalPoints}, Level: ${stats.level}, Quizzes: ${stats.quizzesCompleted}');
+        print('🎮 Parsed streak: ${stats.streak}');
+        print(
+            '🎮 Parsed achievementsUnlocked: ${stats.achievementsUnlocked} / ${stats.totalAchievements}');
         return stats;
       } else {
         throw Exception(response.data['message'] ?? 'Failed to fetch stats');
@@ -58,7 +66,7 @@ class GamificationService {
       );
 
       if (response.data['success'] == true) {
-        final List achievementsData = response.data['data'] ?? [];
+        final List achievementsData = response.data['achievements'] ?? [];
         return achievementsData
             .map((json) => Achievement.fromJson(json))
             .toList();

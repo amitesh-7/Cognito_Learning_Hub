@@ -36,17 +36,70 @@ class StatsManager {
 
       console.log("📊 Calculated updates:", updates);
 
-      // Handle streak logic
+      // Handle streak logic - check consecutive days
       if (resultData.passed) {
         const currentStreak = await this.getCurrentStreak(userId);
-        updates.currentStreak = currentStreak + 1;
+        const lastQuizDate = await this.getLastQuizDate(userId);
+
+        const now = new Date();
+        const today = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
+
+        if (lastQuizDate) {
+          const lastDate = new Date(lastQuizDate);
+          const lastDay = new Date(
+            lastDate.getFullYear(),
+            lastDate.getMonth(),
+            lastDate.getDate()
+          );
+
+          const daysDiff = Math.floor(
+            (today - lastDay) / (1000 * 60 * 60 * 24)
+          );
+
+          console.log(`🔥 Streak check - Days since last quiz: ${daysDiff}`);
+          console.log(`🔥 Current streak: ${currentStreak}`);
+
+          if (daysDiff === 0) {
+            // Same day - keep current streak
+            updates.currentStreak = currentStreak;
+            console.log(
+              `🔥 Same day quiz, maintaining streak: ${currentStreak}`
+            );
+          } else if (daysDiff === 1) {
+            // Consecutive day - increment streak
+            updates.currentStreak = currentStreak + 1;
+            console.log(
+              `🔥 Consecutive day! New streak: ${updates.currentStreak}`
+            );
+          } else {
+            // Missed days - reset to 1
+            updates.currentStreak = 1;
+            console.log(
+              `🔥 Streak broken (${daysDiff} days gap), resetting to 1`
+            );
+          }
+        } else {
+          // First quiz ever
+          updates.currentStreak = 1;
+          console.log(`🔥 First quiz, starting streak at 1`);
+        }
 
         const longestStreak = await this.getLongestStreak(userId);
         if (updates.currentStreak > longestStreak) {
           updates.longestStreak = updates.currentStreak;
+          console.log(`🔥 New longest streak record: ${updates.longestStreak}`);
         }
+
+        // Update last quiz date
+        updates.lastQuizDate = now;
       } else {
+        // Failed quiz - reset streak
         updates.currentStreak = 0;
+        console.log(`❌ Quiz failed, streak reset to 0`);
       }
 
       // Try Redis first
@@ -287,6 +340,19 @@ class StatsManager {
       "longestStreak"
     );
     return parseInt(streak) || 0;
+  }
+
+  /**
+   * Get last quiz date from Redis
+   */
+  async getLastQuizDate(userId) {
+    const { getRedisClient, REDIS_KEYS } = require("../config/redis");
+    const redis = getRedisClient();
+    const dateStr = await redis.hget(
+      REDIS_KEYS.USER_STATS(userId),
+      "lastQuizDate"
+    );
+    return dateStr ? new Date(dateStr) : null;
   }
 
   /**
