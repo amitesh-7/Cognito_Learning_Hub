@@ -117,6 +117,21 @@ app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
   res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
   res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+
+  // Prevent caching of dynamic API responses (stats, achievements, leaderboards)
+  if (
+    req.path.includes("/stats") ||
+    req.path.includes("/achievements") ||
+    req.path.includes("/leaderboard")
+  ) {
+    res.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, private"
+    );
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+  }
+
   next();
 });
 
@@ -128,6 +143,10 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
+
+// Disable ETags to prevent 304 Not Modified responses for dynamic content
+app.set("etag", false);
+
 app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));

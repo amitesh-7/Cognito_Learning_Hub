@@ -76,15 +76,31 @@ export const GamificationProvider = ({ children }) => {
       }
 
       // Fetch all data in parallel from gamification service
+      // Add cache control headers to ensure fresh data (prevents 304 responses)
+      const fetchHeaders = {
+        ...headers,
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      };
+
       const [statsRes, achievementsRes, userAchievementsRes, leaderboardRes] =
         await Promise.all([
-          fetch(`${API_URL}/api/stats/me`, { headers }).catch(() => null),
-          fetch(`${API_URL}/api/achievements`, { headers }).catch(() => null),
-          fetch(`${API_URL}/api/achievements/${userId}`, { headers }).catch(
-            () => null
-          ),
+          fetch(`${API_URL}/api/stats/me`, {
+            headers: fetchHeaders,
+            cache: "no-store",
+          }).catch(() => null),
+          fetch(`${API_URL}/api/achievements`, {
+            headers: fetchHeaders,
+            cache: "no-store",
+          }).catch(() => null),
+          fetch(`${API_URL}/api/achievements/${userId}`, {
+            headers: fetchHeaders,
+            cache: "no-store",
+          }).catch(() => null),
           fetch(`${API_URL}/api/gamification/leaderboard?limit=10`, {
-            headers,
+            headers: fetchHeaders,
+            cache: "no-store",
           }).catch(() => null),
         ]);
 
