@@ -35,8 +35,13 @@ const PORT = process.env.PORT || 3004;
 // Socket.IO configuration
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // Configure properly in production
+    origin: [
+      "http://localhost:5173",
+      "https://www.cognito-learning-hub.live",
+      "https://cognito-learning-hub.live",
+    ],
     methods: ["GET", "POST"],
+    credentials: true,
   },
   pingTimeout: parseInt(process.env.SOCKET_PING_TIMEOUT) || 30000,
   pingInterval: parseInt(process.env.SOCKET_PING_INTERVAL) || 25000,
@@ -46,7 +51,16 @@ const io = new Server(httpServer, {
 });
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://www.cognito-learning-hub.live",
+      "https://cognito-learning-hub.live",
+    ],
+    credentials: true,
+  })
+);
 app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));

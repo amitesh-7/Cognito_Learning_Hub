@@ -34,6 +34,8 @@ const allowedOrigins = process.env.FRONTEND_URLS
   ? process.env.FRONTEND_URLS.split(",").map((url) => url.trim())
   : process.env.NODE_ENV === "production"
   ? [
+      "https://www.cognito-learning-hub.live",
+      "https://cognito-learning-hub.live",
       "https://www.quizwise-ai.live",
       "https://quizwise-ai.live",
       "https://cognito-learning-hub-frontend.vercel.app",
