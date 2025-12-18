@@ -58,6 +58,8 @@ const TopicQuizGenerator = lazy(() => import("./pages/TopicQuizGenerator"));
 const ManualQuizCreator = lazy(() => import("./pages/ManualQuizCreator"));
 const FileQuizGenerator = lazy(() => import("./pages/FileQuizGenerator"));
 const StudentQuizCreator = lazy(() => import("./pages/StudentQuizCreator"));
+const SpeechQuizGenerator = lazy(() => import("./pages/SpeechQuizGenerator"));
+const SpeechQuizTaker = lazy(() => import("./pages/SpeechQuizTaker"));
 const AITutor = lazy(() => import("./pages/AITutorEnhanced"));
 const ChatSystem = lazy(() => import("./pages/ChatSystem"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
@@ -230,6 +232,7 @@ function App() {
                 <Route path="/quests" element={<ProtectedRoute><RouteFeatureGate featureId="questSystem"><QuestPage /></RouteFeatureGate></ProtectedRoute>} />
                 <Route path="/quizzes/my-quizzes" element={<ProtectedRoute><MyQuizzes /></ProtectedRoute>} />
                 <Route path="/quiz/:quizId" element={<ProtectedRoute><SmartQuizRouter /></ProtectedRoute>} />
+                <Route path="/quiz/:quizId/speech" element={<ProtectedRoute><SpeechQuizTaker /></ProtectedRoute>} />
                 <Route path="/quiz/edit/:quizId" element={<ProtectedRoute><EditQuiz /></ProtectedRoute>} />
                 <Route path="/quiz/:quizId/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
                 <Route path="/quiz/:quizId/ai-battle" element={<ProtectedRoute><AIQuizOpponent /></ProtectedRoute>} />
@@ -242,6 +245,7 @@ function App() {
                 <Route path="/quiz-maker/manual" element={<ProtectedRoute><RouteFeatureGate featureId="studentQuizCreation"><ManualQuizCreator /></RouteFeatureGate></ProtectedRoute>} />
                 <Route path="/quiz-maker/enhanced" element={<ProtectedRoute><RouteFeatureGate featureId="aiQuizGeneration"><EnhancedQuizCreator /></RouteFeatureGate></ProtectedRoute>} />
                 <Route path="/quiz-maker/file" element={<ProtectedRoute><RouteFeatureGate featureId="pdfQuizGeneration"><FileQuizGenerator /></RouteFeatureGate></ProtectedRoute>} />
+                <Route path="/quiz-maker/speech" element={<ProtectedRoute><RouteFeatureGate featureId="aiQuizGeneration"><SpeechQuizGenerator /></RouteFeatureGate></ProtectedRoute>} />
                 <Route path="/pdf-quiz-generator" element={<ProtectedRoute><RouteFeatureGate featureId="pdfQuizGeneration"><PDFQuizGenerator /></RouteFeatureGate></ProtectedRoute>} />
                 <Route path="/social" element={<ProtectedRoute><SocialDashboard /></ProtectedRoute>} />
                 <Route path="/create-challenge" element={<ProtectedRoute><ChallengeCreator /></ProtectedRoute>} />

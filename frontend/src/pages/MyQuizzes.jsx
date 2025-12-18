@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { toast } from "react-toastify";
+import QuizModeSelector from "../components/QuizModeSelector";
 
 const MyQuizzes = () => {
   const { user } = useContext(AuthContext);
@@ -38,6 +39,7 @@ const MyQuizzes = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
   const [filterDifficulty, setFilterDifficulty] = useState("all");
+  const [filterQuizType, setFilterQuizType] = useState("all");
   const [stats, setStats] = useState({
     totalQuizzes: 0,
     totalAttempts: 0,
@@ -46,6 +48,10 @@ const MyQuizzes = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [quizToDelete, setQuizToDelete] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Quiz mode selector states
+  const [showModeSelector, setShowModeSelector] = useState(false);
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
 
   useEffect(() => {
     fetchMyQuizzes();
@@ -53,7 +59,7 @@ const MyQuizzes = () => {
 
   useEffect(() => {
     filterQuizzes();
-  }, [quizzes, searchTerm, filterDifficulty]);
+  }, [quizzes, searchTerm, filterDifficulty, filterQuizType]);
 
   const fetchMyQuizzes = async () => {
     try {
@@ -108,6 +114,13 @@ const MyQuizzes = () => {
       );
     }
 
+    // Quiz type filter (for speech-based quizzes)
+    if (filterQuizType !== "all") {
+      filtered = filtered.filter(
+        (quiz) => quiz.quizType === filterQuizType
+      );
+    }
+
     setFilteredQuizzes(filtered);
   };
 
@@ -159,6 +172,19 @@ const MyQuizzes = () => {
       console.error("Error duplicating quiz:", error);
       toast.error("Failed to duplicate quiz");
     }
+  };
+
+  const handleModeSelect = (mode) => {
+    if (!selectedQuiz) return;
+    
+    if (mode === "normal") {
+      navigate(`/quizzes/${selectedQuiz._id}`);
+    } else if (mode === "speech") {
+      navigate(`/quiz/${selectedQuiz._id}/speech`);
+    }
+    
+    setShowModeSelector(false);
+    setSelectedQuiz(null);
   };
 
   const getDifficultyColor = (difficulty) => {
@@ -223,6 +249,11 @@ const MyQuizzes = () => {
                   {quiz.category}
                 </span>
               )}
+              {quiz.quizType === "speech" && (
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-600 border border-purple-500/30 flex items-center gap-1">
+                  🎤 Speech Quiz
+                </span>
+              )}
               {quiz.isPublic ? (
                 <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-600 border border-green-500/30 flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" />
@@ -280,7 +311,10 @@ const MyQuizzes = () => {
         {/* Actions */}
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => navigate(`/quizzes/${quiz._id}`)}
+            onClick={() => {
+              setSelectedQuiz(quiz);
+              setShowModeSelector(true);
+            }}
             className="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
           >
             <Eye className="w-4 h-4" />
@@ -392,7 +426,7 @@ const MyQuizzes = () => {
 
         {/* Filters */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 shadow-lg mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -429,6 +463,20 @@ const MyQuizzes = () => {
               <option value="medium">Medium</option>
               <option value="hard">Hard</option>
               <option value="mixed">Mixed</option>
+            </select>
+
+            {/* Filter by Quiz Type */}
+            <select
+              value={filterQuizType}
+              onChange={(e) => setFilterQuizType(e.target.value)}
+              className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+            >
+              <option value="all">All Types</option>
+              <option value="standard">Standard Quizzes</option>
+              <option value="speech">🎤 Speech Quizzes</option>
+              <option value="pdf">PDF Quizzes</option>
+              <option value="file">File-based Quizzes</option>
+              <option value="adaptive">Adaptive Quizzes</option>
             </select>
           </div>
         </div>
@@ -515,6 +563,17 @@ const MyQuizzes = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Quiz Mode Selector */}
+      <QuizModeSelector
+        isOpen={showModeSelector}
+        onClose={() => {
+          setShowModeSelector(false);
+          setSelectedQuiz(null);
+        }}
+        onSelect={handleModeSelect}
+        quizTitle={selectedQuiz?.title || ""}
+      />
     </div>
   );
 };

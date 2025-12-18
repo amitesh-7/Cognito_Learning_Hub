@@ -43,6 +43,20 @@ export default function Settings() {
   const [activeSection, setActiveSection] = useState("profile");
   const [loading, setLoading] = useState(false);
 
+  // Speech Voice Settings
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [selectedVoice, setSelectedVoice] = useState(() => {
+    return localStorage.getItem('preferredVoice') || '';
+  });
+  const [speechRate, setSpeechRate] = useState(() => {
+    const saved = localStorage.getItem('speechRate');
+    return saved ? parseFloat(saved) : 0.9;
+  });
+  const [speechPitch, setSpeechPitch] = useState(() => {
+    const saved = localStorage.getItem('speechPitch');
+    return saved ? parseFloat(saved) : 1.0;
+  });
+
   // Profile Settings
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -93,6 +107,34 @@ export default function Settings() {
   const [language, setLanguage] = useState(localStorage.getItem('language') || "en");
   
   // Save preferences to localStorage when they change
+  // Load available speech voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      setAvailableVoices(voices);
+    };
+
+    loadVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+  }, []);
+
+  // Save speech settings to localStorage
+  useEffect(() => {
+    if (selectedVoice) {
+      localStorage.setItem('preferredVoice', selectedVoice);
+    }
+  }, [selectedVoice]);
+
+  useEffect(() => {
+    localStorage.setItem('speechRate', speechRate.toString());
+  }, [speechRate]);
+
+  useEffect(() => {
+    localStorage.setItem('speechPitch', speechPitch.toString());
+  }, [speechPitch]);
+
   useEffect(() => {
     localStorage.setItem('emailNotifications', JSON.stringify(emailNotifications));
   }, [emailNotifications]);
@@ -511,6 +553,98 @@ export default function Settings() {
                     checked={accessibilitySettings.keyboardNavigation}
                     onChange={(val) => updateAccessibilitySettings({ keyboardNavigation: val })}
                   />
+
+                  {/* Voice Selection */}
+                  <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
+                      <Volume2 className="w-5 h-5" />
+                      Speech Voice Settings
+                    </h3>
+                    
+                    {/* Voice Selection */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
+                        Preferred Voice
+                      </label>
+                      <select
+                        value={selectedVoice}
+                        onChange={(e) => setSelectedVoice(e.target.value)}
+                        className="w-full px-4 py-3 bg-white dark:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 rounded-xl focus:border-violet-500 dark:focus:border-violet-400 focus:ring-2 focus:ring-violet-200 dark:focus:ring-violet-800 transition-all text-slate-900 dark:text-slate-100"
+                      >
+                        <option value="">Default Voice</option>
+                        {availableVoices.map((voice, index) => (
+                          <option key={index} value={voice.name}>
+                            {voice.name} ({voice.lang})
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+                        Choose the voice for text-to-speech and speech quizzes
+                      </p>
+                    </div>
+
+                    {/* Speech Rate */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
+                        Speech Rate: {speechRate.toFixed(1)}x
+                      </label>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="2.0"
+                        step="0.1"
+                        value={speechRate}
+                        onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
+                        className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-violet-600"
+                      />
+                      <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 mt-2">
+                        <span>Slower (0.5x)</span>
+                        <span>Normal (1.0x)</span>
+                        <span>Faster (2.0x)</span>
+                      </div>
+                    </div>
+
+                    {/* Speech Pitch */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
+                        Speech Pitch: {speechPitch.toFixed(1)}
+                      </label>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="2.0"
+                        step="0.1"
+                        value={speechPitch}
+                        onChange={(e) => setSpeechPitch(parseFloat(e.target.value))}
+                        className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-violet-600"
+                      />
+                      <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 mt-2">
+                        <span>Lower (0.5)</span>
+                        <span>Normal (1.0)</span>
+                        <span>Higher (2.0)</span>
+                      </div>
+                    </div>
+
+                    {/* Test Voice Button */}
+                    <Button
+                      onClick={() => {
+                        const utterance = new SpeechSynthesisUtterance(
+                          "Hello! This is a test of your selected voice settings."
+                        );
+                        utterance.rate = speechRate;
+                        utterance.pitch = speechPitch;
+                        if (selectedVoice) {
+                          const voice = availableVoices.find(v => v.name === selectedVoice);
+                          if (voice) utterance.voice = voice;
+                        }
+                        window.speechSynthesis.speak(utterance);
+                      }}
+                      className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
+                    >
+                      <Volume2 className="w-5 h-5" />
+                      Test Voice Settings
+                    </Button>
+                  </div>
                 </div>
               </Card>
             )}

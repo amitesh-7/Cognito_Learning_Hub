@@ -51,6 +51,7 @@ const AITutorEnhanced = () => {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState([]);
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [copiedId, setCopiedId] = useState(null);
   const [favoriteMessages, setFavoriteMessages] = useState([]);
@@ -59,12 +60,14 @@ const AITutorEnhanced = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [generatedImage, setGeneratedImage] = useState(null);
   const [imagePrompt, setImagePrompt] = useState("");
+  const [voiceMode, setVoiceMode] = useState(false);
   
   // Refs
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const webcamRef = useRef(null);
   const chatContainerRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   // Prevent body scroll - only chat container should scroll
   useEffect(() => {
@@ -74,6 +77,19 @@ const AITutorEnhanced = () => {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };
+  }, []);
+
+  // Load available voices for speech synthesis
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      setAvailableVoices(voices);
+    };
+
+    loadVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
   }, []);
 
   // Keyboard Shortcuts
@@ -99,18 +115,34 @@ const AITutorEnhanced = () => {
         e.preventDefault();
         setShowSettings(true);
       }
-      // Escape: Close modals
+      // Ctrl+V: Toggle voice mode
+      if (e.ctrlKey && e.key === 'v') {
+        e.preventDefault();
+        toggleVoiceMode();
+      }
+      // Escape: Close modals or go back to dashboard
       if (e.key === 'Escape') {
-        setShowSearch(false);
-        setShowTemplates(false);
-        setShowShareModal(false);
-        setShowSettings(false);
+        // If voice mode is active, turn it off
+        if (voiceMode) {
+          setVoiceMode(false);
+          stopVoiceRecognition();
+        }
+        // If any modal is open, close it
+        else if (showSearch || showTemplates || showShareModal || showSettings) {
+          setShowSearch(false);
+          setShowTemplates(false);
+          setShowShareModal(false);
+          setShowSettings(false);
+        } else {
+          // No modal open, navigate back to dashboard
+          navigate('/dashboard');
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+  }, [voiceMode]);
 
   // Example prompts & quick actions from original
   const examplePrompts = [
@@ -497,6 +529,23 @@ const AITutorEnhanced = () => {
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel(); // Stop any ongoing speech
       const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Apply saved voice preferences from localStorage
+      const preferredVoiceName = localStorage.getItem('preferredVoice');
+      const speechRate = parseFloat(localStorage.getItem('speechRate')) || 0.9;
+      const speechPitch = parseFloat(localStorage.getItem('speechPitch')) || 1.0;
+      
+      utterance.rate = speechRate;
+      utterance.pitch = speechPitch;
+      
+      // Set preferred voice if available
+      if (preferredVoiceName && availableVoices.length > 0) {
+        const preferredVoice = availableVoices.find(v => v.name === preferredVoiceName);
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+      }
+      
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
       utterance.onerror = () => setIsSpeaking(false);
@@ -524,6 +573,118 @@ const AITutorEnhanced = () => {
       alert('Voice recognition is not supported in your browser. Please use Chrome or Edge.');
     }
   };
+  
+  // Voice Mode - Continuous Recognition
+  const startVoiceRecognition = () => {
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new webkitSpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      
+      recognition.onstart = () => {
+        setIsListening(true);
+        console.log('Voice recognition started');
+      };
+      
+      recognition.onend = () => {
+        setIsListening(false);
+        // Auto-restart if voice mode is still active
+        if (voiceMode && !isLoading) {
+          setTimeout(() => {
+            if (recognitionRef.current) {
+              recognitionRef.current.start();
+            }
+          }, 100);
+        }
+      };
+      
+      recognition.onerror = (event) => {
+        console.error('Voice recognition error:', event.error);
+        setIsListening(false);
+        if (event.error === 'no-speech' || event.error === 'audio-capture') {
+          // Auto-restart on common errors if voice mode is active
+          if (voiceMode && !isLoading) {
+            setTimeout(() => {
+              if (recognitionRef.current) {
+                recognitionRef.current.start();
+              }
+            }, 1000);
+          }
+        }
+      };
+      
+      recognition.onresult = (event) => {
+        const last = event.results.length - 1;
+        const transcript = event.results[last][0].transcript;
+        
+        // Only process final results
+        if (event.results[last].isFinal) {
+          setInput(transcript);
+          // Auto-submit the message
+          setTimeout(() => {
+            if (!isLoading) {
+              handleSubmit(new Event('submit'));
+            }
+          }, 500);
+        }
+      };
+      
+      recognitionRef.current = recognition;
+      recognition.start();
+    } else {
+      alert('Voice recognition is not supported in your browser. Please use Chrome or Edge.');
+    }
+  };
+  
+  const stopVoiceRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+      setIsListening(false);
+    }
+  };
+  
+  const toggleVoiceMode = () => {
+    const newVoiceMode = !voiceMode;
+    setVoiceMode(newVoiceMode);
+    
+    if (newVoiceMode) {
+      // Enable voice mode - start continuous listening
+      setVoiceEnabled(true);
+      startVoiceRecognition();
+    } else {
+      // Disable voice mode - stop listening
+      stopVoiceRecognition();
+      stopSpeaking();
+    }
+  };
+  
+  // Effect to handle voice mode changes
+  useEffect(() => {
+    if (!voiceMode) {
+      stopVoiceRecognition();
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [voiceMode]);
+  
+  // Effect to automatically speak responses in voice mode
+  useEffect(() => {
+    if (voiceMode && !isLoading && currentMessages.length > 0) {
+      const lastMessage = currentMessages[currentMessages.length - 1];
+      if (lastMessage.role === 'assistant' && !isSpeaking) {
+        setTimeout(() => {
+          speakMessage(lastMessage.content);
+        }, 300);
+      }
+    }
+  }, [currentMessages, voiceMode, isLoading]);
   const exportAsPDF = async () => {
     const element = chatContainerRef.current;
     const canvas = await html2canvas(element);
@@ -767,10 +928,10 @@ const AITutorEnhanced = () => {
           <div className="flex items-center gap-2 lg:gap-4 min-w-0">
             <button
               onClick={() => navigate("/dashboard")}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex-shrink-0"
-              title="Back to Dashboard"
+              className="p-2 lg:p-2.5 hover:bg-violet-100 dark:hover:bg-violet-900/30 hover:text-violet-600 dark:hover:text-violet-400 rounded-xl flex-shrink-0 transition-all border-2 border-transparent hover:border-violet-300 dark:hover:border-violet-700 group"
+              title="Back to Dashboard (Press Esc)"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5 lg:w-6 lg:h-6 group-hover:scale-110 transition-transform" />
             </button>
             
             {!sidebarOpen && (
@@ -783,7 +944,7 @@ const AITutorEnhanced = () => {
             )}
             
             {/* Mode Selector - Responsive */}
-            <div className="flex gap-1 lg:gap-2 overflow-x-auto scrollbar-none flex-1 min-w-0">
+            <div className="flex gap-1 sm:gap-2 overflow-x-auto scrollbar-none flex-1 min-w-0 pb-1">
               {modes.map((mode) => {
                 const Icon = mode.icon;
                 return (
@@ -806,6 +967,30 @@ const AITutorEnhanced = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
+            {/* Voice Mode Button - Prominent */}
+            <motion.button
+              onClick={toggleVoiceMode}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`p-2 lg:p-2.5 rounded-xl transition-all font-medium shadow-lg relative ${
+                voiceMode
+                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 hover:bg-violet-100 dark:hover:bg-violet-900/30"
+              }`}
+              title={voiceMode ? "Voice Mode ON (Ctrl+V)" : "Voice Mode OFF (Ctrl+V)"}
+            >
+              {voiceMode ? (
+                <>
+                  <Mic className="w-5 h-5 animate-pulse" />
+                  {isListening && (
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
+                  )}
+                </>
+              ) : (
+                <MicOff className="w-5 h-5" />
+              )}
+            </motion.button>
+            
             <button
               onClick={() => setVoiceEnabled(!voiceEnabled)}
               className={`p-2 rounded-lg transition-all hidden sm:flex ${
@@ -976,6 +1161,8 @@ const AITutorEnhanced = () => {
                 <div className="mt-6 lg:mt-8 p-3 lg:p-4 bg-slate-100 dark:bg-slate-800 rounded-xl hidden md:block">
                   <h4 className="font-bold text-sm mb-3 text-slate-900 dark:text-white">Keyboard Shortcuts</h4>
                   <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-400">
+                    <div><kbd className="px-2 py-1 bg-white dark:bg-slate-900 rounded">Esc</kbd> Exit/Close</div>
+                    <div><kbd className="px-2 py-1 bg-white dark:bg-slate-900 rounded">Ctrl+V</kbd> Voice Mode</div>
                     <div><kbd className="px-2 py-1 bg-white dark:bg-slate-900 rounded">Ctrl+K</kbd> Search</div>
                     <div><kbd className="px-2 py-1 bg-white dark:bg-slate-900 rounded">Ctrl+N</kbd> New Chat</div>
                     <div><kbd className="px-2 py-1 bg-white dark:bg-slate-900 rounded">Ctrl+S</kbd> Export PDF</div>
@@ -1014,7 +1201,7 @@ const AITutorEnhanced = () => {
                         : "bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     } rounded-2xl p-3 lg:p-4 shadow-lg break-words`}>
                       {msg.role === "user" ? (
-                        <p className="text-sm leading-relaxed">{msg.content}</p>
+                        <div className="text-sm leading-relaxed">{msg.content}</div>
                       ) : (
                         <div className="prose prose-sm dark:prose-invert max-w-none">
                           <ReactMarkdown
@@ -1155,10 +1342,10 @@ const AITutorEnhanced = () => {
         </div>
 
         {/* Input Area */}
-        <div className="flex-shrink-0 p-3 lg:p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-10">
+        <div className="flex-shrink-0 p-2 sm:p-3 lg:p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-10">
           {/* File Attachments */}
           {attachedFiles.length > 0 && (
-            <div className="flex gap-2 mb-3 flex-wrap">
+            <div className="flex gap-1 sm:gap-2 mb-2 sm:mb-3 flex-wrap overflow-x-auto scrollbar-thin">
               {attachedFiles.map((file, index) => (
                 <motion.div
                   key={index}
@@ -1297,9 +1484,9 @@ const AITutorEnhanced = () => {
                       { keys: "Ctrl+K", action: "Search conversations" },
                       { keys: "Ctrl+N", action: "New conversation" },
                       { keys: "Ctrl+S", action: "Export as PDF" },
+                      { keys: "Ctrl+V", action: "Toggle voice mode" },
                       { keys: "Ctrl+/", action: "Open settings" },
-                      { keys: "Esc", action: "Close modals" },
-                      { keys: "Ctrl+Enter", action: "Send message" }
+                      { keys: "Esc", action: "Close/Exit" }
                     ].map((shortcut, idx) => (
                       <div key={idx} className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
                         <span className="text-xs lg:text-sm">{shortcut.action}</span>
@@ -1477,6 +1664,36 @@ const AITutorEnhanced = () => {
                 ))}
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Voice Mode Floating Indicator */}
+      <AnimatePresence>
+        {voiceMode && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] pointer-events-none"
+          >
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 lg:px-6 py-3 lg:py-4 rounded-2xl shadow-2xl flex items-center gap-3 lg:gap-4 max-w-[90vw]">
+              <div className="relative flex-shrink-0">
+                <Mic className="w-5 h-5 lg:w-6 lg:h-6 animate-pulse" />
+                {isListening && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-xs lg:text-sm truncate">Voice Mode Active</p>
+                <p className="text-xs opacity-90">
+                  {isListening ? "Listening..." : isSpeaking ? "Speaking..." : "Ready"}
+                </p>
+              </div>
+              <div className="text-xs opacity-75 border-l border-white/30 pl-3 lg:pl-4 hidden sm:block flex-shrink-0">
+                Press <kbd className="px-1.5 lg:px-2 py-0.5 bg-white/20 rounded text-xs">Esc</kbd> to exit
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

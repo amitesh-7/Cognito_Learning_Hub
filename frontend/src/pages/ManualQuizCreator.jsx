@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import jsPDF from 'jspdf';
 
+// Icons
+const PrinterIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>;
+const DownloadIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
 // Icons
 const PlusCircleIcon = (props) => ( <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>);
 const SaveIcon = (props) => ( <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>);
@@ -33,11 +37,23 @@ const SuccessModal = ({ isOpen, onClose, message }) => (
 export default function ManualQuizCreator() {
   const [quizTitle, setQuizTitle] = useState('');
   const [questions, setQuestions] = useState([
-    { question: '', options: ['', '', '', ''], correct_answer: '' }
+    { question: '', options: ['', '', '', ''], correct_answer: '', points: 1, difficulty: 'medium' }
   ]);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportConfig, setExportConfig] = useState({
+    includeInstructions: true,
+    includeStudentInfo: true,
+    includeAnswerKey: false,
+    separateAnswerKey: true,
+    layoutStyle: 'standard',
+    showPoints: true,
+    showDifficulty: false,
+    timeLimit: '',
+    instructions: 'Read all questions carefully. Choose the best answer for each question. Mark your answers clearly.'
+  });
   const navigate = useNavigate();
 
   const handleQuestionChange = (index, value) => {
@@ -59,7 +75,7 @@ export default function ManualQuizCreator() {
   };
 
   const addQuestion = () => {
-    setQuestions([...questions, { question: '', options: ['', '', '', ''], correct_answer: '' }]);
+    setQuestions([...questions, { question: '', options: ['', '', '', ''], correct_answer: '', points: 1, difficulty: 'medium' }]);
   };
   
   const removeQuestion = (index) => {
@@ -68,6 +84,191 @@ export default function ManualQuizCreator() {
         return;
     }
     setQuestions(questions.filter((_, i) => i !== index));
+  };
+
+  const exportToPDF = (withAnswers = false) => {
+    if (!quizTitle.trim()) {
+      alert('Please add a quiz title before exporting.');
+      return;
+    }
+    if (questions.length === 0) {
+      alert('Please add at least one question before exporting.');
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 20;
+    const lineHeight = 7;
+    let yPosition = margin;
+
+    // Helper function to add new page if needed
+    const checkPageBreak = (requiredSpace) => {
+      if (yPosition + requiredSpace > pageHeight - margin) {
+        doc.addPage();
+        yPosition = margin;
+      }
+    };
+
+    // Helper function to wrap text
+    const wrapText = (text, maxWidth) => {
+      return doc.splitTextToSize(text, maxWidth);
+    };
+
+    // Title
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(79, 70, 229); // Indigo color
+    const titleLines = wrapText(quizTitle, pageWidth - 2 * margin);
+    titleLines.forEach((line, index) => {
+      doc.text(line, pageWidth / 2, yPosition + (index * lineHeight), { align: 'center' });
+    });
+    yPosition += titleLines.length * lineHeight + 10;
+
+    // Quiz info
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100);
+    doc.text(`Total Questions: ${questions.length}`, margin, yPosition);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, pageWidth - margin, yPosition, { align: 'right' });
+    yPosition += 15;
+
+    // Draw separator line
+    doc.setDrawColor(200);
+    doc.line(margin, yPosition, pageWidth - margin, yPosition);
+    yPosition += 10;
+
+    // Questions
+    questions.forEach((q, qIndex) => {
+      // Check if we need a new page
+      checkPageBreak(60);
+
+      // Question number and text
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0);
+      doc.text(`Q${qIndex + 1}.`, margin, yPosition);
+      
+      doc.setFont('helvetica', 'normal');
+      const questionLines = wrapText(q.question, pageWidth - 2 * margin - 15);
+      questionLines.forEach((line, index) => {
+        doc.text(line, margin + 15, yPosition + (index * lineHeight));
+      });
+      yPosition += questionLines.length * lineHeight + 5;
+
+      // Options
+      doc.setFontSize(11);
+      q.options.forEach((opt, oIndex) => {
+        checkPageBreak(lineHeight + 2);
+        
+        const optionLabel = String.fromCharCode(65 + oIndex); // A, B, C, D
+        const isCorrect = withAnswers && opt === q.correct_answer;
+        
+        if (isCorrect) {
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(34, 197, 94); // Green for correct answer
+          // Draw circle around correct answer
+          doc.circle(margin + 5, yPosition - 2, 2);
+        } else {
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(60);
+        }
+        
+        const optionText = `${optionLabel}) ${opt}`;
+        const optionLines = wrapText(optionText, pageWidth - 2 * margin - 20);
+        optionLines.forEach((line, index) => {
+          doc.text(line, margin + 12, yPosition + (index * lineHeight));
+        });
+        yPosition += optionLines.length * lineHeight + 3;
+      });
+
+      // Answer key section (only if withAnswers is true)
+      if (withAnswers) {
+        checkPageBreak(lineHeight + 5);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(79, 70, 229);
+        const answerIndex = q.options.findIndex(opt => opt === q.correct_answer);
+        const answerLabel = answerIndex >= 0 ? String.fromCharCode(65 + answerIndex) : '-';
+        doc.text(`✓ Correct Answer: ${answerLabel}) ${q.correct_answer}`, margin + 12, yPosition);
+        yPosition += lineHeight + 2;
+      }
+
+      yPosition += 8; // Space between questions
+    });
+
+    // Footer on last page
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(150);
+    const footerText = withAnswers ? 'Answer Key Included' : 'Quiz Question Paper';
+    doc.text(`${footerText} - Generated by Cognito Learning Hub`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    // Save the PDF
+    const fileName = `${quizTitle.replace(/[^a-z0-9]/gi, '_')}_${withAnswers ? 'with_answers' : 'questions'}.pdf`;
+    doc.save(fileName);
+  };
+
+  const printQuiz = () => {
+    if (!quizTitle.trim() || questions.length === 0) {
+      alert('Please add quiz title and questions before printing.');
+      return;
+    }
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${quizTitle}</title>
+        <style>
+          @media print {
+            @page { margin: 1.5cm; }
+            body { font-family: Arial, sans-serif; }
+          }
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #4F46E5; padding-bottom: 15px; }
+          h1 { color: #4F46E5; margin: 0; }
+          .quiz-info { display: flex; justify-content: space-between; color: #666; font-size: 14px; margin-top: 10px; }
+          .question { margin: 25px 0; page-break-inside: avoid; }
+          .question-number { font-weight: bold; font-size: 16px; margin-bottom: 10px; }
+          .question-text { margin-bottom: 15px; font-size: 15px; }
+          .options { margin-left: 25px; }
+          .option { margin: 8px 0; font-size: 14px; }
+          .answer-space { margin-top: 30px; border-top: 1px dashed #ccc; padding-top: 15px; color: #666; font-style: italic; }
+          @media print {
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>${quizTitle}</h1>
+          <div class="quiz-info">
+            <span>Total Questions: ${questions.length}</span>
+            <span>Date: ${new Date().toLocaleDateString()}</span>
+          </div>
+        </div>
+        ${questions.map((q, idx) => `
+          <div class="question">
+            <div class="question-number">Q${idx + 1}. ${q.question}</div>
+            <div class="options">
+              ${q.options.map((opt, oIdx) => `
+                <div class="option">${String.fromCharCode(65 + oIdx)}) ${opt}</div>
+              `).join('')}
+            </div>
+          </div>
+        `).join('')}
+        <div class="answer-space">
+          <p><strong>Answer Sheet:</strong></p>
+          ${questions.map((q, idx) => `<p>Q${idx + 1}: _____</p>`).join('')}
+        </div>
+        <script>window.print();</script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   const handleSaveQuiz = async () => {
@@ -129,14 +330,29 @@ export default function ManualQuizCreator() {
                 </div>
                 <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700">
                     <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Actions</h3>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         <button onClick={addQuestion} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors">
                             <PlusCircleIcon className="h-5 w-5" /> Add Question
                         </button>
-                        <button onClick={handleSaveQuiz} disabled={isSaving} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400">
+                        <button onClick={handleSaveQuiz} disabled={isSaving} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors">
                             <SaveIcon className="h-5 w-5" /> {isSaving ? 'Saving...' : 'Save Quiz'}
                         </button>
                     </div>
+                </div>
+                <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Export Options</h3>
+                    <div className="space-y-3">
+                        <button onClick={printQuiz} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors">
+                            <PrinterIcon className="h-5 w-5" /> Print Quiz
+                        </button>
+                        <button onClick={() => exportToPDF(false)} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-500 text-white font-semibold rounded-lg hover:bg-purple-600 transition-colors">
+                            <DownloadIcon className="h-5 w-5" /> Export Questions PDF
+                        </button>
+                        <button onClick={() => exportToPDF(true)} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors">
+                            <DownloadIcon className="h-5 w-5" /> Export with Answers
+                        </button>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">Export professionally formatted PDFs with or without answer keys</p>
                 </div>
                 {error && <div className="p-4 bg-red-100 text-red-800 rounded-lg text-sm">{error}</div>}
             </motion.div>
