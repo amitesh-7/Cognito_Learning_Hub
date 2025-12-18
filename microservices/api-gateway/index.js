@@ -73,6 +73,9 @@ const corsOptions = {
     "Authorization",
     "x-auth-token",
     "x-requested-with",
+    "Cache-Control",
+    "Pragma",
+    "Expires",
   ],
   exposedHeaders: ["Content-Range", "X-Content-Range"],
   maxAge: 86400, // 24 hours - cache preflight requests
@@ -98,7 +101,7 @@ app.use((req, res, next) => {
     );
     res.setHeader(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, x-auth-token"
+      "Content-Type, Authorization, x-auth-token, Cache-Control, Pragma, Expires"
     );
     res.setHeader("Access-Control-Max-Age", "86400");
     return res.status(204).end();
