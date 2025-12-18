@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
+import '../services/socket_service.dart';
 
 // Auth state
 class AuthState {
@@ -43,6 +44,15 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final user = await _authService.getCurrentUser();
       state = AuthState(user: user, isLoading: false);
+
+      // Initialize socket if user is already logged in
+      if (user != null) {
+        final token = await _authService.getToken();
+        if (token != null) {
+          print('🔐 Initializing socket with saved token');
+          SocketService().initialize(token);
+        }
+      }
     } catch (e) {
       state = const AuthState(isLoading: false);
     }
@@ -55,6 +65,13 @@ class AuthNotifier extends Notifier<AuthState> {
 
     if (result.success) {
       state = AuthState(user: result.user, isLoading: false);
+
+      // Initialize socket service with auth token
+      if (result.token != null) {
+        print('🔐 Initializing socket with auth token');
+        SocketService().initialize(result.token!);
+      }
+
       return true;
     } else {
       state = state.copyWith(isLoading: false, error: result.error);
@@ -74,6 +91,13 @@ class AuthNotifier extends Notifier<AuthState> {
 
     if (result.success) {
       state = AuthState(user: result.user, isLoading: false);
+
+      // Initialize socket service with auth token
+      if (result.token != null) {
+        print('🔐 Initializing socket with auth token after registration');
+        SocketService().initialize(result.token!);
+      }
+
       return true;
     } else {
       state = state.copyWith(isLoading: false, error: result.error);
@@ -88,6 +112,13 @@ class AuthNotifier extends Notifier<AuthState> {
 
     if (result.success) {
       state = AuthState(user: result.user, isLoading: false);
+
+      // Initialize socket service with auth token
+      if (result.token != null) {
+        print('🔐 Initializing socket with auth token after Google sign-in');
+        SocketService().initialize(result.token!);
+      }
+
       return true;
     } else {
       state = state.copyWith(isLoading: false, error: result.error);

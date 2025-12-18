@@ -7,6 +7,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../config/theme.dart';
+import '../../models/live_session.dart';
 import '../../providers/live_session_provider.dart';
 import '../../widgets/common/app_button.dart';
 import 'live_quiz_play_screen.dart';
@@ -24,17 +25,38 @@ class LiveQuizLobbyScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<LiveQuizLobbyScreen> createState() => _LiveQuizLobbyScreenState();
+  ConsumerState<LiveQuizLobbyScreen> createState() =>
+      _LiveQuizLobbyScreenState();
 }
 
 class _LiveQuizLobbyScreenState extends ConsumerState<LiveQuizLobbyScreen> {
   bool _isLoading = false;
+  bool _hasNavigated = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.isHost && widget.quizId != null) {
       _createSession();
+    }
+  }
+
+  void _checkSessionStatus(LiveSession? session) {
+    print(
+        '🔍 Checking session status: ${session?.status}, hasNavigated: $_hasNavigated');
+    if (_hasNavigated || session == null) return;
+
+    // For participants, navigate to play screen when session starts
+    if (!widget.isHost && session.status == LiveSessionStatus.active) {
+      print(
+          '🎬 Session started! Status is ACTIVE. Navigating to play screen...');
+      _hasNavigated = true;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const LiveQuizPlayScreen(),
+        ),
+      );
     }
   }
 
@@ -80,7 +102,7 @@ class _LiveQuizLobbyScreenState extends ConsumerState<LiveQuizLobbyScreen> {
   void _startSession() async {
     try {
       await ref.read(currentLiveSessionProvider.notifier).startSession();
-      
+
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -104,6 +126,11 @@ class _LiveQuizLobbyScreenState extends ConsumerState<LiveQuizLobbyScreen> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(currentLiveSessionProvider);
+
+    // Listen for session status changes (for participants)
+    ref.listen<LiveSession?>(currentLiveSessionProvider, (previous, next) {
+      _checkSessionStatus(next);
+    });
 
     if (_isLoading || session == null) {
       return Scaffold(
@@ -183,7 +210,8 @@ class _LiveQuizLobbyScreenState extends ConsumerState<LiveQuizLobbyScreen> {
                       children: [
                         TextButton.icon(
                           onPressed: () => _copyCode(session.code),
-                          icon: const Icon(Icons.copy, size: 18, color: Colors.white),
+                          icon: const Icon(Icons.copy,
+                              size: 18, color: Colors.white),
                           label: const Text(
                             'Copy',
                             style: TextStyle(color: Colors.white),
@@ -191,8 +219,10 @@ class _LiveQuizLobbyScreenState extends ConsumerState<LiveQuizLobbyScreen> {
                         ),
                         const SizedBox(width: 16),
                         TextButton.icon(
-                          onPressed: () => _shareCode(session.code, session.quizTitle),
-                          icon: const Icon(Icons.share, size: 18, color: Colors.white),
+                          onPressed: () =>
+                              _shareCode(session.code, session.quizTitle),
+                          icon: const Icon(Icons.share,
+                              size: 18, color: Colors.white),
                           label: const Text(
                             'Share',
                             style: TextStyle(color: Colors.white),
@@ -379,7 +409,8 @@ class _LiveQuizLobbyScreenState extends ConsumerState<LiveQuizLobbyScreen> {
                             ),
                             title: Text(
                               participant.username,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
                             ),
                             trailing: participant.isHost
                                 ? Container(
@@ -484,7 +515,9 @@ class _LiveQuizLobbyScreenState extends ConsumerState<LiveQuizLobbyScreen> {
               iconColor: Colors.red,
               onTap: () async {
                 Navigator.pop(context);
-                await ref.read(currentLiveSessionProvider.notifier).endSession();
+                await ref
+                    .read(currentLiveSessionProvider.notifier)
+                    .endSession();
                 if (mounted) {
                   Navigator.pop(context);
                 }

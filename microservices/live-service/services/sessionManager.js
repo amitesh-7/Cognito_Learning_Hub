@@ -752,6 +752,18 @@ class SessionManager {
           const [userId, score] = sorted[i];
           const participant = await this.getParticipant(sessionCode, userId);
           if (participant) {
+            // Get participant's answers to calculate average time
+            const answers = await this.getParticipantAnswers(
+              sessionCode,
+              userId
+            );
+            const totalTime = answers.reduce(
+              (sum, a) => sum + (a.timeSpent || 0),
+              0
+            );
+            const avgTime =
+              answers.length > 0 ? totalTime / answers.length / 1000 : 0; // Convert to seconds
+
             result.push({
               rank: i + 1,
               userId,
@@ -762,6 +774,7 @@ class SessionManager {
               score,
               correctAnswers: participant.correctAnswers,
               incorrectAnswers: participant.incorrectAnswers,
+              avgTimePerQuestion: avgTime,
               accuracy:
                 participant.correctAnswers + participant.incorrectAnswers > 0
                   ? (participant.correctAnswers /
@@ -794,6 +807,15 @@ class SessionManager {
         const participant = await this.getParticipant(sessionCode, userId);
 
         if (participant) {
+          // Get participant's answers to calculate average time
+          const answers = await this.getParticipantAnswers(sessionCode, userId);
+          const totalTime = answers.reduce(
+            (sum, a) => sum + (a.timeSpent || 0),
+            0
+          );
+          const avgTime =
+            answers.length > 0 ? totalTime / answers.length / 1000 : 0; // Convert to seconds
+
           leaderboard.push({
             rank: Math.floor(i / 2) + 1,
             userId,
@@ -804,6 +826,7 @@ class SessionManager {
             score,
             correctAnswers: participant.correctAnswers,
             incorrectAnswers: participant.incorrectAnswers,
+            avgTimePerQuestion: avgTime,
             accuracy:
               participant.correctAnswers + participant.incorrectAnswers > 0
                 ? (participant.correctAnswers /

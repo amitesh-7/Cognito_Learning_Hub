@@ -39,6 +39,9 @@ class CurrentLiveSessionNotifier extends Notifier<LiveSession?> {
     final eventType = event['event'];
     final data = event['data'];
 
+    print('📨 Socket event received in provider: $eventType');
+    print('📨 Event data: $data');
+
     switch (eventType) {
       case 'participant_joined':
         _onParticipantJoined(data);
@@ -46,8 +49,17 @@ class CurrentLiveSessionNotifier extends Notifier<LiveSession?> {
       case 'participant_left':
         _onParticipantLeft(data);
         break;
+      case 'session_started':
+        _onSessionStarted(data);
+        break;
+      case 'question_started':
+        _onQuestionReceived(data);
+        break;
       case 'question':
         _onQuestionReceived(data);
+        break;
+      case 'leaderboard_updated':
+        _onLeaderboardUpdate(data);
         break;
       case 'leaderboard':
         _onLeaderboardUpdate(data);
@@ -64,6 +76,9 @@ class CurrentLiveSessionNotifier extends Notifier<LiveSession?> {
     final participant = LiveParticipant.fromJson(data['participant']);
     final updatedParticipants = [...state!.participants, participant];
 
+    print(
+        '👤 Participant joined: ${participant.userId}'); // Log participant info
+
     state = state!.copyWith(participants: updatedParticipants);
   }
 
@@ -77,19 +92,51 @@ class CurrentLiveSessionNotifier extends Notifier<LiveSession?> {
     state = state!.copyWith(participants: updatedParticipants);
   }
 
+  void _onSessionStarted(Map<String, dynamic> data) {
+    if (state == null) {
+      print('⚠️ Cannot update session started - state is null');
+      return;
+    }
+
+    print('🎬 Session started! Current status: ${state!.status}');
+    print('🎬 Session started data: $data');
+
+    state = state!.copyWith(
+      status: LiveSessionStatus.active,
+      startedAt: DateTime.now(),
+    );
+
+    print('✅ Session state updated to ACTIVE: ${state!.status}');
+  }
+
   void _onQuestionReceived(Map<String, dynamic> data) {
-    if (state == null) return;
+    if (state == null) {
+      print('⚠️ Cannot process question - session state is null');
+      return;
+    }
+
+    print('📝 Question received data: $data');
 
     final questionIndex = data['questionIndex'] ?? 0;
+    print('📝 Question index: $questionIndex');
+
     state = state!.copyWith(
       currentQuestionIndex: questionIndex,
       status: LiveSessionStatus.active,
     );
 
+    print('✅ Session state updated - status: ${state!.status}');
+
     // Notify listeners of new question
-    ref.read(currentQuestionProvider.notifier).set(
-          LiveQuestionEvent.fromJson(data),
-        );
+    try {
+      final questionEvent = LiveQuestionEvent.fromJson(data);
+      print('📝 Parsed question: ${questionEvent.questionText}');
+      print('📝 Options count: ${questionEvent.options.length}');
+      ref.read(currentQuestionProvider.notifier).set(questionEvent);
+      print('✅ Question provider updated');
+    } catch (e) {
+      print('❌ Error parsing question: $e');
+    }
   }
 
   void _onLeaderboardUpdate(Map<String, dynamic> data) {
@@ -143,8 +190,26 @@ class CurrentLiveSessionNotifier extends Notifier<LiveSession?> {
 
       state = session;
 
+      // Wait for socket to connect before joining (try multiple times)
+      print(
+          '🔵 Provider: Checking socket connection status: ${_socket.isConnected}');
+
+      int retries = 0;
+      while (!_socket.isConnected && retries < 10) {
+        print('⏳ Socket not connected, waiting... (attempt ${retries + 1}/10)');
+        await Future.delayed(const Duration(milliseconds: 500));
+        retries++;
+      }
+
+      if (!_socket.isConnected) {
+        print(
+            '⚠️ Socket still not connected after waiting, attempting anyway...');
+      }
+
       // Connect to socket and join room with user data
       print('🔵 Provider: Calling socket.joinSession with user data');
+      print('🔵 User: id=${user.id}, name=${user.name}');
+      print('🔵 Socket connected: ${_socket.isConnected}');
       _socket.joinSession(
         code,
         userId: user.id,
@@ -152,6 +217,7 @@ class CurrentLiveSessionNotifier extends Notifier<LiveSession?> {
         userPicture: user.picture,
       );
     } catch (e) {
+      print('❌ Error in joinSession: $e');
       rethrow;
     }
   }
@@ -208,31 +274,38 @@ class CurrentLiveSessionNotifier extends Notifier<LiveSession?> {
   }) async {
     if (state == null) return;
 
+    final question = ref.read(currentQuestionProvider);
+    if (question == null) {
+      print('❌ Cannot submit answer - no current question');
+      return;
+    }
+
+    final authState = ref.read(authProvider);
+    final user = authState.user;
+    if (user == null) {
+      print('❌ Cannot submit answer - user not authenticated');
+      return;
+    }
+
     try {
-      final startTime = ref.read(currentQuestionProvider)?.startTime;
-      final timeTaken = startTime != null
-          ? DateTime.now().difference(startTime).inSeconds
-          : 0;
+      final timeSpent = DateTime.now().difference(question.startTime).inSeconds;
 
-      await _service.submitAnswer(
-        sessionId: state!.id,
-        questionIndex: questionIndex,
-        answerIndex: answerIndex,
-      );
+      print(
+          '📝 Submitting answer: questionIndex=$questionIndex, answerIndex=$answerIndex');
+      print('📝 Question ID: ${question.questionId}, User ID: ${user.id}');
 
-      // Socket will handle the response
+      // Use socket only (no HTTP endpoint exists for this)
       _socket.submitAnswer(
-        state!.id,
-        questionIndex.toString(), // Convert to String for questionId
-        answerIndex,
-        timeTaken,
+        sessionCode: state!.code,
+        userId: user.id,
+        questionId: question.questionId,
+        selectedAnswer: question.options[answerIndex],
+        timeSpent: timeSpent,
       );
-      _service.getSession(state!.id).then((session) {
-        state = session;
-      }).catchError((e) {
-        // Handle error silently
-      });
+
+      print('✅ Answer submitted via socket');
     } catch (e) {
+      print('❌ Error submitting answer: $e');
       rethrow;
     }
   }

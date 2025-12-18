@@ -7,7 +7,9 @@ import '../../models/duel.dart';
 import '../../providers/duel_provider.dart';
 
 class DuelMatchmakingScreen extends ConsumerStatefulWidget {
-  const DuelMatchmakingScreen({super.key});
+  final String? quizId;
+
+  const DuelMatchmakingScreen({super.key, this.quizId});
 
   @override
   ConsumerState<DuelMatchmakingScreen> createState() =>

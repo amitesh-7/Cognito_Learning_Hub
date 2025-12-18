@@ -151,8 +151,9 @@ class LiveParticipant {
   factory LiveParticipant.fromJson(Map<String, dynamic> json) {
     return LiveParticipant(
       userId: json['userId'] ?? json['_id'] ?? '',
-      username: json['username'] ?? json['name'] ?? 'Anonymous',
-      avatar: json['avatar'],
+      username:
+          json['userName'] ?? json['username'] ?? json['name'] ?? 'Anonymous',
+      avatar: json['userPicture'] ?? json['avatar'],
       score: json['score'] ?? 0,
       correctAnswers: json['correctAnswers'] ?? 0,
       isHost: json['isHost'] ?? false,
@@ -195,6 +196,7 @@ class LiveParticipant {
 }
 
 class LiveQuestionEvent {
+  final String questionId;
   final int questionIndex;
   final String questionText;
   final List<String> options;
@@ -202,6 +204,7 @@ class LiveQuestionEvent {
   final DateTime startTime;
 
   LiveQuestionEvent({
+    required this.questionId,
     required this.questionIndex,
     required this.questionText,
     required this.options,
@@ -210,18 +213,37 @@ class LiveQuestionEvent {
   });
 
   factory LiveQuestionEvent.fromJson(Map<String, dynamic> json) {
+    // Handle nested question object from backend
+    final questionData = json['question'];
+    String questionId;
+    String questionText;
+    List<String> options;
+
+    if (questionData is Map<String, dynamic>) {
+      // Backend sends: { question: { _id, question: "text", options: [...] }, timeLimit, questionIndex }
+      questionId = questionData['_id'] ?? '';
+      questionText = questionData['question'] ?? '';
+      options = List<String>.from(questionData['options'] ?? []);
+    } else {
+      // Fallback for direct format
+      questionId = json['questionId'] ?? json['_id'] ?? '';
+      questionText = json['questionText'] ?? json['question'] ?? '';
+      options = List<String>.from(json['options'] ?? []);
+    }
+
     return LiveQuestionEvent(
+      questionId: questionId,
       questionIndex: json['questionIndex'] ?? 0,
-      questionText: json['questionText'] ?? json['question'] ?? '',
-      options: List<String>.from(json['options'] ?? []),
+      questionText: questionText,
+      options: options,
       timeLimit: json['timeLimit'] ?? 30,
-      startTime:
-          DateTime.parse(json['startTime'] ?? DateTime.now().toIso8601String()),
+      startTime: DateTime.tryParse(json['startTime'] ?? '') ?? DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'questionId': questionId,
       'questionIndex': questionIndex,
       'questionText': questionText,
       'options': options,

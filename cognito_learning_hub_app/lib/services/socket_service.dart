@@ -32,15 +32,27 @@ class SocketService {
       _socket!.dispose();
     }
 
+    print('🔌 Initializing Socket.IO connection to: ${ApiConfig.socketUrl}');
+    print(
+        '🔌 Auth token present: ${_authToken != null && _authToken!.isNotEmpty}');
+
     _socket = io.io(
       ApiConfig.socketUrl,
       io.OptionBuilder()
-          .setTransports(['websocket'])
+          .setTransports([
+            'websocket',
+            'polling'
+          ]) // Match web app - try websocket first, fallback to polling
           .setAuth({'token': _authToken})
           .enableAutoConnect()
           .enableReconnection()
           .setReconnectionAttempts(5)
           .setReconnectionDelay(1000)
+          .setReconnectionDelayMax(5000)
+          .setTimeout(10000)
+          .setExtraHeaders({
+            'Authorization': 'Bearer $_authToken'
+          }) // Add auth header as backup
           .build(),
     );
 
@@ -88,6 +100,11 @@ class SocketService {
     _socket?.on('session-started', (data) {
       print('📥 Socket: session-started event received');
       _eventController.add({'event': 'session_started', 'data': data});
+    });
+
+    _socket?.on('first-question', (data) {
+      print('📥 Socket: first-question event received');
+      _eventController.add({'event': 'question_started', 'data': data});
     });
 
     _socket?.on('question-started', (data) {
@@ -162,13 +179,26 @@ class SocketService {
     String? userPicture,
   }) {
     print('🔵 Socket: Emitting join-session event');
+    print('🔵 Socket connected: ${_socket?.connected}');
+    print('🔵 Socket ID: ${_socket?.id}');
     print(
         '🔵 Data: sessionCode=$sessionCode, userId=$userId, userName=$userName');
-    _socket?.emit('join-session', {
+
+    _socket?.emitWithAck('join-session', {
       'sessionCode': sessionCode,
       'userId': userId,
       'userName': userName,
       'userPicture': userPicture,
+    }, ack: (response) {
+      print('📡 Join session response: $response');
+      if (response != null && response['success'] == true) {
+        print('✅ Successfully joined session via socket');
+        _eventController.add({'event': 'session_joined', 'data': response});
+      } else {
+        print(
+            '❌ Failed to join session: ${response?['error'] ?? 'Unknown error'}');
+        _eventController.add({'event': 'error', 'data': response});
+      }
     });
   }
 
@@ -184,17 +214,22 @@ class SocketService {
     _socket?.emit('session:end', {'sessionId': sessionId});
   }
 
-  void submitAnswer(
-    String sessionId,
-    String questionId,
-    int answerIndex,
-    int timeTaken,
-  ) {
-    _socket?.emit('session:answer', {
-      'sessionId': sessionId,
+  void submitAnswer({
+    required String sessionCode,
+    required String userId,
+    required String questionId,
+    required String selectedAnswer,
+    required int timeSpent,
+  }) {
+    print('📝 Socket: Submitting answer');
+    print(
+        '📝 Session: $sessionCode, Question: $questionId, Answer: $selectedAnswer');
+    _socket?.emit('submit-answer', {
+      'sessionCode': sessionCode,
+      'userId': userId,
       'questionId': questionId,
-      'answer': answerIndex,
-      'timeTaken': timeTaken,
+      'selectedAnswer': selectedAnswer,
+      'timeSpent': timeSpent,
     });
   }
 

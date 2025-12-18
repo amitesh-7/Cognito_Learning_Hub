@@ -23,10 +23,10 @@ class ApiConfig {
   static const String prodModerationUrl =
       'https://moderation-service-3e2e.onrender.com';
 
-  // WebSocket URLs (Live & Meeting services need direct connection)
-  static const String prodSocketUrl = 'https://live-service-ga6w.onrender.com';
+  // WebSocket URLs - Should go through API Gateway for production
+  static const String prodSocketUrl = 'https://api-gateway-kzo9.onrender.com';
   static const String prodMeetingWsUrl =
-      'https://meeting-service-ogfj.onrender.com';
+      'https://api-gateway-kzo9.onrender.com';
 
   // ========================================
   // Development URLs (Local)

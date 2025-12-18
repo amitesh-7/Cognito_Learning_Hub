@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/theme.dart';
 import '../../widgets/common/app_button.dart';
+import '../../services/quiz_service.dart';
+import '../../models/quiz.dart';
+import 'duel_matchmaking_screen.dart';
 
 class DuelModeScreen extends ConsumerStatefulWidget {
   const DuelModeScreen({super.key});
@@ -14,20 +17,35 @@ class DuelModeScreen extends ConsumerStatefulWidget {
 
 class _DuelModeScreenState extends ConsumerState<DuelModeScreen> {
   bool _isSearching = false;
-  String? _selectedCategory;
-  String? _selectedDifficulty;
+  bool _isLoading = true;
+  List<Quiz> _quizzes = [];
+  String? _error;
+  final QuizService _quizService = QuizService();
 
-  final List<String> _categories = [
-    'General Knowledge',
-    'Science',
-    'Mathematics',
-    'History',
-    'Geography',
-    'Programming',
-    'Literature',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadQuizzes();
+  }
 
-  final List<String> _difficulties = ['Easy', 'Medium', 'Hard', 'Expert'];
+  Future<void> _loadQuizzes() async {
+    setState(() => _isLoading = true);
+    try {
+      final quizzes = await _quizService.getPublicQuizzes(limit: 1000);
+      // Filter quizzes that have questions
+      final validQuizzes =
+          quizzes.where((q) => q.questions.isNotEmpty).toList();
+      setState(() {
+        _quizzes = validQuizzes;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +64,42 @@ class _DuelModeScreenState extends ConsumerState<DuelModeScreen> {
   }
 
   Widget _buildMatchmakingUI() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: $_error'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadQuizzes,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_quizzes.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('No quizzes available'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadQuizzes,
+              child: const Text('Refresh'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -62,145 +116,109 @@ class _DuelModeScreenState extends ConsumerState<DuelModeScreen> {
 
           Text(
             '1v1 Quiz Battle',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall
+                ?.copyWith(fontWeight: FontWeight.bold),
           ).animate().fadeIn(delay: 100.ms),
 
           const SizedBox(height: 8),
 
           Text(
-            'Challenge another player to a real-time quiz duel!',
+            'Select a quiz and challenge another player!',
             style: TextStyle(color: Colors.grey.shade600),
             textAlign: TextAlign.center,
           ).animate().fadeIn(delay: 200.ms),
 
           const SizedBox(height: 32),
 
-          // Category Selection
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Select Category',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _categories.map((category) {
-                      final isSelected = _selectedCategory == category;
-                      return FilterChip(
-                        label: Text(category),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            _selectedCategory = selected ? category : null;
-                          });
-                        },
-                        selectedColor: AppTheme.primaryColor.withValues(
-                          alpha: 0.2,
-                        ),
-                        checkmarkColor: AppTheme.primaryColor,
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-            ),
-          ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
-
-          const SizedBox(height: 16),
-
-          // Difficulty Selection
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Select Difficulty',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: _difficulties.map((difficulty) {
-                      final isSelected = _selectedDifficulty == difficulty;
-                      return Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: ChoiceChip(
-                            label: Text(
-                              difficulty,
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectedDifficulty = selected
-                                    ? difficulty
-                                    : null;
-                              });
-                            },
-                            selectedColor: _getDifficultyColor(
-                              difficulty,
-                            ).withValues(alpha: 0.2),
+          // Quiz List
+          ..._quizzes.map((quiz) {
+            final index = _quizzes.indexOf(quiz);
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: InkWell(
+                onTap: () => _startDuel(quiz.id),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              AppTheme.primaryColor,
+                              AppTheme.accentColor,
+                            ],
                           ),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      );
-                    }).toList(),
+                        child: const Icon(
+                          Icons.quiz,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              quiz.title,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${quiz.questions.length} questions',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            if (quiz.category != null) ...[
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  quiz.category!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 20,
+                        color: Colors.grey,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2),
-
-          const SizedBox(height: 32),
-
-          // Stats Card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildStatItem('Wins', '12', Colors.green),
-                  _buildStatItem('Losses', '5', Colors.red),
-                  _buildStatItem('Win Rate', '70%', AppTheme.primaryColor),
-                ],
-              ),
-            ),
-          ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2),
-
-          const SizedBox(height: 32),
-
-          // Find Opponent Button
-          SizedBox(
-            width: double.infinity,
-            child: GradientButton(
-              text: 'Find Opponent',
-              icon: Icons.search,
-              onPressed: () => _startSearching(),
-            ),
-          ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2),
-
-          const SizedBox(height: 16),
-
-          // Challenge Friend Button
-          SizedBox(
-            width: double.infinity,
-            child: AppButton(
-              text: 'Challenge a Friend',
-              icon: Icons.person_add,
-              isOutlined: true,
-              onPressed: () => _challengeFriend(),
-            ),
-          ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2),
+            )
+                .animate()
+                .fadeIn(delay: Duration(milliseconds: 300 + index * 50))
+                .slideX(begin: 0.2);
+          }).toList(),
         ],
       ),
     );
@@ -213,23 +231,23 @@ class _DuelModeScreenState extends ConsumerState<DuelModeScreen> {
         children: [
           // Animated searching indicator
           Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                    width: 4,
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.search,
-                    size: 48,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-              )
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                width: 4,
+              ),
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.search,
+                size: 48,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          )
               .animate(onPlay: (c) => c.repeat())
               .shimmer(duration: 2000.ms)
               .then()
@@ -245,7 +263,7 @@ class _DuelModeScreenState extends ConsumerState<DuelModeScreen> {
           const SizedBox(height: 8),
 
           Text(
-            'Category: ${_selectedCategory ?? "Any"}\nDifficulty: ${_selectedDifficulty ?? "Any"}',
+            'Finding a worthy opponent...',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey.shade600),
           ).animate().fadeIn(delay: 200.ms),
@@ -262,59 +280,12 @@ class _DuelModeScreenState extends ConsumerState<DuelModeScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-        ),
-      ],
-    );
-  }
-
-  Color _getDifficultyColor(String difficulty) {
-    switch (difficulty.toLowerCase()) {
-      case 'easy':
-        return Colors.green;
-      case 'medium':
-        return Colors.orange;
-      case 'hard':
-        return Colors.red;
-      case 'expert':
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  void _startSearching() {
-    setState(() => _isSearching = true);
-
-    // Simulate finding opponent after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted && _isSearching) {
-        setState(() => _isSearching = false);
-        // TODO: Navigate to duel battle screen
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Opponent found! Starting duel...')),
-        );
-      }
-    });
-  }
-
-  void _challengeFriend() {
-    // TODO: Show friend list to challenge
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Friend challenge coming soon!')),
+  void _startDuel(String quizId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DuelMatchmakingScreen(quizId: quizId),
+      ),
     );
   }
 

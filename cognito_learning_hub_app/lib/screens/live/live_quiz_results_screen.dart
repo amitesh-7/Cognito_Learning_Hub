@@ -6,6 +6,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:confetti/confetti.dart';
 import '../../config/theme.dart';
 import '../../providers/live_session_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../models/live_session.dart';
 
 class LiveQuizResultsScreen extends ConsumerStatefulWidget {
   const LiveQuizResultsScreen({super.key});
@@ -124,12 +126,12 @@ class _LiveQuizResultsScreenState extends ConsumerState<LiveQuizResultsScreen> {
                               ),
                               _buildStatItem(
                                 'Score',
-                                '${leaderboard.firstWhere((e) => e.rank == userRank).score}',
+                                '${leaderboard.firstWhere((e) => e.rank == userRank, orElse: () => LiveLeaderboardEntry(userId: '', username: '', score: 0, correctAnswers: 0, rank: 0)).score}',
                                 Icons.stars,
                               ),
                               _buildStatItem(
                                 'Correct',
-                                '${leaderboard.firstWhere((e) => e.rank == userRank).correctAnswers}',
+                                '${leaderboard.firstWhere((e) => e.rank == userRank, orElse: () => LiveLeaderboardEntry(userId: '', username: '', score: 0, correctAnswers: 0, rank: 0)).correctAnswers}',
                                 Icons.check_circle,
                               ),
                             ],
@@ -255,7 +257,7 @@ class _LiveQuizResultsScreenState extends ConsumerState<LiveQuizResultsScreen> {
 
   Widget _buildPodium(List<dynamic> topThree) {
     return SizedBox(
-      height: 250,
+      height: 280,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -265,7 +267,7 @@ class _LiveQuizResultsScreenState extends ConsumerState<LiveQuizResultsScreen> {
               child: _buildPodiumPlace(
                 rank: 2,
                 entry: topThree[1],
-                height: 150,
+                height: 120,
                 color: Colors.grey[400]!,
               ),
             ),
@@ -276,7 +278,7 @@ class _LiveQuizResultsScreenState extends ConsumerState<LiveQuizResultsScreen> {
               child: _buildPodiumPlace(
                 rank: 1,
                 entry: topThree[0],
-                height: 200,
+                height: 150,
                 color: Colors.amber,
               ),
             ),
@@ -287,7 +289,7 @@ class _LiveQuizResultsScreenState extends ConsumerState<LiveQuizResultsScreen> {
               child: _buildPodiumPlace(
                 rank: 3,
                 entry: topThree[2],
-                height: 120,
+                height: 90,
                 color: Colors.brown[400]!,
               ),
             ),
@@ -307,22 +309,22 @@ class _LiveQuizResultsScreenState extends ConsumerState<LiveQuizResultsScreen> {
       children: [
         // Avatar
         CircleAvatar(
-          radius: 30,
+          radius: 24,
           backgroundColor: color,
           child: Icon(
             _getRankIcon(rank),
             color: Colors.white,
-            size: 30,
+            size: 24,
           ),
         ),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
 
         // Username
         Text(
           entry.username,
           style: const TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
@@ -334,12 +336,12 @@ class _LiveQuizResultsScreenState extends ConsumerState<LiveQuizResultsScreen> {
         Text(
           '${entry.score} pts',
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 9,
             color: Colors.grey[600],
           ),
         ),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
 
         // Podium Block
         Container(
@@ -416,9 +418,22 @@ class _LiveQuizResultsScreenState extends ConsumerState<LiveQuizResultsScreen> {
   }
 
   int? _getUserRank(List<dynamic> leaderboard) {
-    // TODO: Get current user ID and find their rank
-    // For now, return mock data
     if (leaderboard.isEmpty) return null;
-    return 5; // Mock rank
+
+    final authState = ref.read(authProvider);
+    final user = authState.user;
+    if (user == null) return null;
+
+    // Find user in leaderboard
+    try {
+      final userEntry = leaderboard.firstWhere(
+        (entry) => entry.userId == user.id,
+        orElse: () => null,
+      );
+      return userEntry?.rank;
+    } catch (e) {
+      print('Error finding user rank: $e');
+      return null;
+    }
   }
 }
