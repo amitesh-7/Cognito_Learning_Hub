@@ -1901,20 +1901,20 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               className="mt-8"
             >
-              <Card className="bg-gradient-to-r from-purple-900/30 via-blue-900/30 to-indigo-900/30 border-purple-500/30 overflow-hidden">
+              <Card className="bg-gradient-to-r from-purple-700 via-blue-700 to-indigo-700 dark:from-purple-900/90 dark:via-blue-900/90 dark:to-indigo-900/90 border-purple-400 dark:border-purple-500/50 overflow-hidden shadow-2xl">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-purple-400" />
+                      <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2 drop-shadow-lg">
+                        <Sparkles className="w-5 h-5 text-yellow-300" />
                         Feature Unlock Progress
                       </h3>
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-white text-sm font-semibold drop-shadow-md">
                         {unlockedCount} / {totalFeatures} Features Unlocked
                       </p>
                     </div>
                     <Link to="/roadmap">
-                      <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600">
+                      <Button className="bg-white text-purple-700 hover:bg-purple-50 dark:bg-gradient-to-r dark:from-purple-500 dark:to-blue-500 dark:hover:from-purple-600 dark:hover:to-blue-600 dark:text-white font-bold shadow-lg hover:shadow-xl transition-all">
                         <MapIcon className="w-4 h-4 mr-2" />
                         View Roadmap
                       </Button>
@@ -1922,24 +1922,24 @@ export default function Dashboard() {
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="relative h-4 bg-gray-800/50 rounded-full overflow-hidden">
+                  <div className="relative h-4 bg-white/20 dark:bg-slate-800/50 rounded-full overflow-hidden border-2 border-white/30 dark:border-white/10 shadow-inner">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${progressPercent}%` }}
                       transition={{ duration: 1, ease: "easeOut" }}
-                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 rounded-full"
+                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400 dark:from-purple-400 dark:via-blue-400 dark:to-indigo-400 rounded-full shadow-lg"
                     >
                       {/* Shimmer effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
                     </motion.div>
                   </div>
 
                   {/* Progress Stats */}
                   <div className="flex items-center justify-between mt-3">
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-white text-sm font-bold drop-shadow-md">
                       {progressPercent}% Complete
                     </p>
-                    <p className="text-purple-400 text-sm font-medium">
+                    <p className="text-white text-sm font-bold drop-shadow-md">
                       {totalFeatures - unlockedCount} features remaining
                     </p>
                   </div>
@@ -1973,19 +1973,19 @@ export default function Dashboard() {
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
-                          className="mt-4 p-3 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/20"
+                          className="mt-4 p-4 bg-gradient-to-r from-purple-500/30 to-blue-500/30 dark:from-purple-500/20 dark:to-blue-500/20 rounded-xl border-2 border-purple-400/40 dark:border-purple-400/30 shadow-lg"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="p-2 bg-purple-500/20 rounded-lg">
-                                <Zap className="w-5 h-5 text-purple-400" />
+                              <div className="p-2 bg-purple-400/40 dark:bg-purple-500/30 rounded-lg shadow-md">
+                                <Zap className="w-5 h-5 text-purple-100 dark:text-purple-200" />
                               </div>
                               <div>
-                                <p className="text-white font-medium text-sm">{feature.name}</p>
-                                <p className="text-gray-400 text-xs">{requirementText}</p>
+                                <p className="text-white font-semibold text-sm">{feature.name}</p>
+                                <p className="text-white/90 dark:text-white/80 text-xs font-medium">{requirementText}</p>
                               </div>
                             </div>
-                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                            <ChevronRight className="w-5 h-5 text-white/70 dark:text-white/60" />
                           </div>
                         </motion.div>
                       );

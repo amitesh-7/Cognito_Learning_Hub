@@ -270,17 +270,17 @@ const Pricing = () => {
             className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700"
           >
             {/* Table Header */}
-            <div className="grid grid-cols-3 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 p-6 border-b border-slate-200 dark:border-slate-700">
-              <div className="font-bold text-slate-600 dark:text-slate-400">Feature</div>
+            <div className="grid grid-cols-3 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-800 p-6 border-b border-slate-200 dark:border-slate-600">
+              <div className="font-bold text-slate-900 dark:text-white text-lg">Features</div>
               <div className="text-center">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full shadow-lg">
                   <Brain className="w-5 h-5 text-white" />
-                  <span className="font-bold text-white">Cognito</span>
+                  <span className="font-bold text-white text-base">Cognito 🚀</span>
                 </div>
               </div>
               <div className="text-center">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-full">
-                  <span className="font-bold text-slate-700 dark:text-slate-300">Kahoot</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-300 dark:bg-slate-700 rounded-full shadow-md">
+                  <span className="font-bold text-slate-800 dark:text-slate-100 text-base">Competitor</span>
                 </div>
               </div>
             </div>
@@ -293,25 +293,25 @@ const Pricing = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.05 }}
-                className={`grid grid-cols-3 p-5 border-b border-slate-100 dark:border-slate-800 ${
-                  row.cognitoWins ? "bg-emerald-50/50 dark:bg-emerald-900/10" : ""
+                className={`grid grid-cols-3 p-5 border-b border-slate-100 dark:border-slate-700 ${
+                  row.cognitoWins ? "bg-emerald-50/80 dark:bg-emerald-900/30" : "bg-white dark:bg-slate-800/50"
                 }`}
               >
-                <div className="font-medium text-slate-900 dark:text-white flex items-center">
+                <div className="font-bold text-slate-800 dark:text-slate-100 flex items-center text-base">
                   {row.feature}
                 </div>
                 <div className="text-center">
-                  <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold shadow-sm ${
                     row.cognitoWins 
-                      ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300" 
-                      : "text-slate-600 dark:text-slate-400"
+                      ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-200" 
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
                   }`}>
                     {row.cognitoWins && <Crown className="w-4 h-4" />}
                     {row.cognito}
                   </span>
                 </div>
                 <div className="text-center">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                     {row.kahoot}
                   </span>
                 </div>
