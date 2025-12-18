@@ -1,13 +1,16 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const leaderboardManager = require('../services/leaderboardManager');
-const { authenticateToken, adminMiddleware } = require('../../../shared/middleware/auth');
+const leaderboardManager = require("../services/leaderboardManager");
+const {
+  authenticateToken,
+  adminMiddleware,
+} = require("../../../shared/middleware/auth");
 
 /**
  * GET /api/leaderboards/global
  * Get global leaderboard
  */
-router.get('/global', authenticateToken, async (req, res, next) => {
+router.get("/global", authenticateToken, async (req, res, next) => {
   try {
     const { start = 0, limit = 100 } = req.query;
 
@@ -16,9 +19,16 @@ router.get('/global', authenticateToken, async (req, res, next) => {
       parseInt(limit)
     );
 
+    // Add no-cache headers to prevent stale leaderboard data
+    res.set({
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    });
+
     res.json({
       success: true,
-      type: 'global',
+      type: "global",
       start: parseInt(start),
       limit: parseInt(limit),
       count: leaderboard.length,
@@ -33,7 +43,7 @@ router.get('/global', authenticateToken, async (req, res, next) => {
  * GET /api/leaderboards/category/:category
  * Get category-specific leaderboard
  */
-router.get('/category/:category', authenticateToken, async (req, res, next) => {
+router.get("/category/:category", authenticateToken, async (req, res, next) => {
   try {
     const { category } = req.params;
     const { start = 0, limit = 100 } = req.query;
@@ -46,7 +56,7 @@ router.get('/category/:category', authenticateToken, async (req, res, next) => {
 
     res.json({
       success: true,
-      type: 'category',
+      type: "category",
       category,
       start: parseInt(start),
       limit: parseInt(limit),
@@ -62,7 +72,7 @@ router.get('/category/:category', authenticateToken, async (req, res, next) => {
  * GET /api/leaderboards/weekly
  * Get weekly leaderboard
  */
-router.get('/weekly', authenticateToken, async (req, res, next) => {
+router.get("/weekly", authenticateToken, async (req, res, next) => {
   try {
     const { start = 0, limit = 100 } = req.query;
 
@@ -73,7 +83,7 @@ router.get('/weekly', authenticateToken, async (req, res, next) => {
 
     res.json({
       success: true,
-      type: 'weekly',
+      type: "weekly",
       start: parseInt(start),
       limit: parseInt(limit),
       count: leaderboard.length,
@@ -88,7 +98,7 @@ router.get('/weekly', authenticateToken, async (req, res, next) => {
  * GET /api/leaderboards/monthly
  * Get monthly leaderboard
  */
-router.get('/monthly', authenticateToken, async (req, res, next) => {
+router.get("/monthly", authenticateToken, async (req, res, next) => {
   try {
     const { start = 0, limit = 100 } = req.query;
 
@@ -99,7 +109,7 @@ router.get('/monthly', authenticateToken, async (req, res, next) => {
 
     res.json({
       success: true,
-      type: 'monthly',
+      type: "monthly",
       start: parseInt(start),
       limit: parseInt(limit),
       count: leaderboard.length,
@@ -114,7 +124,7 @@ router.get('/monthly', authenticateToken, async (req, res, next) => {
  * GET /api/leaderboards/rank/:userId
  * Get user's rank in global leaderboard
  */
-router.get('/rank/:userId', authenticateToken, async (req, res, next) => {
+router.get("/rank/:userId", authenticateToken, async (req, res, next) => {
   try {
     const { userId } = req.params;
 
@@ -135,65 +145,81 @@ router.get('/rank/:userId', authenticateToken, async (req, res, next) => {
  * GET /api/leaderboards/rank/:userId/category/:category
  * Get user's rank in category leaderboard
  */
-router.get('/rank/:userId/category/:category', authenticateToken, async (req, res, next) => {
-  try {
-    const { userId, category } = req.params;
+router.get(
+  "/rank/:userId/category/:category",
+  authenticateToken,
+  async (req, res, next) => {
+    try {
+      const { userId, category } = req.params;
 
-    const rankData = await leaderboardManager.getUserCategoryRank(userId, category);
+      const rankData = await leaderboardManager.getUserCategoryRank(
+        userId,
+        category
+      );
 
-    res.json({
-      success: true,
-      userId,
-      category,
-      rank: rankData.rank,
-      score: rankData.score,
-    });
-  } catch (error) {
-    next(error);
+      res.json({
+        success: true,
+        userId,
+        category,
+        rank: rankData.rank,
+        score: rankData.score,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 /**
  * GET /api/leaderboards/surrounding/:userId
  * Get surrounding users in leaderboard
  */
-router.get('/surrounding/:userId', authenticateToken, async (req, res, next) => {
-  try {
-    const { userId } = req.params;
-    const { range = 5 } = req.query;
+router.get(
+  "/surrounding/:userId",
+  authenticateToken,
+  async (req, res, next) => {
+    try {
+      const { userId } = req.params;
+      const { range = 5 } = req.query;
 
-    const surrounding = await leaderboardManager.getSurroundingUsers(
-      userId,
-      parseInt(range)
-    );
+      const surrounding = await leaderboardManager.getSurroundingUsers(
+        userId,
+        parseInt(range)
+      );
 
-    res.json({
-      success: true,
-      userId,
-      range: parseInt(range),
-      count: surrounding.length,
-      leaderboard: surrounding,
-    });
-  } catch (error) {
-    next(error);
+      res.json({
+        success: true,
+        userId,
+        range: parseInt(range),
+        count: surrounding.length,
+        leaderboard: surrounding,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 /**
  * POST /api/leaderboards/rebuild (Admin)
  * Rebuild leaderboards from database
  */
-router.post('/rebuild', authenticateToken, adminMiddleware, async (req, res, next) => {
-  try {
-    await leaderboardManager.rebuildGlobalLeaderboard(0, 1000);
+router.post(
+  "/rebuild",
+  authenticateToken,
+  adminMiddleware,
+  async (req, res, next) => {
+    try {
+      await leaderboardManager.rebuildGlobalLeaderboard(0, 1000);
 
-    res.json({
-      success: true,
-      message: 'Leaderboards rebuilt successfully',
-    });
-  } catch (error) {
-    next(error);
+      res.json({
+        success: true,
+        message: "Leaderboards rebuilt successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 module.exports = router;

@@ -1,7 +1,170 @@
 const express = require("express");
 const router = express.Router();
 const Result = require("../models/Result");
-const Quiz = require("../../shared/models/Quiz");
+const mongoose = require("mongoose");
+const { authenticateToken } = require("../../shared/middleware/auth");
+
+// Define Quiz schema inline to avoid import issues
+const quizSchema = new mongoose.Schema(
+  {
+    title: String,
+    category: String,
+    difficulty: String,
+  },
+  { collection: "quizzes" }
+);
+
+const Quiz = mongoose.models.Quiz || mongoose.model("Quiz", quizSchema);
+
+/**
+ * @route   GET /api/time-travel/history
+ * @desc    Get user's past quiz attempts for time travel
+ * @access  Private
+ */
+router.get("/history", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id || req.user._id;
+
+    console.log("🔍 Time Travel - User ID:", userId);
+    console.log("🔍 Time Travel - User object:", req.user);
+
+    // Get all past results
+    const results = await Result.find({ userId: userId })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+
+    console.log("🔍 Time Travel - Found results:", results.length);
+
+    // Get quiz details for each result
+    const quizIds = results.map((r) => r.quizId);
+    const quizzes = await Quiz.find({ _id: { $in: quizIds } }).lean();
+    const quizMap = {};
+    quizzes.forEach((q) => {
+      quizMap[q._id.toString()] = q;
+    });
+
+    console.log("🔍 Time Travel - Found quizzes:", quizzes.length);
+
+    // Transform results to match frontend expectations
+    const attempts = results.map((result) => {
+      const quiz = quizMap[result.quizId.toString()];
+      return {
+        _id: result._id,
+        quizId: result.quizId,
+        quizTitle: quiz?.title || "Quiz",
+        score: result.percentage || 0,
+        correctAnswers: result.correctAnswers || 0,
+        totalQuestions: result.totalQuestions || 0,
+        timeTaken: result.totalTimeSpent || 0,
+        completedAt: result.createdAt,
+        attemptNumber: 1,
+        improvementPotential:
+          result.percentage < 90 ? 90 - result.percentage : 0,
+        weakTopics: [],
+        previousAttempts: [],
+      };
+    });
+
+    res.json({
+      success: true,
+      data: attempts,
+    });
+  } catch (error) {
+    console.error("Error fetching time travel history:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch quiz history",
+    });
+  }
+});
+
+/**
+ * @route   GET /api/time-travel/analyze/:quizId
+ * @desc    Analyze performance for a specific quiz
+ * @access  Private
+ */
+router.get("/analyze/:quizId", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id || req.user._id;
+    const { quizId } = req.params;
+
+    // Get all attempts for this quiz
+    const attempts = await Result.find({ userId: userId, quizId: quizId })
+      .sort({ createdAt: 1 })
+      .lean();
+
+    if (attempts.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "No attempts found for this quiz",
+      });
+    }
+
+    // Analyze performance
+    const latestAttempt = attempts[attempts.length - 1];
+    const strengths = [];
+    const improvements = [];
+
+    if (latestAttempt.percentage >= 80) {
+      strengths.push("Strong overall performance");
+    }
+    if (latestAttempt.percentage < 70) {
+      improvements.push("Review key concepts to improve score");
+    }
+    if (attempts.length > 1) {
+      const firstScore = attempts[0].percentage;
+      const lastScore = latestAttempt.percentage;
+      if (lastScore > firstScore) {
+        strengths.push(
+          `Improved by ${(lastScore - firstScore).toFixed(
+            1
+          )}% from first attempt`
+        );
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        strengths,
+        improvements,
+        totalAttempts: attempts.length,
+        averageScore:
+          attempts.reduce((sum, a) => sum + a.percentage, 0) / attempts.length,
+      },
+    });
+  } catch (error) {
+    console.error("Error analyzing quiz:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to analyze quiz",
+    });
+  }
+});
+
+/**
+ * @route   POST /api/time-travel/retake/:quizId
+ * @desc    Mark quiz for time travel retake
+ * @access  Private
+ */
+router.post("/retake/:quizId", authenticateToken, async (req, res) => {
+  try {
+    const { quizId } = req.params;
+
+    // Just return success - the navigation happens on frontend
+    res.json({
+      success: true,
+      message: "Time travel mode activated",
+    });
+  } catch (error) {
+    console.error("Error in retake:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to activate time travel",
+    });
+  }
+});
 
 /**
  * @route   GET /api/time-travel/analyze/:userId

@@ -41,18 +41,23 @@ const TimeTravelMode = () => {
         localStorage.getItem("token") || localStorage.getItem("quizwise-token");
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-      const response = await fetch(
-        `${API_URL}/api/results/time-travel/history`,
-        {
-          headers: { "x-auth-token": token },
-        }
-      );
+      const response = await fetch(`${API_URL}/api/time-travel/history`, {
+        headers: { "x-auth-token": token },
+      });
+
+      console.log("Time Travel API Response Status:", response.status);
 
       if (response.ok) {
         const data = await response.json();
+        console.log("Time Travel API Data:", data);
         setPastAttempts(Array.isArray(data.data) ? data.data : []);
       } else {
-        console.error("Failed to load past attempts");
+        const errorData = await response.text();
+        console.error(
+          "Failed to load past attempts:",
+          response.status,
+          errorData
+        );
         setPastAttempts([]);
       }
     } catch (error) {
@@ -70,7 +75,7 @@ const TimeTravelMode = () => {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
       const response = await fetch(
-        `${API_URL}/api/results/time-travel/analyze/${quizId}`,
+        `${API_URL}/api/time-travel/analyze/${quizId}`,
         {
           headers: { "x-auth-token": token },
         }
@@ -96,7 +101,7 @@ const TimeTravelMode = () => {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
       const response = await fetch(
-        `${API_URL}/api/results/time-travel/retake/${attempt.quizId}`,
+        `${API_URL}/api/time-travel/retake/${attempt.quizId}`,
         {
           method: "POST",
           headers: {

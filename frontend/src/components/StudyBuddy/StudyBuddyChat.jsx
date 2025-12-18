@@ -185,9 +185,9 @@ const StudyBuddyChat = ({ context = {} }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[calc(100vh-140px)]">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[calc(100vh-12rem)] max-h-[800px]">
       {/* Conversation History Sidebar (desktop) */}
-      <Card className="hidden lg:block lg:col-span-1 p-4 overflow-y-auto bg-white dark:bg-gray-900">
+      <Card className="hidden lg:block lg:col-span-1 p-4 overflow-y-auto bg-white dark:bg-gray-900 max-h-full">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-indigo-600" />
@@ -310,7 +310,7 @@ const StudyBuddyChat = ({ context = {} }) => {
       )}
 
       {/* Chat Area */}
-      <Card className="lg:col-span-3 flex flex-col bg-white dark:bg-gray-900">
+      <Card className="lg:col-span-3 flex flex-col bg-white dark:bg-gray-900 h-full max-h-full overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b dark:border-gray-700 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
           <div className="flex items-center gap-3">
@@ -327,7 +327,7 @@ const StudyBuddyChat = ({ context = {} }) => {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <Sparkles className="w-16 h-16 text-indigo-600 mb-4" />

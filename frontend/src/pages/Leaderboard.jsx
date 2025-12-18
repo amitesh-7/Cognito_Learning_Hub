@@ -31,7 +31,11 @@ const itemVariants = {
 export default function Leaderboard() {
   const { quizId } = useParams();
   const { user } = useContext(AuthContext);
-  const { leaderboard: globalLeaderboard, refreshData, loading: gamificationLoading } = useGamification();
+  const {
+    leaderboard: globalLeaderboard,
+    refreshData,
+    loading: gamificationLoading,
+  } = useGamification();
   const [leaderboard, setLeaderboard] = useState([]);
   const [quizTitle, setQuizTitle] = useState("");
   const [loading, setLoading] = useState(true);
@@ -65,9 +69,17 @@ export default function Leaderboard() {
       // If no quizId, fetch global leaderboard by XP from gamification service
       if (!quizId) {
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/gamification/leaderboard?limit=100`,
+          `${
+            import.meta.env.VITE_API_URL
+          }/api/gamification/leaderboard?limit=100`,
           {
-            headers: { "x-auth-token": token },
+            headers: {
+              "x-auth-token": token,
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              Pragma: "no-cache",
+              Expires: "0",
+            },
+            cache: "no-store",
           }
         );
 
@@ -76,10 +88,10 @@ export default function Leaderboard() {
 
         const data = await response.json();
         console.log("📊 Leaderboard data:", data);
-        
+
         // Handle gamification service response format
         const leaderboardData = data.leaderboard || data || [];
-        
+
         // Transform data to match expected format with XP display
         const transformedData = leaderboardData.map((entry, index) => ({
           rank: entry.rank || index + 1,
@@ -89,20 +101,32 @@ export default function Leaderboard() {
           totalXP: entry.score || 0, // Score is XP points
           userId: entry.userId,
         }));
-        
+
         setLeaderboard(transformedData);
         setQuizTitle("Global Rankings - Highest XP");
       } else {
         // Fetch quiz-specific leaderboard
         const [leaderboardRes, quizRes] = await Promise.all([
           fetch(
-            `${
-              import.meta.env.VITE_API_URL
-            }/api/quizzes/${quizId}/leaderboard`,
-            { headers: { "x-auth-token": token } }
+            `${import.meta.env.VITE_API_URL}/api/quizzes/${quizId}/leaderboard`,
+            {
+              headers: {
+                "x-auth-token": token,
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                Pragma: "no-cache",
+                Expires: "0",
+              },
+              cache: "no-store",
+            }
           ),
           fetch(`${import.meta.env.VITE_API_URL}/api/quizzes/${quizId}`, {
-            headers: { "x-auth-token": token },
+            headers: {
+              "x-auth-token": token,
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              Pragma: "no-cache",
+              Expires: "0",
+            },
+            cache: "no-store",
           }),
         ]);
 
@@ -249,20 +273,26 @@ export default function Leaderboard() {
                 whileTap={{ scale: 0.95 }}
                 title="Refresh leaderboard"
               >
-                <RefreshCw className={`w-4 h-4 text-yellow-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`w-4 h-4 text-yellow-600 ${
+                    isRefreshing ? "animate-spin" : ""
+                  }`}
+                />
                 <span className="text-xs font-medium">Refresh</span>
               </motion.button>
             </div>
-            
+
             {/* Real-time indicator */}
-            <motion.div 
+            <motion.div
               className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100/80 dark:bg-green-900/30 rounded-full border border-green-200 dark:border-green-800"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-sm font-medium text-green-700 dark:text-green-400">Live updates</span>
+              <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                Live updates
+              </span>
             </motion.div>
           </motion.div>
 
@@ -287,7 +317,7 @@ export default function Leaderboard() {
                 {topThree[1] && topThree[1].userName && (
                   <div className="text-center">
                     <div className="w-24 h-24 rounded-full bg-gray-400 dark:bg-gray-600 text-white text-3xl font-bold mx-auto flex items-center justify-center mb-2 border-4 border-gray-300 dark:border-gray-500">
-                      {topThree[1].userName[0]?.toUpperCase() || '?'}
+                      {topThree[1].userName[0]?.toUpperCase() || "?"}
                     </div>
                     <p className="font-bold text-gray-800 dark:text-white">
                       {topThree[1].userName}
@@ -305,7 +335,7 @@ export default function Leaderboard() {
                 {topThree[0] && topThree[0].userName && (
                   <div className="text-center">
                     <div className="w-32 h-32 rounded-full bg-yellow-400 dark:bg-yellow-500 text-white text-4xl font-bold mx-auto flex items-center justify-center mb-2 border-4 border-yellow-300 dark:border-yellow-400">
-                      {topThree[0].userName[0]?.toUpperCase() || '?'}
+                      {topThree[0].userName[0]?.toUpperCase() || "?"}
                     </div>
                     <p className="font-bold text-gray-800 dark:text-white text-lg">
                       {topThree[0].userName}
@@ -323,7 +353,7 @@ export default function Leaderboard() {
                 {topThree[2] && topThree[2].userName && (
                   <div className="text-center">
                     <div className="w-24 h-24 rounded-full bg-yellow-600 dark:bg-yellow-800 text-white text-3xl font-bold mx-auto flex items-center justify-center mb-2 border-4 border-yellow-700 dark:border-yellow-900">
-                      {topThree[2].userName[0]?.toUpperCase() || '?'}
+                      {topThree[2].userName[0]?.toUpperCase() || "?"}
                     </div>
                     <p className="font-bold text-gray-800 dark:text-white">
                       {topThree[2].userName}
@@ -346,7 +376,7 @@ export default function Leaderboard() {
                 variants={itemVariants}
               >
                 <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {restOfBoard.map((entry, index) => (
+                  {restOfBoard.map((entry, index) =>
                     entry && entry.userName ? (
                       <li
                         key={index}
@@ -357,7 +387,7 @@ export default function Leaderboard() {
                             {index + 4}
                           </span>
                           <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold flex items-center justify-center">
-                            {entry.userName[0]?.toUpperCase() || '?'}
+                            {entry.userName[0]?.toUpperCase() || "?"}
                           </div>
                           <div className="text-md font-semibold text-gray-800 dark:text-white">
                             {entry.userName}
@@ -370,7 +400,7 @@ export default function Leaderboard() {
                         </div>
                       </li>
                     ) : null
-                  ))}
+                  )}
                 </ul>
               </motion.div>
             </>

@@ -440,6 +440,16 @@ app.use(
   })
 );
 
+// Route to Time Travel (Result Service)
+app.use(
+  "/api/time-travel",
+  createProxyMiddleware({
+    ...proxyOptions,
+    target: SERVICES.RESULT,
+    pathRewrite: { "^/api/time-travel": "/api/time-travel" },
+  })
+);
+
 // Route to Live Service (REST endpoints)
 app.use(
   "/api/live-sessions",
