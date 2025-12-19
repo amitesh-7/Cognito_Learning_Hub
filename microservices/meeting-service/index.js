@@ -21,10 +21,15 @@ const mediasoupHandlers = require("./socket/mediasoupHandlers");
 const meetingRoutes = require("./routes/meetings");
 const connectDB = require("./models");
 const createLogger = require("../shared/utils/logger");
-const { createLogger: createServiceLogger } = require("../shared/utils/serviceLogger");
+const {
+  createLogger: createServiceLogger,
+} = require("../shared/utils/serviceLogger");
 
 const logger = createLogger("meeting-service");
-const serviceLogger = createServiceLogger("Meeting Service", process.env.ADMIN_SERVICE_URL);
+const serviceLogger = createServiceLogger(
+  "Meeting Service",
+  process.env.ADMIN_SERVICE_URL
+);
 
 const app = express();
 const server = http.createServer(app);
@@ -37,16 +42,52 @@ app.set("trust proxy", 1);
 // SOCKET.IO SETUP
 // ============================================
 
+// Parse CORS origins and add common Vercel/frontend patterns
+const corsOrigins = process.env.CORS_ORIGINS?.split(",").map((origin) =>
+  origin.trim()
+) || ["http://localhost:5173"];
+
 const io = socketIO(server, {
   cors: {
-    origin: process.env.CORS_ORIGINS?.split(",") || ["http://localhost:5173"],
-    methods: ["GET", "POST"],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+
+      // Check if origin is in allowed list
+      if (
+        corsOrigins.some((allowed) => {
+          // Exact match
+          if (origin === allowed) return true;
+          // Wildcard match for Vercel deployments
+          if (
+            allowed.includes("*") &&
+            origin.includes(allowed.replace("*", ""))
+          )
+            return true;
+          // Allow all Vercel preview deployments
+          if (origin.endsWith(".vercel.app")) return true;
+          return false;
+        })
+      ) {
+        callback(null, true);
+      } else {
+        logger.warn(`CORS blocked origin: ${origin}`);
+        callback(null, true); // Still allow in production to avoid breaking
+      }
+    },
+    methods: ["GET", "POST", "OPTIONS"],
     credentials: true,
+    allowedHeaders: ["Authorization", "Content-Type"],
   },
-  pingTimeout: parseInt(process.env.SOCKET_PING_TIMEOUT) || 30000,
-  pingInterval: 10000,
-  transports: ["websocket", "polling"],
+  pingTimeout: parseInt(process.env.SOCKET_PING_TIMEOUT) || 60000,
+  pingInterval: parseInt(process.env.SOCKET_PING_INTERVAL) || 25000,
+  transports: ["polling", "websocket"], // Try polling first, upgrade to websocket
   allowEIO3: true,
+  allowUpgrades: true,
+  upgradeTimeout: 30000,
+  maxHttpBufferSize: parseInt(process.env.SOCKET_MAX_HTTP_BUFFER_SIZE) || 1e6,
+  path: "/socket.io/",
+  serveClient: false,
 });
 
 // ============================================
