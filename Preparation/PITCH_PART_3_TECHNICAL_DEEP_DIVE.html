@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognito Learning Hub - Technical Deep Dive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 60px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #8b5cf6;
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #8b5cf6;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.5em;
+            color: #666;
+            font-weight: 300;
+        }
+
+        .team-info {
+            font-size: 1em;
+            color: #888;
+            margin-top: 15px;
+        }
+
+        section {
+            margin-bottom: 50px;
+            page-break-inside: avoid;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: #8b5cf6;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ede9fe;
+        }
+
+        h3 {
+            font-size: 1.4em;
+            color: #333;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        .tech-box {
+            background: #faf5ff;
+            border-left: 4px solid #8b5cf6;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .tech-box pre {
+            overflow-x: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #e9d5ff;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .tech-card {
+            background: white;
+            border: 2px solid #e9d5ff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .tech-card h4 {
+            color: #8b5cf6;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .tech-card p {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+
+        table th {
+            background: #8b5cf6;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        table tr:nth-child(even) {
+            background: #faf5ff;
+        }
+
+        table tr:hover {
+            background: #f3e8ff;
+        }
+
+        .architecture-diagram {
+            background: #faf5ff;
+            border: 2px solid #e9d5ff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 1.4;
+            overflow-x: auto;
+        }
+
+        .highlight-box {
+            background: #ecfdf5;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .highlight-box h4 {
+            color: #10b981;
+            margin-bottom: 10px;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-card h4 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .metric-card .value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 2px solid #e9d5ff;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                max-width: 100%;
+                box-shadow: none;
+                padding: 40px;
+            }
+            section {
+                page-break-inside: avoid;
+            }
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .feature-list li {
+            padding: 12px;
+            margin: 8px 0;
+            background: #faf5ff;
+            border-left: 3px solid #8b5cf6;
+            padding-left: 15px;
+            border-radius: 3px;
+        }
+
+        .feature-list li strong {
+            color: #8b5cf6;
+        }
+
+        code {
+            background: #f3e8ff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #7c3aed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 COGNITO LEARNING HUB</h1>
+            <p class="subtitle">Technical Deep Dive & Architecture</p>
+            <p class="team-info">Team: OPTIMISTIC MUTANT CODERS | Competition: IIT Bombay Techfest 2025</p>
+        </header>
+
+        <section id="timing">
+            <div class="highlight-box">
+                <h4>⏱️ Presentation Timing</h4>
+                <p><strong>Part 3: Technical Deep Dive - 5 Minutes</strong></p>
+                <p>Detailed explanation of architecture, AI integration, and scalability</p>
+            </div>
+        </section>
+
+        <section id="architecture">
+            <h2>🏗️ ARCHITECTURE OVERVIEW</h2>
+            
+            <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────┐
+│                   FRONTEND LAYER                        │
+│  React 18 + Vite + TailwindCSS + Framer Motion         │
+│  • Glassmorphism UI   • Smooth Animations              │
+│  • Socket.IO Client   • MediaSoup Client                │
+└─────────────────────┬───────────────────────────────────┘
+                      │ HTTPS/WSS
+                      ▼
+┌─────────────────────────────────────────────────────────┐
+│                  API GATEWAY (3000)                     │
+│  • Express.js Routing  • Rate Limiting (100/15min)     │
+│  • JWT Validation      • CORS Management               │
+│  • Request Logging     • Error Handling                │
+└───┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────────┘
+    │     │     │     │     │     │     │     │
+    ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼
+┌──────┐┌──────┐┌──────┐┌──────┐┌──────┐┌──────┐┌──────┐┌──────┐
+│Auth  ││Quiz  ││Result││Live  ││Social││Gamif ││Meet  ││Mod   │
+│3001  ││3002  ││3003  ││3004  ││3006  ││3007  ││3009  ││3008  │
+└──┬───┘└──┬───┘└──┬───┘└──┬───┘└──┬───┘└──┬───┘└──┬───┘└──┬───┘
+   │       │       │       │       │       │       │       │
+   └───────┴───────┴───────┴───────┴───────┴───────┴───────┘
+                           │
+              ┌────────────┴──────────────┐
+              ▼                           ▼
+      ┌──────────────┐           ┌──────────────┐
+      │   MongoDB    │           │    Redis     │
+      │   Atlas      │           │   Cloud      │
+      └──────────────┘           └──────────────┘
+            </div>
+
+            <h3>Architecture Principles:</h3>
+            <ul class="feature-list">
+                <li><strong>Microservices Pattern:</strong> 9 independent services with clear responsibilities</li>
+                <li><strong>API Gateway:</strong> Single entry point with routing, rate limiting, and authentication</li>
+                <li><strong>Event-Driven:</strong> Services communicate via Socket.IO and Redis Pub/Sub</li>
+                <li><strong>Horizontal Scalability:</strong> Each service can be deployed independently</li>
+                <li><strong>Fault Tolerance:</strong> Service failures don't cascade to other services</li>
+            </ul>
+        </section>
+
+        <section id="tech-stack">
+            <h2>🔧 TECHNOLOGY STACK</h2>
+
+            <h3>Frontend Technologies:</h3>
+            <div class="tech-box">
+                <pre>{
+  "Core": "React 18.3.1 + Vite 5.4.11",
+  "UI": "TailwindCSS + Framer Motion",
+  "Real-time": "Socket.IO Client 4.8.1",
+  "Video": "MediaSoup Client 3.18.1",
+  "State": "React Context + Custom Hooks",
+  "Router": "React Router DOM 6.28",
+  "AI Integration": "Google Generative AI",
+  "Charts": "Recharts 2.13",
+  "Animations": "Lottie React, Canvas Confetti",
+  "Code Editor": "Monaco Editor",
+  "PDF Generation": "html2canvas + jsPDF",
+  "Auth": "Google OAuth + JWT Decode"
+}</pre>
+            </div>
+
+            <h3>Backend Technologies:</h3>
+            <div class="tech-box">
+                <pre>{
+  "Runtime": "Node.js 20.x LTS",
+  "Framework": "Express.js 4.x",
+  "Real-time": "Socket.IO 4.8",
+  "Database": "MongoDB Atlas + Mongoose",
+  "Cache": "Redis Cloud 7.x",
+  "Queue": "Bull Queue (Redis-based)",
+  "Video": "MediaSoup 3.x (SFU)",
+  "Auth": "JWT + Google OAuth 2.0",
+  "AI": "Google Gemini API",
+  "File Storage": "Local + Cloud (ready for S3)",
+  "Testing": "Vitest + Testing Library"
+}</pre>
+            </div>
+
+            <h3>Service Architecture:</h3>
+            <table>
+                <tr>
+                    <th>Service</th>
+                    <th>Port</th>
+                    <th>Responsibility</th>
+                </tr>
+                <tr>
+                    <td><strong>API Gateway</strong></td>
+                    <td>3000</td>
+                    <td>Routing, rate limiting, CORS, JWT validation</td>
+                </tr>
+                <tr>
+                    <td><strong>Auth Service</strong></td>
+                    <td>3001</td>
+                    <td>User authentication, JWT, Google OAuth, RBAC</td>
+                </tr>
+                <tr>
+                    <td><strong>Quiz Service</strong></td>
+                    <td>3002</td>
+                    <td>Quiz CRUD, AI generation, file parsing</td>
+                </tr>
+                <tr>
+                    <td><strong>Result Service</strong></td>
+                    <td>3003</td>
+                    <td>Analytics, leaderboards, progress tracking</td>
+                </tr>
+                <tr>
+                    <td><strong>Live Service</strong></td>
+                    <td>3004</td>
+                    <td>Real-time sessions, 1v1 duels, WebSocket</td>
+                </tr>
+                <tr>
+                    <td><strong>Social Service</strong></td>
+                    <td>3006</td>
+                    <td>Friends, chat, notifications, activity feed</td>
+                </tr>
+                <tr>
+                    <td><strong>Gamification Service</strong></td>
+                    <td>3007</td>
+                    <td>XP, levels, achievements, streaks, avatars</td>
+                </tr>
+                <tr>
+                    <td><strong>Meeting Service</strong></td>
+                    <td>3009</td>
+                    <td>MediaSoup SFU, WebRTC video conferencing</td>
+                </tr>
+                <tr>
+                    <td><strong>Moderation Service</strong></td>
+                    <td>3008</td>
+                    <td>Content review, reports, flagging</td>
+                </tr>
+            </table>
+        </section>
+
+        <section id="ai-integration">
+            <h2>🤖 AI MODEL INTEGRATION</h2>
+
+            <h3>Google Gemini API Implementation:</h3>
+            <div class="tech-box">
+                <pre>// AI Quiz Generation Pipeline
+const quizGenerationFlow = {
+  "Step 1: Content Extraction": {
+    input: "PDF/DOCX/TXT/YouTube URL",
+    process: "Text extraction + cleaning",
+    output: "Raw content string"
+  },
+  "Step 2: AI Processing": {
+    model: "Gemini 1.5 Pro",
+    prompt: "Generate MCQ questions from content",
+    parameters: {
+      difficulty: "easy/medium/hard",
+      questionCount: 1-50,
+      includeExplanations: true
+    }
+  },
+  "Step 3: Response Parsing": {
+    parse: "JSON structured response",
+    validate: "Question quality checks",
+    store: "MongoDB with metadata"
+  },
+  "Average Time": "15-30 seconds"
+};</pre>
+            </div>
+
+            <h3>AI Tutor Features:</h3>
+            <ul class="feature-list">
+                <li><strong>Context-Aware:</strong> Maintains conversation history for coherent responses</li>
+                <li><strong>Multi-Modal:</strong> Text + Voice input/output support</li>
+                <li><strong>Adaptive:</strong> Adjusts explanations based on user level</li>
+                <li><strong>Code Support:</strong> Syntax highlighting + execution capabilities</li>
+                <li><strong>Study Plans:</strong> Generates personalized learning paths</li>
+                <li><strong>Voice Mode:</strong> Continuous speech recognition (Ctrl+V)</li>
+            </ul>
+
+            <h3>AI Performance Metrics:</h3>
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <h4>⚡ Response Time</h4>
+                    <p class="value">< 3 sec</p>
+                </div>
+                <div class="metric-card">
+                    <h4>🎯 Accuracy</h4>
+                    <p class="value">95%+</p>
+                </div>
+                <div class="metric-card">
+                    <h4>🗣️ Voice Rec</h4>
+                    <p class="value">90%+</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="scalability">
+            <h2>⚡ SCALABILITY ARCHITECTURE</h2>
+
+            <h3>Horizontal Scaling Strategy:</h3>
+
+            <div class="tech-box">
+                <pre>Service Level Scaling:
+  Quiz Service: High read, moderate write → 3-5 instances
+  Live Service: WebSocket intensive → 5-10 instances
+  Auth Service: Low load → 2 instances
+  Result Service: High write → 3-4 instances
+
+Database Scaling:
+  MongoDB Atlas:
+    - Replica Sets: 3 nodes (Primary + 2 Secondaries)
+    - Sharding: Ready for horizontal partitioning
+    - Indexes: Optimized for common queries
+    - TTL Indexes: Auto-cleanup of old data
+
+Caching Strategy:
+  Redis Cloud:
+    - User sessions: 24-hour TTL
+    - Quiz data: 1-hour cache
+    - Leaderboards: Real-time updates
+    - Bull Queues: Background job processing</pre>
+            </div>
+
+            <h3>Current vs Future Capacity:</h3>
+            <table>
+                <tr>
+                    <th>Metric</th>
+                    <th>Current Capacity</th>
+                    <th>6-Month Target</th>
+                </tr>
+                <tr>
+                    <td><strong>Concurrent Users</strong></td>
+                    <td>10,000</td>
+                    <td>100,000</td>
+                </tr>
+                <tr>
+                    <td><strong>Quizzes in DB</strong></td>
+                    <td>1 million</td>
+                    <td>10 million</td>
+                </tr>
+                <tr>
+                    <td><strong>Live Sessions</strong></td>
+                    <td>100</td>
+                    <td>1,000</td>
+                </tr>
+                <tr>
+                    <td><strong>Video Meetings</strong></td>
+                    <td>50</td>
+                    <td>500</td>
+                </tr>
+            </table>
+        </section>
+
+        <section id="performance">
+            <h2>🚀 PERFORMANCE OPTIMIZATIONS</h2>
+
+            <h3>Frontend Optimizations:</h3>
+            <ul class="feature-list">
+                <li><strong>Code Splitting:</strong> Route-based lazy loading reduces initial bundle</li>
+                <li><strong>Image Optimization:</strong> WebP format with lazy loading</li>
+                <li><strong>Virtual Scrolling:</strong> Efficient list rendering for large datasets</li>
+                <li><strong>Memoization:</strong> React.memo for expensive components</li>
+                <li><strong>Bundle Size:</strong> Optimized to < 500KB gzipped</li>
+            </ul>
+
+            <h3>Backend Optimizations:</h3>
+            <ul class="feature-list">
+                <li><strong>Connection Pooling:</strong> Reuse database connections</li>
+                <li><strong>Query Optimization:</strong> Indexed queries, aggregation pipelines</li>
+                <li><strong>Response Compression:</strong> Gzip compression on all responses</li>
+                <li><strong>Rate Limiting:</strong> 100 requests per 15 minutes per IP</li>
+                <li><strong>Caching:</strong> Redis for frequently accessed data</li>
+            </ul>
+
+            <h3>Real-Time Optimizations:</h3>
+            <ul class="feature-list">
+                <li><strong>Binary Protocol:</strong> Socket.IO binary events for efficiency</li>
+                <li><strong>Room-Based Broadcasting:</strong> Efficient message delivery</li>
+                <li><strong>Heartbeat Mechanism:</strong> Connection health monitoring</li>
+                <li><strong>Reconnection Logic:</strong> Automatic retry with exponential backoff</li>
+            </ul>
+        </section>
+
+        <section id="security">
+            <h2>🔒 SECURITY MEASURES</h2>
+
+            <h3>Authentication & Authorization:</h3>
+            <ul class="feature-list">
+                <li><strong>JWT Tokens:</strong> Short-lived access tokens (15 min) with refresh rotation</li>
+                <li><strong>OAuth 2.0:</strong> Google authentication integration</li>
+                <li><strong>RBAC:</strong> Role-based access control (Student, Teacher, Moderator, Admin)</li>
+                <li><strong>Password Security:</strong> Bcrypt hashing with 10 rounds</li>
+            </ul>
+
+            <h3>Data Protection:</h3>
+            <ul class="feature-list">
+                <li><strong>HTTPS Everywhere:</strong> TLS 1.3 encryption for all connections</li>
+                <li><strong>CORS Configuration:</strong> Strict cross-origin policies</li>
+                <li><strong>Input Validation:</strong> Prevent SQL/NoSQL injection</li>
+                <li><strong>Rate Limiting:</strong> Prevent brute force attacks</li>
+                <li><strong>DDoS Protection:</strong> Cloudflare integration</li>
+            </ul>
+
+            <h3>Content Moderation:</h3>
+            <ul class="feature-list">
+                <li><strong>Automated Flagging:</strong> ML-based content filtering</li>
+                <li><strong>Admin Review Queue:</strong> Manual verification of flagged content</li>
+                <li><strong>User Reporting:</strong> Community-driven content moderation</li>
+                <li><strong>Content Filtering:</strong> Profanity and harmful content detection</li>
+            </ul>
+        </section>
+
+        <section id="real-time">
+            <h2>🔄 REAL-TIME ARCHITECTURE DETAILS</h2>
+
+            <h3>Socket.IO Implementation:</h3>
+            <div class="tech-box">
+                <pre>// Live Quiz Session
+socket.on('join_live_session', (sessionId) => {
+  // Join room
+  socket.join(`session_${sessionId}`);
+  
+  // Broadcast to room
+  io.to(`session_${sessionId}`).emit('user_joined', userData);
+});
+
+// 1v1 Duel Matchmaking
+const duelQueue = [];
+socket.on('find_opponent', () => {
+  if (duelQueue.length > 0) {
+    const opponent = duelQueue.shift();
+    createDuel(socket, opponent);
+  } else {
+    duelQueue.push(socket);
+  }
+});</pre>
+            </div>
+
+            <h3>MediaSoup Video Architecture:</h3>
+            <div class="tech-box">
+                <pre>// SFU (Selective Forwarding Unit) Pattern
+const mediaServer = {
+  "Router": "Single router per room",
+  "Transport": "WebRTC transport per participant",
+  "Producer": "Audio/Video/Screen streams",
+  "Consumer": "Selective stream subscription",
+  "Bandwidth": "Adaptive bitrate control"
+};</pre>
+            </div>
+        </section>
+
+        <section id="deployment">
+            <h2>🚢 DEPLOYMENT & MONITORING</h2>
+
+            <h3>Current Deployment:</h3>
+            <table>
+                <tr>
+                    <th>Component</th>
+                    <th>Platform</th>
+                    <th>URL/Details</th>
+                </tr>
+                <tr>
+                    <td><strong>Frontend</strong></td>
+                    <td>Vercel</td>
+                    <td>https://cognito-learning-hub.vercel.app</td>
+                </tr>
+                <tr>
+                    <td><strong>API Gateway</strong></td>
+                    <td>Render</td>
+                    <td>https://cognito-api.onrender.com</td>
+                </tr>
+                <tr>
+                    <td><strong>Database</strong></td>
+                    <td>MongoDB Atlas</td>
+                    <td>Cloud hosted with backups</td>
+                </tr>
+                <tr>
+                    <td><strong>Cache</strong></td>
+                    <td>Redis Cloud</td>
+                    <td>7GB plan with auto-scaling</td>
+                </tr>
+            </table>
+
+            <h3>Monitoring & Observability:</h3>
+            <ul class="feature-list">
+                <li><strong>Logging:</strong> Winston + Morgan for structured logging</li>
+                <li><strong>Error Tracking:</strong> Sentry integration ready</li>
+                <li><strong>Performance:</strong> Web Vitals tracking (LCP, FID, CLS)</li>
+                <li><strong>Analytics:</strong> Custom event tracking</li>
+                <li><strong>Uptime:</strong> 99.9% target with automated alerts</li>
+            </ul>
+        </section>
+
+        <section id="innovation">
+            <h2>💡 TECHNICAL INNOVATIONS</h2>
+
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <h4>🏗️ Microservices</h4>
+                    <p>9 independent, scalable services. Each can be deployed and scaled separately.</p>
+                </div>
+                <div class="tech-card">
+                    <h4>⚡ Real-Time Sync</h4>
+                    <p>Socket.IO + Redis Pub/Sub for instant updates across all connected clients.</p>
+                </div>
+                <div class="tech-card">
+                    <h4>🤖 AI at Scale</h4>
+                    <p>Gemini API integration with smart caching and fallback mechanisms.</p>
+                </div>
+                <div class="tech-card">
+                    <h4>📹 Efficient Video</h4>
+                    <p>MediaSoup SFU for bandwidth-efficient video conferencing at scale.</p>
+                </div>
+                <div class="tech-card">
+                    <h4>🔊 Voice Everywhere</h4>
+                    <p>Speech recognition + synthesis integrated throughout the platform.</p>
+                </div>
+                <div class="tech-card">
+                    <h4>🎨 Modern UX</h4>
+                    <p>Glassmorphism design with Framer Motion animations for delight.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="footer">
+            <p>🔧 COGNITO LEARNING HUB | Part 3: Technical Deep Dive | IIT Bombay Techfest 2025</p>
+            <p>© 2025 OPTIMISTIC MUTANT CODERS. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

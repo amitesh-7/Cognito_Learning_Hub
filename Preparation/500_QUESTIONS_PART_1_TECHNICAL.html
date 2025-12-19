@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500+ Judge Questions - Part 1: Technical & Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 50px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 4px solid #667eea;
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.5em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .info {
+            color: #888;
+            font-size: 1em;
+        }
+
+        section {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        h3 {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+
+        .question-group {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+
+        .question {
+            margin: 12px 0;
+            padding: 10px;
+            background: white;
+            border-left: 3px solid #764ba2;
+            padding-left: 15px;
+            border-radius: 4px;
+            line-height: 1.5;
+        }
+
+        .question-num {
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .difficulty {
+            display: inline-block;
+            font-size: 0.8em;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-left: 10px;
+            font-weight: 600;
+        }
+
+        .easy {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .hard {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .category-header {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #667eea;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+        }
+
+        .tip {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .tip strong {
+            color: #0056b3;
+        }
+
+        .answer-toggle {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-left: 10px;
+            transition: background 0.3s;
+        }
+
+        .answer-toggle:hover {
+            background: #764ba2;
+        }
+
+        .answer-content {
+            display: none;
+            margin-top: 12px;
+            padding: 12px;
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            line-height: 1.6;
+        }
+
+        .answer-content.show {
+            display: block;
+        }
+
+        .answer-content strong {
+            color: #667eea;
+        }
+    </style>
+    <script>
+        function toggleAnswer(btn) {
+            const answer = btn.nextElementSibling;
+            answer.classList.toggle('show');
+            btn.textContent = answer.classList.contains('show') ? '✕ Hide Answer' : '✓ Show Answer';
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 500+ JUDGE QUESTIONS</h1>
+            <p class="subtitle">Part 1: Technical & Architecture Questions</p>
+            <p class="info">Cognito Learning Hub | IIT Bombay Techfest 2025 | OPTIMISTIC MUTANT CODERS</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="value">150+</div>
+                <div class="label">Technical Questions</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">9</div>
+                <div class="label">Microservices</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">5</div>
+                <div class="label">Categories</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">∞</div>
+                <div class="label">Scalability</div>
+            </div>
+        </div>
+
+        <div class="tip">
+            <strong>💡 Usage Tip:</strong> Study these questions thoroughly. They cover all technical aspects of your architecture. For each question, prepare a 2-3 minute answer with real examples from your codebase.
+        </div>
+
+        <!-- MICROSERVICES & ARCHITECTURE -->
+        <section>
+            <h2>🏗️ MICROSERVICES & ARCHITECTURE (30 Questions)</h2>
+
+            <h3>Microservices Design</h3>
+            <div class="question-group">
+                <div class="category-header">ARCHITECTURE</div>
+                <div class="question"><span class="question-num">1.</span>Why did you choose microservices over monolithic architecture? <span class="difficulty medium">Medium</span>
+                <button class="answer-toggle" onclick="toggleAnswer(this)">✓ Show Answer</button>
+                <div class="answer-content"><strong>Answer:</strong> We chose microservices to achieve independent scalability, team ownership, and technology flexibility. Each service (Quiz, Live, Gamification, etc.) can scale based on its own demand patterns. This allows teams to deploy independently, use appropriate tech stacks, and reduce blast radius of failures. For an EdTech platform with multiple feature areas, this is crucial for agility.</div>
+                </div>
+                <div class="question"><span class="question-num">2.</span>How do you define service boundaries? What's the criteria? <span class="difficulty hard">Hard</span>
+                <button class="answer-toggle" onclick="toggleAnswer(this)">✓ Show Answer</button>
+                <div class="answer-content"><strong>Answer:</strong> We use domain-driven design (DDD) principles. Boundaries are defined by business capabilities: user management, quiz creation, live sessions, results analysis, etc. Each service has clear responsibilities and minimal coupling. We ask: "Can this service be owned by one team?" and "Does this service have distinct scaling needs?" If yes to both, it's a good boundary.</div>
+                </div>
+                <div class="question"><span class="question-num">3.</span>What are the trade-offs of microservices architecture? <span class="difficulty hard">Hard</span>
+                <button class="answer-toggle" onclick="toggleAnswer(this)">✓ Show Answer</button>
+                <div class="answer-content"><strong>Answer:</strong> <strong>Pros:</strong> Independent scaling, team autonomy, technology flexibility, resilience. <strong>Cons:</strong> Complex distributed debugging, network latency, data consistency challenges, operational overhead. We accept these trade-offs because our traffic patterns vary significantly across services—Live Service peaks during class hours, Quiz Service during evenings.</div>
+                </div>
+                <div class="question"><span class="question-num">4.</span>How do you handle distributed transactions across services? <span class="difficulty hard">Hard</span>
+                <button class="answer-toggle" onclick="toggleAnswer(this)">✓ Show Answer</button>
+                <div class="answer-content"><strong>Answer:</strong> We use the Saga pattern with Redis-backed event sourcing. When a user completes a quiz: Quiz Service saves result → publishes event → Result Service updates scores → Gamification Service awards badges. Each step is idempotent. We accept eventual consistency because users don't mind a 1-2 second delay for badges to appear.</div>
+                </div>
+                <div class="question"><span class="question-num">5.</span>What's your service discovery mechanism? <span class="difficulty medium">Medium</span>
+                <button class="answer-toggle" onclick="toggleAnswer(this)">✓ Show Answer</button>
+                <div class="answer-content"><strong>Answer:</strong> We use environment variables + service mesh approach. In development, services are hardcoded. In production, we use Docker compose service names which DNS resolves. For advanced scenarios, we've configured a simple load balancer at the API Gateway that maintains a registry of healthy service instances using health checks.</div>
+                </div>
+                <div class="question"><span class="question-num">6.</span>How do you version your APIs across services? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">7.</span>Describe your deployment strategy for all 9 services? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">8.</span>How do you handle service failures and cascading failures? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">9.</span>What is circuit breaker pattern and how do you implement it? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">10.</span>How do you handle data consistency across services? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>API Gateway & Communication</h3>
+            <div class="question-group">
+                <div class="category-header">API GATEWAY</div>
+                <div class="question"><span class="question-num">11.</span>What role does the API Gateway play in your system? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">12.</span>How do you implement rate limiting (100 req/15min)? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">13.</span>How do you route requests to different services? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">14.</span>How do you handle CORS in the gateway? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">15.</span>What happens if the API Gateway goes down? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">16.</span>How do you handle request timeout and retries? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">17.</span>How does authentication flow through the gateway? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">18.</span>Can you have multiple API Gateways? How does failover work? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">19.</span>How do you monitor gateway performance? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">20.</span>How do you handle request logging and tracing? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Service Interdependencies</h3>
+            <div class="question-group">
+                <div class="category-header">SERVICE COMMUNICATION</div>
+                <div class="question"><span class="question-num">21.</span>How does Live Service communicate with Result Service? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">22.</span>How does Gamification Service know when a user completes a quiz? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">23.</span>How do you prevent service dependency cycles? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">24.</span>Can Quiz Service work without Result Service being available? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">25.</span>How do you handle late-arriving data from services? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">26.</span>What's your eventual consistency strategy? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">27.</span>How do you implement the saga pattern for distributed transactions? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">28.</span>How do services register their health status? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">29.</span>What's the latency between service calls? How do you optimize? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">30.</span>How do you test service interactions? <span class="difficulty medium">Medium</span></div>
+            </div>
+        </section>
+
+        <!-- DATABASE & STORAGE -->
+        <section>
+            <h2>💾 DATABASE & STORAGE (35 Questions)</h2>
+
+            <h3>MongoDB Design</h3>
+            <div class="question-group">
+                <div class="category-header">DATABASE</div>
+                <div class="question"><span class="question-num">31.</span>Why did you choose MongoDB over SQL databases? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">32.</span>How do you design your document schema? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">33.</span>How do you handle one-to-many relationships in MongoDB? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">34.</span>What's your indexing strategy? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">35.</span>How do you prevent N+1 query problems? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">36.</span>How do you denormalize data for performance? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">37.</span>What's your backup and disaster recovery strategy? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">38.</span>How do you handle schema migrations? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">39.</span>What TTL indexes do you use? Why? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">40.</span>How do you optimize MongoDB aggregation pipelines? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>Data Sharding & Replication</h3>
+            <div class="question-group">
+                <div class="category-header">SCALING</div>
+                <div class="question"><span class="question-num">41.</span>Are you using MongoDB sharding currently? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">42.</span>What shard key would you choose for Quiz collection? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">43.</span>How does replication work in MongoDB Atlas? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">44.</span>What's a replica set and how many nodes do you have? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">45.</span>How do you handle read consistency? Read preference? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">46.</span>What happens during primary failover? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">47.</span>How do you backup data in MongoDB Atlas? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">48.</span>What's your point-in-time recovery (PITR) strategy? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">49.</span>How do you monitor replica lag? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">50.</span>Can you query from secondary replicas? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Data Query Optimization</h3>
+            <div class="question-group">
+                <div class="category-header">PERFORMANCE</div>
+                <div class="question"><span class="question-num">51.</span>How do you fetch user's top 10 quizzes efficiently? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">52.</span>How do you calculate leaderboards in real-time? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">53.</span>How do you handle pagination for large result sets? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">54.</span>What's your strategy for archiving old quiz attempts? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">55.</span>How do you efficiently search quizzes by title/category? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">56.</span>Do you use full-text search? How? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">57.</span>How do you handle multi-field sorting efficiently? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">58.</span>What's the query execution plan tool you use? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">59.</span>How do you detect slow queries? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">60.</span>What's your approach to batch processing large datasets? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>Data Consistency & Integrity</h3>
+            <div class="question-group">
+                <div class="category-header">DATA INTEGRITY</div>
+                <div class="question"><span class="question-num">61.</span>How do you ensure data consistency across services? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">62.</span>Do you use transactions? Which ACID properties matter? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">63.</span>How do you handle duplicate quiz submissions? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">64.</span>How do you validate quiz answers are accurate? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">65.</span>What's your strategy for detecting data corruption? <span class="difficulty hard">Hard</span></div>
+            </div>
+        </section>
+
+        <!-- REAL-TIME & SOCKET.IO -->
+        <section>
+            <h2>⚡ REAL-TIME & SOCKET.IO (40 Questions)</h2>
+
+            <h3>Socket.IO Implementation</h3>
+            <div class="question-group">
+                <div class="category-header">REAL-TIME</div>
+                <div class="question"><span class="question-num">66.</span>Why Socket.IO instead of WebRTC or raw WebSockets? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">67.</span>How do you handle Socket.IO connections at scale? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">68.</span>How do you scale Socket.IO across multiple server instances? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">69.</span>What role does Redis play in Socket.IO? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">70.</span>How do you handle client reconnection? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">71.</span>What's the fallback mechanism if WebSocket isn't available? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">72.</span>How do you implement socket authentication? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">73.</span>How do you handle socket disconnection? Grace period? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">74.</span>What's your heartbeat/ping strategy? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">75.</span>How do you prevent duplicate messages? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>Rooms & Namespaces</h3>
+            <div class="question-group">
+                <div class="category-header">SOCKET ARCHITECTURE</div>
+                <div class="question"><span class="question-num">76.</span>How do you use Socket.IO rooms for live quizzes? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">77.</span>What's the difference between rooms and namespaces? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">78.</span>How many users can be in a single room? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">79.</span>How do you broadcast to all connected clients efficiently? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">80.</span>How do you implement private messaging between two users? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">81.</span>How do you handle room cleanup when all users leave? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">82.</span>How do you prevent a user from joining multiple live sessions? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">83.</span>How do you monitor room size and performance? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">84.</span>Can you have cross-service rooms? How? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">85.</span>How do you handle room state persistence? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>Live Features Implementation</h3>
+            <div class="question-group">
+                <div class="category-header">LIVE FEATURES</div>
+                <div class="question"><span class="question-num">86.</span>How does live quiz synchronization work? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">87.</span>How do you ensure all students see the same question at the same time? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">88.</span>How do you handle time synchronization between server and clients? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">89.</span>How do you prevent students from seeing the answer before submission? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">90.</span>How do you update leaderboard in real-time? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">91.</span>How do you handle late-joining users in a live session? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">92.</span>How do you implement 1v1 duel matching? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">93.</span>What happens if a student disconnects during a live session? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">94.</span>How do you store live session data? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">95.</span>Can you pause/resume a live session? How? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">96.</span>How do you handle multiple live sessions simultaneously? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">97.</span>What's the latency for leaderboard updates? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">98.</span>How do you replay a live session? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">99.</span>How do you handle teacher controls during live session? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">100.</span>How do you ensure question randomization isn't predictable? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Socket Performance & Optimization</h3>
+            <div class="question-group">
+                <div class="category-header">OPTIMIZATION</div>
+                <div class="question"><span class="question-num">101.</span>How do you reduce bandwidth usage in Socket.IO? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">102.</span>What's the message size optimization strategy? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">103.</span>How do you handle message bursts without overload? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">104.</span>What's your message deduplication strategy? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">105.</span>How do you prioritize critical messages? <span class="difficulty hard">Hard</span></div>
+            </div>
+        </section>
+
+        <!-- CACHING & REDIS -->
+        <section>
+            <h2>🔄 CACHING & REDIS (30 Questions)</h2>
+
+            <h3>Redis Strategy</h3>
+            <div class="question-group">
+                <div class="category-header">CACHING</div>
+                <div class="question"><span class="question-num">106.</span>Why Redis Cloud instead of in-memory caching? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">107.</span>What data do you cache? How long? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">108.</span>How do you invalidate cache? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">109.</span>What's your cache warming strategy? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">110.</span>How do you handle cache stampede? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">111.</span>What's the cache hit ratio? How do you measure? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">112.</span>How do you prevent stale cache data? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">113.</span>What's your TTL strategy for different data types? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">114.</span>How do you scale Redis? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">115.</span>Do you use Redis clustering? How? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>Redis Use Cases</h3>
+            <div class="question-group">
+                <div class="category-header">USE CASES</div>
+                <div class="question"><span class="question-num">116.</span>How do you use Redis for sessions? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">117.</span>How do you implement Socket.IO adapter with Redis? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">118.</span>How do you use Redis Pub/Sub for cross-service messaging? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">119.</span>How do you handle leaderboard updates in Redis? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">120.</span>How do you use Redis for rate limiting? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">121.</span>How do you implement distributed locks with Redis? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">122.</span>How do you use Redis for queue management? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">123.</span>How do you cache user profiles? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">124.</span>How do you cache quiz questions? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">125.</span>How do you cache quiz results? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Redis Persistence & High Availability</h3>
+            <div class="question-group">
+                <div class="category-header">RELIABILITY</div>
+                <div class="question"><span class="question-num">126.</span>Is Redis data persistent? Your strategy? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">127.</span>What happens if Redis goes down? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">128.</span>How do you implement Redis failover? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">129.</span>Do you use Redis Sentinel? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">130.</span>How do you backup Redis data? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">131.</span>What's your recovery strategy if Redis loses data? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">132.</span>How do you monitor Redis performance? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">133.</span>How much data can Redis hold? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">134.</span>How do you handle Redis memory management? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">135.</span>What's your Redis eviction policy? <span class="difficulty medium">Medium</span></div>
+            </div>
+        </section>
+
+        <!-- BULL QUEUES -->
+        <section>
+            <h2>📋 BULL QUEUES & JOB PROCESSING (25 Questions)</h2>
+
+            <h3>Bull Queue Implementation</h3>
+            <div class="question-group">
+                <div class="category-header">QUEUES</div>
+                <div class="question"><span class="question-num">136.</span>Why use Bull queues? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">137.</span>What background jobs do you have? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">138.</span>How do you handle job failures? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">139.</span>What's your retry strategy? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">140.</span>How do you scale job processing? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">141.</span>How many workers do you have? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">142.</span>How do you prioritize jobs? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">143.</span>How do you schedule recurring jobs? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">144.</span>How do you monitor job queue? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">145.</span>What's the maximum job queue size? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">146.</span>How do you handle long-running jobs? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">147.</span>How do you prevent duplicate job execution? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">148.</span>How do you track job progress? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">149.</span>Can jobs communicate with each other? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">150.</span>What's your job timeout strategy? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Job Types</h3>
+            <div class="question-group">
+                <div class="category-backend">BACKGROUND JOBS</div>
+                <div class="question"><span class="question-num">151.</span>How do you process AI quiz generation asynchronously? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">152.</span>How do you calculate leaderboards offline? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">153.</span>How do you process email notifications? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">154.</span>How do you clean up old data? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">155.</span>How do you generate daily reports? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">156.</span>How do you process large file uploads? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">157.</span>How do you handle analytics processing? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">158.</span>How do you send push notifications? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">159.</span>How do you update achievement status? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">160.</span>How do you synchronize leaderboards? <span class="difficulty hard">Hard</span></div>
+            </div>
+        </section>
+
+        <!-- SECURITY & AUTHENTICATION -->
+        <section>
+            <h2>🔒 SECURITY & AUTHENTICATION (40 Questions)</h2>
+
+            <h3>Authentication & JWT</h3>
+            <div class="question-group">
+                <div class="category-header">SECURITY</div>
+                <div class="question"><span class="question-num">161.</span>Explain your JWT authentication flow? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">162.</span>How long are access tokens valid? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">163.</span>How do you handle refresh tokens? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">164.</span>How do you sign JWT tokens? What key do you use? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">165.</span>How do you handle token expiration? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">166.</span>Can tokens be revoked before expiration? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">167.</span>How do you store JWT on the client? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">168.</span>How do you prevent token theft? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">169.</span>How do you implement CSRF protection? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">170.</span>How do you handle logout? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Google OAuth Integration</h3>
+            <div class="question-group">
+                <div class="category-header">OAUTH</div>
+                <div class="question"><span class="question-num">171.</span>How does Google OAuth 2.0 flow work? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">172.</span>How do you store user profile data from Google? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">173.</span>How do you handle email verification? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">174.</span>Can users switch between email and Google login? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">175.</span>How do you refresh Google tokens? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">176.</span>How do you handle failed OAuth? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">177.</span>How do you prevent OAuth account takeover? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">178.</span>Can you have multiple OAuth providers? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">179.</span>How do you validate OAuth tokens? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">180.</span>What data do you request from Google? <span class="difficulty easy">Easy</span></div>
+            </div>
+
+            <h3>Password Security</h3>
+            <div class="question-group">
+                <div class="category-header">PASSWORD</div>
+                <div class="question"><span class="question-num">181.</span>How do you hash passwords? Which algorithm? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">182.</span>What's your salt strategy? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">183.</span>How many bcrypt rounds do you use? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">184.</span>How do you handle password reset? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">185.</span>How do you prevent brute force attacks? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">186.</span>Do you enforce password complexity? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">187.</span>How do you detect compromised passwords? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">188.</span>Do you expire passwords? How often? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">189.</span>How do you prevent password reuse? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">190.</span>How do you send password reset emails securely? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Data Protection</h3>
+            <div class="question-group">
+                <div class="category-header">DATA SECURITY</div>
+                <div class="question"><span class="question-num">191.</span>How do you encrypt data at rest? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">192.</span>How do you encrypt data in transit? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">193.</span>Do you use HTTPS everywhere? Which TLS version? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">194.</span>How do you handle sensitive data in logs? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">195.</span>How do you prevent SQL injection? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">196.</span>How do you prevent NoSQL injection? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">197.</span>How do you handle XSS attacks? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">198.</span>How do you validate/sanitize input? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">199.</span>How do you prevent DDoS attacks? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">200.</span>How do you implement rate limiting? <span class="difficulty medium">Medium</span></div>
+            </div>
+        </section>
+
+        <div class="footer">
+            <p>Questions 1-200 of 500+ | Part 1: Technical & Architecture Complete</p>
+            <p>See Part 2 for Business & Market Questions | See Part 3 for Product & Features Questions</p>
+            <p>© 2025 OPTIMISTIC MUTANT CODERS</p>
+        </div>
+    </div>
+</body>
+</html>

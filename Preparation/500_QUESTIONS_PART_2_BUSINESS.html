@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500+ Judge Questions - Part 2: Business & Market</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 50px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 4px solid #f5576c;
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #f5576c;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.5em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .info {
+            color: #888;
+            font-size: 1em;
+        }
+
+        section {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: white;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        h3 {
+            font-size: 1.3em;
+            color: #f5576c;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-left: 4px solid #f5576c;
+            padding-left: 15px;
+        }
+
+        .question-group {
+            background: #ffe8ec;
+            border-left: 4px solid #f5576c;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+
+        .question {
+            margin: 12px 0;
+            padding: 10px;
+            background: white;
+            border-left: 3px solid #f093fb;
+            padding-left: 15px;
+            border-radius: 4px;
+            line-height: 1.5;
+        }
+
+        .question-num {
+            color: #f5576c;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .difficulty {
+            display: inline-block;
+            font-size: 0.8em;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-left: 10px;
+            font-weight: 600;
+        }
+
+        .easy {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .hard {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .category-header {
+            display: inline-block;
+            background: #f5576c;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #f5576c;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+        }
+
+        .tip {
+            background: #e8f4f8;
+            border-left: 4px solid #f5576c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .tip strong {
+            color: #c10a36;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💼 500+ JUDGE QUESTIONS</h1>
+            <p class="subtitle">Part 2: Business & Market Strategy</p>
+            <p class="info">Cognito Learning Hub | IIT Bombay Techfest 2025 | OPTIMISTIC MUTANT CODERS</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="value">170+</div>
+                <div class="label">Business Questions</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">₹50M+</div>
+                <div class="label">TAM Opportunity</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">50+</div>
+                <div class="label">Revenue Streams</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">5</div>
+                <div class="label">Key Markets</div>
+            </div>
+        </div>
+
+        <div class="tip">
+            <strong>💡 Strategy Tip:</strong> These questions test your business acumen. Know your TAM, SAM, SOM, revenue model, unit economics, and growth metrics. Have data for everything.
+        </div>
+
+        <!-- MARKET & OPPORTUNITY -->
+        <section>
+            <h2>🎯 MARKET ANALYSIS & OPPORTUNITY (35 Questions)</h2>
+
+            <h3>Market Size & Opportunity</h3>
+            <div class="question-group">
+                <div class="category-header">MARKET</div>
+                <div class="question"><span class="question-num">201.</span>What's your Total Addressable Market (TAM)? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">202.</span>How did you calculate TAM? Show your math. <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">203.</span>What's your Serviceable Available Market (SAM)? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">204.</span>What's your Serviceable Obtainable Market (SOM)? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">205.</span>How many potential users are there in India? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">206.</span>What's the K-12 education market size in India? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">207.</span>What's the online education market growth rate? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">208.</span>Who are your primary target users? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">209.</span>What's the age range of your target users? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">210.</span>What's the secondary target market? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Competitive Analysis</h3>
+            <div class="question-group">
+                <div class="category-header">COMPETITION</div>
+                <div class="question"><span class="question-num">211.</span>Who are your direct competitors? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">212.</span>What does Byju's offer that you don't? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">213.</span>What does Vedantu offer that you don't? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">214.</span>How is your offering different from Toppr? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">215.</span>What about small competitors like Unacademy? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">216.</span>What's your competitive advantage? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">217.</span>Can competitors replicate your features? How quickly? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">218.</span>What's your defensibility? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">219.</span>What's your market positioning vs Byju's? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">220.</span>How will you differentiate as you scale? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>Market Trends & Adoption</h3>
+            <div class="question-group">
+                <div class="category-header">TRENDS</div>
+                <div class="question"><span class="question-num">221.</span>What's driving EdTech adoption in India? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">222.</span>What % of K-12 students use online learning? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">223.</span>What's the growth trajectory of online learning? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">224.</span>How has post-COVID learning changed? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">225.</span>What's the rural vs urban adoption? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">226.</span>What's the mobile vs desktop usage? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">227.</span>What are macro trends you're riding? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">228.</span>Is the market growing or mature? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">229.</span>What could disrupt the EdTech market? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">230.</span>Is there sufficient internet penetration? <span class="difficulty easy">Easy</span></div>
+            </div>
+
+            <h3>User Behavior & Economics</h3>
+            <div class="question-group">
+                <div class="category-header">USER ECONOMICS</div>
+                <div class="question"><span class="question-num">231.</span>How much are parents willing to spend on education? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">232.</span>What's the CAC (Customer Acquisition Cost)? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">233.</span>What's the LTV (Lifetime Value)? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">234.</span>What's LTV/CAC ratio? Is it healthy? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">235.</span>What's your user retention rate? <span class="difficulty medium">Medium</span></div>
+            </div>
+        </section>
+
+        <!-- REVENUE & MONETIZATION -->
+        <section>
+            <h2>💰 REVENUE & MONETIZATION STRATEGY (35 Questions)</h2>
+
+            <h3>Revenue Streams</h3>
+            <div class="question-group">
+                <div class="category-header">REVENUE</div>
+                <div class="question"><span class="question-num">236.</span>How many revenue streams do you have? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">237.</span>What's your primary revenue stream? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">238.</span>What % revenue from subscriptions? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">239.</span>What % revenue from B2B partnerships? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">240.</span>What % revenue from premium quizzes? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">241.</span>Do you have enterprise customers? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">242.</span>What's your pricing for schools/colleges? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">243.</span>Do you monetize teacher content creation? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">244.</span>Do you have sponsored content revenue? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">245.</span>What other revenue opportunities exist? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>Pricing Strategy</h3>
+            <div class="question-group">
+                <div class="category-header">PRICING</div>
+                <div class="question"><span class="question-num">246.</span>What's your pricing model? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">247.</span>How did you arrive at your pricing? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">248.</span>What are your subscription tiers? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">249.</span>What's the Basic plan price? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">250.</span>What's the Premium plan price? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">251.</span>What's included in each tier? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">252.</span>How do you justify the pricing? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">253.</span>Is pricing the same for all states? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">254.</span>Do you offer discounts? When? How much? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">255.</span>What % of users are free vs paid? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>Unit Economics</h3>
+            <div class="question-group">
+                <div class="category-header">UNIT ECONOMICS</div>
+                <div class="question"><span class="question-num">256.</span>What's ARPU (Average Revenue Per User)? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">257.</span>What's your gross margin? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">258.</span>What's your contribution margin? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">259.</span>What's your CAC payback period? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">260.</span>What's your churn rate? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">261.</span>What causes user churn? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">262.</span>How do you reduce churn? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">263.</span>What's your MRR (Monthly Recurring Revenue)? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">264.</span>What's your MRR growth rate? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">265.</span>When do you expect profitability? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Monetization Challenges</h3>
+            <div class="question-group">
+                <div class="category-header">CHALLENGES</div>
+                <div class="question"><span class="question-num">266.</span>Why do users hesitate to pay for education? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">267.</span>How do you compete with free alternatives? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">268.</span>How do you prevent piracy/sharing? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">269.</span>How sensitive is demand to price? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">270.</span>What's your response to price wars? <span class="difficulty hard">Hard</span></div>
+            </div>
+        </section>
+
+        <!-- GROWTH & SCALING -->
+        <section>
+            <h2>📈 GROWTH & SCALING STRATEGY (35 Questions)</h2>
+
+            <h3>User Acquisition</h3>
+            <div class="question-group">
+                <div class="category-header">GROWTH</div>
+                <div class="question"><span class="question-num">271.</span>What are your user acquisition channels? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">272.</span>What's your primary acquisition channel? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">273.</span>What % users come from organic? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">274.</span>What % users come from paid ads? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">275.</span>What % users come from referrals? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">276.</span>What's your referral strategy? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">277.</span>Do you offer referral incentives? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">278.</span>How much do you spend on marketing? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">279.</span>What's your marketing spend as % of revenue? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">280.</span>Are you using SEO? What keywords? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Viral Growth & Network Effects</h3>
+            <div class="question-group">
+                <div class="category-header">VIRALITY</div>
+                <div class="question"><span class="question-num">281.</span>What's your viral coefficient? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">282.</span>Do you have network effects? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">283.</span>How does your product become stickier? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">284.</span>How do you leverage social sharing? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">285.</span>Does gamification drive viral sharing? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">286.</span>What's your user growth rate? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">287.</span>Can you sustain this growth? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">288.</span>What's your 5-year user projection? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">289.</span>How will you reach tier-2/tier-3 cities? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">290.</span>What's your localization strategy? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Geographic Expansion</h3>
+            <div class="question-group">
+                <div class="category-header">EXPANSION</div>
+                <div class="question"><span class="question-num">291.</span>Which states are you targeting first? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">292.</span>Why those states specifically? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">293.</span>How many states will you cover in 1 year? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">294.</span>What % of India can you reach by 2028? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">295.</span>Will you expand to other countries? When? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">296.</span>What markets are easiest to enter? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="quality">297.</span>What's your international strategy? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">298.</span>How do you adapt to different markets? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">299.</span>What languages will you support? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">300.</span>How will you handle regional content variations? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Product Roadmap & Scaling</h3>
+            <div class="question-group">
+                <div class="category-header">ROADMAP</div>
+                <div class="question"><span class="question-num">301.</span>What's your 6-month roadmap? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">302.</span>What's your 1-year roadmap? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">303.</span>What's your 3-year vision? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">304.</span>What new features will drive growth? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">305.</span>How will you expand your course library? <span class="difficulty medium">Medium</span></div>
+            </div>
+        </section>
+
+        <!-- PARTNERSHIPS & ECOSYSTEM -->
+        <section>
+            <h2>🤝 PARTNERSHIPS & ECOSYSTEM (35 Questions)</h2>
+
+            <h3>B2B Partnerships</h3>
+            <div class="question-group">
+                <div class="category-header">PARTNERSHIPS</div>
+                <div class="question"><span class="question-num">306.</span>Who are your ideal B2B partners? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">307.</span>Have you partnered with any schools? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">308.</span>Have you partnered with any boards/institutions? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">309.</span>What value do you provide to schools? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">310.</span>How do you benefit from partnerships? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">311.</span>What's the partnership revenue model? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">312.</span>Do you have government partnerships? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">313.</span>Can school teachers create content? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">314.</span>What revenue % do teachers get? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">315.</span>How do you recruit and support partners? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Content Partners</h3>
+            <div class="question-group">
+                <div class="category-header">CONTENT</div>
+                <div class="question"><span class="question-num">316.</span>Do you have publisher partnerships? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">317.</span>Do you license content from others? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">318.</span>What's your content acquisition strategy? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">319.</span>How do you ensure content quality? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">320.</span>What's your creator incentive program? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">321.</span>How many creators/teachers use your platform? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">322.</span>What % of content is user-generated? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">323.</span>How do you prevent low-quality content? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">324.</span>Do you verify teacher credentials? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">325.</span>What content IP belongs to whom? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>Strategic Integrations</h3>
+            <div class="question-group">
+                <div class="category-header">INTEGRATIONS</div>
+                <div class="question"><span class="question-num">326.</span>Do you integrate with school management systems? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">327.</span>Do you integrate with other EdTech platforms? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">328.</span>Do you have an API for partners? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">329.</span>How do you handle data sharing with partners? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">330.</span>What third-party services do you use? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">331.</span>How critical are these integrations? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">332.</span>What if a critical partner fails? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">333.</span>Do you have contingency plans? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">334.</span>Are your APIs rate-limited for partners? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">335.</span>How do you ensure partner data security? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>Ecosystem Development</h3>
+            <div class="question-group">
+                <div class="category-header">ECOSYSTEM</div>
+                <div class="question"><span class="question-num">336.</span>Do you have an app marketplace? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">337.</span>Do you allow third-party extensions? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">238.</span>How do you monetize ecosystem partners? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">339.</span>What incentives do you offer creators? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">340.</span>How do you prevent ecosystem fragmentation? <span class="difficulty hard">Hard</span></div>
+            </div>
+        </section>
+
+        <!-- FINANCIAL PROJECTIONS -->
+        <section>
+            <h2>📊 FINANCIAL PROJECTIONS & FUNDING (30 Questions)</h2>
+
+            <h3>Financial Forecasts</h3>
+            <div class="question-group">
+                <div class="category-header">FINANCIALS</div>
+                <div class="question"><span class="question-num">341.</span>What's your revenue forecast for 2025? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">342.</span>What's your revenue forecast for 2026? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">343.</span>What's your revenue forecast for 2028? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">344.</span>What assumptions are these based on? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">345.</span>What's your burn rate? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">346.</span>When will you break even? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">347.</span>What's your path to profitability? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">348.</span>What are your fixed costs? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">349.</span>What are your variable costs? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">350.</span>What's your cost of goods sold? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Funding & Capital</h3>
+            <div class="question-group">
+                <div class="category-header">FUNDING</div>
+                <div class="question"><span class="question-num">351.</span>How much funding have you raised? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">352.</span>Who are your investors? <span class="difficulty easy">Easy</span></div>
+                <div class="question"><span class="question-num">353.</span>How much capital do you need? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">354.</span>What will you use funding for? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">355.</span>How long will funding last? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">356.</span>When do you need next funding? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">357.</span>What's your target valuation? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">358.</span>How did you value your company? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">359.</span>What's your cap table? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">360.</span>What's your dilution plan? <span class="difficulty medium">Medium</span></div>
+            </div>
+
+            <h3>Use of Funds</h3>
+            <div class="question-group">
+                <div class="category-header">USE OF FUNDS</div>
+                <div class="question"><span class="question-num">361.</span>What % goes to product development? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">362.</span>What % goes to sales & marketing? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">363.</span>What % goes to operations? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">364.</span>What % goes to people/HR? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">365.</span>What % goes to infrastructure? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">366.</span>Will you hire more people? How many? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">367.</span>What roles will you hire? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">368.</span>What's your hiring timeline? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">369.</span>Will you open new offices? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">370.</span>What's your content creation budget? <span class="difficulty medium">Medium</span></div>
+            </div>
+        </section>
+
+        <!-- SUSTAINABILITY & RISK -->
+        <section>
+            <h2>⚠️ SUSTAINABILITY & RISK MANAGEMENT (25 Questions)</h2>
+
+            <h3>Business Risks</h3>
+            <div class="question-group">
+                <div class="category-header">RISKS</div>
+                <div class="question"><span class="question-num">371.</span>What are your biggest business risks? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">372.</span>What if Byju's copies your features? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">373.</span>What if regulatory environment changes? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">374.</span>What if government restricts EdTech? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">375.</span>What if internet penetration plateaus? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">376.</span>What if your funding runs out? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">377.</span>What if you lose key investors? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">378.</span>What if team leaves? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">379.</span>How do you mitigate risks? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">380.</span>What's your contingency plan? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>Market & Competitive Risks</h3>
+            <div class="question-group">
+                <div class="category-header">MARKET RISKS</div>
+                <div class="question"><span class="question-num">381.</span>Is the EdTech market oversaturated? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">382.</span>Can you survive price wars? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">383.</span>What if traditional education rebounds? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">384.</span>What if AI disrupts the market? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">385.</span>How do you stay relevant? <span class="difficulty hard">Hard</span></div>
+            </div>
+
+            <h3>Sustainability & Moat</h3>
+            <div class="question-group">
+                <div class="category-header">SUSTAINABILITY</div>
+                <div class="question"><span class="question-num">386.</span>Is your business sustainable long-term? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">387.</span>What's your competitive moat? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">388.</span>Can your moat widen over time? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">389.</span>What keeps you ahead? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">390.</span>Can you achieve market leadership? <span class="difficulty hard">Hard</span></div>
+                <div class="question"><span class="question-num">391.</span>What's your exit strategy? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">392.</span>What's your valuation target at exit? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">393.</span>Who would acquire you? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">394.</span>Is IPO possible? <span class="difficulty medium">Medium</span></div>
+                <div class="question"><span class="question-num">395.</span>What needs to happen for IPO? <span class="difficulty hard">Hard</span></div>
+            </div>
+        </section>
+
+        <div class="footer">
+            <p>Questions 201-395 of 500+ | Part 2: Business & Market Complete</p>
+            <p>See Part 1 for Technical Questions | See Part 3 for Product & Features Questions</p>
+            <p>© 2025 OPTIMISTIC MUTANT CODERS</p>
+        </div>
+    </div>
+</body>
+</html>
