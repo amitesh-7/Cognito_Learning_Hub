@@ -1,6 +1,8 @@
 // lib/services/webrtc_service.dart
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:http/http.dart' as http;
 
 class WebRTCService {
   static final WebRTCService _instance = WebRTCService._internal();
@@ -23,15 +25,62 @@ class WebRTCService {
       StreamController<Map<String, dynamic>>.broadcast();
   Stream<Map<String, dynamic>> get signalStream => _signalController.stream;
 
-  final Map<String, dynamic> _iceServers = {
+  // ICE servers configuration - will be fetched from backend
+  Map<String, dynamic> _iceServers = {
     'iceServers': [
       {'urls': 'stun:stun.l.google.com:19302'},
-      {'urls': 'stun:stun1.l.google.com:19302'},
-      {'urls': 'stun:stun2.l.google.com:19302'},
     ],
   };
 
+  // ICE transport policy - can be 'all' or 'relay'
+  String? _iceTransportPolicy;
+
   MediaStream? get localStream => _localStream;
+
+  /// Fetch ICE server configuration from backend
+  /// This includes TURN servers for NAT traversal
+  Future<void> fetchIceServers(String apiBaseUrl, String token) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$apiBaseUrl/api/meetings/config/ice-servers'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['iceServers'] != null) {
+          _iceServers = {
+            'iceServers': data['iceServers'],
+          };
+
+          // Set transport policy if provided
+          if (data['iceTransportPolicy'] != null) {
+            _iceTransportPolicy = data['iceTransportPolicy'];
+            _iceServers['iceTransportPolicy'] = _iceTransportPolicy;
+          }
+
+          print('✅ ICE servers fetched from backend:');
+          print(
+              '   - STUN servers: ${data['iceServers'].where((s) => s['urls'].toString().startsWith('stun:')).length}');
+          print(
+              '   - TURN servers: ${data['iceServers'].where((s) => s['urls'].toString().startsWith('turn')).length}');
+          print('   - Transport policy: ${_iceTransportPolicy ?? 'all'}');
+
+          if (data['config']?['azureTurnEnabled'] == true) {
+            print('   - ✅ Azure TURN server enabled');
+          }
+        }
+      } else {
+        print('⚠️  Failed to fetch ICE servers, using defaults');
+      }
+    } catch (e) {
+      print('⚠️  Error fetching ICE servers: $e');
+      print('   Using default STUN configuration');
+    }
+  }
 
   Future<void> initialize({bool video = true, bool audio = true}) async {
     final mediaConstraints = {

@@ -218,7 +218,7 @@ class _DuelModeScreenState extends ConsumerState<DuelModeScreen> {
                 .animate()
                 .fadeIn(delay: Duration(milliseconds: 300 + index * 50))
                 .slideX(begin: 0.2);
-          }).toList(),
+          }),
         ],
       ),
     );

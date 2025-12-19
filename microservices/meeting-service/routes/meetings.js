@@ -453,55 +453,121 @@ router.get("/health/check", async (req, res) => {
  */
 router.get("/config/ice-servers", authenticateToken, async (req, res) => {
   try {
-    // If you have your own TURN server credentials from environment variables
-    const turnUsername = process.env.TURN_USERNAME;
-    const turnCredential = process.env.TURN_CREDENTIAL;
-    const turnServer =
-      process.env.TURN_SERVER || "turn:openrelay.metered.ca:80";
-    const turnsServer =
-      process.env.TURNS_SERVER || "turns:openrelay.metered.ca:443";
+    // Option 1: Fetch dynamic credentials from metered.ca API (recommended)
+    const meteredApiKey = process.env.METERED_API_KEY;
 
-    // Build ICE servers array
+    if (meteredApiKey) {
+      try {
+        const fetch = (await import("node-fetch")).default;
+        const response = await fetch(
+          `https://cognito.metered.live/api/v1/turn/credentials?apiKey=${meteredApiKey}`
+        );
+
+        if (response.ok) {
+          const meteredServers = await response.json();
+
+          // Add backup STUN servers
+          const backupSTUN = [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" },
+          ];
+
+          const iceServers = [...meteredServers, ...backupSTUN];
+
+          logger.info("ICE servers fetched from metered.ca API");
+          return res.json({
+            success: true,
+            iceServers,
+            source: "metered.ca-api",
+          });
+        }
+      } catch (apiError) {
+        logger.warn(
+          "Failed to fetch metered.ca credentials, using static config",
+          apiError
+        );
+      }
+    }
+
+    // Option 2: Static credentials from environment variables
+    const turnUsername =
+      process.env.TURN_USERNAME || "5ed29053a8052a1de614fc6b";
+    const turnCredential = process.env.TURN_CREDENTIAL || "H6s8TMlICsyTg9Cf";
+
+    // Azure TURN server credentials
+    const azureTurnIp = process.env.AZURE_TURN_IP;
+    const azureTurnUsername = process.env.AZURE_TURN_USERNAME || "turnuser";
+    const azureTurnCredential =
+      process.env.AZURE_TURN_CREDENTIAL || "turnpassword";
+
+    // ICE transport policy (all or relay)
+    const iceTransportPolicy = process.env.ICE_TRANSPORT_POLICY || "all";
+
+    // Build ICE servers array - ORDER MATTERS!
+    // STUN first (fastest), then TURN (fallback)
     const iceServers = [
-      // STUN servers (free, no authentication needed)
+      // 1. STUN servers (no authentication needed) - Try these first
       { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" },
-      { urls: "stun:stun2.l.google.com:19302" },
       { urls: "stun:stun.relay.metered.ca:80" },
+      { urls: "stun:stun1.l.google.com:19302" },
     ];
 
-    // Add TURN servers if credentials are configured
-    if (turnUsername && turnCredential) {
-      // Your own TURN server
+    // 2. Azure TURN server (your custom deployment) - Highest priority TURN
+    if (azureTurnIp) {
       iceServers.push(
         {
-          urls: turnServer,
-          username: turnUsername,
-          credential: turnCredential,
+          urls: `turn:${azureTurnIp}:3478?transport=udp`,
+          username: azureTurnUsername,
+          credential: azureTurnCredential,
         },
         {
-          urls: `${turnServer}?transport=tcp`,
-          username: turnUsername,
-          credential: turnCredential,
+          urls: `turn:${azureTurnIp}:3478?transport=tcp`,
+          username: azureTurnUsername,
+          credential: azureTurnCredential,
         },
         {
-          urls: turnsServer,
-          username: turnUsername,
-          credential: turnCredential,
+          urls: `turns:${azureTurnIp}:5349`,
+          username: azureTurnUsername,
+          credential: azureTurnCredential,
         }
       );
-    } else {
-      // Fallback to free open relay TURN servers (limited capacity)
-      // Sign up at https://www.metered.ca/tools/openrelay/ for free credentials
-      logger.warn(
-        "No TURN credentials configured - using fallback STUN-only configuration"
-      );
+      logger.info(`Azure TURN server configured: ${azureTurnIp}`);
     }
+
+    // 3. Metered.ca TURN servers (India region - backup)
+    iceServers.push(
+      {
+        urls: "turn:in.relay.metered.ca:80",
+        username: turnUsername,
+        credential: turnCredential,
+      },
+      {
+        urls: "turn:in.relay.metered.ca:80?transport=tcp",
+        username: turnUsername,
+        credential: turnCredential,
+      },
+      {
+        urls: "turn:in.relay.metered.ca:443",
+        username: turnUsername,
+        credential: turnCredential,
+      },
+      {
+        urls: "turns:in.relay.metered.ca:443?transport=tcp",
+        username: turnUsername,
+        credential: turnCredential,
+      }
+    );
 
     res.json({
       success: true,
       iceServers,
+      iceTransportPolicy,
       timestamp: new Date().toISOString(),
+      config: {
+        azureTurnEnabled: !!azureTurnIp,
+        meteredEnabled: true,
+        transportPolicy: iceTransportPolicy,
+      },
     });
   } catch (error) {
     logger.error("Error getting ICE servers:", error);

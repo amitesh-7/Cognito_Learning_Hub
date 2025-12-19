@@ -67,7 +67,7 @@ class LiveSessionService {
       }
 
       if (sessionData is Map) {
-        print('🎯 Session data keys: ${(sessionData as Map).keys.toList()}');
+        print('🎯 Session data keys: ${(sessionData).keys.toList()}');
       }
 
       final session = LiveSession.fromJson(sessionData);
