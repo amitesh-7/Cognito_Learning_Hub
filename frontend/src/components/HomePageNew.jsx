@@ -27,7 +27,6 @@ import {
   Check,
   X,
   FileText,
-  Youtube,
   Swords,
   Crown,
   Radio,
@@ -62,7 +61,7 @@ import "../animations.css";
 
 export default function HomePageNew() {
   const [isLoading, setIsLoading] = useState(true);
-  const [activeDemo, setActiveDemo] = useState(0);
+  const [activeDemo, setActiveDemo] = useState(1);
   const [platformStats, setPlatformStats] = useState({
     totalUsers: 10000,
     totalQuizzes: 50000,
@@ -75,19 +74,19 @@ export default function HomePageNew() {
   const heroRef = useRef(null);
   const isHeroInView = useInView(heroRef, { once: false, amount: 0.3 });
 
-  // Auto-rotate demos
+  // Auto-rotate demos (6 demos: PDF, Topic, Manual, AI Tutor, Battle, Meet - YouTube removed)
   useEffect(() => {
     if (!isPlaying || !isHeroInView) return;
     const interval = setInterval(() => {
       setActiveDemo((prev) => {
-        const next = (prev + 1) % 7;
+        const next = (prev + 1) % 6;
         // Reset battle scores when cycling
-        if (next === 5) {
+        if (next === 4) {
           setBattleScore1(0);
           setBattleScore2(0);
         }
         // Increment scores during battle demo
-        if (prev === 5) {
+        if (prev === 4) {
           setBattleScore1((s) => s + (Math.random() > 0.4 ? 100 : 50));
           setBattleScore2((s) => s + (Math.random() > 0.5 ? 100 : 50));
         }
@@ -351,7 +350,7 @@ export default function HomePageNew() {
                 </motion.div>
               </motion.div>
 
-              {/* Right - Product Demo Laptop */}
+              {/* Right - Product Demo - Laptop on Desktop, iPhone on Mobile */}
               <motion.div
                 ref={heroRef}
                 initial={{ opacity: 0, x: 50 }}
@@ -359,8 +358,8 @@ export default function HomePageNew() {
                 transition={{ duration: 0.8, delay: 0.3 }}
                 className="relative"
               >
-                {/* MacBook Frame */}
-                <div className="relative">
+                {/* MacBook Frame - Desktop Only */}
+                <div className="relative hidden md:block">
                   <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-3xl p-4 shadow-2xl">
                     {/* Notch */}
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-gray-900 rounded-b-3xl z-20"></div>
@@ -375,7 +374,7 @@ export default function HomePageNew() {
                       <div className="flex-1 bg-gray-800/50 rounded px-3 py-1 text-xs text-gray-400 flex items-center justify-between">
                         <span>cognito-learning-hub.com</span>
                         <span className="text-[10px] text-gray-500">
-                          Demo {activeDemo + 1}/7
+                          Demo {activeDemo + 1}/6
                         </span>
                       </div>
                       <motion.button
@@ -565,38 +564,6 @@ export default function HomePageNew() {
                           {activeDemo === 2 && (
                             <div className="h-full flex flex-col">
                               <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center shadow-lg">
-                                  <Play className="w-7 h-7 text-white" />
-                                </div>
-                                <div>
-                                  <h4 className="text-white font-bold">YouTube to Quiz</h4>
-                                  <p className="text-xs text-gray-400">Video Learning</p>
-                                </div>
-                              </div>
-                              <div className="bg-red-500/10 rounded-2xl overflow-hidden border border-red-400 flex-1">
-                                <div className="bg-black aspect-video flex items-center justify-center">
-                                  <motion.div
-                                    animate={{ scale: [1, 1.2, 1] }}
-                                    transition={{ duration: 1.5, repeat: Infinity }}
-                                  >
-                                    <Play className="w-20 h-20 text-red-500" />
-                                  </motion.div>
-                                </div>
-                                <div className="p-3 bg-red-500/20">
-                                  <motion.div
-                                    className="h-2 bg-red-500 rounded-full"
-                                    initial={{ width: 0 }}
-                                    animate={{ width: "65%" }}
-                                    transition={{ duration: 2 }}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {activeDemo === 3 && (
-                            <div className="h-full flex flex-col">
-                              <div className="flex items-center gap-3 mb-4">
                                 <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
                                   <ListChecks className="w-7 h-7 text-white" />
                                 </div>
@@ -641,7 +608,7 @@ export default function HomePageNew() {
                             </div>
                           )}
 
-                          {activeDemo === 4 && (
+                          {activeDemo === 3 && (
                             <div className="h-full flex flex-col">
                               <div className="flex items-center gap-3 mb-4">
                                 <div className="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -680,7 +647,7 @@ export default function HomePageNew() {
                             </div>
                           )}
 
-                          {activeDemo === 5 && (
+                          {activeDemo === 4 && (
                             <div className="h-full flex flex-col">
                               <div className="flex items-center gap-3 mb-3">
                                 <motion.div
@@ -824,7 +791,7 @@ export default function HomePageNew() {
                             </div>
                           )}
 
-                          {activeDemo === 6 && (
+                          {activeDemo === 5 && (
                             <div className="h-full flex flex-col">
                               <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
@@ -968,6 +935,277 @@ export default function HomePageNew() {
                     transition={{ duration: 4, repeat: Infinity }}
                   />
                 </div>
+                {/* End of Desktop MacBook Frame */}
+
+                {/* iPhone Frame - Mobile Only */}
+                <div className="relative md:hidden flex justify-center">
+                  {/* iPhone Device Frame */}
+                  <div className="relative w-[280px] sm:w-[320px]">
+                    {/* iPhone Outer Frame */}
+                    <div className="relative bg-gradient-to-b from-gray-800 via-gray-900 to-black rounded-[3rem] p-2 shadow-2xl border-4 border-gray-700">
+                      {/* iPhone Inner Bezel */}
+                      <div className="relative bg-black rounded-[2.5rem] overflow-hidden">
+                        {/* Dynamic Island / Notch */}
+                        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-7 bg-black rounded-full z-30 flex items-center justify-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-gray-800 ring-1 ring-gray-700" />
+                          <div className="w-10 h-3 rounded-full bg-gray-800 ring-1 ring-gray-700" />
+                        </div>
+                        
+                        {/* Status Bar */}
+                        <div className="absolute top-0 left-0 right-0 h-12 z-20 flex items-end justify-between px-6 pb-1">
+                          <span className="text-white text-xs font-semibold">9:41</span>
+                          <div className="flex items-center gap-1">
+                            <div className="flex gap-0.5">
+                              <div className="w-1 h-2 bg-white rounded-sm" />
+                              <div className="w-1 h-2.5 bg-white rounded-sm" />
+                              <div className="w-1 h-3 bg-white rounded-sm" />
+                              <div className="w-1 h-3.5 bg-white rounded-sm" />
+                            </div>
+                            <div className="ml-1 w-6 h-3 border border-white rounded-sm relative">
+                              <div className="absolute inset-0.5 bg-green-500 rounded-[2px]" style={{ width: '70%' }} />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* App Header Bar */}
+                        <div className="absolute top-11 left-0 right-0 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 z-10 flex items-center px-4 gap-2">
+                          <Brain className="w-5 h-5 text-white" />
+                          <span className="text-white font-bold text-sm">Cognito</span>
+                          <span className="ml-auto text-white/80 text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
+                            Demo {activeDemo + 1}/6
+                          </span>
+                        </div>
+                        
+                        {/* iPhone Screen Content */}
+                        <div className="bg-gradient-to-br from-slate-950 via-indigo-950 to-purple-950 aspect-[9/19.5] relative overflow-hidden pt-[84px] pb-8">
+                          <AnimatePresence mode="wait">
+                            <motion.div
+                              key={`mobile-${activeDemo}`}
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              transition={{ duration: 0.4 }}
+                              className="absolute inset-x-0 top-[84px] bottom-8 p-4"
+                            >
+                              {/* Mobile Demo Content */}
+                              {activeDemo === 0 && (
+                                <div className="h-full flex flex-col">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+                                      <BookOpen className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                      <h4 className="text-white font-bold text-sm">PDF to Quiz</h4>
+                                      <p className="text-[10px] text-gray-400">Upload & Generate</p>
+                                    </div>
+                                  </div>
+                                  <motion.div
+                                    className="border-2 border-dashed border-blue-400 rounded-xl p-6 bg-blue-500/10 flex-1 flex items-center justify-center"
+                                    animate={{ borderColor: ["#60a5fa", "#3b82f6", "#60a5fa"] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                  >
+                                    <div className="text-center">
+                                      <motion.div
+                                        className="text-4xl mb-2"
+                                        animate={{ y: [0, -5, 0] }}
+                                        transition={{ duration: 1.5, repeat: Infinity }}
+                                      >
+                                        📄
+                                      </motion.div>
+                                      <p className="text-white text-sm font-medium">Tap to Upload</p>
+                                      <p className="text-gray-400 text-xs mt-1">AI generates quiz</p>
+                                    </div>
+                                  </motion.div>
+                                </div>
+                              )}
+                              {activeDemo === 1 && (
+                                <div className="h-full flex flex-col">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <motion.div
+                                      className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center shadow-lg"
+                                      animate={{ boxShadow: ["0 0 15px rgba(168,85,247,0.4)", "0 0 25px rgba(168,85,247,0.6)", "0 0 15px rgba(168,85,247,0.4)"] }}
+                                      transition={{ duration: 2, repeat: Infinity }}
+                                    >
+                                      <Brain className="w-5 h-5 text-white" />
+                                    </motion.div>
+                                    <div>
+                                      <h4 className="text-white font-bold text-sm">Topic to Quiz</h4>
+                                      <p className="text-[10px] text-gray-400">AI-Powered</p>
+                                    </div>
+                                  </div>
+                                  <div className="bg-white/10 rounded-lg p-3 border border-purple-400 mb-3">
+                                    <motion.p
+                                      className="text-white text-sm"
+                                      initial={{ width: 0 }}
+                                      animate={{ width: "100%" }}
+                                      transition={{ duration: 2 }}
+                                    >
+                                      Photosynthesis...
+                                    </motion.p>
+                                  </div>
+                                  <div className="space-y-2 flex-1">
+                                    {[1, 2, 3].map((i) => (
+                                      <motion.div
+                                        key={i}
+                                        className="bg-indigo-500/20 rounded-lg p-2 border-l-2 border-indigo-400"
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: i * 0.2 }}
+                                      >
+                                        <div className="h-2 bg-indigo-400/40 rounded w-3/4" />
+                                      </motion.div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {activeDemo === 2 && (
+                                <div className="h-full flex flex-col">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+                                      <ListChecks className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                      <h4 className="text-white font-bold text-sm">Manual Creator</h4>
+                                      <p className="text-[10px] text-gray-400">Full Control</p>
+                                    </div>
+                                  </div>
+                                  <div className="bg-emerald-500/10 rounded-lg p-3 border border-emerald-400 flex-1">
+                                    <div className="flex justify-between mb-2">
+                                      <span className="text-emerald-300 font-bold text-sm">Q1</span>
+                                      <span className="text-emerald-400 text-[10px] bg-emerald-500/20 px-2 py-0.5 rounded">MCQ</span>
+                                    </div>
+                                    {[1, 2, 3, 4].map((i) => (
+                                      <div key={i} className="flex items-center gap-2 mb-2">
+                                        <div className={`w-3 h-3 rounded-full border ${i === 2 ? 'bg-emerald-400/30 border-emerald-400' : 'border-emerald-400'}`} />
+                                        <div className="h-2 bg-emerald-400/30 rounded flex-1" />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {activeDemo === 3 && (
+                                <div className="h-full flex flex-col">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-10 h-10 bg-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+                                      <MessageCircle className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                      <h4 className="text-white font-bold text-sm">AI Tutor 24/7</h4>
+                                      <p className="text-[10px] text-gray-400">Instant Help</p>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-3 flex-1">
+                                    <motion.div
+                                      className="bg-blue-500/20 rounded-lg p-3 ml-auto max-w-[80%] border border-blue-400"
+                                      initial={{ opacity: 0, x: 10 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                    >
+                                      <p className="text-white text-xs">Newton's 2nd law?</p>
+                                    </motion.div>
+                                    <motion.div
+                                      className="bg-purple-500/20 rounded-lg p-3 mr-auto max-w-[80%] border border-purple-400"
+                                      initial={{ opacity: 0, x: -10 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{ delay: 0.5 }}
+                                    >
+                                      <p className="text-white text-xs font-semibold">F = ma</p>
+                                      <p className="text-gray-300 text-[10px] mt-1">Force = mass × acceleration</p>
+                                    </motion.div>
+                                  </div>
+                                </div>
+                              )}
+                              {activeDemo === 4 && (
+                                <div className="h-full flex flex-col">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <motion.div
+                                      className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg"
+                                      animate={{ rotate: [0, 5, -5, 0] }}
+                                      transition={{ duration: 2, repeat: Infinity }}
+                                    >
+                                      <Swords className="w-5 h-5 text-white" />
+                                    </motion.div>
+                                    <div>
+                                      <h4 className="text-white font-bold text-sm">1v1 Battle</h4>
+                                      <p className="text-[10px] text-gray-400">Real-time Duel</p>
+                                    </div>
+                                  </div>
+                                  <motion.div
+                                    className="bg-gradient-to-r from-red-600 to-orange-600 rounded-full px-3 py-1 mx-auto mb-2"
+                                    animate={{ boxShadow: ["0 0 10px rgba(239,68,68,0.5)", "0 0 20px rgba(239,68,68,0.8)", "0 0 10px rgba(239,68,68,0.5)"] }}
+                                    transition={{ duration: 1, repeat: Infinity }}
+                                  >
+                                    <span className="text-white font-bold text-[10px]">LIVE BATTLE</span>
+                                  </motion.div>
+                                  <div className="grid grid-cols-2 gap-2 flex-1">
+                                    <div className="bg-blue-500/20 rounded-lg p-2 border border-blue-400">
+                                      <div className="text-center">
+                                        <p className="text-white text-lg font-black">{battleScore1}</p>
+                                        <p className="text-blue-300 text-[10px]">You</p>
+                                      </div>
+                                    </div>
+                                    <div className="bg-red-500/20 rounded-lg p-2 border border-red-400">
+                                      <div className="text-center">
+                                        <p className="text-white text-lg font-black">{battleScore2}</p>
+                                        <p className="text-red-300 text-[10px]">Rival</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              {activeDemo === 5 && (
+                                <div className="h-full flex flex-col">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                                        <Video className="w-4 h-4 text-white" />
+                                      </div>
+                                      <div>
+                                        <h4 className="text-white font-bold text-xs">Meeting</h4>
+                                        <p className="text-[9px] text-gray-400">Live</p>
+                                      </div>
+                                    </div>
+                                    <motion.div
+                                      className="flex items-center gap-1"
+                                      animate={{ opacity: [1, 0.5, 1] }}
+                                      transition={{ duration: 1, repeat: Infinity }}
+                                    >
+                                      <div className="w-2 h-2 bg-red-500 rounded-full" />
+                                      <span className="text-red-400 text-[10px] font-bold">LIVE</span>
+                                    </motion.div>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-1 flex-1">
+                                    {["👨‍🏫", "👨‍🎓", "👩‍🎓", "🧑‍🎓"].map((emoji, i) => (
+                                      <div key={i} className={`aspect-video bg-gradient-to-br ${i === 0 ? 'from-purple-600 to-pink-600' : 'from-blue-600 to-cyan-600'} rounded-lg flex items-center justify-center text-xl`}>
+                                        {emoji}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </motion.div>
+                          </AnimatePresence>
+                          
+                          {/* Home Indicator */}
+                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-white/30 rounded-full" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* iPhone Side Buttons */}
+                    <div className="absolute -left-1 top-24 w-1 h-8 bg-gray-600 rounded-l" />
+                    <div className="absolute -left-1 top-36 w-1 h-12 bg-gray-600 rounded-l" />
+                    <div className="absolute -left-1 top-52 w-1 h-12 bg-gray-600 rounded-l" />
+                    <div className="absolute -right-1 top-32 w-1 h-16 bg-gray-600 rounded-r" />
+                    
+                    {/* Glow Effect */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 rounded-[3rem] blur-2xl -z-10"
+                      animate={{ scale: [1, 1.1, 1], opacity: [0.4, 0.6, 0.4] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    />
+                  </div>
+                </div>
+                {/* End of Mobile iPhone Frame */}
 
                 {/* Progress Indicators & Navigation Controls */}
                 <div className="mt-8 space-y-4">
@@ -976,7 +1214,6 @@ export default function HomePageNew() {
                     {[
                       { label: "PDF", color: "bg-blue-500", hoverColor: "hover:bg-blue-600" },
                       { label: "Topic", color: "bg-purple-500", hoverColor: "hover:bg-purple-600" },
-                      { label: "YouTube", color: "bg-red-500", hoverColor: "hover:bg-red-600" },
                       { label: "Manual", color: "bg-emerald-500", hoverColor: "hover:bg-emerald-600" },
                       { label: "AI Tutor", color: "bg-cyan-500", hoverColor: "hover:bg-cyan-600" },
                       { label: "Battle", color: "bg-orange-500", hoverColor: "hover:bg-orange-600" },
@@ -1017,7 +1254,7 @@ export default function HomePageNew() {
                   {/* Play/Pause & Navigation Controls */}
                   <div className="flex items-center justify-center gap-3">
                     <motion.button
-                      onClick={() => setActiveDemo((prev) => (prev - 1 + 7) % 7)}
+                      onClick={() => setActiveDemo((prev) => (prev - 1 + 6) % 6)}
                       className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-all"
                       whileHover={{ scale: 1.1, x: -3 }}
                       whileTap={{ scale: 0.95 }}
@@ -1064,7 +1301,7 @@ export default function HomePageNew() {
                     </motion.button>
 
                     <motion.button
-                      onClick={() => setActiveDemo((prev) => (prev + 1) % 7)}
+                      onClick={() => setActiveDemo((prev) => (prev + 1) % 6)}
                       className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 transition-all"
                       whileHover={{ scale: 1.1, x: 3 }}
                       whileTap={{ scale: 0.95 }}

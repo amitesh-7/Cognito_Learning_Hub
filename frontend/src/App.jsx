@@ -184,10 +184,10 @@ function App() {
       {/* Modern Glassmorphism Navbar with Scroll Behavior */}
       {!isFullScreen && <Navbar />}
 
-      {/* Main Content */}
+      {/* Main Content - Added top padding for fixed navbar */}
       <main
         id="main-content"
-        className={isFullScreen ? "" : "relative z-10"}
+        className={isFullScreen ? "" : "relative z-10 pt-16 sm:pt-18 md:pt-20"}
         role="main"
         aria-label="Main content"
       >

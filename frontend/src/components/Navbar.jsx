@@ -71,18 +71,18 @@ const Navbar = () => {
   const shouldReduceMotion = useReducedMotion();
   const isMobile = useIsMobile();
 
-  // Product demos for mega menu
+  // Product demos for mega menu (Video/YouTube features removed)
   const productDemos = [
     {
       id: "quiz",
       title: "AI Quiz Generator",
-      description: "Create quizzes from PDFs, topics, or YouTube videos",
+      description: "Create quizzes from PDFs, topics, and custom content",
       icon: Brain,
       color: "from-blue-500 to-cyan-500",
       features: [
         "PDF Upload",
         "Topic Input",
-        "YouTube Links",
+        "Speech Input",
         "MCQ, T/F, Descriptive",
       ],
     },
@@ -111,14 +111,6 @@ const Navbar = () => {
         "Session Controls",
         "Analytics",
       ],
-    },
-    {
-      id: "meeting",
-      title: "Video Meetings",
-      description: "Built-in video conferencing for classes",
-      icon: Video,
-      color: "from-green-500 to-teal-500",
-      features: ["HD Video", "Screen Share", "Chat", "Scheduling"],
     },
   ];
 
@@ -260,7 +252,7 @@ const Navbar = () => {
                 duration: 0.6,
               }
         }
-        className={`sticky top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-500 ${
             isScrolled
               ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-lg border-b border-indigo-200/30 dark:border-indigo-400/20"
               : "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-indigo-100/20 dark:border-indigo-500/10"
