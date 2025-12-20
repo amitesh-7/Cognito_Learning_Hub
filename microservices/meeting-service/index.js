@@ -184,8 +184,23 @@ app.use((err, req, res, next) => {
 // SOCKET.IO HANDLERS
 // ============================================
 
-signalingHandlers(io); // P2P mode
-mediasoupHandlers(io); // SFU mode
+signalingHandlers(io); // P2P mode (always enabled)
+
+// SFU mode (only if enabled and workers available)
+const sfuEnabled = process.env.SFU_MODE_ENABLED === "true";
+const mediasoupWorkers = parseInt(process.env.MEDIASOUP_WORKERS) || 0;
+
+if (sfuEnabled && mediasoupWorkers > 0) {
+  mediasoupHandlers(io);
+  logger.info("✅ SFU mode (mediasoup) enabled");
+} else {
+  logger.info("ℹ️  SFU mode disabled - using P2P + TURN relay");
+  logger.info(
+    `   Reason: ${
+      !sfuEnabled ? "SFU_MODE_ENABLED=false" : "MEDIASOUP_WORKERS=0"
+    }`
+  );
+}
 
 // Socket.IO connection logging
 io.on("connection", (socket) => {

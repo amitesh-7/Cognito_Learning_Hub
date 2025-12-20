@@ -95,7 +95,7 @@ const MeetingRoom = () => {
       setMyUserName(displayName);
       myUserNameRef.current = displayName;
 
-      // Join meeting with SFU mode
+      // Join meeting with SFU mode (MediaSoup)
       meetSocket.emit(
         "join-meeting-sfu",
         {
