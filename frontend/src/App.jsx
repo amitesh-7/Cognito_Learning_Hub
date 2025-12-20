@@ -187,7 +187,7 @@ function App() {
       {/* Main Content - Added responsive top padding for fixed navbar */}
       <main
         id="main-content"
-        className={isFullScreen ? "" : "relative z-10 pt-14 sm:pt-16 md:pt-20 lg:pt-[72px]"}
+        className={isFullScreen ? "" : "relative z-10 pt-24 sm:pt-28 md:pt-32 lg:pt-28"}
         role="main"
         aria-label="Main content"
       >

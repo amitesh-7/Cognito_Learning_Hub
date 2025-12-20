@@ -21,7 +21,12 @@ export default function OnboardingTour({ onComplete }) {
     const hasCompletedTour = localStorage.getItem("onboarding-completed");
     const isNewUser = !localStorage.getItem("onboarding-dismissed");
     
-    if (!hasCompletedTour && isNewUser) {
+    // Only show tour on dashboard/home pages, not during quiz or other activities
+    const currentPath = window.location.pathname;
+    const allowedPaths = ['/', '/dashboard', '/quizzes'];
+    const isOnAllowedPage = allowedPaths.some(path => currentPath === path || currentPath.startsWith('/dashboard'));
+    
+    if (!hasCompletedTour && isNewUser && isOnAllowedPage) {
       setTimeout(() => setIsVisible(true), 800);
     }
   }, []);
@@ -131,7 +136,7 @@ export default function OnboardingTour({ onComplete }) {
           animate={{ opacity: 1, x: 0, y: 0 }}
           exit={{ opacity: 0, x: 100, scale: 0.8 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="fixed bottom-6 right-6 z-[9998] w-[380px] max-w-[calc(100vw-48px)]"
+          className="fixed bottom-6 right-6 z-[60] w-[380px] max-w-[calc(100vw-48px)]"
           style={{ pointerEvents: "auto" }}
         >
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700">
@@ -306,7 +311,7 @@ export default function OnboardingTour({ onComplete }) {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.5 }}
           onClick={() => setIsMinimized(false)}
-          className="fixed bottom-6 right-24 z-[9998] flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
+          className="fixed bottom-6 right-24 z-[60] flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           style={{ pointerEvents: "auto" }}

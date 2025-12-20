@@ -269,7 +269,7 @@ const Navbar = () => {
             stiffness: 300,
             damping: 30,
           }}
-          className={`transition-all duration-500 rounded-2xl sm:rounded-3xl lg:rounded-[28px] overflow-hidden ${
+          className={`transition-all duration-500 rounded-2xl sm:rounded-3xl lg:rounded-[28px] overflow-visible ${
             isScrolled
               ? "bg-white/98 dark:bg-slate-900/98 backdrop-blur-2xl shadow-2xl shadow-indigo-500/20 dark:shadow-indigo-500/30 border-2 border-indigo-200/50 dark:border-indigo-400/40"
               : "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-xl shadow-indigo-500/10 border border-indigo-100/40 dark:border-indigo-500/30"
@@ -616,7 +616,7 @@ const Navbar = () => {
                       ) : (
                         // Dropdown
                         <div
-                          className="relative"
+                          className="relative z-20"
                           onMouseEnter={() => setActiveDropdown(index)}
                           onMouseLeave={() => setActiveDropdown(null)}
                         >
@@ -644,7 +644,7 @@ const Navbar = () => {
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                 transition={{ duration: 0.2 }}
-                                className="absolute top-full mt-2 left-0 min-w-[200px] bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-xl shadow-2xl border border-indigo-200/50 dark:border-indigo-400/30 overflow-hidden"
+                                className="absolute top-full mt-2 left-0 min-w-[200px] bg-white dark:bg-slate-800 backdrop-blur-xl rounded-xl shadow-2xl border border-indigo-200/50 dark:border-indigo-400/30 overflow-hidden z-[100]"
                               >
                                 {group.items.map((item, itemIndex) => (
                                   <Link
@@ -779,7 +779,7 @@ const Navbar = () => {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[700px] p-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/50 dark:border-indigo-500/30 z-50"
+                          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[700px] p-6 bg-white dark:bg-slate-900 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/50 dark:border-indigo-500/30 z-[100]"
                           style={{
                             boxShadow:
                               "0 25px 50px -12px rgba(99, 102, 241, 0.25), 0 0 0 1px rgba(255,255,255,0.1)",
