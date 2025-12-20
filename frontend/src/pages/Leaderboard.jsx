@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { AuthContext } from "../context/AuthContext";
@@ -41,30 +41,19 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
 
-  // Use global leaderboard from context if no quizId
-  useEffect(() => {
-    if (!quizId && globalLeaderboard.length > 0) {
-      setLeaderboard(globalLeaderboard);
-      setQuizTitle("Global Rankings");
-      setLoading(false);
-    }
-  }, [globalLeaderboard, quizId]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    if (!quizId) {
-      refreshData();
-    } else {
-      // Refetch quiz-specific leaderboard
-      await fetchLeaderboard();
-    }
-    setTimeout(() => setIsRefreshing(false), 500);
-  };
-
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = useCallback(async () => {
     try {
+      setLoading(true);
+      setError(""); // Clear any previous errors
       const token = localStorage.getItem("quizwise-token");
+      
+      if (!token) {
+        setError("Please log in to view the leaderboard.");
+        setLoading(false);
+        return;
+      }
 
       // If no quizId, fetch global leaderboard by XP from gamification service
       if (!quizId) {
@@ -83,8 +72,12 @@ export default function Leaderboard() {
           }
         );
 
-        if (!response.ok)
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Session expired. Please log in again.");
+          }
           throw new Error("Could not fetch global leaderboard.");
+        }
 
         const data = await response.json();
         console.log("📊 Leaderboard data:", data);
@@ -95,8 +88,8 @@ export default function Leaderboard() {
         // Transform data to match expected format with XP display
         const transformedData = leaderboardData.map((entry, index) => ({
           rank: entry.rank || index + 1,
-          userName: entry.user?.name || "Unknown User",
-          user: entry.user || { name: "Unknown User", email: "" },
+          userName: entry.user?.name || entry.userName || "Unknown User",
+          user: entry.user || { name: entry.userName || "Unknown User", email: "" },
           score: entry.score || 0,
           totalXP: entry.score || 0, // Score is XP points
           userId: entry.userId,
@@ -104,6 +97,7 @@ export default function Leaderboard() {
 
         setLeaderboard(transformedData);
         setQuizTitle("Global Rankings - Highest XP");
+        setHasFetched(true);
       } else {
         // Fetch quiz-specific leaderboard
         const [leaderboardRes, quizRes] = await Promise.all([
@@ -138,20 +132,47 @@ export default function Leaderboard() {
 
         setLeaderboard(leaderboardData);
         setQuizTitle(quizData.title);
+        setHasFetched(true);
       }
     } catch (err) {
+      console.error("Error fetching leaderboard:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    // Only fetch from API if quizId is provided or no global data
-    if (quizId || globalLeaderboard.length === 0) {
-      fetchLeaderboard();
-    }
   }, [quizId]);
+
+  // Initial data fetch - always fetch on mount
+  useEffect(() => {
+    // Fetch directly from API for reliability
+    fetchLeaderboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quizId]); // fetchLeaderboard is stable due to useCallback with [quizId]
+
+  // Also update from global context when available (for real-time updates)
+  useEffect(() => {
+    if (!quizId && globalLeaderboard.length > 0 && hasFetched) {
+      // Transform global leaderboard data
+      const transformedData = globalLeaderboard.map((entry, index) => ({
+        rank: entry.rank || index + 1,
+        userName: entry.user?.name || entry.userName || "Unknown User",
+        user: entry.user || { name: entry.userName || "Unknown User", email: "" },
+        score: entry.score || 0,
+        totalXP: entry.score || 0,
+        userId: entry.userId,
+      }));
+      setLeaderboard(transformedData);
+    }
+  }, [globalLeaderboard, quizId, hasFetched]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchLeaderboard();
+    if (!quizId) {
+      refreshData(); // Also refresh context data
+    }
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   const topThree = (leaderboard || []).slice(0, 3);
   const restOfBoard = (leaderboard || []).slice(3); // Show remaining students (up to 5 total)
@@ -314,13 +335,13 @@ export default function Leaderboard() {
                 className="flex justify-center items-end gap-4 mb-12"
                 variants={itemVariants}
               >
-                {topThree[1] && topThree[1].userName && (
+                {topThree[1] && (
                   <div className="text-center">
                     <div className="w-24 h-24 rounded-full bg-gray-400 dark:bg-gray-600 text-white text-3xl font-bold mx-auto flex items-center justify-center mb-2 border-4 border-gray-300 dark:border-gray-500">
-                      {topThree[1].userName[0]?.toUpperCase() || "?"}
+                      {(topThree[1].userName || topThree[1].user?.name || "?")?.[0]?.toUpperCase() || "?"}
                     </div>
                     <p className="font-bold text-gray-800 dark:text-white">
-                      {topThree[1].userName}
+                      {topThree[1].userName || topThree[1].user?.name || "Unknown"}
                     </p>
                     <p className="font-bold text-lg text-gray-500 dark:text-gray-400">
                       {quizId
@@ -332,13 +353,13 @@ export default function Leaderboard() {
                     </div>
                   </div>
                 )}
-                {topThree[0] && topThree[0].userName && (
+                {topThree[0] && (
                   <div className="text-center">
                     <div className="w-32 h-32 rounded-full bg-yellow-400 dark:bg-yellow-500 text-white text-4xl font-bold mx-auto flex items-center justify-center mb-2 border-4 border-yellow-300 dark:border-yellow-400">
-                      {topThree[0].userName[0]?.toUpperCase() || "?"}
+                      {(topThree[0].userName || topThree[0].user?.name || "?")?.[0]?.toUpperCase() || "?"}
                     </div>
                     <p className="font-bold text-gray-800 dark:text-white text-lg">
-                      {topThree[0].userName}
+                      {topThree[0].userName || topThree[0].user?.name || "Unknown"}
                     </p>
                     <p className="font-bold text-xl text-yellow-500 dark:text-yellow-400">
                       {quizId
@@ -350,13 +371,13 @@ export default function Leaderboard() {
                     </div>
                   </div>
                 )}
-                {topThree[2] && topThree[2].userName && (
+                {topThree[2] && (
                   <div className="text-center">
                     <div className="w-24 h-24 rounded-full bg-yellow-600 dark:bg-yellow-800 text-white text-3xl font-bold mx-auto flex items-center justify-center mb-2 border-4 border-yellow-700 dark:border-yellow-900">
-                      {topThree[2].userName[0]?.toUpperCase() || "?"}
+                      {(topThree[2].userName || topThree[2].user?.name || "?")?.[0]?.toUpperCase() || "?"}
                     </div>
                     <p className="font-bold text-gray-800 dark:text-white">
-                      {topThree[2].userName}
+                      {topThree[2].userName || topThree[2].user?.name || "Unknown"}
                     </p>
                     <p className="font-bold text-lg text-yellow-700 dark:text-yellow-500">
                       {quizId
@@ -377,9 +398,9 @@ export default function Leaderboard() {
               >
                 <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                   {restOfBoard.map((entry, index) =>
-                    entry && entry.userName ? (
+                    entry ? (
                       <li
-                        key={index}
+                        key={entry.userId || index}
                         className="p-4 flex items-center justify-between"
                       >
                         <div className="flex items-center gap-4">
@@ -387,10 +408,10 @@ export default function Leaderboard() {
                             {index + 4}
                           </span>
                           <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold flex items-center justify-center">
-                            {entry.userName[0]?.toUpperCase() || "?"}
+                            {(entry.userName || entry.user?.name || "?")?.[0]?.toUpperCase() || "?"}
                           </div>
                           <div className="text-md font-semibold text-gray-800 dark:text-white">
-                            {entry.userName}
+                            {entry.userName || entry.user?.name || "Unknown"}
                           </div>
                         </div>
                         <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">

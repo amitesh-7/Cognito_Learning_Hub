@@ -931,7 +931,6 @@ export default function QuizList() {
         quizTitle={quizForModeSelection?.title || ""}
         anchorPosition={modeSelectorPosition}
       />
-      />
     </div>
   );
 }
