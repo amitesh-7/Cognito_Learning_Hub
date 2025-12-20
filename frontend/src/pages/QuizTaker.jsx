@@ -301,8 +301,11 @@ export default function QuizTaker() {
     }
   }, [isFinished, quiz, score, questionResults, refreshData, success]);
 
-  // Timer logic
+  // Timer logic - clean up properly and restart on question change
   useEffect(() => {
+    // Reset timer when question changes or quiz restarts
+    setTimeLeft(30);
+    
     if (!selectedAnswer && !isFinished && quiz) {
       const timer = setInterval(() => {
         setTimeLeft((prev) => {
@@ -353,6 +356,8 @@ export default function QuizTaker() {
     if (currentQuestionIndex < quiz.questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
       setSelectedAnswer(null);
+      setAnswered(false);
+      setShowResult(false);
       setTimeLeft(30); // Reset timer
       setQuestionStartTime(Date.now()); // Reset question start time
     } else {
@@ -361,14 +366,20 @@ export default function QuizTaker() {
   };
 
   const restartQuiz = () => {
+    // Reset all state variables to initial values
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
     setScore(0);
     setIsFinished(false);
     setTimeLeft(30);
+    setAnswered(false);
+    setShowResult(false);
     setQuestionResults([]);
     setQuestionStartTime(Date.now());
     hasSubmittedRef.current = false; // Allow re-submission on restart
+    
+    // Scroll to top of page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Enhanced loading and error states
@@ -856,9 +867,15 @@ export default function QuizTaker() {
   const progressPercentage =
     ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
   const timePercentage = (timeLeft / 30) * 100;
+  
+  // Create a key that changes when quiz restarts to force remount
+  const quizKey = `quiz-${currentQuestionIndex}-${score}-${isFinished}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900 py-8 relative overflow-hidden">
+    <div 
+      key={quizKey}
+      className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900 py-8 relative overflow-hidden"
+    >
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -928,15 +945,17 @@ export default function QuizTaker() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {/* Animated timer */}
+                  {/* Animated timer - always visible with high z-index */}
                   <motion.div
+                    key={`timer-${currentQuestionIndex}`}
+                    initial={{ opacity: 1, scale: 1 }}
                     animate={timeLeft <= 10 ? { scale: [1, 1.05, 1] } : {}}
                     transition={{
                       duration: 0.5,
                       repeat: timeLeft <= 10 ? Infinity : 0,
                     }}
                     className={cn(
-                      "flex items-center gap-2 px-5 py-3 rounded-2xl font-bold shadow-xl transition-all duration-300 border-2",
+                      "flex items-center gap-2 px-5 py-3 rounded-2xl font-bold shadow-xl transition-all duration-300 border-2 relative z-20",
                       timeLeft <= 10
                         ? "bg-gradient-to-r from-red-500 to-pink-500 text-white border-red-300 dark:border-red-700"
                         : timeLeft <= 20
@@ -982,6 +1001,7 @@ export default function QuizTaker() {
                   </div>
                   <div className="relative h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                     <motion.div
+                      key={`progress-${currentQuestionIndex}`}
                       initial={{ width: 0 }}
                       animate={{ width: `${progressPercentage}%` }}
                       transition={{ duration: 0.5, ease: "easeOut" }}
@@ -1024,6 +1044,7 @@ export default function QuizTaker() {
                   </div>
                   <div className="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                     <motion.div
+                      key={`time-bar-${currentQuestionIndex}`}
                       animate={{ width: `${timePercentage}%` }}
                       transition={{ duration: 0.3 }}
                       className={cn(
