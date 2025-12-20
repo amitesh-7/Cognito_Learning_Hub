@@ -79,7 +79,8 @@ const MeetingRoom = () => {
     console.log("[Meeting SFU] Connecting to:", meetingUrl);
 
     const meetSocket = io(meetingUrl, {
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
+      upgrade: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
