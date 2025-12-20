@@ -82,13 +82,13 @@ const Navbar = () => {
     {
       id: "quiz",
       title: "AI Quiz Generator",
-      description: "Create quizzes from PDFs, topics, or YouTube videos",
+      description: "Create quizzes from PDFs, topics, and custom content",
       icon: Brain,
       color: "from-blue-500 to-cyan-500",
       features: [
         "PDF Upload",
         "Topic Input",
-        "YouTube Links",
+        "Speech Input",
         "MCQ, T/F, Descriptive",
       ],
     },
@@ -117,14 +117,6 @@ const Navbar = () => {
         "Session Controls",
         "Analytics",
       ],
-    },
-    {
-      id: "meeting",
-      title: "Video Meetings",
-      description: "Built-in video conferencing for classes",
-      icon: Video,
-      color: "from-green-500 to-teal-500",
-      features: ["HD Video", "Screen Share", "Chat", "Scheduling"],
     },
   ], []);
 
@@ -339,7 +331,7 @@ const Navbar = () => {
         )}
 
         <motion.nav
-          className="relative z-10 px-4 sm:px-6 lg:px-8"
+          className="w-full max-w-[1600px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 relative z-10"
           animate={{
             paddingTop: isScrolled ? "0.75rem" : "1rem",
             paddingBottom: isScrolled ? "0.75rem" : "1rem",
@@ -350,7 +342,7 @@ const Navbar = () => {
             damping: 20,
           }}
         >
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center h-12 sm:h-14 md:h-16 lg:h-14">
             {/* Logo with Ultra-Modern Effects */}
             <motion.div
               initial={
@@ -365,10 +357,10 @@ const Navbar = () => {
             >
               <Link
                 to="/"
-                className="flex items-center space-x-2 sm:space-x-3 group"
+                className="flex items-center gap-1.5 sm:gap-2 md:gap-3 group flex-shrink-0"
               >
                 <motion.div
-                  className="relative p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 shadow-lg sm:shadow-2xl shadow-blue-500/40 dark:shadow-purple-500/30 overflow-hidden"
+                  className="relative p-1.5 sm:p-2 md:p-2.5 lg:p-3 rounded-lg sm:rounded-xl md:rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 shadow-md sm:shadow-lg md:shadow-2xl shadow-blue-500/40 dark:shadow-purple-500/30 overflow-hidden"
                   whileHover={
                     shouldReduceMotion
                       ? {}
@@ -434,37 +426,36 @@ const Navbar = () => {
                     transition={{ duration: 0.3 }}
                   >
                     <motion.h1
-                      className="text-base sm:text-xl md:text-2xl lg:text-3xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-indigo-600 group-hover:to-blue-600 transition-all duration-700 tracking-tight whitespace-nowrap"
+                      className="text-sm sm:text-base md:text-xl lg:text-2xl xl:text-3xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:via-indigo-600 group-hover:to-blue-600 transition-all duration-700 tracking-tight whitespace-nowrap"
                       style={{
                         backgroundSize: "200% 200%",
                         fontFamily: "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                         letterSpacing: "-0.02em",
                       }}
                     >
-                      <span className="hidden sm:inline">Cognito</span>
-                      <span className="sm:hidden">Cognito</span>
+                      Cognito
                     </motion.h1>
                     <motion.div
-                      className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 dark:from-indigo-400/20 dark:via-purple-400/20 dark:to-pink-400/20 rounded-full border border-indigo-200/50 dark:border-indigo-400/30"
+                      className="hidden lg:flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 lg:px-2.5 py-0.5 md:py-1 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 dark:from-indigo-400/20 dark:via-purple-400/20 dark:to-pink-400/20 rounded-full border border-indigo-200/50 dark:border-indigo-400/30"
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Zap className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
-                      <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">AI Powered</span>
+                      <Zap className="w-2.5 md:w-3 h-2.5 md:h-3 text-indigo-600 dark:text-indigo-400" />
+                      <span className="text-[9px] md:text-[10px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">AI Powered</span>
                     </motion.div>
                   </motion.div>
                   <motion.p
-                    className="text-[9px] sm:text-[10px] md:text-xs text-gray-600 dark:text-gray-400 font-semibold hidden sm:flex items-center gap-2 mt-0.5"
+                    className="text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs text-gray-600 dark:text-gray-400 font-semibold hidden md:flex items-center gap-1.5 md:gap-2 mt-0.5"
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                   >
                     <span className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                      <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-green-500 rounded-full animate-pulse"></span>
                       <span className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent font-bold">Smart Learning Platform</span>
                     </span>
-                    <span className="hidden lg:inline text-gray-400">•</span>
-                    <span className="hidden lg:inline text-emerald-600 dark:text-emerald-400 font-bold">100% Free</span>
+                    <span className="hidden xl:inline text-gray-400">•</span>
+                    <span className="hidden xl:inline text-emerald-600 dark:text-emerald-400 font-bold">100% Free</span>
                   </motion.p>
                 </div>
               </Link>
@@ -472,7 +463,7 @@ const Navbar = () => {
 
             {/* Desktop Navigation */}
             <motion.div
-              className="hidden lg:flex items-center space-x-1"
+              className="hidden lg:flex items-center gap-0.5 xl:gap-1 flex-shrink-0"
               variants={staggerContainer}
               initial="initial"
               animate="animate"
@@ -480,7 +471,7 @@ const Navbar = () => {
               {user ? (
                 <>
                   {/* Enhanced Gamification Badges - Real-time data */}
-                  <div className="hidden xl:flex items-center gap-1.5 mr-3">
+                  <div className="hidden xl:flex items-center gap-1 xl:gap-1.5 mr-1.5 xl:mr-3">
                     {/* Level Badge - Enhanced */}
                     <motion.div
                       variants={staggerItem}
@@ -940,16 +931,16 @@ const Navbar = () => {
                   <motion.div variants={staggerItem}>
                     <Link
                       to="/login"
-                      className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl hover:bg-gradient-to-r hover:from-blue-500/10 hover:via-purple-500/10 hover:to-indigo-500/10 dark:hover:from-blue-500/20 dark:hover:via-purple-500/20 dark:hover:to-indigo-500/20 transition-all duration-300 border border-transparent hover:border-white/40 dark:hover:border-indigo-400/30 backdrop-blur-xl"
+                      className="flex items-center gap-1.5 px-3 lg:px-4 xl:px-5 py-2 lg:py-2.5 text-xs lg:text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg lg:rounded-xl hover:bg-gradient-to-r hover:from-blue-500/10 hover:via-purple-500/10 hover:to-indigo-500/10 dark:hover:from-blue-500/20 dark:hover:via-purple-500/20 dark:hover:to-indigo-500/20 transition-all duration-300 border border-transparent hover:border-white/40 dark:hover:border-indigo-400/30 backdrop-blur-xl"
                     >
-                      <Users className="w-4 h-4" />
-                      Login
+                      <Users className="w-3.5 lg:w-4 h-3.5 lg:h-4" />
+                      <span className="hidden xl:inline">Login</span>
                     </Link>
                   </motion.div>
                   <motion.div variants={staggerItem}>
                     <Link
                       to="/signup"
-                      className="relative flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:shadow-purple-500/50 overflow-hidden group transition-all duration-300 border border-white/20"
+                      className="relative flex items-center gap-1.5 px-3 lg:px-4 xl:px-6 py-2 lg:py-2.5 xl:py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-800 text-white text-xs lg:text-sm font-bold rounded-lg lg:rounded-xl shadow-lg lg:shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:shadow-purple-500/50 overflow-hidden group transition-all duration-300 border border-white/20"
                     >
                       {/* Animated gradient background */}
                       <motion.div
@@ -964,9 +955,9 @@ const Navbar = () => {
                         }}
                         style={{ backgroundSize: "200% 200%" }}
                       />
-                      <UserCog className="w-5 h-5 relative z-10" />
-                      <span className="relative z-10 drop-shadow-md">
-                        Sign Up Free
+                      <UserCog className="w-4 lg:w-5 h-4 lg:h-5 relative z-10" />
+                      <span className="relative z-10 drop-shadow-md whitespace-nowrap">
+                        Sign Up<span className="hidden lg:inline"> Free</span>
                       </span>
                       {/* Premium shine sweep effect */}
                       <motion.div
@@ -987,7 +978,7 @@ const Navbar = () => {
                       />
                       {/* Sparkle badge */}
                       <motion.div
-                        className="absolute -top-1 -right-1 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg"
+                        className="absolute -top-1 -right-1 bg-yellow-400 text-yellow-900 text-[8px] lg:text-[10px] font-bold px-1 lg:px-1.5 py-0.5 rounded-full shadow-lg"
                         animate={{
                           scale: [1, 1.1, 1],
                         }}
@@ -1010,7 +1001,7 @@ const Navbar = () => {
                     const event = new CustomEvent('openHelpWidget');
                     window.dispatchEvent(event);
                   }}
-                  className="ml-2 p-2.5 rounded-xl bg-gradient-to-br from-violet-100 via-fuchsia-100 to-purple-100 dark:from-slate-800 dark:via-violet-900/50 dark:to-fuchsia-900/50 hover:from-violet-200 hover:via-fuchsia-200 hover:to-purple-200 dark:hover:from-violet-800/60 dark:hover:via-fuchsia-800/60 dark:hover:to-purple-800/60 transition-all duration-500 shadow-md hover:shadow-lg border border-white/60 dark:border-violet-400/30 backdrop-blur-xl relative overflow-hidden group"
+                  className="ml-1 lg:ml-2 p-2 lg:p-2.5 rounded-lg lg:rounded-xl bg-gradient-to-br from-violet-100 via-fuchsia-100 to-purple-100 dark:from-slate-800 dark:via-violet-900/50 dark:to-fuchsia-900/50 hover:from-violet-200 hover:via-fuchsia-200 hover:to-purple-200 dark:hover:from-violet-800/60 dark:hover:via-fuchsia-800/60 dark:hover:to-purple-800/60 transition-all duration-500 shadow-md hover:shadow-lg border border-white/60 dark:border-violet-400/30 backdrop-blur-xl relative overflow-hidden group"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   title="Open Help Center (Alt+H)"
@@ -1021,7 +1012,7 @@ const Navbar = () => {
                     animate={{ x: ["-100%", "100%"] }}
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 4 }}
                   />
-                  <HelpCircle className="w-5 h-5 text-violet-700 dark:text-violet-400 drop-shadow-md relative z-10" />
+                  <HelpCircle className="w-4 lg:w-5 h-4 lg:h-5 text-violet-700 dark:text-violet-400 drop-shadow-md relative z-10" />
                   {/* Alt+H Badge */}
                   <span className="absolute -bottom-1 -right-1 px-1 py-0.5 text-[8px] font-bold bg-violet-600 dark:bg-violet-500 text-white rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
                     Alt+H
@@ -1033,7 +1024,7 @@ const Navbar = () => {
               <motion.div variants={staggerItem}>
                 <motion.button
                   onClick={() => setIsAccessibilityModalOpen(true)}
-                  className="ml-2 p-2.5 rounded-xl bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 dark:from-indigo-900/50 dark:via-purple-900/50 dark:to-pink-900/50 hover:from-indigo-200 hover:via-purple-200 hover:to-pink-200 dark:hover:from-indigo-800/60 dark:hover:via-purple-800/60 dark:hover:to-pink-800/60 transition-all duration-500 shadow-md hover:shadow-lg border border-white/60 dark:border-indigo-400/30 backdrop-blur-xl relative overflow-hidden group"
+                  className="ml-1 lg:ml-2 p-2 lg:p-2.5 rounded-lg lg:rounded-xl bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 dark:from-indigo-900/50 dark:via-purple-900/50 dark:to-pink-900/50 hover:from-indigo-200 hover:via-purple-200 hover:to-pink-200 dark:hover:from-indigo-800/60 dark:hover:via-purple-800/60 dark:hover:to-pink-800/60 transition-all duration-500 shadow-md hover:shadow-lg border border-white/60 dark:border-indigo-400/30 backdrop-blur-xl relative overflow-hidden group"
                   whileHover={{ scale: 1.1, rotate: [0, 5, -5, 5, 0] }}
                   whileTap={{ scale: 0.9 }}
                   title="Accessibility Settings"
@@ -1043,7 +1034,7 @@ const Navbar = () => {
                     animate={{ x: ["-100%", "100%"] }}
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 4 }}
                   />
-                  <Settings className="w-5 h-5 text-indigo-700 dark:text-indigo-300 drop-shadow-md relative z-10" />
+                  <Settings className="w-4 lg:w-5 h-4 lg:h-5 text-indigo-700 dark:text-indigo-300 drop-shadow-md relative z-10" />
                 </motion.button>
               </motion.div>
 
@@ -1051,7 +1042,7 @@ const Navbar = () => {
               <motion.div variants={staggerItem}>
                 <motion.button
                   onClick={toggleTheme}
-                  className="ml-2 p-2.5 rounded-xl bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 dark:from-slate-800 dark:via-indigo-900/50 dark:to-purple-900/50 hover:from-blue-200 hover:via-purple-200 hover:to-indigo-200 dark:hover:from-indigo-800/60 dark:hover:via-purple-800/60 dark:hover:to-blue-800/60 transition-all duration-500 shadow-md hover:shadow-lg border border-white/60 dark:border-indigo-400/30 backdrop-blur-xl relative overflow-hidden group"
+                  className="ml-1 lg:ml-2 p-2 lg:p-2.5 rounded-lg lg:rounded-xl bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 dark:from-slate-800 dark:via-indigo-900/50 dark:to-purple-900/50 hover:from-blue-200 hover:via-purple-200 hover:to-indigo-200 dark:hover:from-indigo-800/60 dark:hover:via-purple-800/60 dark:hover:to-blue-800/60 transition-all duration-500 shadow-md hover:shadow-lg border border-white/60 dark:border-indigo-400/30 backdrop-blur-xl relative overflow-hidden group"
                   whileHover={{ scale: 1.1, rotate: [0, -10, 10, -10, 0] }}
                   whileTap={{ scale: 0.9 }}
                   title="Toggle theme (Ctrl+Shift+D)"
@@ -1069,9 +1060,9 @@ const Navbar = () => {
                     className="relative z-10"
                   >
                     {theme === "light" ? (
-                      <Moon className="w-5 h-5 text-indigo-700 drop-shadow-md" />
+                      <Moon className="w-4 lg:w-5 h-4 lg:h-5 text-indigo-700 drop-shadow-md" />
                     ) : (
-                      <Sun className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" />
+                      <Sun className="w-4 lg:w-5 h-4 lg:h-5 text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" />
                     )}
                   </motion.div>
                 </motion.button>
@@ -1079,14 +1070,14 @@ const Navbar = () => {
             </motion.div>
 
             {/* Enhanced Mobile Menu Button */}
-            <div className="lg:hidden flex items-center space-x-2">
+            <div className="lg:hidden flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               {/* Help Center (Mobile) */}
               <motion.button
                 onClick={() => {
                   const event = new CustomEvent('openHelpWidget');
                   window.dispatchEvent(event);
                 }}
-                className="p-2 rounded-xl bg-gradient-to-br from-violet-100 via-fuchsia-100 to-purple-100 dark:from-slate-800 dark:via-violet-900/50 dark:to-fuchsia-900/50 border border-white/60 dark:border-violet-400/30 shadow-md backdrop-blur-xl relative overflow-hidden"
+                className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-100 via-fuchsia-100 to-purple-100 dark:from-slate-800 dark:via-violet-900/50 dark:to-fuchsia-900/50 border border-white/60 dark:border-violet-400/30 shadow-md backdrop-blur-xl relative overflow-hidden flex-shrink-0"
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.92 }}
                 title="Open Help Center (Alt+H)"
@@ -1097,12 +1088,12 @@ const Navbar = () => {
                   animate={{ x: ["-100%", "100%"] }}
                   transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                 />
-                <HelpCircle className="w-5 h-5 text-violet-700 dark:text-violet-400 relative z-10" />
+                <HelpCircle className="w-4 sm:w-5 h-4 sm:h-5 text-violet-700 dark:text-violet-400 relative z-10" />
               </motion.button>
               
               <motion.button
                 onClick={toggleTheme}
-                className="p-2 rounded-xl bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 dark:from-slate-800 dark:via-indigo-900/50 dark:to-purple-900/50 border border-white/60 dark:border-indigo-400/30 shadow-md backdrop-blur-xl relative overflow-hidden"
+                className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 dark:from-slate-800 dark:via-indigo-900/50 dark:to-purple-900/50 border border-white/60 dark:border-indigo-400/30 shadow-md backdrop-blur-xl relative overflow-hidden flex-shrink-0"
                 whileHover={{ scale: 1.08, rotate: [0, -10, 10, 0] }}
                 whileTap={{ scale: 0.92 }}
                 title="Toggle theme (Ctrl+Shift+D)"
@@ -1119,16 +1110,16 @@ const Navbar = () => {
                   className="relative z-10"
                 >
                   {theme === "light" ? (
-                    <Moon className="w-5 h-5 text-indigo-700" />
+                    <Moon className="w-4 sm:w-5 h-4 sm:h-5 text-indigo-700" />
                   ) : (
-                    <Sun className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
+                    <Sun className="w-4 sm:w-5 h-4 sm:h-5 text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]" />
                   )}
                 </motion.div>
               </motion.button>
 
               <motion.button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 rounded-xl bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white shadow-lg hover:shadow-xl shadow-blue-500/40 border border-white/20 backdrop-blur-xl relative overflow-hidden group"
+                className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white shadow-lg hover:shadow-xl shadow-blue-500/40 border border-white/20 backdrop-blur-xl relative overflow-hidden group flex-shrink-0"
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.92 }}
               >
@@ -1147,7 +1138,7 @@ const Navbar = () => {
                       exit={{ rotate: 90, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <X className="w-6 h-6" />
+                      <X className="w-5 sm:w-6 h-5 sm:h-6" />
                     </motion.div>
                   ) : (
                     <motion.div
@@ -1157,7 +1148,7 @@ const Navbar = () => {
                       exit={{ rotate: -90, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Menu className="w-6 h-6" />
+                      <Menu className="w-5 sm:w-6 h-5 sm:h-6" />
                     </motion.div>
                   )}
                 </AnimatePresence>
