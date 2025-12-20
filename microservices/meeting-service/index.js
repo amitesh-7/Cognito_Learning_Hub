@@ -269,7 +269,7 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 // START SERVER
 // ============================================
 
-const PORT = process.env.PORT || 3005;
+const PORT = process.env.PORT || 3009;
 
 const startServer = async () => {
   try {
