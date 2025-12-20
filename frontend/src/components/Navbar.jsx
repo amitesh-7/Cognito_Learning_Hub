@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   motion,
@@ -71,8 +71,14 @@ const Navbar = () => {
   const shouldReduceMotion = useReducedMotion();
   const isMobile = useIsMobile();
 
-  // Product demos for mega menu
-  const productDemos = [
+  // Close mobile menu on navigation
+  useEffect(() => {
+    setIsMenuOpen(false);
+    setIsMegaMenuOpen(false);
+  }, [location.pathname]);
+
+  // Memoize product demos for performance (prevents recreation on every render)
+  const productDemos = useMemo(() => [
     {
       id: "quiz",
       title: "AI Quiz Generator",
@@ -120,12 +126,12 @@ const Navbar = () => {
       color: "from-green-500 to-teal-500",
       features: ["HD Video", "Screen Share", "Chat", "Scheduling"],
     },
-  ];
+  ], []);
 
-  // Smart navigation structure with dropdowns
+  // Smart navigation structure with dropdowns (memoized for performance)
   const [activeDropdown, setActiveDropdown] = useState(null);
 
-  const navigationGroups = user
+  const navigationGroups = useMemo(() => user
     ? [
         {
           type: "link",
@@ -166,7 +172,7 @@ const Navbar = () => {
           badge: true,
         },
       ]
-    : [];
+    : [], [user, isQuizCreationUnlocked]);
 
   // Track scroll position for navbar appearance changes (always visible)
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -246,8 +252,9 @@ const Navbar = () => {
 
   return (
     <>
-      {/* Main Navbar with Ultra-Modern Glassmorphism - Always Visible (Sticky) */}
-      <motion.header
+      {/* Floating/Detached Navbar Container - Modern Glassmorphism */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 py-3 sm:py-4"
         initial={shouldReduceMotion ? { opacity: 1 } : { y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={
@@ -260,10 +267,20 @@ const Navbar = () => {
                 duration: 0.6,
               }
         }
-        className={`sticky top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      >
+        <motion.header
+          animate={{
+            scale: isScrolled ? 0.98 : 1,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 30,
+          }}
+          className={`transition-all duration-500 rounded-2xl sm:rounded-3xl lg:rounded-[28px] overflow-hidden ${
             isScrolled
-              ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-lg border-b border-indigo-200/30 dark:border-indigo-400/20"
-              : "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-indigo-100/20 dark:border-indigo-500/10"
+              ? "bg-white/98 dark:bg-slate-900/98 backdrop-blur-2xl shadow-2xl shadow-indigo-500/20 dark:shadow-indigo-500/30 border-2 border-indigo-200/50 dark:border-indigo-400/40"
+              : "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-xl shadow-indigo-500/10 border border-indigo-100/40 dark:border-indigo-500/30"
           }`}
           style={{
             WebkitBackdropFilter: isScrolled
@@ -273,7 +290,7 @@ const Navbar = () => {
               ? "blur(24px) saturate(180%)"
               : "blur(16px) saturate(150%)",
           }}
-      >
+        >
         {/* Ultra-modern multi-layer gradient overlays */}
         {!isMobile && (
           <>
@@ -311,20 +328,21 @@ const Navbar = () => {
             </motion.div>
             {/* Frosted glass texture */}
             <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]" />
-            {/* Iridescent border glow */}
+            {/* Enhanced border glow for floating navbar */}
             <div
-              className={`absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent transition-opacity duration-700 ${
-                isScrolled ? "opacity-100" : "opacity-50"
+              className={`absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 blur-sm transition-opacity duration-700 pointer-events-none ${
+                isScrolled ? "opacity-80" : "opacity-40"
               }`}
+              style={{ transform: 'scale(1.01)' }}
             />
           </>
         )}
 
         <motion.nav
-          className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10"
+          className="relative z-10 px-4 sm:px-6 lg:px-8"
           animate={{
-            paddingTop: isScrolled ? "0.375rem" : "0.5rem",
-            paddingBottom: isScrolled ? "0.375rem" : "0.5rem",
+            paddingTop: isScrolled ? "0.75rem" : "1rem",
+            paddingBottom: isScrolled ? "0.75rem" : "1rem",
           }}
           transition={{
             type: "spring",
@@ -332,7 +350,7 @@ const Navbar = () => {
             damping: 20,
           }}
         >
-          <div className="flex justify-between items-center h-14">
+          <div className="flex justify-between items-center">
             {/* Logo with Ultra-Modern Effects */}
             <motion.div
               initial={
@@ -1431,6 +1449,7 @@ const Navbar = () => {
         isOpen={isAccessibilityModalOpen}
         onClose={() => setIsAccessibilityModalOpen(false)}
       />
+    </motion.div>
     </>
   );
 };
