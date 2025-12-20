@@ -84,6 +84,7 @@ export default function QuizList() {
   // Quiz mode selector states
   const [showModeSelector, setShowModeSelector] = useState(false);
   const [quizForModeSelection, setQuizForModeSelection] = useState(null);
+  const [modeSelectorPosition, setModeSelectorPosition] = useState(null);
 
   useEffect(() => {
     const fetchQuizzes = async () => {
@@ -597,7 +598,9 @@ export default function QuizList() {
                     <motion.button
                       whileHover={{ scale: 1.05, x: 5 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => {
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setModeSelectorPosition({ x: rect.left + rect.width / 2, y: rect.top });
                         setQuizForModeSelection(paginatedQuizzes[0]);
                         setShowModeSelector(true);
                       }}
@@ -748,7 +751,9 @@ export default function QuizList() {
                         <motion.button
                           whileHover={{ scale: 1.05, x: 3 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => {
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setModeSelectorPosition({ x: rect.left + rect.width / 2, y: rect.top });
                             setQuizForModeSelection(quiz);
                             setShowModeSelector(true);
                           }}
@@ -920,9 +925,12 @@ export default function QuizList() {
         onClose={() => {
           setShowModeSelector(false);
           setQuizForModeSelection(null);
+          setModeSelectorPosition(null);
         }}
         onSelect={handleModeSelect}
         quizTitle={quizForModeSelection?.title || ""}
+        anchorPosition={modeSelectorPosition}
+      />
       />
     </div>
   );

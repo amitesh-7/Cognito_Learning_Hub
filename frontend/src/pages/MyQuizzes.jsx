@@ -52,6 +52,7 @@ const MyQuizzes = () => {
   // Quiz mode selector states
   const [showModeSelector, setShowModeSelector] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const [modeSelectorPosition, setModeSelectorPosition] = useState(null);
 
   useEffect(() => {
     fetchMyQuizzes();
@@ -311,7 +312,9 @@ const MyQuizzes = () => {
         {/* Actions */}
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => {
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setModeSelectorPosition({ top: rect.bottom, left: rect.left, width: rect.width });
               setSelectedQuiz(quiz);
               setShowModeSelector(true);
             }}
@@ -570,9 +573,11 @@ const MyQuizzes = () => {
         onClose={() => {
           setShowModeSelector(false);
           setSelectedQuiz(null);
+          setModeSelectorPosition(null);
         }}
         onSelect={handleModeSelect}
         quizTitle={selectedQuiz?.title || ""}
+        anchorPosition={modeSelectorPosition}
       />
     </div>
   );

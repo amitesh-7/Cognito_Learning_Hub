@@ -179,22 +179,35 @@ export default function OnboardingTour({ onComplete }) {
                 </div>
               </div>
               
-              {/* Progress dots */}
-              <div className="flex items-center gap-1.5 mt-3">
-                {steps.map((_, idx) => (
-                  <motion.button
-                    key={idx}
-                    onClick={() => setCurrentStep(idx)}
-                    className={`h-1.5 rounded-full transition-all ${
-                      idx === currentStep 
-                        ? "bg-white w-6" 
-                        : idx < currentStep 
-                          ? "bg-white/60 w-1.5" 
-                          : "bg-white/30 w-1.5"
-                    }`}
-                    whileHover={{ scale: 1.2 }}
-                  />
-                ))}
+              {/* Progress dots with icons */}
+              <div className="flex items-center gap-2 mt-3">
+                {steps.map((stepItem, idx) => {
+                  const StepItemIcon = stepItem.icon;
+                  return (
+                    <motion.button
+                      key={idx}
+                      onClick={() => setCurrentStep(idx)}
+                      className={`flex items-center justify-center rounded-full transition-all duration-300 ${
+                        idx === currentStep 
+                          ? "bg-white w-8 h-8 shadow-lg" 
+                          : idx < currentStep 
+                            ? "bg-white/70 w-6 h-6" 
+                            : "bg-white/30 w-6 h-6 hover:bg-white/40"
+                      }`}
+                      whileHover={{ scale: 1.15 }}
+                      whileTap={{ scale: 0.95 }}
+                      title={stepItem.title}
+                    >
+                      <StepItemIcon className={`${
+                        idx === currentStep 
+                          ? "w-4 h-4 text-violet-600" 
+                          : idx < currentStep 
+                            ? "w-3 h-3 text-violet-500" 
+                            : "w-3 h-3 text-white/70"
+                      }`} />
+                    </motion.button>
+                  );
+                })}
               </div>
             </div>
 

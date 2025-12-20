@@ -1,10 +1,55 @@
-import React from "react";
+import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, MousePointer, Headphones, Keyboard, X } from "lucide-react";
 import Button from "./ui/Button";
 
-const QuizModeSelector = ({ isOpen, onClose, onSelect, quizTitle }) => {
+const QuizModeSelector = ({ isOpen, onClose, onSelect, quizTitle, anchorPosition }) => {
+  const modalRef = useRef(null);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [isPositioned, setIsPositioned] = useState(false);
+
+  useLayoutEffect(() => {
+    if (isOpen && anchorPosition && modalRef.current) {
+      // Use a small delay to ensure modal is rendered and has dimensions
+      const timer = setTimeout(() => {
+        const modalRect = modalRef.current?.getBoundingClientRect();
+        if (!modalRect) return;
+        
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Calculate position to place modal near the button
+        // anchorPosition contains: { top: rect.bottom, left: rect.left, width: rect.width }
+        let top = anchorPosition.top + 8; // 8px gap below button
+        let left = anchorPosition.left + (anchorPosition.width / 2) - (modalRect.width / 2);
+        
+        // Ensure modal doesn't go off screen horizontally
+        if (left < 16) left = 16;
+        if (left + modalRect.width > viewportWidth - 16) {
+          left = viewportWidth - modalRect.width - 16;
+        }
+        
+        // Ensure modal doesn't go off screen vertically
+        // Position above button if it would go below viewport
+        if (top + modalRect.height > viewportHeight - 16) {
+          top = anchorPosition.top - modalRect.height - 16;
+        }
+        if (top < 16) top = 16;
+        
+        setPosition({ top, left });
+        setIsPositioned(true);
+      }, 10);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setIsPositioned(false);
+    }
+  }, [isOpen, anchorPosition]);
+
   if (!isOpen) return null;
+
+  // If no anchor position or not yet positioned, use centered modal
+  const useAnchoredPosition = anchorPosition && anchorPosition.top !== undefined && isPositioned;
 
   return (
     <AnimatePresence>
@@ -12,14 +57,23 @@ const QuizModeSelector = ({ isOpen, onClose, onSelect, quizTitle }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
-          className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border-4 border-purple-200 dark:border-purple-800"
+          ref={modalRef}
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-[90%] max-w-lg overflow-hidden border-4 border-purple-200 dark:border-purple-800"
+          style={useAnchoredPosition ? {
+            position: 'fixed',
+            top: `${position.top}px`,
+            left: `${position.left}px`,
+          } : {
+            // Centered via flex parent
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -131,7 +185,7 @@ const QuizModeSelector = ({ isOpen, onClose, onSelect, quizTitle }) => {
               Cancel
             </Button>
           </div>
-        </motion.div>
+          </motion.div>
       </motion.div>
     </AnimatePresence>
   );
