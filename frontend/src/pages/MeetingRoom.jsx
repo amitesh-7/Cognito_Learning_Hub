@@ -2,8 +2,10 @@ import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import { AuthContext } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { getSocketUrl, getMeetingWsUrl } from "../lib/apiConfig";
 import MediasoupHandler from "../lib/mediasoupClient";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Video,
   VideoOff,
@@ -20,12 +22,20 @@ import {
   Send,
   LogOut,
   UserX,
+  Settings,
+  Maximize2,
+  Minimize2,
+  MoreVertical,
+  Hand,
+  Smile,
 } from "lucide-react";
 
 const MeetingRoom = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   // Socket and mediasoup
   const [socket, setSocket] = useState(null);
@@ -648,151 +658,242 @@ const MeetingRoom = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 flex flex-col">
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${
+      isDark 
+        ? "bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" 
+        : "bg-gradient-to-br from-gray-100 via-white to-gray-100"
+    }`}>
       {/* Top bar */}
-      <div className="bg-gradient-to-r from-black/60 via-black/40 to-black/60 backdrop-blur-xl border-b border-white/10 px-4 py-3 flex items-center justify-between">
+      <motion.div 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className={`backdrop-blur-xl border-b px-4 sm:px-6 py-3 flex items-center justify-between ${
+          isDark 
+            ? "bg-slate-900/80 border-white/10" 
+            : "bg-white/80 border-gray-200"
+        }`}
+      >
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-500/20 rounded-xl">
-              <Video className="w-5 h-5 text-purple-400" />
+            <div className={`p-2 rounded-xl ${
+              isDark ? "bg-purple-500/20" : "bg-purple-100"
+            }`}>
+              <Video className={`w-5 h-5 ${isDark ? "text-purple-400" : "text-purple-600"}`} />
             </div>
             <div>
-              <h1 className="text-white text-lg font-bold">Meeting Room</h1>
-              <p className="text-white/50 text-xs font-mono">{roomId}</p>
+              <h1 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                Meeting Room
+              </h1>
+              <p className={`text-xs font-mono ${isDark ? "text-white/50" : "text-gray-500"}`}>
+                {roomId?.slice(0, 8)}...{roomId?.slice(-4)}
+              </p>
             </div>
           </div>
           <button
             onClick={copyRoomId}
-            className="p-2 hover:bg-white/10 rounded-lg transition-all duration-300 group relative"
+            className={`p-2 rounded-lg transition-all duration-300 group relative ${
+              isDark ? "hover:bg-white/10" : "hover:bg-gray-100"
+            }`}
             title="Copy Room ID"
           >
             {copiedRoomId ? (
-              <Check className="w-5 h-5 text-green-400" />
+              <Check className="w-5 h-5 text-green-500" />
             ) : (
-              <Copy className="w-5 h-5 text-white/70 group-hover:text-purple-400" />
+              <Copy className={`w-5 h-5 transition-colors ${
+                isDark ? "text-white/70 group-hover:text-purple-400" : "text-gray-500 group-hover:text-purple-600"
+              }`} />
             )}
-            {copiedRoomId && (
-              <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50">
-                Copied!
-              </span>
-            )}
+            <AnimatePresence>
+              {copiedRoomId && (
+                <motion.span 
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-50"
+                >
+                  Copied!
+                </motion.span>
+              )}
+            </AnimatePresence>
           </button>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           {/* Connection indicator */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/20 rounded-full">
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
+            isDark ? "bg-green-500/20" : "bg-green-100"
+          }`}>
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-green-400 text-sm font-medium">
-              {participants.length} participant
-              {participants.length !== 1 ? "s" : ""}
+            <span className={`text-sm font-medium hidden sm:inline ${
+              isDark ? "text-green-400" : "text-green-600"
+            }`}>
+              {participants.length} participant{participants.length !== 1 ? "s" : ""}
+            </span>
+            <span className={`text-sm font-medium sm:hidden ${
+              isDark ? "text-green-400" : "text-green-600"
+            }`}>
+              {participants.length}
             </span>
           </div>
           {isHost && (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={endMeeting}
-              className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2 shadow-lg shadow-red-500/30"
+              className="px-3 sm:px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl transition-all duration-300 flex items-center gap-2 shadow-lg shadow-red-500/20"
             >
               <LogOut className="w-4 h-4" />
-              <span className="font-medium">End Meeting</span>
-            </button>
+              <span className="font-medium hidden sm:inline">End</span>
+            </motion.button>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left sidebar - participants panel (collapsible) */}
-        {showParticipants && (
-          <div className="w-80 bg-gradient-to-b from-black/60 to-black/40 backdrop-blur-xl border-r border-white/10 flex flex-col">
-            <div className="p-4 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-white font-semibold flex items-center gap-2">
-                <div className="p-2 bg-purple-500/20 rounded-lg">
-                  <Users className="w-5 h-5 text-purple-400" />
-                </div>
-                <span>Participants ({participants.length})</span>
-              </h2>
-              <button
-                onClick={() => setShowParticipants(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-white/70" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {participants.map((p) => (
-                <div
-                  key={p.socketId || p.userId}
-                  className="flex items-center justify-between p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-purple-500/20"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg">
-                      {(p.userName || p.name || "?")[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-white text-sm font-medium flex items-center gap-2">
-                        {p.userName || p.name || "Participant"}
-                        {p.peerId === mySocketId && (
-                          <span className="px-2 py-0.5 text-[10px] bg-green-500/20 text-green-400 rounded-full font-medium">
-                            You
-                          </span>
-                        )}
-                        {p.isHost && (
-                          <span className="px-2 py-0.5 text-[10px] bg-yellow-500/20 text-yellow-400 rounded-full font-medium">
-                            Host
-                          </span>
-                        )}
-                      </p>
-                      {p.role && (
-                        <p className="text-white/50 text-xs capitalize">
-                          {p.role}
-                        </p>
-                      )}
-                    </div>
+        {/* Left sidebar - participants panel */}
+        <AnimatePresence>
+          {showParticipants && (
+            <motion.div 
+              initial={{ x: -300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -300, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className={`w-72 sm:w-80 backdrop-blur-xl border-r flex flex-col ${
+                isDark 
+                  ? "bg-slate-900/60 border-white/10" 
+                  : "bg-white/60 border-gray-200"
+              }`}
+            >
+              <div className={`p-4 border-b flex items-center justify-between ${
+                isDark ? "border-white/10" : "border-gray-200"
+              }`}>
+                <h2 className={`font-semibold flex items-center gap-2 ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>
+                  <div className={`p-2 rounded-lg ${isDark ? "bg-purple-500/20" : "bg-purple-100"}`}>
+                    <Users className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-purple-600"}`} />
                   </div>
-                  {isHost && !p.isHost && p.peerId !== mySocketId && (
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => handleMuteParticipant(p.socketId)}
-                        className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                        title="Mute participant"
-                      >
-                        <MicOff className="w-4 h-4 text-red-400" />
-                      </button>
-                      <button
-                        onClick={() => handleRemoveParticipant(p.socketId)}
-                        className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                        title="Remove participant"
-                      >
-                        <UserX className="w-4 h-4 text-red-400" />
-                      </button>
+                  <span>Participants ({participants.length})</span>
+                </h2>
+                <button
+                  onClick={() => setShowParticipants(false)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isDark ? "hover:bg-white/10 text-white/70" : "hover:bg-gray-100 text-gray-500"
+                  }`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                {participants.map((p, index) => (
+                  <motion.div
+                    key={p.socketId || p.userId}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className={`flex items-center justify-between p-3 rounded-xl transition-all duration-300 border ${
+                      isDark 
+                        ? "bg-white/5 hover:bg-white/10 border-white/5 hover:border-purple-500/20" 
+                        : "bg-gray-50 hover:bg-gray-100 border-gray-200 hover:border-purple-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg">
+                        {(p.userName || p.name || "?")[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className={`text-sm font-medium flex items-center gap-2 ${
+                          isDark ? "text-white" : "text-gray-900"
+                        }`}>
+                          <span className="truncate max-w-[100px]">
+                            {p.userName || p.name || "Participant"}
+                          </span>
+                          {p.peerId === mySocketId && (
+                            <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${
+                              isDark ? "bg-green-500/20 text-green-400" : "bg-green-100 text-green-600"
+                            }`}>
+                              You
+                            </span>
+                          )}
+                          {p.isHost && (
+                            <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${
+                              isDark ? "bg-yellow-500/20 text-yellow-400" : "bg-yellow-100 text-yellow-700"
+                            }`}>
+                              Host
+                            </span>
+                          )}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {p.isAudioEnabled ? (
+                            <Mic className={`w-3 h-3 ${isDark ? "text-green-400" : "text-green-600"}`} />
+                          ) : (
+                            <MicOff className={`w-3 h-3 ${isDark ? "text-red-400" : "text-red-500"}`} />
+                          )}
+                          {p.isVideoEnabled ? (
+                            <Video className={`w-3 h-3 ${isDark ? "text-green-400" : "text-green-600"}`} />
+                          ) : (
+                            <VideoOff className={`w-3 h-3 ${isDark ? "text-red-400" : "text-red-500"}`} />
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+                    {isHost && !p.isHost && p.peerId !== mySocketId && (
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleMuteParticipant(p.socketId)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            isDark ? "hover:bg-red-500/20" : "hover:bg-red-100"
+                          }`}
+                          title="Mute participant"
+                        >
+                          <MicOff className="w-4 h-4 text-red-500" />
+                        </button>
+                        <button
+                          onClick={() => handleRemoveParticipant(p.socketId)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            isDark ? "hover:bg-red-500/20" : "hover:bg-red-100"
+                          }`}
+                          title="Remove participant"
+                        >
+                          <UserX className="w-4 h-4 text-red-500" />
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Center - video grid */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Video grid */}
-          <div className="flex-1 p-4 overflow-auto">
+          <div className="flex-1 p-3 sm:p-4 overflow-auto">
             <div
-              className={`grid gap-4 h-full ${
+              className={`grid gap-3 sm:gap-4 h-full auto-rows-fr ${
                 peers.size === 0
                   ? "grid-cols-1"
                   : peers.size === 1
-                  ? "grid-cols-1"
+                  ? "grid-cols-1 lg:grid-cols-2"
                   : peers.size <= 4
                   ? "grid-cols-2"
                   : peers.size <= 9
-                  ? "grid-cols-3"
-                  : "grid-cols-4"
+                  ? "grid-cols-2 lg:grid-cols-3"
+                  : "grid-cols-2 lg:grid-cols-4"
               }`}
             >
               {/* Local video */}
-              <div className="relative rounded-2xl overflow-hidden border border-white/10 aspect-video bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 shadow-xl group hover:border-purple-500/30 transition-all duration-300">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className={`relative rounded-2xl overflow-hidden border aspect-video shadow-xl group transition-all duration-300 ${
+                  isDark 
+                    ? "bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 border-white/10 hover:border-purple-500/30" 
+                    : "bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100 border-gray-200 hover:border-purple-400"
+                }`}
+              >
                 {cameraOn ? (
                   <video
                     ref={localVideoRef}
@@ -803,13 +904,17 @@ const MeetingRoom = () => {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shadow-lg">
                       {myUserName?.charAt(0)?.toUpperCase() || "Y"}
                     </div>
                   </div>
                 )}
                 {/* Name label */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 z-20">
+                <div className={`absolute bottom-0 left-0 right-0 p-3 z-20 ${
+                  isDark 
+                    ? "bg-gradient-to-t from-black/80 via-black/40 to-transparent" 
+                    : "bg-gradient-to-t from-gray-900/70 via-gray-900/30 to-transparent"
+                }`}>
                   <div className="flex items-center gap-2">
                     <span className="text-white font-medium text-sm">
                       You{" "}
@@ -824,16 +929,16 @@ const MeetingRoom = () => {
                 {/* Mic off indicator */}
                 {!micOn && (
                   <div className="absolute top-3 right-3 bg-red-500/90 p-2 rounded-full shadow-lg z-20">
-                    <MicOff className="w-4 h-4 text-white" />
+                    <MicOff className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                   </div>
                 )}
                 {/* Camera off indicator */}
                 {!cameraOn && (
                   <div className="absolute top-3 left-3 bg-red-500/90 p-2 rounded-full shadow-lg z-20">
-                    <VideoOff className="w-4 h-4 text-white" />
+                    <VideoOff className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                   </div>
                 )}
-              </div>
+              </motion.div>
 
               {/* Remote videos */}
               {Array.from(peers.entries()).map(([peerId, peerData]) => {
@@ -862,6 +967,7 @@ const MeetingRoom = () => {
                     screenTrack={peerData.screenTrack}
                     name={displayName}
                     isHost={peerData.isHost}
+                    isDark={isDark}
                   />
                 );
               })}
@@ -869,170 +975,236 @@ const MeetingRoom = () => {
           </div>
 
           {/* Bottom controls */}
-          <div className="bg-gradient-to-r from-black/60 via-black/40 to-black/60 backdrop-blur-xl border-t border-white/10 p-4">
-            <div className="flex items-center justify-center gap-4">
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className={`backdrop-blur-xl border-t p-3 sm:p-4 ${
+              isDark 
+                ? "bg-slate-900/80 border-white/10" 
+                : "bg-white/80 border-gray-200"
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2 sm:gap-3">
               {/* Toggle Mic */}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={toggleMic}
-                className={`p-4 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
+                className={`p-3 sm:p-4 rounded-2xl transition-all duration-300 ${
                   micOn
-                    ? "bg-white/10 hover:bg-white/20 border border-white/20"
+                    ? isDark 
+                      ? "bg-white/10 hover:bg-white/20 border border-white/20" 
+                      : "bg-gray-100 hover:bg-gray-200 border border-gray-300"
                     : "bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/30"
                 }`}
                 title={micOn ? "Mute" : "Unmute"}
               >
                 {micOn ? (
-                  <Mic className="w-6 h-6 text-white" />
+                  <Mic className={`w-5 h-5 sm:w-6 sm:h-6 ${isDark ? "text-white" : "text-gray-700"}`} />
                 ) : (
-                  <MicOff className="w-6 h-6 text-white" />
+                  <MicOff className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 )}
-              </button>
+              </motion.button>
 
               {/* Toggle Camera */}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={toggleCamera}
-                className={`p-4 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
+                className={`p-3 sm:p-4 rounded-2xl transition-all duration-300 ${
                   cameraOn
-                    ? "bg-white/10 hover:bg-white/20 border border-white/20"
+                    ? isDark 
+                      ? "bg-white/10 hover:bg-white/20 border border-white/20" 
+                      : "bg-gray-100 hover:bg-gray-200 border border-gray-300"
                     : "bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/30"
                 }`}
                 title={cameraOn ? "Turn off camera" : "Turn on camera"}
               >
                 {cameraOn ? (
-                  <Video className="w-6 h-6 text-white" />
+                  <Video className={`w-5 h-5 sm:w-6 sm:h-6 ${isDark ? "text-white" : "text-gray-700"}`} />
                 ) : (
-                  <VideoOff className="w-6 h-6 text-white" />
+                  <VideoOff className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 )}
-              </button>
+              </motion.button>
 
               {/* Toggle Screen Share */}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={toggleScreenShare}
-                className={`p-4 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
+                className={`p-3 sm:p-4 rounded-2xl transition-all duration-300 ${
                   isScreenSharing
                     ? "bg-blue-500 hover:bg-blue-600 shadow-lg shadow-blue-500/30"
-                    : "bg-white/10 hover:bg-white/20 border border-white/20"
+                    : isDark 
+                      ? "bg-white/10 hover:bg-white/20 border border-white/20" 
+                      : "bg-gray-100 hover:bg-gray-200 border border-gray-300"
                 }`}
                 title={isScreenSharing ? "Stop sharing" : "Share screen"}
               >
                 {isScreenSharing ? (
-                  <MonitorOff className="w-6 h-6 text-white" />
+                  <MonitorOff className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 ) : (
-                  <Monitor className="w-6 h-6 text-white" />
+                  <Monitor className={`w-5 h-5 sm:w-6 sm:h-6 ${isDark ? "text-white" : "text-gray-700"}`} />
                 )}
-              </button>
+              </motion.button>
 
               {/* Toggle Chat */}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setShowChat(!showChat)}
-                className={`p-4 rounded-2xl transition-all duration-300 transform hover:scale-105 relative ${
+                className={`p-3 sm:p-4 rounded-2xl transition-all duration-300 relative ${
                   showChat
                     ? "bg-purple-500 hover:bg-purple-600 shadow-lg shadow-purple-500/30"
-                    : "bg-white/10 hover:bg-white/20 border border-white/20"
+                    : isDark 
+                      ? "bg-white/10 hover:bg-white/20 border border-white/20" 
+                      : "bg-gray-100 hover:bg-gray-200 border border-gray-300"
                 }`}
                 title="Chat"
               >
-                <MessageSquare className="w-6 h-6 text-white" />
+                <MessageSquare className={`w-5 h-5 sm:w-6 sm:h-6 ${
+                  showChat ? "text-white" : isDark ? "text-white" : "text-gray-700"
+                }`} />
                 {chatMessages.length > 0 && !showChat && (
                   <span className="absolute -top-1 -right-1 bg-gradient-to-r from-pink-500 to-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold animate-pulse">
                     {chatMessages.length > 9 ? "9+" : chatMessages.length}
                   </span>
                 )}
-              </button>
+              </motion.button>
 
               {/* Toggle Participants */}
               {!showParticipants && (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setShowParticipants(true)}
-                  className="p-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 transform hover:scale-105"
+                  className={`p-3 sm:p-4 rounded-2xl transition-all duration-300 ${
+                    isDark 
+                      ? "bg-white/10 hover:bg-white/20 border border-white/20" 
+                      : "bg-gray-100 hover:bg-gray-200 border border-gray-300"
+                  }`}
                   title="Show participants"
                 >
-                  <Users className="w-6 h-6 text-white" />
-                </button>
+                  <Users className={`w-5 h-5 sm:w-6 sm:h-6 ${isDark ? "text-white" : "text-gray-700"}`} />
+                </motion.button>
               )}
 
               {/* Leave Meeting */}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={leaveMeeting}
-                className="p-4 px-6 rounded-2xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-red-500/30 flex items-center gap-2"
+                className="p-3 sm:p-4 px-4 sm:px-6 rounded-2xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-lg shadow-red-500/30 flex items-center gap-2"
                 title="Leave meeting"
               >
-                <Phone className="w-6 h-6 text-white transform rotate-135" />
+                <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-white transform rotate-135" />
                 <span className="text-white font-medium hidden sm:inline">
                   Leave
                 </span>
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Right sidebar - chat panel (collapsible) */}
-        {showChat && (
-          <div className="w-80 bg-gradient-to-b from-black/60 to-black/40 backdrop-blur-xl border-l border-white/10 flex flex-col">
-            <div className="p-4 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-white font-semibold flex items-center gap-2">
-                <div className="p-2 bg-purple-500/20 rounded-lg">
-                  <MessageSquare className="w-5 h-5 text-purple-400" />
-                </div>
-                <span>Chat</span>
-              </h2>
-              <button
-                onClick={() => setShowChat(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-white/70" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {chatMessages.length === 0 && (
-                <div className="text-center text-white/40 py-8">
-                  <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">No messages yet</p>
-                  <p className="text-xs mt-1">Be the first to say hello!</p>
-                </div>
-              )}
-              {chatMessages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className="bg-white/5 rounded-xl p-3 border border-white/5 hover:border-purple-500/20 transition-all duration-300"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
-                      {msg.from?.charAt(0)?.toUpperCase() || "?"}
-                    </div>
-                    <p className="text-purple-400 text-xs font-semibold">
-                      {msg.from}
-                    </p>
-                    <p className="text-white/40 text-[10px] ml-auto">
-                      {new Date(msg.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
+        {/* Right sidebar - chat panel */}
+        <AnimatePresence>
+          {showChat && (
+            <motion.div 
+              initial={{ x: 300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 300, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className={`w-72 sm:w-80 backdrop-blur-xl border-l flex flex-col ${
+                isDark 
+                  ? "bg-slate-900/60 border-white/10" 
+                  : "bg-white/60 border-gray-200"
+              }`}
+            >
+              <div className={`p-4 border-b flex items-center justify-between ${
+                isDark ? "border-white/10" : "border-gray-200"
+              }`}>
+                <h2 className={`font-semibold flex items-center gap-2 ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>
+                  <div className={`p-2 rounded-lg ${isDark ? "bg-purple-500/20" : "bg-purple-100"}`}>
+                    <MessageSquare className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-purple-600"}`} />
                   </div>
-                  <p className="text-white text-sm pl-8">{msg.message}</p>
-                </div>
-              ))}
-            </div>
-            <div className="p-4 border-t border-white/10">
-              <form onSubmit={sendMessage} className="flex gap-2">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1 bg-white/10 text-white placeholder-white/40 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 border border-white/10 focus:border-purple-500/50 transition-all"
-                />
+                  <span>Chat</span>
+                </h2>
                 <button
-                  type="submit"
-                  className="px-4 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30"
+                  onClick={() => setShowChat(false)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isDark ? "hover:bg-white/10 text-white/70" : "hover:bg-gray-100 text-gray-500"
+                  }`}
                 >
-                  <Send className="w-5 h-5" />
+                  <X className="w-5 h-5" />
                 </button>
-              </form>
-            </div>
-          </div>
-        )}
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {chatMessages.length === 0 && (
+                  <div className={`text-center py-8 ${isDark ? "text-white/40" : "text-gray-400"}`}>
+                    <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">No messages yet</p>
+                    <p className="text-xs mt-1">Be the first to say hello!</p>
+                  </div>
+                )}
+                {chatMessages.map((msg, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`rounded-xl p-3 border transition-all duration-300 ${
+                      isDark 
+                        ? "bg-white/5 border-white/5 hover:border-purple-500/20" 
+                        : "bg-gray-50 border-gray-200 hover:border-purple-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
+                        {msg.from?.charAt(0)?.toUpperCase() || "?"}
+                      </div>
+                      <p className={`text-xs font-semibold ${isDark ? "text-purple-400" : "text-purple-600"}`}>
+                        {msg.from}
+                      </p>
+                      <p className={`text-[10px] ml-auto ${isDark ? "text-white/40" : "text-gray-400"}`}>
+                        {new Date(msg.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                    <p className={`text-sm pl-8 ${isDark ? "text-white" : "text-gray-700"}`}>
+                      {msg.message}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+              <div className={`p-4 border-t ${isDark ? "border-white/10" : "border-gray-200"}`}>
+                <form onSubmit={sendMessage} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Type a message..."
+                    className={`flex-1 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 border transition-all ${
+                      isDark 
+                        ? "bg-white/10 text-white placeholder-white/40 border-white/10 focus:border-purple-500/50" 
+                        : "bg-gray-100 text-gray-900 placeholder-gray-400 border-gray-200 focus:border-purple-400"
+                    }`}
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    type="submit"
+                    className="px-4 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl transition-all shadow-lg shadow-purple-500/30"
+                  >
+                    <Send className="w-5 h-5" />
+                  </motion.button>
+                </form>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -1046,6 +1218,7 @@ const RemoteVideoSFU = ({
   screenTrack,
   name,
   isHost,
+  isDark,
 }) => {
   const videoRef = useRef(null);
   const audioRef = useRef(null);
@@ -1245,7 +1418,15 @@ const RemoteVideoSFU = ({
   const hasVideo = videoTrack || screenTrack;
 
   return (
-    <div className="relative aspect-video overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 border border-white/10 shadow-xl group hover:border-purple-500/30 transition-all duration-300">
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`relative aspect-video overflow-hidden rounded-2xl border shadow-xl group transition-all duration-300 ${
+        isDark 
+          ? "bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 border-white/10 hover:border-purple-500/30" 
+          : "bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100 border-gray-200 hover:border-purple-400"
+      }`}
+    >
       {/* Video element - always rendered but conditionally visible */}
       <video
         ref={videoRef}
@@ -1259,7 +1440,7 @@ const RemoteVideoSFU = ({
       {/* Avatar when no video */}
       {!hasVideo && (
         <div className="w-full h-full flex items-center justify-center absolute inset-0">
-          <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shadow-lg">
             {name?.charAt(0)?.toUpperCase() || "?"}
           </div>
         </div>
@@ -1269,7 +1450,11 @@ const RemoteVideoSFU = ({
       <audio ref={audioRef} autoPlay />
 
       {/* Name label - always visible at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 z-20">
+      <div className={`absolute bottom-0 left-0 right-0 p-3 z-20 ${
+        isDark 
+          ? "bg-gradient-to-t from-black/80 via-black/40 to-transparent" 
+          : "bg-gradient-to-t from-gray-900/70 via-gray-900/30 to-transparent"
+      }`}>
         <div className="flex items-center gap-2">
           <span className="text-white font-medium text-sm truncate">
             {name || "Participant"}
@@ -1291,7 +1476,7 @@ const RemoteVideoSFU = ({
       <div className="absolute top-3 right-3 z-20">
         <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

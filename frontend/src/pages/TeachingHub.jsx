@@ -16,10 +16,15 @@ import {
   Settings,
   Plus,
   X,
+  ArrowRight,
+  Zap,
 } from "lucide-react";
 import AdvancedQuestionCreator from "../components/Teacher/AdvancedQuestionCreator";
+import { useTheme } from "../context/ThemeContext";
 
 const TeachingHub = () => {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [stats, setStats] = useState({
     totalQuizzes: 0,
     activeStudents: 0,
@@ -183,23 +188,46 @@ const TeachingHub = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-950 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className={`min-h-screen py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${
+      isDark 
+        ? "bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950" 
+        : "bg-gradient-to-br from-slate-50 via-blue-50/50 to-indigo-100/50"
+    }`}>
+      {/* Background decorations */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className={`absolute top-20 right-20 w-96 h-96 rounded-full blur-3xl animate-pulse ${
+          isDark ? "bg-purple-500/10" : "bg-purple-400/20"
+        }`} />
+        <div className={`absolute bottom-20 left-20 w-96 h-96 rounded-full blur-3xl animate-pulse ${
+          isDark ? "bg-indigo-500/10" : "bg-indigo-400/20"
+        }`} style={{ animationDelay: "1s" }} />
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg">
-              <GraduationCap className="w-10 h-10 text-white" />
+          <motion.div 
+            className="flex items-center justify-center gap-3 mb-6"
+            whileHover={{ scale: 1.05 }}
+          >
+            <div className="p-4 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-xl shadow-purple-500/25">
+              <GraduationCap className="w-12 h-12 text-white" />
             </div>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-900 via-indigo-800 to-purple-900 dark:from-slate-100 dark:via-indigo-200 dark:to-purple-200 bg-clip-text text-transparent mb-4">
+          </motion.div>
+          <h1 className={`text-4xl sm:text-5xl md:text-6xl font-bold mb-4 ${
+            isDark 
+              ? "bg-gradient-to-r from-white via-purple-200 to-indigo-200 bg-clip-text text-transparent" 
+              : "bg-gradient-to-r from-slate-900 via-indigo-700 to-purple-700 bg-clip-text text-transparent"
+          }`}>
             Teaching Hub
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          <p className={`text-lg sm:text-xl max-w-2xl mx-auto ${
+            isDark ? "text-gray-400" : "text-gray-600"
+          }`}>
             Your complete teaching toolkit - Create quizzes, host live sessions,
             and track student progress
           </p>
@@ -216,19 +244,31 @@ const TeachingHub = () => {
             <motion.div
               key={index}
               variants={item}
-              className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-2xl rounded-2xl p-6 border border-white/40 dark:border-gray-700/40 shadow-xl"
+              whileHover={{ scale: 1.02, y: -2 }}
+              className={`relative overflow-hidden backdrop-blur-xl rounded-2xl p-6 border shadow-xl transition-all duration-300 ${
+                isDark 
+                  ? "bg-slate-800/60 border-white/10 hover:border-purple-500/30" 
+                  : "bg-white/80 border-white/60 hover:border-purple-300"
+              }`}
             >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
-                  <stat.icon className="w-5 h-5 text-white" />
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-purple-500/10 to-transparent rounded-full blur-xl" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
+                    <stat.icon className="w-5 h-5 text-white" />
+                  </div>
                 </div>
+                <p className={`text-3xl sm:text-4xl font-bold mb-1 ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>
+                  {stat.value}
+                </p>
+                <p className={`text-sm font-medium ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}>
+                  {stat.label}
+                </p>
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-                {stat.value}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {stat.label}
-              </p>
             </motion.div>
           ))}
         </motion.div>
@@ -238,7 +278,7 @@ const TeachingHub = () => {
           variants={container}
           initial="hidden"
           animate="show"
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6"
         >
           {features.map((feature, index) => (
             <motion.div key={index} variants={item}>
@@ -246,7 +286,11 @@ const TeachingHub = () => {
                 <motion.div
                   whileHover={{ scale: 1.02, y: -5 }}
                   whileTap={{ scale: 0.98 }}
-                  className="group relative bg-white/70 dark:bg-gray-800/70 backdrop-blur-2xl rounded-3xl p-8 border border-white/40 dark:border-gray-700/40 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden h-full"
+                  className={`group relative backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 border shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden h-full ${
+                    isDark 
+                      ? "bg-slate-800/60 border-white/10 hover:border-purple-500/30" 
+                      : "bg-white/80 border-white/60 hover:border-purple-300"
+                  }`}
                 >
                   {/* Background gradient on hover */}
                   <div
@@ -255,44 +299,42 @@ const TeachingHub = () => {
 
                   <div className="relative z-10">
                     {/* Icon */}
-                    <div
-                      className={`inline-flex p-4 bg-gradient-to-br ${feature.gradient} rounded-2xl mb-4 shadow-lg group-hover:shadow-xl transition-shadow duration-300`}
+                    <motion.div
+                      whileHover={{ rotate: [0, -10, 10, 0] }}
+                      transition={{ duration: 0.5 }}
+                      className={`inline-flex p-3 sm:p-4 bg-gradient-to-br ${feature.gradient} rounded-xl sm:rounded-2xl mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300`}
                     >
-                      <feature.icon className="w-8 h-8 text-white" />
-                    </div>
+                      <feature.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    </motion.div>
 
                     {/* Title */}
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                    <h3 className={`text-xl sm:text-2xl font-bold mb-2 sm:mb-3 ${
+                      isDark ? "text-white" : "text-gray-900"
+                    }`}>
                       {feature.title}
                     </h3>
 
                     {/* Description */}
-                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    <p className={`text-sm sm:text-base leading-relaxed ${
+                      isDark ? "text-gray-400" : "text-gray-600"
+                    }`}>
                       {feature.description}
                     </p>
 
                     {/* Arrow indicator */}
-                    <div className="mt-4 flex items-center gap-2 text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text font-semibold group-hover:gap-3 transition-all duration-300">
-                      <span>Get Started</span>
-                      <svg
-                        className="w-5 h-5 text-indigo-600 dark:text-indigo-400 transform group-hover:translate-x-1 transition-transform duration-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 8l4 4m0 0l-4 4m4-4H3"
-                        />
-                      </svg>
+                    <div className="mt-4 flex items-center gap-2 font-semibold group-hover:gap-3 transition-all duration-300">
+                      <span className={`bg-gradient-to-r ${feature.gradient} bg-clip-text text-transparent`}>
+                        Get Started
+                      </span>
+                      <ArrowRight className={`w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform duration-300 ${
+                        isDark ? "text-purple-400" : "text-purple-600"
+                      }`} />
                     </div>
                   </div>
 
                   {/* Decorative elements */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/20 to-transparent rounded-full blur-3xl -z-0" />
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-indigo-500/10 to-transparent rounded-full blur-2xl -z-0" />
+                  <div className="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-gradient-to-br from-white/10 to-transparent rounded-full blur-2xl" />
+                  <div className="absolute bottom-0 left-0 w-20 sm:w-24 h-20 sm:h-24 bg-gradient-to-tr from-purple-500/10 to-transparent rounded-full blur-xl" />
                 </motion.div>
               </Link>
             </motion.div>
@@ -304,21 +346,28 @@ const TeachingHub = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-8 text-white shadow-2xl"
+          className="mt-12 relative overflow-hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-white shadow-2xl"
         >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h3 className="text-2xl font-bold mb-2">Ready to create?</h3>
-              <p className="text-indigo-100">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
+          
+          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
+            <div className="text-center lg:text-left">
+              <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
+                <Zap className="w-6 h-6 text-yellow-300" />
+                <h3 className="text-2xl sm:text-3xl font-bold">Ready to create?</h3>
+              </div>
+              <p className="text-indigo-100 text-sm sm:text-base">
                 Start with AI-powered quiz generation or host a live session
               </p>
             </div>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
               <Link to="/quiz-maker">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-6 py-3 bg-white text-indigo-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors duration-200 shadow-lg"
+                  className="px-5 sm:px-6 py-2.5 sm:py-3 bg-white text-indigo-600 font-bold rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg text-sm sm:text-base"
                 >
                   Create Quiz
                 </motion.button>
@@ -327,18 +376,18 @@ const TeachingHub = () => {
                 onClick={() => setShowAdvancedCreator(true)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg flex items-center gap-2"
+                className="px-5 sm:px-6 py-2.5 sm:py-3 bg-white/20 backdrop-blur-sm text-white font-bold rounded-xl hover:bg-white/30 transition-all duration-200 shadow-lg border border-white/30 flex items-center gap-2 text-sm sm:text-base"
               >
-                <Plus className="w-5 h-5" />
-                Advanced Quiz
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                Advanced
               </motion.button>
               <Link to="/teacher-dashboard">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-6 py-3 bg-indigo-700 text-white font-semibold rounded-xl hover:bg-indigo-800 transition-colors duration-200 shadow-lg border border-white/20"
+                  className="px-5 sm:px-6 py-2.5 sm:py-3 bg-indigo-800/80 text-white font-bold rounded-xl hover:bg-indigo-900 transition-all duration-200 shadow-lg border border-white/20 text-sm sm:text-base"
                 >
-                  Go to Dashboard
+                  Dashboard
                 </motion.button>
               </Link>
             </div>

@@ -32,12 +32,12 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useToast } from "../components/ui/Toast";
-import { useTheme } from "../hooks/useTheme";
+import { useTheme } from "../context/ThemeContext";
 
 export default function Settings() {
   const { user, logout } = useContext(AuthContext);
   const { settings: accessibilitySettings, updateSettings: updateAccessibilitySettings } = useAccessibility();
-  const [theme, toggleTheme] = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const { success, error: showError } = useToast();
 
   const [activeSection, setActiveSection] = useState("profile");

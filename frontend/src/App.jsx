@@ -7,7 +7,7 @@ import FloatingShapes from "./components/FloatingShapes";
 import LoadingSpinner from "./components/LoadingSpinner";
 import Navbar from "./components/Navbar";
 import LenisScroll from "./components/LenisScroll";
-import { useTheme } from "./hooks/useTheme";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import { useIsMobile } from "./hooks/useReducedMotion";
 import NetworkStatusIndicator from "./components/ui/NetworkStatusIndicator";
 import PWAInstallPrompt from "./components/ui/PWAInstallPrompt";
@@ -105,7 +105,7 @@ const Contact = lazy(() => import("./pages/PublicPages/Contact"));
 const Pricing = lazy(() => import("./pages/PublicPages/Pricing"));
 
 function App() {
-  const [theme, toggleTheme] = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const isMobile = useIsMobile();
   const location = useLocation();
   const { user } = useContext(AuthContext);
@@ -358,4 +358,11 @@ function App() {
   );
 };
 
-export default App;
+// Wrap App with ThemeProvider
+const AppWithTheme = () => (
+  <ThemeProvider>
+    <App />
+  </ThemeProvider>
+);
+
+export default AppWithTheme;

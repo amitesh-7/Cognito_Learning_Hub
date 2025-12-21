@@ -45,7 +45,7 @@ import { AuthContext } from "../context/AuthContext";
 import { useGamification } from "../context/GamificationContext";
 import { useAccessibility } from "../context/AccessibilityContext";
 import { useFeatureUnlock } from "./FeatureGate";
-import { useTheme } from "../hooks/useTheme";
+import { useTheme } from "../context/ThemeContext";
 import { useReducedMotion, useIsMobile } from "../hooks/useReducedMotion";
 import Button from "./ui/Button";
 import AccessibilityModal from "./AccessibilityModal";
@@ -59,7 +59,7 @@ const Navbar = () => {
   } = useGamification();
   const { unlocked: isQuizCreationUnlocked } = useFeatureUnlock('studentQuizCreation');
   const { settings, toggleVisuallyImpairedMode } = useAccessibility();
-  const [theme, toggleTheme] = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
