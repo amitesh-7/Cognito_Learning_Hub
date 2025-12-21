@@ -248,7 +248,11 @@ const platformHighlights = [
 ];
 
 export default function Login() {
-  const [formData, setFormData] = useState({ email: "", password: "", role: "Student" });
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    role: "Student",
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -626,16 +630,28 @@ export default function Login() {
                   </h4>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center p-2.5 rounded-lg bg-white/80 dark:bg-gray-800/60 border border-blue-200 dark:border-gray-700">
-                      <span className="font-semibold text-gray-800 dark:text-gray-300">Teacher:</span>
-                      <span className="font-mono text-gray-900 dark:text-gray-200 font-medium">teacher@cognito.com / Teacher@123</span>
+                      <span className="font-semibold text-gray-800 dark:text-gray-300">
+                        Teacher:
+                      </span>
+                      <span className="font-mono text-gray-900 dark:text-gray-200 font-medium">
+                        teacher@cognito.com / Teacher@123
+                      </span>
                     </div>
                     <div className="flex justify-between items-center p-2.5 rounded-lg bg-white/80 dark:bg-gray-800/60 border border-purple-200 dark:border-gray-700">
-                      <span className="font-semibold text-gray-800 dark:text-gray-300">Student:</span>
-                      <span className="font-mono text-gray-900 dark:text-gray-200 font-medium">student@cognito.com / Student@123</span>
+                      <span className="font-semibold text-gray-800 dark:text-gray-300">
+                        Student:
+                      </span>
+                      <span className="font-mono text-gray-900 dark:text-gray-200 font-medium">
+                        student@cognito.com / Student@123
+                      </span>
                     </div>
                     <div className="flex justify-between items-center p-2.5 rounded-lg bg-white/80 dark:bg-gray-800/60 border border-pink-200 dark:border-gray-700">
-                      <span className="font-semibold text-gray-800 dark:text-gray-300">Admin:</span>
-                      <span className="font-mono text-gray-900 dark:text-gray-200 font-medium">admin@cognito.com / Admin@123</span>
+                      <span className="font-semibold text-gray-800 dark:text-gray-300">
+                        Admin:
+                      </span>
+                      <span className="font-mono text-gray-900 dark:text-gray-200 font-medium">
+                        admin@cognito.com / Admin@123
+                      </span>
                     </div>
                   </div>
                 </motion.div>
@@ -719,6 +735,21 @@ export default function Login() {
                     </div>
                   </motion.div>
 
+                  {/* Forgot Password Link */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.62 }}
+                    className="flex justify-end -mt-2"
+                  >
+                    <Link
+                      to="/forgot-password"
+                      className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors hover:underline"
+                    >
+                      Forgot your password?
+                    </Link>
+                  </motion.div>
+
                   {/* Role Selection */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -727,7 +758,9 @@ export default function Login() {
                   >
                     <RoleSelector
                       selectedRole={formData.role}
-                      onRoleChange={(role) => setFormData({ ...formData, role })}
+                      onRoleChange={(role) =>
+                        setFormData({ ...formData, role })
+                      }
                     />
                   </motion.div>
 

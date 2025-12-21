@@ -137,7 +137,8 @@ export default function Login() {
   // Voice announcement for VI users
   useEffect(() => {
     if (settings?.visuallyImpairedMode && window.speechSynthesis) {
-      const announcement = "Login page. Enter your email and password to sign in. For full accessibility support, press Alt plus A to enable voice guidance.";
+      const announcement =
+        "Login page. Enter your email and password to sign in. For full accessibility support, press Alt plus A to enable voice guidance.";
       const utterance = new SpeechSynthesisUtterance(announcement);
       utterance.rate = 0.9;
       window.speechSynthesis.speak(utterance);
@@ -513,7 +514,11 @@ export default function Login() {
                       ♿ Accessibility Features Available
                     </h4>
                     <p className="text-sm text-violet-700 dark:text-violet-300 mb-2">
-                      For visually impaired users: Press <kbd className="px-2 py-1 bg-violet-200 dark:bg-violet-800 rounded font-mono text-xs">Alt+A</kbd> for voice guidance
+                      For visually impaired users: Press{" "}
+                      <kbd className="px-2 py-1 bg-violet-200 dark:bg-violet-800 rounded font-mono text-xs">
+                        Alt+A
+                      </kbd>{" "}
+                      for voice guidance
                     </p>
                     <div className="flex flex-wrap gap-2 text-xs">
                       <span className="flex items-center gap-1 text-violet-600 dark:text-violet-400">
@@ -546,7 +551,9 @@ export default function Login() {
 
             <div className="space-y-4">
               <div className="relative">
-                <label htmlFor="email" className="sr-only">Email address</label>
+                <label htmlFor="email" className="sr-only">
+                  Email address
+                </label>
                 <Input
                   id="email"
                   type="email"
@@ -563,7 +570,9 @@ export default function Login() {
               </div>
 
               <div className="relative">
-                <label htmlFor="password" className="sr-only">Password</label>
+                <label htmlFor="password" className="sr-only">
+                  Password
+                </label>
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -590,6 +599,16 @@ export default function Login() {
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* Forgot Password Link */}
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors hover:underline"
+              >
+                Forgot your password?
+              </Link>
             </div>
 
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>

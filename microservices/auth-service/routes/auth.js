@@ -123,9 +123,16 @@ router.post(
       logger.info(`User registered: ${email}`);
 
       // Send verification email
-      const emailResult = await emailService.sendVerificationEmail(user, verificationToken);
+      const emailResult = await emailService.sendVerificationEmail(
+        user,
+        verificationToken
+      );
       if (!emailResult.success) {
-        logger.warn(`Failed to send verification email to ${email}: ${emailResult.error || emailResult.message}`);
+        logger.warn(
+          `Failed to send verification email to ${email}: ${
+            emailResult.error || emailResult.message
+          }`
+        );
       } else {
         logger.info(`Verification email sent to ${email}`);
       }
@@ -314,10 +321,12 @@ router.post("/google", authLimiter, async (req, res) => {
       // Validate and fix role for existing users (migrate from old schema)
       const validRoles = ["Student", "Teacher", "Moderator", "Admin"];
       if (!validRoles.includes(user.role)) {
-        logger.warn(`Invalid role "${user.role}" found for user ${email}, correcting to Student`);
+        logger.warn(
+          `Invalid role "${user.role}" found for user ${email}, correcting to Student`
+        );
         user.role = "Student";
       }
-      
+
       // Link Google account if not already linked
       if (!user.googleId) {
         user.googleId = googleId;
@@ -652,6 +661,143 @@ router.post("/verify-email/:token", async (req, res) => {
   } catch (error) {
     logger.error("Email verification error:", error);
     return ApiResponse.error(res, "Email verification failed", 500);
+  }
+});
+
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Request password reset
+ * @access  Public
+ */
+router.post("/forgot-password", authLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return ApiResponse.badRequest(res, "Email is required");
+    }
+
+    // Find user
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    // Always return success message (security best practice - don't reveal if email exists)
+    const successMessage =
+      "If your email is registered with us, you will receive password reset instructions shortly. Please check your inbox.";
+
+    if (!user) {
+      logger.info(`Password reset requested for non-existent email: ${email}`);
+      return ApiResponse.success(res, successMessage);
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.passwordResetToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    user.passwordResetExpires =
+      Date.now() + (parseInt(process.env.PASSWORD_RESET_EXPIRY) || 300000); // 5 minutes default
+
+    await user.save();
+
+    // Send reset email
+    await emailService.sendPasswordResetEmail(user, resetToken);
+
+    logger.info(`Password reset email sent to: ${email}`);
+
+    return ApiResponse.success(res, successMessage);
+  } catch (error) {
+    logger.error("Forgot password error:", error);
+    return ApiResponse.error(
+      res,
+      "Failed to process password reset request",
+      500
+    );
+  }
+});
+
+/**
+ * @route   POST /api/auth/reset-password
+ * @desc    Reset password with token
+ * @access  Public
+ */
+router.post("/reset-password", authLimiter, async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return ApiResponse.badRequest(res, "Token and new password are required");
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+      return ApiResponse.badRequest(
+        res,
+        "Password must be at least 8 characters long"
+      );
+    }
+    if (!/[A-Z]/.test(password)) {
+      return ApiResponse.badRequest(
+        res,
+        "Password must contain at least one uppercase letter"
+      );
+    }
+    if (!/[a-z]/.test(password)) {
+      return ApiResponse.badRequest(
+        res,
+        "Password must contain at least one lowercase letter"
+      );
+    }
+    if (!/[0-9]/.test(password)) {
+      return ApiResponse.badRequest(
+        res,
+        "Password must contain at least one number"
+      );
+    }
+
+    // Hash the token to match stored hash
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    // Find user with valid reset token
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return ApiResponse.badRequest(
+        res,
+        "Invalid or expired password reset token"
+      );
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(
+      parseInt(process.env.BCRYPT_ROUNDS) || 10
+    );
+    user.password = await bcrypt.hash(password, salt);
+
+    // Clear reset token fields
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    // Invalidate all existing refresh tokens for security
+    user.refreshTokens = [];
+
+    await user.save();
+
+    logger.info(`Password reset successful for user: ${user.email}`);
+
+    // Send confirmation email
+    await emailService.sendPasswordChangedEmail(user);
+
+    return ApiResponse.success(
+      res,
+      "Password reset successful. You can now login with your new password."
+    );
+  } catch (error) {
+    logger.error("Reset password error:", error);
+    return ApiResponse.error(res, "Failed to reset password", 500);
   }
 });
 

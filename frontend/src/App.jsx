@@ -42,6 +42,8 @@ import Home from "./pages/Home";
 // Auth Pages - Modern 2025 Design
 const Login = lazy(() => import("./pages/AuthPages/Login"));
 const SignUp = lazy(() => import("./pages/AuthPages/SignUp"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 // Less critical pages - lazy load
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -99,7 +101,9 @@ const MeetingRoom = lazy(() => import("./pages/MeetingRoom"));
 
 // Public Pages - Modern 2025 Design
 const Features = lazy(() => import("./pages/PublicPages/Features"));
-const FeatureComparison = lazy(() => import("./pages/PublicPages/FeatureComparison"));
+const FeatureComparison = lazy(() =>
+  import("./pages/PublicPages/FeatureComparison")
+);
 const About = lazy(() => import("./pages/PublicPages/About"));
 const Contact = lazy(() => import("./pages/PublicPages/Contact"));
 const Pricing = lazy(() => import("./pages/PublicPages/Pricing"));
@@ -113,23 +117,26 @@ function App() {
   // Keyboard shortcut for theme toggle (Ctrl+Shift+D)
   useEffect(() => {
     const handleKeyPress = (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+      if (e.ctrlKey && e.shiftKey && e.key === "D") {
         e.preventDefault();
         toggleTheme();
         // Show brief toast notification
-        const toastDiv = document.createElement('div');
-        toastDiv.className = 'fixed bottom-24 right-6 z-[9999] px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-2xl shadow-2xl font-semibold animate-bounce';
-        toastDiv.textContent = `Switched to ${theme === 'light' ? 'Dark' : 'Light'} Mode`;
+        const toastDiv = document.createElement("div");
+        toastDiv.className =
+          "fixed bottom-24 right-6 z-[9999] px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-2xl shadow-2xl font-semibold animate-bounce";
+        toastDiv.textContent = `Switched to ${
+          theme === "light" ? "Dark" : "Light"
+        } Mode`;
         document.body.appendChild(toastDiv);
         setTimeout(() => {
-          toastDiv.style.animation = 'fadeOut 0.3s ease-out';
-          toastDiv.style.opacity = '0';
+          toastDiv.style.animation = "fadeOut 0.3s ease-out";
+          toastDiv.style.opacity = "0";
           setTimeout(() => document.body.removeChild(toastDiv), 300);
         }, 2000);
       }
     };
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
   }, [toggleTheme, theme]);
 
   // Routes that need full-screen layout without navbar/padding
@@ -144,7 +151,7 @@ function App() {
     /^\/quiz\/[^/]+\/gamified$/.test(location.pathname);
 
   // Disable LenisScroll on AI Tutor page (uses its own scroll container)
-  const disableLenisScroll = location.pathname === '/doubt-solver';
+  const disableLenisScroll = location.pathname === "/doubt-solver";
 
   // Render app content (used both with and without LenisScroll)
   const renderAppContent = () => (
@@ -187,7 +194,9 @@ function App() {
       {/* Main Content - Added responsive top padding for fixed navbar */}
       <main
         id="main-content"
-        className={isFullScreen ? "" : "relative z-10 pt-24 sm:pt-28 md:pt-32 lg:pt-28"}
+        className={
+          isFullScreen ? "" : "relative z-10 pt-24 sm:pt-28 md:pt-32 lg:pt-28"
+        }
         role="main"
         aria-label="Main content"
       >
@@ -219,65 +228,436 @@ function App() {
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<SignUp />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
                 {/* Protected Routes */}
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                <Route path="/roadmap" element={<ProtectedRoute><FeatureRoadmapPage /></ProtectedRoute>} />
-                <Route path="/quick-actions" element={<ProtectedRoute><QuickActions /></ProtectedRoute>} />
-                <Route path="/teacher-dashboard" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
-                <Route path="/teaching-hub" element={<ProtectedRoute><TeachingHub /></ProtectedRoute>} />
-                <Route path="/quizzes" element={<ProtectedRoute><QuizList /></ProtectedRoute>} />
-                <Route path="/quests" element={<ProtectedRoute><RouteFeatureGate featureId="questSystem"><QuestPage /></RouteFeatureGate></ProtectedRoute>} />
-                <Route path="/quizzes/my-quizzes" element={<ProtectedRoute><MyQuizzes /></ProtectedRoute>} />
-                <Route path="/quiz/:quizId" element={<ProtectedRoute><SmartQuizRouter /></ProtectedRoute>} />
-                <Route path="/quiz/:quizId/speech" element={<ProtectedRoute><SpeechQuizTaker /></ProtectedRoute>} />
-                <Route path="/quiz/edit/:quizId" element={<ProtectedRoute><EditQuiz /></ProtectedRoute>} />
-                <Route path="/quiz/:quizId/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
-                <Route path="/quiz/:quizId/ai-battle" element={<ProtectedRoute><AIQuizOpponent /></ProtectedRoute>} />
-                <Route path="/quiz-history" element={<ProtectedRoute><QuizHistory /></ProtectedRoute>} />
-                <Route path="/quiz/result/:resultId" element={<ProtectedRoute><QuizResultDetail /></ProtectedRoute>} />
-                <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
-                <Route path="/quiz-maker" element={<ProtectedRoute><QuizMaker /></ProtectedRoute>} />
-                <Route path="/student-quiz-creator" element={<ProtectedRoute><StudentQuizCreator /></ProtectedRoute>} />
-                <Route path="/quiz-maker/topic" element={<ProtectedRoute><RouteFeatureGate featureId="aiQuizGeneration"><TopicQuizGenerator /></RouteFeatureGate></ProtectedRoute>} />
-                <Route path="/quiz-maker/manual" element={<ProtectedRoute><RouteFeatureGate featureId="studentQuizCreation"><ManualQuizCreator /></RouteFeatureGate></ProtectedRoute>} />
-                <Route path="/quiz-maker/enhanced" element={<ProtectedRoute><RouteFeatureGate featureId="aiQuizGeneration"><EnhancedQuizCreator /></RouteFeatureGate></ProtectedRoute>} />
-                <Route path="/quiz-maker/file" element={<ProtectedRoute><RouteFeatureGate featureId="pdfQuizGeneration"><FileQuizGenerator /></RouteFeatureGate></ProtectedRoute>} />
-                <Route path="/quiz-maker/speech" element={<ProtectedRoute><RouteFeatureGate featureId="aiQuizGeneration"><SpeechQuizGenerator /></RouteFeatureGate></ProtectedRoute>} />
-                <Route path="/pdf-quiz-generator" element={<ProtectedRoute><RouteFeatureGate featureId="pdfQuizGeneration"><PDFQuizGenerator /></RouteFeatureGate></ProtectedRoute>} />
-                <Route path="/social" element={<ProtectedRoute><SocialDashboard /></ProtectedRoute>} />
-                <Route path="/create-challenge" element={<ProtectedRoute><ChallengeCreator /></ProtectedRoute>} />
-                <Route path="/quiz/:quizId/gamified" element={<ProtectedRoute><GamifiedQuizTaker /></ProtectedRoute>} />
-                <Route path="/achievements" element={<ProtectedRoute><AchievementDashboard /></ProtectedRoute>} />
-                <Route path="/rewards" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
-                <Route path="/avatar/customize" element={<ProtectedRoute><RouteFeatureGate featureId="avatarCustomization"><AvatarCustomization /></RouteFeatureGate></ProtectedRoute>} />
-                <Route path="/doubt-solver" element={<ProtectedRoute><RouteFeatureGate featureId="aiTutor"><AITutor /></RouteFeatureGate></ProtectedRoute>} />
-                <Route path="/chat" element={<ProtectedRoute><ChatSystem /></ProtectedRoute>} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/roadmap"
+                  element={
+                    <ProtectedRoute>
+                      <FeatureRoadmapPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quick-actions"
+                  element={
+                    <ProtectedRoute>
+                      <QuickActions />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/teacher-dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <TeacherDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/teaching-hub"
+                  element={
+                    <ProtectedRoute>
+                      <TeachingHub />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quizzes"
+                  element={
+                    <ProtectedRoute>
+                      <QuizList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quests"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="questSystem">
+                        <QuestPage />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quizzes/my-quizzes"
+                  element={
+                    <ProtectedRoute>
+                      <MyQuizzes />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/:quizId"
+                  element={
+                    <ProtectedRoute>
+                      <SmartQuizRouter />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/:quizId/speech"
+                  element={
+                    <ProtectedRoute>
+                      <SpeechQuizTaker />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/edit/:quizId"
+                  element={
+                    <ProtectedRoute>
+                      <EditQuiz />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/:quizId/leaderboard"
+                  element={
+                    <ProtectedRoute>
+                      <Leaderboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/:quizId/ai-battle"
+                  element={
+                    <ProtectedRoute>
+                      <AIQuizOpponent />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-history"
+                  element={
+                    <ProtectedRoute>
+                      <QuizHistory />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/result/:resultId"
+                  element={
+                    <ProtectedRoute>
+                      <QuizResultDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/leaderboard"
+                  element={
+                    <ProtectedRoute>
+                      <Leaderboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker"
+                  element={
+                    <ProtectedRoute>
+                      <QuizMaker />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/student-quiz-creator"
+                  element={
+                    <ProtectedRoute>
+                      <StudentQuizCreator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/topic"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="aiQuizGeneration">
+                        <TopicQuizGenerator />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/manual"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="studentQuizCreation">
+                        <ManualQuizCreator />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/enhanced"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="aiQuizGeneration">
+                        <EnhancedQuizCreator />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/file"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="pdfQuizGeneration">
+                        <FileQuizGenerator />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz-maker/speech"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="aiQuizGeneration">
+                        <SpeechQuizGenerator />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/pdf-quiz-generator"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="pdfQuizGeneration">
+                        <PDFQuizGenerator />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/social"
+                  element={
+                    <ProtectedRoute>
+                      <SocialDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/create-challenge"
+                  element={
+                    <ProtectedRoute>
+                      <ChallengeCreator />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/quiz/:quizId/gamified"
+                  element={
+                    <ProtectedRoute>
+                      <GamifiedQuizTaker />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/achievements"
+                  element={
+                    <ProtectedRoute>
+                      <AchievementDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/rewards"
+                  element={
+                    <ProtectedRoute>
+                      <RewardsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/avatar/customize"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="avatarCustomization">
+                        <AvatarCustomization />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/doubt-solver"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="aiTutor">
+                        <AITutor />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/chat"
+                  element={
+                    <ProtectedRoute>
+                      <ChatSystem />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Live Session Routes */}
-                <Route path="/live" element={<ProtectedRoute><LiveSessionSelector /></ProtectedRoute>} />
-                <Route path="/live/host/:quizId" element={<ProtectedRoute><RouteFeatureGate featureId="hostLiveSessions"><LiveSessionHost /></RouteFeatureGate></ProtectedRoute>} />
-                <Route path="/live/join" element={<ProtectedRoute><LiveSessionJoin /></ProtectedRoute>} />
-                <Route path="/live/analytics/:sessionCode" element={<ProtectedRoute><LiveSessionAnalytics /></ProtectedRoute>} />
-                <Route path="/live/history" element={<ProtectedRoute><LiveSessionHistory /></ProtectedRoute>} />
-                <Route path="/live/start" element={<ProtectedRoute><RouteFeatureGate featureId="hostLiveSessions"><LiveSessionSelector /></RouteFeatureGate></ProtectedRoute>} />
+                <Route
+                  path="/live"
+                  element={
+                    <ProtectedRoute>
+                      <LiveSessionSelector />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/live/host/:quizId"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="hostLiveSessions">
+                        <LiveSessionHost />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/live/join"
+                  element={
+                    <ProtectedRoute>
+                      <LiveSessionJoin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/live/analytics/:sessionCode"
+                  element={
+                    <ProtectedRoute>
+                      <LiveSessionAnalytics />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/live/history"
+                  element={
+                    <ProtectedRoute>
+                      <LiveSessionHistory />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/live/start"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="hostLiveSessions">
+                        <LiveSessionSelector />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* 1v1 Duel Routes */}
-                <Route path="/duel" element={<ProtectedRoute><RouteFeatureGate featureId="duelMode"><DuelMode /></RouteFeatureGate></ProtectedRoute>} />
-                <Route path="/duel/:quizId" element={<ProtectedRoute><RouteFeatureGate featureId="duelMode"><DuelBattle /></RouteFeatureGate></ProtectedRoute>} />
+                <Route
+                  path="/duel"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="duelMode">
+                        <DuelMode />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/duel/:quizId"
+                  element={
+                    <ProtectedRoute>
+                      <RouteFeatureGate featureId="duelMode">
+                        <DuelBattle />
+                      </RouteFeatureGate>
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Video Meeting Routes */}
-                <Route path="/meeting/create" element={<ProtectedRoute><TeacherMeetingStart /></ProtectedRoute>} />
-                <Route path="/meeting/join" element={<ProtectedRoute><StudentJoinMeeting /></ProtectedRoute>} />
-                <Route path="/meeting/:roomId" element={<ProtectedRoute><MeetingRoom /></ProtectedRoute>} />
+                <Route
+                  path="/meeting/create"
+                  element={
+                    <ProtectedRoute>
+                      <TeacherMeetingStart />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/meeting/join"
+                  element={
+                    <ProtectedRoute>
+                      <StudentJoinMeeting />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/meeting/:roomId"
+                  element={
+                    <ProtectedRoute>
+                      <MeetingRoom />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Admin & Moderator Routes */}
-                <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-                <Route path="/admin-broadcast" element={<AdminRoute><AdminBroadcast /></AdminRoute>} />
-                <Route path="/moderator" element={<ModeratorRoute><ModeratorDashboard /></ModeratorRoute>} />
-                <Route path="/reports" element={<ModeratorRoute><ReportsDashboard /></ModeratorRoute>} />
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin-broadcast"
+                  element={
+                    <AdminRoute>
+                      <AdminBroadcast />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/moderator"
+                  element={
+                    <ModeratorRoute>
+                      <ModeratorDashboard />
+                    </ModeratorRoute>
+                  }
+                />
+                <Route
+                  path="/reports"
+                  element={
+                    <ModeratorRoute>
+                      <ReportsDashboard />
+                    </ModeratorRoute>
+                  }
+                />
 
                 {/* 404 Not Found */}
                 <Route path="*" element={<NotFound />} />
@@ -346,9 +726,7 @@ function App() {
               {disableLenisScroll ? (
                 renderAppContent()
               ) : (
-                <LenisScroll>
-                  {renderAppContent()}
-                </LenisScroll>
+                <LenisScroll>{renderAppContent()}</LenisScroll>
               )}
             </ToastProvider>
           </AvatarProvider>
@@ -356,7 +734,7 @@ function App() {
       </SocketProvider>
     </AccessibilityProvider>
   );
-};
+}
 
 // Wrap App with ThemeProvider
 const AppWithTheme = () => (
