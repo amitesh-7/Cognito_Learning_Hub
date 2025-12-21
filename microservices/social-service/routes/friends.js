@@ -9,8 +9,11 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 const createLogger = require('../../shared/utils/logger');
 const { authenticateToken } = require('../../shared/middleware/auth');
+const axios = require('axios');
 
 const logger = createLogger('friends-routes');
+
+const GAMIFICATION_SERVICE = process.env.GAMIFICATION_SERVICE_URL || 'http://localhost:3007';
 
 /**
  * Get user's friends list (accepted friendships only)
@@ -50,17 +53,155 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 /**
+ * Get pending friend requests (received)
+ */
+router.get('/requests/pending', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const pendingRequests = await Friendship.find({
+      recipient: userId,
+      status: 'pending',
+    })
+      .populate('requester', 'name email role profilePicture')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const requests = pendingRequests.map(req => ({
+      friendshipId: req._id,
+      user: req.requester,
+      createdAt: req.createdAt,
+    }));
+
+    res.json({ requests });
+  } catch (error) {
+    logger.error('Error fetching pending requests:', error);
+    res.status(500).json({ message: 'Failed to fetch pending requests' });
+  }
+});
+
+/**
+ * Get sent friend requests
+ */
+router.get('/requests/sent', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const sentRequests = await Friendship.find({
+      requester: userId,
+      status: 'pending',
+    })
+      .populate('recipient', 'name email role profilePicture')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const requests = sentRequests.map(req => ({
+      friendshipId: req._id,
+      user: req.recipient,
+      createdAt: req.createdAt,
+    }));
+
+    res.json({ requests });
+  } catch (error) {
+    logger.error('Error fetching sent requests:', error);
+    res.status(500).json({ message: 'Failed to fetch sent requests' });
+  }
+});
+
+/**
+ * Get friend's profile with stats and achievements
+ */
+router.get('/profile/:friendId', authenticateToken, async (req, res) => {
+  try {
+    const { friendId } = req.params;
+    const userId = req.user.userId;
+
+    // Verify friendship exists
+    const friendship = await Friendship.findOne({
+      $or: [
+        { requester: userId, recipient: friendId, status: 'accepted' },
+        { requester: friendId, recipient: userId, status: 'accepted' },
+      ],
+    });
+
+    if (!friendship) {
+      return res.status(403).json({ message: 'Not friends with this user' });
+    }
+
+    // Get friend's basic info
+    const friend = await User.findById(friendId)
+      .select('name email role profilePicture status lastSeen lastActivity createdAt')
+      .lean();
+
+    if (!friend) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get friend's stats from gamification service
+    let stats = null;
+    let achievements = [];
+    try {
+      const statsResponse = await axios.get(
+        `${GAMIFICATION_SERVICE}/api/stats/${friendId}`,
+        { headers: { 'x-auth-token': req.headers['x-auth-token'] } }
+      );
+      stats = statsResponse.data?.data || statsResponse.data;
+
+      const achievementsResponse = await axios.get(
+        `${GAMIFICATION_SERVICE}/api/achievements/user/${friendId}`,
+        { headers: { 'x-auth-token': req.headers['x-auth-token'] } }
+      );
+      achievements = achievementsResponse.data?.data || achievementsResponse.data?.achievements || [];
+    } catch (err) {
+      logger.warn('Could not fetch gamification data:', err.message);
+    }
+
+    res.json({
+      friend,
+      stats,
+      achievements,
+      friendSince: friendship.acceptedAt,
+    });
+  } catch (error) {
+    logger.error('Error fetching friend profile:', error);
+    res.status(500).json({ message: 'Failed to fetch friend profile' });
+  }
+});
+
+/**
  * Get suggested friends
  */
 router.get('/suggestions', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     
-    // Simple suggestion: return empty for now
-    res.json({ success: true, data: [] });
+    // Get existing friendships and pending requests
+    const existingFriendships = await Friendship.find({
+      $or: [
+        { requester: userId },
+        { recipient: userId },
+      ],
+    }).lean();
+
+    const excludeIds = new Set([userId]);
+    existingFriendships.forEach(f => {
+      excludeIds.add(f.requester.toString());
+      excludeIds.add(f.recipient.toString());
+    });
+
+    // Get users from auth service for suggestions
+    const AUTH_SERVICE = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
+    const response = await axios.get(`${AUTH_SERVICE}/api/users/discover`, {
+      params: { excludeIds: Array.from(excludeIds).join(','), limit: 10 },
+      headers: { 'x-auth-token': req.headers['x-auth-token'] },
+    });
+
+    const suggestions = response.data?.users || response.data?.data?.users || [];
+    res.json({ success: true, suggestions });
   } catch (error) {
     logger.error('Error fetching friend suggestions:', error);
-    res.status(500).json({ success: true, data: [] });
+    // Return empty array on error instead of failing
+    res.json({ success: true, suggestions: [] });
   }
 });
 

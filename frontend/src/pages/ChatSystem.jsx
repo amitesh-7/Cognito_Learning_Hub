@@ -91,7 +91,7 @@ const ChatSystem = () => {
   const updateUserStatus = async (status) => {
     try {
       const token = localStorage.getItem("quizwise-token");
-      await fetch(`${import.meta.env.VITE_API_URL}/api/user/status`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -99,8 +99,12 @@ const ChatSystem = () => {
         },
         body: JSON.stringify({ status }),
       });
+      // Silently fail if endpoint doesn't exist
+      if (!response.ok && response.status !== 404) {
+        console.warn("Failed to update status:", response.status);
+      }
     } catch (error) {
-      console.error("Error updating user status:", error);
+      // Silently ignore errors for optional status updates
     }
   };
 
@@ -119,12 +123,16 @@ const ChatSystem = () => {
   const updateActivity = async () => {
     try {
       const token = localStorage.getItem("quizwise-token");
-      await fetch(`${import.meta.env.VITE_API_URL}/api/user/activity`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/activity`, {
         method: "PUT",
         headers: { "x-auth-token": token },
       });
+      // Silently fail if endpoint doesn't exist
+      if (!response.ok && response.status !== 404) {
+        console.warn("Failed to update activity:", response.status);
+      }
     } catch (error) {
-      console.error("Error updating activity:", error);
+      // Silently ignore errors for optional activity tracking
     }
   };
 

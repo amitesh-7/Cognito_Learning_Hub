@@ -91,8 +91,8 @@ Cognito Learning Hub is a scalable, microservices-based AI-powered educational p
 | **Quiz Service**         | 3002 | Quiz CRUD, AI generation, file upload parsing        |
 | **Result Service**       | 3003 | Result submission, analytics, leaderboards           |
 | **Live Service**         | 3004 | Real-time quiz sessions, Socket.IO, duels            |
-| **Social Service**       | 3006 | Friends, chat, notifications, social features        |
-| **Gamification Service** | 3007 | XP, levels, achievements, streaks, badges, avatars   |
+| **Social Service**       | 3006 | Friends, challenges, chat, notifications, duels      |
+| **Gamification Service** | 3007 | XP, levels, achievements, streaks, badges, challenges|
 | **Moderation Service**   | 3008 | Content moderation, reports, flagging                |
 | **Meeting Service**      | 3009 | WebRTC video meetings, peer connections              |
 
@@ -159,18 +159,53 @@ Cognito Learning Hub is a scalable, microservices-based AI-powered educational p
 - **Streaks & Badges**: Daily engagement rewards
 - **Quests**: Daily and weekly challenges
 
+### 👥 Social Hub & Friend System
+
+1. **Friend Management**
+   - Search users by name or email
+   - Send/accept/decline friend requests
+   - Real-time online status indicators
+   - Friends list with quick actions
+
+2. **1v1 Friend Duel Challenges**
+   - Challenge any friend to a quiz duel
+   - Quiz selection modal with categories
+   - Real-time duel matchmaking
+   - Winner/loser determination
+
+3. **Notifications Center**
+   - Friend request notifications with inline actions
+   - Challenge received/accepted alerts
+   - Achievement unlock notifications
+   - Real-time unread count badge
+
+4. **Social Dashboard**
+   - Glassmorphism UI with dark/light mode
+   - Animated components with Framer Motion
+   - Responsive design for all devices
+   - Tab-based navigation (Friends/Duels/Alerts)
+
+### 🎨 Modern UI/UX Design
+
+- **Theme System**: Global dark/light mode with ThemeContext
+- **Glassmorphism**: Backdrop blur, transparency effects
+- **Smooth Animations**: Framer Motion powered transitions
+- **Responsive**: Mobile-first adaptive layouts
+- **Accessibility**: ARIA labels, keyboard navigation
+
 ---
 
 ## 🛠️ Tech Stack
 
-| Category     | Technologies                                          |
-| ------------ | ----------------------------------------------------- |
-| **Frontend** | React 18, Vite, TailwindCSS, Framer Motion, Socket.IO |
-| **Backend**  | Node.js 20, Express.js, Socket.IO, Bull Queues        |
-| **Database** | MongoDB Atlas, Redis Cloud                            |
-| **AI**       | Google Gemini API                                     |
-| **Video**    | MediaSoup SFU, WebRTC                                 |
-| **Auth**     | JWT, Google OAuth 2.0                                 |
+| Category     | Technologies                                                    |
+| ------------ | --------------------------------------------------------------- |
+| **Frontend** | React 18, Vite, TailwindCSS, Framer Motion, Socket.IO, ThemeCtx |
+| **Backend**  | Node.js 20, Express.js, Socket.IO, Bull Queues                  |
+| **Database** | MongoDB Atlas, Redis Cloud                                      |
+| **AI**       | Google Gemini API                                               |
+| **Video**    | MediaSoup SFU, WebRTC                                           |
+| **Auth**     | JWT, Google OAuth 2.0                                           |
+| **UI/UX**    | Glassmorphism, Lucide Icons, CSS Animations                     |
 
 ---
 
@@ -214,7 +249,8 @@ For testing purposes, use the following pre-configured accounts:
 | [Architecture](docs/ARCHITECTURE.md)             | System design and service details    |
 | [API Reference](docs/API_REFERENCE.md)           | REST API endpoints documentation     |
 | [Setup Guide](docs/SETUP_GUIDE.md)               | Local development and deployment     |
-| [Meeting Deployment](docs/MEETING_DEPLOYMENT.md) | Video service configuration          |
+| [Accessibility Guide](docs/ACCESSIBILITY_GUIDE.md)| Inclusive design implementation     |
+| [Quiz Accessibility](docs/QUIZ_ACCESSIBILITY_GUIDE.md)| Speech-based quiz features      |
 | [Technical Summary](docs/TECHNICAL_SUMMARY.html) | 2-page PDF summary (open in browser) |
 
 ---
@@ -224,6 +260,13 @@ For testing purposes, use the following pre-configured accounts:
 ```
 Cognito_Learning_Hub/
 ├── frontend/                 # React frontend application
+│   ├── src/
+│   │   ├── components/      # Reusable UI components
+│   │   ├── context/         # React Context (Auth, Theme)
+│   │   ├── hooks/           # Custom hooks
+│   │   ├── pages/           # Page components
+│   │   └── services/        # API service layers
+│   └── public/              # Static assets
 ├── microservices/
 │   ├── api-gateway/         # Central API routing (Port 3000)
 │   ├── auth-service/        # Authentication (Port 3001)
@@ -231,10 +274,14 @@ Cognito_Learning_Hub/
 │   ├── result-service/      # Results & analytics (Port 3003)
 │   ├── live-service/        # Real-time features (Port 3004)
 │   ├── social-service/      # Social features (Port 3006)
+│   │   ├── routes/          # friends, challenges, chat, notifications
+│   │   ├── models/          # Friendship, Notification, Post
+│   │   └── socket/          # Real-time events
 │   ├── gamification-service/# XP & achievements (Port 3007)
 │   ├── moderation-service/  # Content moderation (Port 3008)
 │   ├── meeting-service/     # Video conferencing (Port 3009)
 │   └── shared/              # Shared utilities
+├── admin-portal/            # Admin management dashboard
 ├── docs/                    # Documentation
 └── README.md
 ```

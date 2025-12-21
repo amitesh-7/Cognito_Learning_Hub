@@ -69,6 +69,50 @@ router.get('/search', authenticateToken, async (req, res) => {
 });
 
 /**
+ * @route   GET /api/users/discover
+ * @desc    Discover users for friend suggestions (excludes existing connections)
+ * @access  Private
+ */
+router.get('/discover', authenticateToken, async (req, res) => {
+  try {
+    const currentUserId = req.user.userId;
+    const { excludeIds, limit = 10 } = req.query;
+
+    // Parse excluded IDs from comma-separated string
+    let excludeIdList = [currentUserId];
+    if (excludeIds) {
+      excludeIdList = [...excludeIdList, ...excludeIds.split(',').filter(id => id.trim())];
+    }
+
+    // Get random users excluding the provided IDs
+    const users = await User.aggregate([
+      { $match: { _id: { $nin: excludeIdList.map(id => require('mongoose').Types.ObjectId(id)) } } },
+      { $sample: { size: parseInt(limit) } },
+      { $project: { name: 1, email: 1, picture: 1, role: 1, createdAt: 1 } }
+    ]);
+
+    logger.info(`Discover found ${users.length} users for suggestion`);
+
+    return ApiResponse.success(
+      res,
+      {
+        users: users.map(user => ({
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          picture: user.picture,
+          role: user.role,
+        })),
+      },
+      'Users discovered successfully'
+    );
+  } catch (error) {
+    logger.error('Discover users error:', error);
+    return ApiResponse.error(res, 'Failed to discover users', 500);
+  }
+});
+
+/**
  * @route   GET /api/users/:id
  * @desc    Get user by ID
  * @access  Private
