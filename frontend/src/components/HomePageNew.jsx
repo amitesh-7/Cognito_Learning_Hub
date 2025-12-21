@@ -2041,13 +2041,16 @@ export default function HomePageNew() {
 
                   <div className="divide-y divide-gray-200 dark:divide-gray-800">
                     {[
-                      { label: "AI Quiz Generation", cognito: true, kahoot: false },
-                      { label: "1v1 Duel Mode", cognito: true, kahoot: false },
-                      { label: "24/7 AI Tutor", cognito: true, kahoot: false },
-                      { label: "Video Meetings", cognito: true, kahoot: false },
-                      { label: "Progress Analytics", cognito: true, kahoot: true },
-                      { label: "Social Features", cognito: true, kahoot: false },
-                      { label: "Achievement System", cognito: true, kahoot: false },
+                      { label: "AI Quiz Generation (4 Methods)", cognito: true, kahoot: false },
+                      { label: "KBC-Style Voice Quiz ♿", cognito: true, kahoot: false },
+                      { label: "1v1 Duels + AI Opponents", cognito: true, kahoot: false },
+                      { label: "24/7 AI Tutor (Gemini)", cognito: true, kahoot: false },
+                      { label: "Friend System & Chat", cognito: true, kahoot: false },
+                      { label: "Avatar Customization (150+)", cognito: true, kahoot: false },
+                      { label: "Quest System (14 Realms)", cognito: true, kahoot: false },
+                      { label: "Video Meetings (50+ users)", cognito: true, kahoot: false },
+                      { label: "Achievement System (100+)", cognito: true, kahoot: false },
+                      { label: "Live Sessions", cognito: true, kahoot: true },
                     ].map((row, idx) => (
                       <motion.div
                         key={row.label}
@@ -2244,10 +2247,10 @@ export default function HomePageNew() {
             {/* Quick Comparison Grid */}
             <div className="grid md:grid-cols-4 gap-6 mb-12">
               {[
-                { name: "Cognito", logo: "🧠", score: "14/14", highlight: true },
-                { name: "Kahoot", logo: "🎮", score: "7/14", highlight: false },
-                { name: "Quizlet", logo: "📚", score: "6/14", highlight: false },
-                { name: "Duolingo", logo: "🦉", score: "8/14", highlight: false },
+                { name: "Cognito", logo: "🧠", score: "22/22", highlight: true },
+                { name: "Kahoot", logo: "🎮", score: "5/22", highlight: false },
+                { name: "Quizlet", logo: "📚", score: "8/22", highlight: false },
+                { name: "Duolingo", logo: "🦉", score: "10/22", highlight: false },
               ].map((platform, index) => (
                 <motion.div
                   key={platform.name}
@@ -2382,7 +2385,7 @@ export default function HomePageNew() {
               </Link>
               
               <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
-                Compare all 14 features across 4 platforms
+                Compare all 22 features across 4 platforms
               </p>
             </motion.div>
           </div>
