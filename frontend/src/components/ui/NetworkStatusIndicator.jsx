@@ -45,7 +45,7 @@ export const NetworkStatusIndicator = ({ className = "" }) => {
   const getMessage = () => {
     if (isOffline) return "No internet connection";
     if (justWentOnline) return "Back online";
-    if (isSlowConnection) return "Slow connection";
+    // Slow connection popup removed per user request
     return null;
   };
 

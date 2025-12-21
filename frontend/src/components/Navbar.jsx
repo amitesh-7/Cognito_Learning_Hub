@@ -140,7 +140,7 @@ const Navbar = () => {
             { to: "/quests", label: "Quest Realms", icon: Map, badge: true },
             { to: "/doubt-solver", label: "AI Tutor", icon: Bot },
             { to: "/duel", label: "1v1 Duel", icon: Swords },
-            { to: "/live", label: "Live Sessions", icon: Radio },
+            ...(user?.role !== "Student" ? [{ to: "/live", label: "Live Sessions", icon: Radio }] : []),
             ...(user?.role === "Student" && isQuizCreationUnlocked ? [{ to: "/student-quiz-creator", label: "Create Quiz", icon: Sparkles, badge: true }] : []),
           ],
         },
