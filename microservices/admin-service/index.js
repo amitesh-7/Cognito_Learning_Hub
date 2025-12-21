@@ -44,7 +44,7 @@ const requireAdmin = async (req, res, next) => {
 
     // Verify token with auth service (use production URL if available)
     const authServiceUrl =
-      process.env.AUTH_SERVICE_URL || "http://localhost:3001";
+      process.env.AUTH_SERVICE_URL || "http://localhost:3000";
     const authResponse = await axios.get(`${authServiceUrl}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
       timeout: 10000,
@@ -68,6 +68,11 @@ const requireAdmin = async (req, res, next) => {
     console.error("Auth middleware error:", error.message);
     return res.status(401).json({ error: "Invalid or expired token" });
   }
+};
+
+// Helper function to validate MongoDB ObjectId
+const isValidObjectId = (id) => {
+  return mongoose.Types.ObjectId.isValid(id) && /^[0-9a-fA-F]{24}$/.test(id);
 };
 
 // Root endpoint
@@ -105,7 +110,7 @@ app.post("/api/admin/login", async (req, res) => {
 
     // Forward to auth service for authentication
     const authServiceUrl =
-      process.env.AUTH_SERVICE_URL || "http://localhost:3001";
+      process.env.AUTH_SERVICE_URL || "http://localhost:3000";
     const loginResponse = await axios.post(
       `${authServiceUrl}/api/auth/login`,
       { email, password },
@@ -617,6 +622,10 @@ app.get("/api/admin/users/stats", requireAdmin, async (req, res) => {
 // Get a specific user
 app.get("/api/admin/users/:id", requireAdmin, async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: "Invalid user ID format" });
+    }
+
     const User = mongoose.connection.collection("users");
     const user = await User.findOne({
       _id: new mongoose.Types.ObjectId(req.params.id),
@@ -637,6 +646,10 @@ app.get("/api/admin/users/:id", requireAdmin, async (req, res) => {
 // Update user
 app.put("/api/admin/users/:id", requireAdmin, async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: "Invalid user ID format" });
+    }
+
     const { name, email, role, status } = req.body;
     const User = mongoose.connection.collection("users");
 
@@ -666,9 +679,49 @@ app.put("/api/admin/users/:id", requireAdmin, async (req, res) => {
   }
 });
 
+// Toggle user status (active/inactive)
+app.post("/api/admin/users/:id/toggle-status", requireAdmin, async (req, res) => {
+  try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: "Invalid user ID format" });
+    }
+
+    const User = mongoose.connection.collection("users");
+    
+    const user = await User.findOne({
+      _id: new mongoose.Types.ObjectId(req.params.id)
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const newStatus = user.status === "active" ? "inactive" : "active";
+
+    const result = await User.findOneAndUpdate(
+      { _id: new mongoose.Types.ObjectId(req.params.id) },
+      { $set: { status: newStatus, updatedAt: new Date() } },
+      { returnDocument: "after" }
+    );
+
+    // Remove password from response
+    const userResponse = { ...result };
+    delete userResponse.password;
+
+    res.json({ success: true, user: userResponse });
+  } catch (error) {
+    console.error("User status toggle error:", error);
+    res.status(500).json({ error: "Failed to toggle user status" });
+  }
+});
+
 // Delete user
 app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: "Invalid user ID format" });
+    }
+
     const User = mongoose.connection.collection("users");
     const result = await User.deleteOne({
       _id: new mongoose.Types.ObjectId(req.params.id),
@@ -784,6 +837,10 @@ app.get("/api/admin/quizzes/stats", requireAdmin, async (req, res) => {
 // Get a specific quiz
 app.get("/api/admin/quizzes/:id", requireAdmin, async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: "Invalid quiz ID format" });
+    }
+
     const Quiz = mongoose.connection.collection("quizzes");
     const quiz = await Quiz.findOne({
       _id: new mongoose.Types.ObjectId(req.params.id),
@@ -800,9 +857,84 @@ app.get("/api/admin/quizzes/:id", requireAdmin, async (req, res) => {
   }
 });
 
+// Update quiz (full edit)
+app.put("/api/admin/quizzes/:id", requireAdmin, async (req, res) => {
+  try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: "Invalid quiz ID format" });
+    }
+
+    const Quiz = mongoose.connection.collection("quizzes");
+    const { title, subject, difficulty, questions, timeLimit, description } = req.body;
+
+    const updateData = {
+      updatedAt: new Date()
+    };
+
+    // Only update fields that are provided
+    if (title !== undefined) updateData.title = title;
+    if (subject !== undefined) updateData.subject = subject;
+    if (difficulty !== undefined) updateData.difficulty = difficulty;
+    if (questions !== undefined) updateData.questions = questions;
+    if (timeLimit !== undefined) updateData.timeLimit = timeLimit;
+    if (description !== undefined) updateData.description = description;
+
+    const result = await Quiz.findOneAndUpdate(
+      { _id: new mongoose.Types.ObjectId(req.params.id) },
+      { $set: updateData },
+      { returnDocument: "after" }
+    );
+
+    if (!result) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+
+    res.json({ success: true, quiz: result });
+  } catch (error) {
+    console.error("Quiz update error:", error);
+    res.status(500).json({ error: "Failed to update quiz" });
+  }
+});
+
+// Toggle quiz status (active/inactive)
+app.post("/api/admin/quizzes/:id/toggle-status", requireAdmin, async (req, res) => {
+  try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: "Invalid quiz ID format" });
+    }
+
+    const Quiz = mongoose.connection.collection("quizzes");
+    
+    const quiz = await Quiz.findOne({
+      _id: new mongoose.Types.ObjectId(req.params.id)
+    });
+
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
+    }
+
+    const newStatus = quiz.status === "active" ? "inactive" : "active";
+
+    const result = await Quiz.findOneAndUpdate(
+      { _id: new mongoose.Types.ObjectId(req.params.id) },
+      { $set: { status: newStatus, updatedAt: new Date() } },
+      { returnDocument: "after" }
+    );
+
+    res.json({ success: true, quiz: result });
+  } catch (error) {
+    console.error("Quiz status toggle error:", error);
+    res.status(500).json({ error: "Failed to toggle quiz status" });
+  }
+});
+
 // Update quiz status
 app.put("/api/admin/quizzes/:id/status", requireAdmin, async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: "Invalid quiz ID format" });
+    }
+
     const { status } = req.body;
     const Quiz = mongoose.connection.collection("quizzes");
 
@@ -826,6 +958,10 @@ app.put("/api/admin/quizzes/:id/status", requireAdmin, async (req, res) => {
 // Delete quiz
 app.delete("/api/admin/quizzes/:id", requireAdmin, async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ error: "Invalid quiz ID format" });
+    }
+
     const Quiz = mongoose.connection.collection("quizzes");
     const result = await Quiz.deleteOne({
       _id: new mongoose.Types.ObjectId(req.params.id),
